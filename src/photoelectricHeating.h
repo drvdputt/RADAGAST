@@ -2,12 +2,13 @@
 #define _PHOTOELECTRICHEATING_H_
 
 #include <vector>
+#include <cstring>
 
 namespace Photoelectric {
 // Functions to calculate the heating rate according to the recipe by Weingartner and Draine (2001)
 
 double ionizationPotential(double a, int Z);
-    
+
 double heatingRateAZ(double a, int Z, std::vector<double>& wavelength, std::vector<double>& Qabs, std::vector<double>& isrf);
 
 double heatingRateA(double a, std::vector<double>& wavelength, std::vector<double>& Qabs, std::vector<double>& isrf);
@@ -35,7 +36,7 @@ void chargeBalance(double a, std::vector<double>& wavelength, std::vector<double
 
 double yieldFunctionTest();
 
-double heatingRateTest();
+double heatingRateTest(std::string filename);
 
 double chargeBalanceTest();
 

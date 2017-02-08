@@ -1,5 +1,5 @@
-#include "ionizationBalance.h"
 #include "NumUtils.h"
+#include "IonizationBalance.h"
 
 double Ionization::ionizedFraction(double nH, double T, vector<double> wavelength, vector<double> isrf)
 {

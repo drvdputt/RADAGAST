@@ -3,7 +3,7 @@
 
 
 namespace Constant {
- 
+
   // "Physical" constants
   //   updated for TRUST values 12 Jun 2015
   const double LIGHT=2.99792458e10;            // Speed of light cm sec^-1
@@ -14,6 +14,7 @@ namespace Constant {
   const double SOL_MASS=1.9891e+33;            // Solar mass in gm.
   const double HMASS_AMU=1.0078250321;         // Hydrogen mass in atomic mass units.
   const double HMASS_CGS=1.67353263e-24;       // Hydrogen mass in gm. 
+  const double FINESTRUCTURE = .0072973525664;
 
   // Conversion factors and common constant combinations.
   const double PLANCKLIGHT=(PLANCK)*(LIGHT);   // hc in erg cm 
@@ -35,6 +36,10 @@ namespace Constant {
   const double VFAC=(FPI)/3.0;                 // Volume factor (4/3)*pi 
   const double ERG_EV=6.24150974e11;           // Ergs -> electron volts
 
+  // New constants
+  const double HABING = 5.33e-14; // 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
+  const double ESQUARE = Constant::FINESTRUCTURE * Constant::PLANCKLIGHT / 2 / Constant::PI; // electron charge square in cgs (I think cgs uses Gaussian units or something)
+  const double ELECTRONMASS = 9.1094e-28; // electron mass in grams
 
 }
 
