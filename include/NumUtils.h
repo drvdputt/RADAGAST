@@ -8,7 +8,7 @@
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
-#include <vector> 
+#include <vector>
 
 #include "Constants.h"
 
@@ -17,66 +17,66 @@ using namespace std;
 // needed as apples don't define unit properly (or at least like linux)
 #ifdef __APPLE__
 typedef unsigned int uint;
-#endif 
+#endif
 
-namespace NumUtils { // Define a namespace to avoid confusion with other 
-                     // classes/libraries. 
+namespace NumUtils { // Define a namespace to avoid confusion with other
+                     // classes/libraries.
 
-  // Note that will you can call these with any type, the meaning is not 
-  // intuitively obvious for some.  They were constructed mainly for 
-  // float/double types.  
+  // Note that will you can call these with any type, the meaning is not
+  // intuitively obvious for some.  They were constructed mainly for
+  // float/double types.
 
   // ****************************************************************************
-  // Template prototypes. 
+  // Template prototypes.
   // **********************************************************************
   template<class T>
     class sqSum {
   public:
     T operator()(T sum, T val) { return sum+val*val; }
   };
-  template<class T> 
-    class Square { 
-  public: 
+  template<class T>
+    class Square {
+  public:
     T operator()(T val) { return val*val; }
-  }; 
-  template<class T> 
-    class inverse { 
-  public: 
+  };
+  template<class T>
+    class inverse {
+  public:
     T operator()(T val) { return 1/val; }
-  }; 
-  template <class T> 
-    class exp { 
-  public: 
+  };
+  template <class T>
+    class exp {
+  public:
     T operator()(T val) { return std::exp(val); }
-  }; 
-  template <class T>  
-    class ln { 
-  public: 
+  };
+  template <class T>
+    class ln {
+  public:
     T operator()(T val) { return std::log(val); }
   };
-  template <class T> 
-    class pow10 { 
-  public: 
+  template <class T>
+    class pow10 {
+  public:
     T operator()(T val) { return std::pow(10,val); }
-  }; 
-  template <class T>  
-    class log10 { 
-  public: 
+  };
+  template <class T>
+    class log10 {
+  public:
     T operator()(T val) { return std::log10(val); }
   };
-  template <class T> 
-    class isNan { 
-  public: 
-    bool operator()(T val) { return val != val; } 
+  template <class T>
+    class isNan {
+  public:
+    bool operator()(T val) { return val != val; }
   };
-  template <class T> 
-    class invmult { 
-  public: 
+  template <class T>
+    class invmult {
+  public:
     T operator()(T val1, T val2) { return val1/val2; }
-  }; 
+  };
 
-  template <class T> void swap( T & a, T & b) { 
-    T tmp=a; 
+  template <class T> void swap( T & a, T & b) {
+    T tmp=a;
     a=b;
     b=tmp;
   }
@@ -89,52 +89,52 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   template <typename T> inline T line(T x1, T x2, T y1, T y2, T x)
     { return ( (y2-y1)/(x2-x1)*(x-x1)+y1 ); }
   template <typename T> inline int index(T val, vector <T>&vect) {
-    typename vector <T>::iterator idx;  
-    idx=std::lower_bound(vect.begin(),vect.end(),val); 
-    return distance(vect.begin(),idx); 
+    typename vector <T>::iterator idx;
+    idx=std::lower_bound(vect.begin(),vect.end(),val);
+    return distance(vect.begin(),idx);
   }
   template <typename T> inline int rindex(T val, vector <T>&vect) {
-    typename vector <T>::iterator idx;  
-    idx=std::lower_bound(vect.begin(),vect.end(),val,greater<T>()); 
-    return distance(vect.begin(),idx); 
+    typename vector <T>::iterator idx;
+    idx=std::lower_bound(vect.begin(),vect.end(),val,greater<T>());
+    return distance(vect.begin(),idx);
   }
-  // Some extrapolators. 
-  template <typename T> inline T lextra(T & val1, T & val2, T & val3) 
+  // Some extrapolators.
+  template <typename T> inline T lextra(T & val1, T & val2, T & val3)
     { return val1*val2/val3; }
-  template <typename T> inline T cextra(T & val1, T & val2, T & val3) 
-    { T ratio=val2/val3; return val1*ratio*ratio*ratio; } 
-  template <typename T> inline T qextra(T & val1, T & val2, T & val3) 
-    { T ratio=val2/val3; return val1*ratio*ratio*ratio*ratio; } 
-  template <typename T> inline T frootextra(T & val1, T & val2, T & val3) 
-    { T ratio=val2/val3; return val1*sqrt(sqrt(ratio)); } 
-  
+  template <typename T> inline T cextra(T & val1, T & val2, T & val3)
+    { T ratio=val2/val3; return val1*ratio*ratio*ratio; }
+  template <typename T> inline T qextra(T & val1, T & val2, T & val3)
+    { T ratio=val2/val3; return val1*ratio*ratio*ratio*ratio; }
+  template <typename T> inline T frootextra(T & val1, T & val2, T & val3)
+    { T ratio=val2/val3; return val1*sqrt(sqrt(ratio)); }
+
   // Functions with 'source'
   template <typename T> int maxID(vector <T>& vect);
   template <typename T> vector <int> sortID(vector <T>&vect);
-  template <typename T> vector <int> sortID_src(vector <T>&vect); 
+  template <typename T> vector <int> sortID_src(vector <T>&vect);
   template <typename T> void sortIndexOnVector(vector <T> & vect, vector <int> & index, int beg, int end);
-  template <typename T, typename T1, typename T2> T integrate (vector <T1>& x, vector <T2>& y);
-  template <typename T> vector <T> interpol (vector <T>& v, vector <T>& x, 
-				       vector <T>& u, 
+  template <typename T, typename T1, typename T2> T integrate (const vector <T1>& x, const vector <T2>& y);
+  template <typename T> vector <T> interpol (vector <T>& v, vector <T>& x,
+				       vector <T>& u,
 				       int LoEx=2, int HiEx=2);
-  template <typename T> void interpolr (vector <T>& v, vector <T>& x, 
+  template <typename T> void interpolr (vector <T>& v, vector <T>& x,
 					vector <T>& u, int LoEx=2, int HiEx=2);
   template <typename T, typename T1, typename T2> vector <T> bbodyCGS (T1 wave, vector <T2>& Temperature);
-  template <typename T, typename T1, typename T2> vector <T> bbodyCGS (vector <T1>& wave, T2 Temperature);
+  template <typename T, typename T1, typename T2> vector <T> bbodyCGS (const vector <T1>& wave, T2 Temperature);
   template <class T, class T1, class T2, class T3> vector <T> prod_bbodyCGS (T1 wave, vector <T2>& Temperature, vector <T3>& product);
   template <class T, class T1, class T2, class T3> vector <T> prod_bbodyCGS (vector <T1>& wave, T2 Temperature, vector <T3>& product);
   template <class T, class T1, class T2, class T3> vector <T> add_bbodyCGS (T1 wave, vector <T2>& Temperature, vector <T3>& add);
   template <class T, class T1, class T2, class T3> vector <T> add_bbodyCGS (vector <T1>& wave, T2 Temperature, vector <T3>& add);
   template <typename T> string vtos(const T & value);
   template <typename T> class Matrix;
-  template <typename T> class Cube; 
-  template <typename T> Matrix <T> mInvert(Matrix <T> A); 
-  template <typename T> vector <T> poly_fit(vector <T> x, vector <T> y, 
+  template <typename T> class Cube;
+  template <typename T> Matrix <T> mInvert(Matrix <T> A);
+  template <typename T> vector <T> poly_fit(vector <T> x, vector <T> y,
 					    int ndegree, vector <T>& yfit, vector <T>& sigma);
-  
-  
+
+
   // ****************************************************************************
-  // Function 'source' code. 
+  // Function 'source' code.
   // ****************************************************************************
 
  // Simple "one-pass" algorithm for mean/variance.
@@ -152,21 +152,21 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 /*       var = sqrt(Q1/(T)(vect.size()-1)); */
 
 /*       return M1; */
-      long nNaN=0; 
-      while (isnan(vect[nNaN])) ++nNaN; 
+      long nNaN=0;
+      while (isnan(vect[nNaN])) ++nNaN;
       T M0=vect[nNaN];
       T Q0=0;
       T M1,Q1;
       for (int i=nNaN+1;i<vect.size();i++) {
 	if (isnan(vect[i])) {
-	  ++nNaN; 
-	} else { 
+	  ++nNaN;
+	} else {
 	  M1 = M0 + (vect[i]-M0)/(T)(i+1-nNaN);
 	  Q1 = Q0 + ((T)(i-nNaN))*pow((vect[i]-M0),2)/(T)(i+1-nNaN);
 	  M0 = M1;
 	  Q0 = Q1;
 	}
-      } 
+      }
       var = sqrt(Q1/(T)(vect.size()-1-nNaN));
 
       return M1;
@@ -177,20 +177,20 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 
   template <typename T> T sigma_clip(vector <T> & vect, T & hi_clip, T & lo_clip)
     {
-      replace_if(vect.begin(),vect.end(),bind2nd(greater<T>(),hi_clip),NaN<T>()); 
+      replace_if(vect.begin(),vect.end(),bind2nd(greater<T>(),hi_clip),NaN<T>());
       replace_if(vect.begin(),vect.end(),bind1st(greater<T>(),lo_clip),NaN<T>());
 /*       vect.erase(remove_if(vect.begin(),vect.end(),bind2nd(greater<T>(),hi_clip)),vect.end()); */
 /*       vect.erase(remove_if(vect.begin(),vect.end(),bind1st(greater<T>(),lo_clip)),vect.end());  */
     }
 
-  // "Clip" max/min values from a vector.  The nMax largest and nMin smalles values 
-  // are replaced with nans. 
-  template <typename T> void minmax_clip( vector <T> & vect, long nMin, long nMax) 
+  // "Clip" max/min values from a vector.  The nMax largest and nMin smalles values
+  // are replaced with nans.
+  template <typename T> void minmax_clip( vector <T> & vect, long nMin, long nMax)
     {
       if ( (nMin+nMax) < vect.size() ) {
-	typename vector <T>::iterator _it; 
-	for (long _i=0;_i<nMin;++_i) *(min_element(vect.begin(),vect.end())) = NaN<T>(); 
-	for (long _i=0;_i<nMax;++_i) *(max_element(vect.begin(),vect.end())) = NaN<T>(); 
+	typename vector <T>::iterator _it;
+	for (long _i=0;_i<nMin;++_i) *(min_element(vect.begin(),vect.end())) = NaN<T>();
+	for (long _i=0;_i<nMax;++_i) *(max_element(vect.begin(),vect.end())) = NaN<T>();
       }
     }
 
@@ -199,23 +199,23 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   template <typename T> int maxID(vector <T>& vect)
     {
       //T theMax=-1e256;
-      int theMaxID=0; 
+      int theMaxID=0;
       T theMax=vect[0];
-      typename vector <T>::iterator _it,_itb,_ite; 
+      typename vector <T>::iterator _it,_itb,_ite;
       _itb=vect.begin(); _ite=vect.end();
       for (_it=_itb;_it!=_ite;++_it) {
-	if (*_it > theMax) { 
-	   theMax = *_it; 
-	   theMaxID = distance(_itb,_it); 
+	if (*_it > theMax) {
+	   theMax = *_it;
+	   theMaxID = distance(_itb,_it);
         }
       }
       //for (int i=0;i<vect.size();i++) {
-//	if (vect[i] > theMax) { 
+//	if (vect[i] > theMax) {
 //	  theMax=vect[i];
-//	  theMaxID=i; 
+//	  theMaxID=i;
 //	}
  //     }
-      return theMaxID; 
+      return theMaxID;
     }
   // ****************************************************************************
   // ****************************************************************************
@@ -224,74 +224,74 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
     {
       int n=vect.size();
       int i;
-      T a; 
+      T a;
       vector <int> retvect;
-      retvect.push_back(0); 
+      retvect.push_back(0);
       for (int j=1;j<n;j++) {
-	retvect.push_back(j); 
+	retvect.push_back(j);
 	a=vect[j];
-	i=j; 
+	i=j;
 	while (i > 0 && vect[retvect[i-1]] > a) {
 	  //retvect[i+1] = retvect[i];
-	  swap(retvect[i],retvect[i-1]); 
-	  i--; 
+	  swap(retvect[i],retvect[i-1]);
+	  i--;
 	}
       }
-      
+
       return retvect;
     }
   // ****************************************************************************
 
   template <typename T> void sortIndexOnVector(vector <T> & vect, vector <int> & index, int beg, int end)
     {
-      int i; 
-      T a; 
+      int i;
+      T a;
       for (int j=beg+1;j<end;j++) {
-	//cout << "assigning " << vect[index[j]] << " to a" << endl; 
+	//cout << "assigning " << vect[index[j]] << " to a" << endl;
 	a = vect[index[j]];
-	i=j; 
-	while (i > beg && vect[index[i-1]] > a) { 
-	  //cout << "Satisfied that " << vect[index[i-1]] << " is > " << a << endl; 
-	  //cout << "Swapping " << vect[index[i]] << " " << vect[index[i-1]] << endl; 
-	  swap(index[i],index[i-1]); 
-	  i--; 
+	i=j;
+	while (i > beg && vect[index[i-1]] > a) {
+	  //cout << "Satisfied that " << vect[index[i-1]] << " is > " << a << endl;
+	  //cout << "Swapping " << vect[index[i]] << " " << vect[index[i-1]] << endl;
+	  swap(index[i],index[i-1]);
+	  i--;
 	}
       }
     }
 
   // ****************************************************************************
-  // returns vector of indices AND Re-orders vector. 
+  // returns vector of indices AND Re-orders vector.
   template <typename T> vector <int> sortID_src(vector <T>&vect)
     {
-      
+
       int n=vect.size();
       int i;
-      T a; 
+      T a;
       vector <int> retvect;
-      retvect.push_back(0); 
+      retvect.push_back(0);
       //for (int j=0;j<n;j++) retvect.push_back(j);
       for (int j=1;j<n;j++) {
-	retvect.push_back(j); 
+	retvect.push_back(j);
 	a=vect[j];
-	i=j; 
+	i=j;
 	while (i > 0 && vect[i-1] > a) {
 	  swap(vect[i],vect[i-1]);
-	  swap(retvect[i],retvect[i-1]); 
-	  i--; 
+	  swap(retvect[i],retvect[i-1]);
+	  i--;
 	}
       }
-      
+
       return retvect;
     }
   // ****************************************************************************
 
   // ****************************************************************************
   // Simple trapazoidal integration
-  template <typename T, typename T1, typename T2> T integrate (vector <T1>& x, vector <T2>& y)
+  template <typename T, typename T1, typename T2> T integrate (const vector <T1>& x, const vector <T2>& y)
     {
       T answer=0.0;
-      typename vector <T2>::iterator iy;
-      typename vector <T1>::iterator ix; 
+      typename vector <T2>::const_iterator iy;
+      typename vector <T1>::const_iterator ix;
       if (x.size() > 1) {
 	iy = y.begin()+1;
 	for (ix=x.begin()+1;ix!=x.end();ix++) {
@@ -304,27 +304,27 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // ****************************************************************************
 
 
- 
+
 
   // ****************************************************************************
   // Interpolate - should be fast enough for small vectors.
-  template <typename T> vector <T> interpol (vector <T>& v, vector <T>& x, 
+  template <typename T> vector <T> interpol (vector <T>& v, vector <T>& x,
 				       vector <T>& u,
 				       int LoEx, int HiEx)
     {
 
-      if (v.size() != x.size()) { 
-	cout << "Abscissa and ordinate lengths do not match in interpol" << endl; 
-	throw "size mismatch"; 
-      } 
+      if (v.size() != x.size()) {
+	cout << "Abscissa and ordinate lengths do not match in interpol" << endl;
+	throw "size mismatch";
+      }
       //cout << "usize " << u.size() << " " << x.size() << endl;
-      vector <T> r(u.size()); 
+      vector <T> r(u.size());
       T slp,extrslp1 = 0;
       T intcpt,extrint1 = 0;
       uint j;
-      uint n = x.size()-1; 
-      if (HiEx == -99) { 
-	extrslp1 = (v[n]-v[n-1])/(x[n]-x[n-1]); 
+      uint n = x.size()-1;
+      if (HiEx == -99) {
+	extrslp1 = (v[n]-v[n-1])/(x[n]-x[n-1]);
 	extrint1 = v[n] - extrslp1*x[n];
       }
 
@@ -353,9 +353,9 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 	    case 0:
 	      r[i] = v[v.size()-1];
 	      break;
-	    case -99 : 
-	      r[i] = extrint1 + extrslp1*u[i]; 
-	      break; 
+	    case -99 :
+	      r[i] = extrint1 + extrslp1*u[i];
+	      break;
 	    default :
 	      r[i] = v[v.size()-1]*pow(u[i]/x[x.size()-1],HiEx);
 	      break;
@@ -372,7 +372,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 	    }
 	    // take care of the case where i=j=0
 	    // seemed to work w/o this line on 32bit, but not 64bit (even unoptimized)
-	    if (j == 0) j++;  
+	    if (j == 0) j++;
 /* 	    cout << (u[i] > x[j]) << " " << (u[i] == x[j]) << " "; */
 /* 	    cout << j << " "; */
 /* 	    cout << u[i] << " " << x[j] << " "; */
@@ -386,7 +386,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 	  }
 	}
       }
-	
+
 /*       typename vector <T>::iterator iu,iul,iuh,ir,ix,iv; */
 /*       ix = x.begin(); */
 /*       iv = v.begin(); */
@@ -449,87 +449,87 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 /* 	*ir = ((*iu) - (*(ix)))*((*(iv)) - (*(iv-1)))/((*(ix))- (*(ix-1))) + (*iv); */
 /* 	ir++; */
 /*       } */
-      
-      return r; 
+
+      return r;
     }
   // ****************************************************************************
 
   // *************************************************************************
-  // Interpolate with replacement of input vector - ie. v comes out with 
-  // interpolated vector rather than the input vector. 
-  template <typename T> void interpolr (vector <T>& v, vector <T>& x, vector <T>& u, 
-					int LoEx, int HiEx) 
+  // Interpolate with replacement of input vector - ie. v comes out with
+  // interpolated vector rather than the input vector.
+  template <typename T> void interpolr (vector <T>& v, vector <T>& x, vector <T>& u,
+					int LoEx, int HiEx)
     {
 
-      if (v.size() != x.size()) { 
-	cout << "Abscissa and ordinate lengths do not match in interpol" << endl; 
-	throw "size mismatch"; 
-      }  
+      if (v.size() != x.size()) {
+	cout << "Abscissa and ordinate lengths do not match in interpol" << endl;
+	throw "size mismatch";
+      }
 
-      // Copy input vector into a temporary vector and use v as the new vector. 
+      // Copy input vector into a temporary vector and use v as the new vector.
       vector <T> tmpv;
       copy(v.begin(),v.end(),back_inserter(tmpv));
       v.erase(v.begin(),v.end());
       v.resize(u.size());
- 
-      //T slope,intercept; 
 
-      typename vector <T>::iterator iu,iul,iuh,ir,ix,iv; 
+      //T slope,intercept;
+
+      typename vector <T>::iterator iu,iul,iuh,ir,ix,iv;
       // Iterators point to begining of vectors.
       ix = x.begin();
-      iv = tmpv.begin(); 
-      iul = u.begin(); 
+      iv = tmpv.begin();
+      iul = u.begin();
       ir = v.begin();
- 
-      while ( *iul < *ix ) { // Extrapolate to the left. 
-	//cout << "EXTRAPOLATING LOW" << endl; 
-	switch (LoEx) { 
+
+      while ( *iul < *ix ) { // Extrapolate to the left.
+	//cout << "EXTRAPOLATING LOW" << endl;
+	switch (LoEx) {
 	case -1 :  // set to 0
-	  *ir = 0.0; 
-	  break; 
+	  *ir = 0.0;
+	  break;
 	case 0 : // Constant extrapolation
-	  *ir = *iv; 
-	  break; 
-	default : // Power law. 
+	  *ir = *iv;
+	  break;
+	default : // Power law.
 	  *ir = (*iv)*pow((*iul)/(*ix), LoEx);
-	  break; 
+	  break;
 	}
-	iul++; 
-	ir++; 
+	iul++;
+	ir++;
       }
 
       // Iterators point to last element of vectors
-      iuh = u.end()-1; 
-      ir = v.end()-1; 
-      ix = x.end()-1; 
-      iv = tmpv.end()-1; 
+      iuh = u.end()-1;
+      ir = v.end()-1;
+      ix = x.end()-1;
+      iv = tmpv.end()-1;
 
-      while ( *iuh > *ix ) { // Extrapolate to the right. 
-	switch (HiEx) { 
+      while ( *iuh > *ix ) { // Extrapolate to the right.
+	switch (HiEx) {
 	case -1 : // set to 0
-	  *ir = 0; 
-	  break; 
+	  *ir = 0;
+	  break;
 	case 0 : // constant
-	  *ir = *iv; 
-	  break; 
-	default : // Power law. 
-	  *ir = (*iv)*pow( (*ix)/(*iuh), HiEx); 
-	  break; 
+	  *ir = *iv;
+	  break;
+	default : // Power law.
+	  *ir = (*iv)*pow( (*ix)/(*iuh), HiEx);
+	  break;
 	}
-	iuh--; 
+	iuh--;
 	ir--;
       }
 
-      ix = x.begin(); 
+      ix = x.begin();
       iv = tmpv.begin();
-      ir = v.begin()+distance(u.begin(),iul); 
-  
-      for (iu=iul;iu<=iuh;iu++) {      
+      ir = v.begin()+distance(u.begin(),iul);
+
+      for (iu=iul;iu<=iuh;iu++) {
 	while ( *ix < *iu ) { ix++; iv++; }
-	*ir = ((*iu) - (*(ix)))*((*(iv)) - (*(iv-1)))/((*(ix))- (*(ix-1))) + (*iv); 
+	*ir = ((*iu) - (*(ix)))*((*(iv)) - (*(iv-1)))/((*(ix))- (*(ix-1))) + (*iv);
 	ir++;
       }
- 
+
     }
   // ****************************************************************************
 
@@ -537,7 +537,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
   // Returns BB as f(T) for a single wavelength
   template <typename T, typename T1, typename T2> vector <T> bbodyCGS (T1 wave, vector <T2>& Temperature)
-    {   
+    {
       // Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
       T c1 = 2.0*Constant::PLANCK*pow(Constant::LIGHT,2);
       T c2 = Constant::PLANCKLIGHT/(Constant::BOLTZMAN*static_cast<T>(wave));
@@ -547,16 +547,16 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 /*       cout << "C2 in bb: " << c2 << endl;  */
       typename vector <T2>::iterator _itbeg,_itend,_it;
       typename vector <T>::iterator _itBB;
-      //cout << "comp bb: " <<  c1 << " " << c2 << endl; 
+      //cout << "comp bb: " <<  c1 << " " << c2 << endl;
       vector <T> theBB(Temperature.size());
       _itBB = theBB.begin();
       _itbeg = Temperature.begin();
       _itend = Temperature.end();
       for (_it=_itbeg;_it!=_itend;++_it,++_itBB) {
-	//cout << "INBB 1: " << static_cast<T1>(wave) << " " << c1/pow((static_cast<T1>(wave)),5) << endl; 
-	//cout << (std::exp((c2/static_cast<T1>((*_it))))) << endl; 
+	//cout << "INBB 1: " << static_cast<T1>(wave) << " " << c1/pow((static_cast<T1>(wave)),5) << endl;
+	//cout << (std::exp((c2/static_cast<T1>((*_it))))) << endl;
         *_itBB = c1/pow((wave),5)*(1.0/(std::exp(c2/(*_it)) - 1.0));
-	//cout << "IN BB: " << wave << " " << *_it << " "<<  theBB[i] << endl; 
+	//cout << "IN BB: " << wave << " " << *_it << " "<<  theBB[i] << endl;
       }
       return theBB;
     }
@@ -566,7 +566,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
   // Returns BB multiplied by another vector as f(T) for a single wavelength
   template <class T, class T1, class T2, class T3> vector <T> prod_bbodyCGS (T1 wave, vector <T2>& Temperature, vector <T3>& product)
-    {   
+    {
       // Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
       T c1 = 2.0*Constant::PLANCK*pow(Constant::LIGHT,2);
       T c2 = Constant::PLANCKLIGHT/(Constant::BOLTZMAN*static_cast<T>(wave));
@@ -578,7 +578,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       _itBB = theBB.begin();
       _itbeg = Temperature.begin();
       _itend = Temperature.end();
-      _itp = product.begin(); 
+      _itp = product.begin();
       for (_it=_itbeg;_it!=_itend;++_it,++_itp,++_itBB) {
         *_itBB = (*_itp)*c1/pow((wave),5)*(1.0/(std::exp(c2/(*_it)) - 1.0));
       }
@@ -589,7 +589,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
   // Returns BB summed with another vector as f(T) for a single wavelength
   template <class T, class T1, class T2, class T3> vector <T> add_bbodyCGS (T1 wave, vector <T2>& Temperature, vector <T3>& add)
-    {   
+    {
       // Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
       T c1 = 2.0*Constant::PLANCK*pow(Constant::LIGHT,2);
       T c2 = Constant::PLANCKLIGHT/(Constant::BOLTZMAN*static_cast<T>(wave));
@@ -612,12 +612,12 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // ****************************************************************************
   // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
   // Returns BB as f(wave) for a single T
-  template <typename T, typename T1, typename T2> vector <T> bbodyCGS (vector <T1>& wave, T2 Temperature)
-    {   
+  template <typename T, typename T1, typename T2> vector <T> bbodyCGS (const vector <T1>& wave, T2 Temperature)
+    {
       // Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
       T c1 = 2.0*Constant::PLANCK*pow(Constant::LIGHT,2);
       T c2 = Constant::PLANCKLIGHT/(Constant::BOLTZMAN*Temperature);
-      typename vector <T1>::iterator _itbeg,_itend,_it;
+      typename vector <T1>::const_iterator _itbeg,_itend,_it;
       typename vector <T>::iterator _itBB;
 
       vector <T> theBB(wave.size());
@@ -627,7 +627,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       for (_it=_itbeg;_it!=_itend;++_it,++_itBB) {
         *_itBB = c1/pow((*_it),5)*(1.0/(std::exp(c2/(*_it)) - 1.0));
       }
-      
+
       return theBB;
     }
   // ****************************************************************************
@@ -636,12 +636,12 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
   // Returns BB multiplied by another vector as f(wave) for a single T
   template <class T, class T1, class T2, class T3> vector <T> prod_bbodyCGS (vector <T1>& wave, T2 Temperature, vector <T3>& product)
-    {   
+    {
       // Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
       T c1 = 2.0*Constant::PLANCK*pow(Constant::LIGHT,2);
       T c2 = Constant::PLANCKLIGHT/(Constant::BOLTZMAN*Temperature);
       typename vector <T1>::iterator _itbeg,_itend,_it;
-      typename vector <T3>::iterator _itp; 
+      typename vector <T3>::iterator _itp;
       typename vector <T>::iterator _itBB;
 
       vector <T> theBB(wave.size());
@@ -649,9 +649,9 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       _itbeg = wave.begin();
       _itend = wave.end();
       _itp = product.begin();
-      for (_it=_itbeg;_it!=_itend;++_it,++_itp,++_itBB) 
+      for (_it=_itbeg;_it!=_itend;++_it,++_itp,++_itBB)
         *_itBB = (*_itp)*c1/pow((*_it),5)*(1.0/(std::exp(c2/(*_it)) - 1.0));
-      
+
       return theBB;
     }
   // ****************************************************************************
@@ -659,12 +659,12 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
   // Returns BB multiplied by another vector as f(wave) for a single T
   template <class T, class T1, class T2, class T3> vector <T> add_bbodyCGS (vector <T1>& wave, T2 Temperature, vector <T3>& add)
-    {   
+    {
       // Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
       T c1 = 2.0*Constant::PLANCK*pow(Constant::LIGHT,2);
       T c2 = Constant::PLANCKLIGHT/(Constant::BOLTZMAN*Temperature);
       typename vector <T1>::iterator _itbeg,_itend,_it;
-      typename vector <T3>::iterator _ita; 
+      typename vector <T3>::iterator _ita;
       typename vector <T>::iterator _itBB;
 
       vector <T> theBB(wave.size());
@@ -672,16 +672,16 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       _itbeg = wave.begin();
       _itend = wave.end();
       _ita = add.begin();
-      for (_it=_itbeg;_it!=_itend;++_it,++_ita,++_itBB) 
+      for (_it=_itbeg;_it!=_itend;++_it,++_ita,++_itBB)
         *_itBB = (c1/pow((*_it),5)*(1.0/(std::exp(c2/(*_it)) - 1.0))) + *_ita;
-      
+
       return theBB;
     }
   // ****************************************************************************
 
   // ****************************************************************************
   // Convert value of type T to a string - useful for constructing filenames
-  // out of numbers. 
+  // out of numbers.
   template <typename T> string vtos(const T & value)
     {
       stringstream ss;
@@ -693,37 +693,37 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // ****************************************************************************
   // Do a polynomial fit to a set of data. Simple re-write of IDL poly_fit.pro
   // TODO: add HAVEMEASUREERRORS.
-  template <typename T> vector <T> poly_fit(vector <T> x, 
-					    vector <T> y, 
-					    int ndegree, 
+  template <typename T> vector <T> poly_fit(vector <T> x,
+					    vector <T> y,
+					    int ndegree,
 					    vector <T>& yfit,
 					    vector <T>& sigma)
     {
 
       int m=ndegree+1;
       int n=x.size();
-      //cout << m << " " << ndegree << endl; 
+      //cout << m << " " << ndegree << endl;
       vector <T> param(m);
       NumUtils::Matrix <T> covar(m,m);
-      
-      vector <T> b(m); 
+
+      vector <T> b(m);
       vector <T> z(n,1.0);
       T sdev=1.0,sdev2=1.0;
-      vector <T> wy=y; 
-      //cout << "in polyfit 1: " << param[0] << " " << param[1] << endl; 
-      if (yfit.size() != n) { 
-	cout << "Size of fit return not equal input vector sizes; poly_fit()" << endl; 
+      vector <T> wy=y;
+      //cout << "in polyfit 1: " << param[0] << " " << param[1] << endl;
+      if (yfit.size() != n) {
+	cout << "Size of fit return not equal input vector sizes; poly_fit()" << endl;
 	exit(8);
       }
-      if (sigma.size() != m) { 
-	cout << "Size of parameter error array not equal to order+1; poly_fit()" << endl; 
-	exit(8); 
+      if (sigma.size() != m) {
+	cout << "Size of parameter error array not equal to order+1; poly_fit()" << endl;
+	exit(8);
       }
 
-      T sum; 
-      covar(0,0)=(T)n; 
-      b[0] = accumulate(wy.begin(),wy.end(),0.0); 
-      for (long p=1;p<=2*ndegree;p++) { 
+      T sum;
+      covar(0,0)=(T)n;
+      b[0] = accumulate(wy.begin(),wy.end(),0.0);
+      for (long p=1;p<=2*ndegree;p++) {
 	// z=z*x
 	transform(z.begin(),z.end(),x.begin(),z.begin(),multiplies<T>());
 	// b[p] = wy*z
@@ -733,82 +733,82 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 	for (int j=( (0>(p-ndegree)) ? 0:(p-ndegree) );j<=( (ndegree<p) ? ndegree : p);j++) covar(j,p-j)=sum;
       }
       covar = mInvert(covar);
-      for (int j=0;j<m;j++) 
+      for (int j=0;j<m;j++)
 	for (int i=0;i<m;i++) param[j] += b[i]*covar(i,j);
       //vector <double> yfit(n,param[ndegree]);
-      for (int i=0;i<n;++i) yfit[i]=param[ndegree]; 
-      //for (int i=0;i<n;i++) yfit.push_back(param[ndegree]); 
+      for (int i=0;i<n;++i) yfit[i]=param[ndegree];
+      //for (int i=0;i<n;i++) yfit.push_back(param[ndegree]);
       for (int k=ndegree-1;k>=0;k--) {
 	transform(yfit.begin(),yfit.end(),x.begin(),yfit.begin(),multiplies<T>());
-	transform(yfit.begin(),yfit.end(),yfit.begin(), 
+	transform(yfit.begin(),yfit.end(),yfit.begin(),
 		  bind2nd(plus<T>(),param[k]));
       }
-      // Sigma == diagonal 
+      // Sigma == diagonal
       for (int i=0;i<m;i++) sigma[i] = (sqrt(abs(covar(i,i))));
       // diff = yfit - y; chisq=SUM[(diff)^2]
       vector <T> diff;
       transform(yfit.begin(),yfit.end(),y.begin(),back_inserter(diff),minus<T>());
       T chisq=accumulate(diff.begin(),diff.end(),0.0,NumUtils::sqSum<T>());
-      T var = (n > m) ? chisq/T(n-m) : 0.0; 
+      T var = (n > m) ? chisq/T(n-m) : 0.0;
       transform(sigma.begin(),sigma.end(),sigma.begin(),
-		bind2nd(plus<T>(),sqrt(chisq/(T)(n-m)))); 
+		bind2nd(plus<T>(),sqrt(chisq/(T)(n-m))));
       T yerr = sqrt(var);
 
-      //cout << "in polyfit 2: " << param[0] << " " << param[1] << endl; 
-      return param; 
+      //cout << "in polyfit 2: " << param[0] << " " << param[1] << endl;
+      return param;
     }
   // ****************************************************************************
-  
+
   // ****************************************************************************
   // Compute inverse of a matrix; stolen from the web... Forgot where...
-  template <typename T> NumUtils::Matrix <T> mInvert(NumUtils::Matrix <T> A) 
+  template <typename T> NumUtils::Matrix <T> mInvert(NumUtils::Matrix <T> A)
     {
-      int N = A.nRow(); 
-      NumUtils::Matrix <T> Ainv=A; 
+      int N = A.nRow();
+      NumUtils::Matrix <T> Ainv=A;
       NumUtils::Matrix <T> b(N,N,0.0);
       vector <T> scale(N);
-      vector <int> index(N+1);     
-      for (int i=0;i<N;i++) { 
+      vector <int> index(N+1);
+      for (int i=0;i<N;i++) {
 	b(i,i)=1.0;
 	index[i]=i;
 	T scalemax=0.0;
 	for (int j=0;j<N;j++) scalemax = (scalemax > fabs(A(i,j))) ? scalemax : fabs(A(i,j));
-	scale[i] = scalemax; 
+	scale[i] = scalemax;
       }
       int signDet=1;
-      for (int k=0;k<N-1;k++) { 
+      for (int k=0;k<N-1;k++) {
 	T ratiomax=0.0;
 	int jPivot=k;
-	for (int i=k;i<N;i++) { 
-	  T ratio=fabs(A(index[i],k))/scale[index[i]]; 
-	  if (ratio > ratiomax) { 
-	    jPivot=i; 
-	    ratiomax=ratio; 
+	for (int i=k;i<N;i++) {
+	  T ratio=fabs(A(index[i],k))/scale[index[i]];
+	  if (ratio > ratiomax) {
+	    jPivot=i;
+	    ratiomax=ratio;
 	  }
 	}
-	int indexJ=index[k]; 
-	if (jPivot != k) { 
+	int indexJ=index[k];
+	if (jPivot != k) {
 	  indexJ = index[jPivot];
-	  index[jPivot] = index[k]; 
+	  index[jPivot] = index[k];
 	  index[k] = indexJ;
-	  signDet *= -1; 
+	  signDet *= -1;
 	}
 	for (int i=k+1;i<N;i++) {
 	  T coeff=A(index[i],k)/A(indexJ,k);
 	  for (int j=k+1;j<N;j++) A(index[i],j) -= coeff*A(indexJ,j);
-	  A(index[i],k)=coeff; 
+	  A(index[i],k)=coeff;
 	  for (int j=0;j<N;j++) b(index[i],j) -= A(index[i],k)*b(indexJ,j);
 	}
       }
-      for (int k=0;k<N;k++) { 
+      for (int k=0;k<N;k++) {
 	Ainv(N-1,k) = b(index[N-1],k)/A(index[N-1],N-1);
-	for (int i=N-2;i>=0;i--) { 
+	for (int i=N-2;i>=0;i--) {
 	  T sum=b(index[i],k);
 	  for (int j=i+1;j<N;j++) sum -= A(index[i],j)*Ainv(j,k);
-	  Ainv(i,k) = sum/A(index[i],i); 
+	  Ainv(i,k) = sum/A(index[i],i);
 	}
       }
-      return Ainv; 
+      return Ainv;
     }
   // ****************************************************************************
 
@@ -817,7 +817,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // ****************************************************************************
   //  Separating out header and source doesn't work so well...
   template <typename T> class  Matrix : public std::vector<T> {
-    
+
   public:
     // Constructors/destructors.
     Matrix() : std::vector<T>() {}
@@ -829,13 +829,13 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
     T& operator() (int n1_id, int n2_id);
     int nRow ();
     int nCol ();
-    void MSize(int n1_id, int n2_id); 
-    
+    void MSize(int n1_id, int n2_id);
+
   private:
     // Keep track of how many elements we're allowed to have in each dimension..
     int _n1,_n2;
   };
-  
+
   //  Overload of operator()
   template <typename T> inline T& Matrix<T>::operator() (int n1_id, int n2_id)
     {
@@ -851,7 +851,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       }
       return *( this->begin()+ n2_id*_n1 + n1_id );
     }
-  
+
   // Size the Matrix after instatiation.
   template <typename T> void Matrix<T>::MSize(int n1_id, int n2_id)
     {
@@ -860,7 +860,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       Matrix::clear();
       Matrix::resize(n1_id*n2_id);
     }
-  
+
   template <typename T> int Matrix<T>::nRow() { return _n1; }
   template <typename T> int Matrix<T>::nCol() { return _n2; }
   // ****************************************************************************
@@ -868,10 +868,10 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   // ****************************************************************************
   // Cube class.
   template <typename T> class Cube : public std::vector<T> {
-    
+
   public:
     // Constructors/destructors.
-    Cube() : std::vector<T>() {} 
+    Cube() : std::vector<T>() {}
     Cube(int n1, int n2, int n3, const T& ival) : std::vector<T>(n1*n2*n3,ival), _n1 (n1),_n2 (n2), _n3 (n3) {}
     explicit Cube(int n1, int n2, int n3) : std::vector<T>(n1*n2*n3), _n1 (n1), _n2 (n2), _n3 (n3) {}
     ~Cube() {}
@@ -879,58 +879,58 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
     //   should work.
     T& operator() (int n1_id, int n2_id, int n3_id);
     void CSize (int n1_id, int n2_id, int n3_id);
-    
+
     int nRow ();
     int nCol ();
     int n3rd ();
-	
+
 	void get_xyz(int cell_num, int &n1_id, int &n2_id, int &n3_id);
-    
-  private: 
-    // Keep track of how many elements we're allowed to have in each dimension. 
+
+  private:
+    // Keep track of how many elements we're allowed to have in each dimension.
     int _n1,_n2,_n3;
-    
+
   };
-  
-  // Overload of operator() 
+
+  // Overload of operator()
   template <typename T> inline T& Cube<T>::operator() (int n1_id, int n2_id, int n3_id)
     {
-      if (n1_id < 0 || n1_id >= _n1) { 
-	cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id << "," << n3_id << " " << _n1 << 
+      if (n1_id < 0 || n1_id >= _n1) {
+	cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id << "," << n3_id << " " << _n1 <<
 endl;
-	std::string ExceptionObject = "out_of_range Cube::operator(), element 1"; 
+	std::string ExceptionObject = "out_of_range Cube::operator(), element 1";
 	throw std::out_of_range(ExceptionObject);
       }
-      if (n2_id < 0 || n2_id >= _n2) { 
-	cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id << "," << n3_id << " " << _n2 << 
+      if (n2_id < 0 || n2_id >= _n2) {
+	cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id << "," << n3_id << " " << _n2 <<
 endl;
-	std::string ExceptionObject = "out_of_range Cube::operator(), element 2"; 
+	std::string ExceptionObject = "out_of_range Cube::operator(), element 2";
 	throw std::out_of_range(ExceptionObject);
       }
       if (n3_id < 0 || n3_id >= _n3) {
-	cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id << "," << n3_id << " " << _n3 << 
-endl; 
-	std::string ExceptionObject = "out_of_range Cube::operator(), element 3"; 
+	cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id << "," << n3_id << " " << _n3 <<
+endl;
+	std::string ExceptionObject = "out_of_range Cube::operator(), element 3";
 	throw std::out_of_range(ExceptionObject);
       }
       return *( this->begin() + n3_id*_n1*_n2 + n2_id*_n1 +  n1_id);
-      
+
     }
 
-  // Size the Cube after instatiation. 
+  // Size the Cube after instatiation.
   template <typename T> void Cube<T>::CSize(int n1_id, int n2_id, int n3_id)
     {
       _n1 = n1_id;
-      _n2 = n2_id; 
+      _n2 = n2_id;
       _n3 = n3_id;
       Cube::clear();
       Cube::resize(n1_id*n2_id*n3_id);
     }
-  
+
   template <typename T> int Cube<T>::nRow() { return _n1; }
   template <typename T> int Cube<T>::nCol() { return _n2; }
   template <typename T> int Cube<T>::n3rd() { return _n3; }
-  
+
   // ****************************************************************************
 
   // given the index of the cell, return the x, y and z indices
@@ -938,7 +938,7 @@ endl;
   {
     div_t div_result;
     if (cell_num < 0 || cell_num > (int)this->size()) {
-      std::string ExceptionObject = "out_of_range Cube::get_xyz()"; 
+      std::string ExceptionObject = "out_of_range Cube::get_xyz()";
       throw std::out_of_range(ExceptionObject);
     }
     div_result = div(cell_num, _n2*_n1);
@@ -952,10 +952,10 @@ endl;
   // ****************************************************************************
   // FourVector class.
   template <typename T> class FourVector : public std::vector<T> {
-    
+
   public:
     // Constructors/destructors.
-    FourVector() : std::vector<T>() {} 
+    FourVector() : std::vector<T>() {}
     FourVector(int n1, int n2, int n3, int n4, const T& ival) : std::vector<T>(n1*n2*n3*n4,ival), _n1 (n1),_n2 (n2), _n3 (n3), _n4 (n4) {}
     explicit FourVector(int n1, int n2, int n3, int n4) : std::vector<T>(n1*n2*n3*n4), _n1 (n1), _n2 (n2), _n3 (n3), _n4 (n4) {}
     ~FourVector() {}
@@ -963,67 +963,67 @@ endl;
     //   should work.
     T& operator() (int n1_id, int n2_id, int n3_id, int n4_id);
     void FVSize (int n1_id, int n2_id, int n3_id, int n4_id);
-    
+
     int nRow ();
     int nCol ();
     int n3rd ();
     int n4th ();
-	
+
        void get_xyzz(int cell_num, int &n1_id, int &n2_id, int &n3_id, int &n4_id);
-    
-  private: 
-    // Keep track of how many elements we're allowed to have in each dimension. 
+
+  private:
+    // Keep track of how many elements we're allowed to have in each dimension.
     int _n1,_n2,_n3,_n4;
-    
+
   };
-  
-  // Overload of operator() 
+
+  // Overload of operator()
   template <typename T> inline T& FourVector<T>::operator() (int n1_id, int n2_id, int n3_id, int n4_id)
     {
-      if (n1_id < 0 || n1_id >= _n1) { 
-	cout << "out_of_range FourVector::operator(), element 1 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n1 << 
+      if (n1_id < 0 || n1_id >= _n1) {
+	cout << "out_of_range FourVector::operator(), element 1 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n1 <<
 endl;
-	std::string ExceptionObject = "out_of_range FourVector::operator(), element 1"; 
+	std::string ExceptionObject = "out_of_range FourVector::operator(), element 1";
 	throw std::out_of_range(ExceptionObject);
       }
-      if (n2_id < 0 || n2_id >= _n2) { 
-	cout << "out_of_range FourVector::operator(), element 2 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n2 << 
+      if (n2_id < 0 || n2_id >= _n2) {
+	cout << "out_of_range FourVector::operator(), element 2 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n2 <<
 endl;
-	std::string ExceptionObject = "out_of_range FourVector::operator(), element 2"; 
+	std::string ExceptionObject = "out_of_range FourVector::operator(), element 2";
 	throw std::out_of_range(ExceptionObject);
       }
       if (n3_id < 0 || n3_id >= _n3) {
-	cout << "out_of_range FourVector::operator(), element 3 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n3 << 
-endl; 
-	std::string ExceptionObject = "out_of_range FourVector::operator(), element 3"; 
+	cout << "out_of_range FourVector::operator(), element 3 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n3 <<
+endl;
+	std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 	throw std::out_of_range(ExceptionObject);
       }
       if (n4_id < 0 || n4_id >= _n4) {
-	cout << "out_of_range FourVector::operator(), element 4 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n4 << 
-endl; 
-	std::string ExceptionObject = "out_of_range FourVector::operator(), element 3"; 
+	cout << "out_of_range FourVector::operator(), element 4 " << n1_id << "," << n2_id << "," << n3_id << " " << n4_id << " " << _n4 <<
+endl;
+	std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 	throw std::out_of_range(ExceptionObject);
       }
       return *( this->begin() + n4_id*_n1*_n2*_n3 + n3_id*_n1*_n2 + n2_id*_n1 +  n1_id);
-      
+
     }
 
-  // Size the FourVector after instatiation. 
+  // Size the FourVector after instatiation.
   template <typename T> void FourVector<T>::FVSize(int n1_id, int n2_id, int n3_id, int n4_id)
     {
       _n1 = n1_id;
-      _n2 = n2_id; 
+      _n2 = n2_id;
       _n3 = n3_id;
       _n4 = n4_id;
       FourVector::clear();
       FourVector::resize(n1_id*n2_id*n3_id*n4_id);
     }
-  
+
   template <typename T> int FourVector<T>::nRow() { return _n1; }
   template <typename T> int FourVector<T>::nCol() { return _n2; }
   template <typename T> int FourVector<T>::n3rd() { return _n3; }
   template <typename T> int FourVector<T>::n4th() { return _n4; }
-  
+
   // ****************************************************************************
 
   // given the index of the cell, return the x, y and z indices
@@ -1031,7 +1031,7 @@ endl;
   {
     div_t div_result;
     if (cell_num < 0 || cell_num > (int)this->size()) {
-      std::string ExceptionObject = "out_of_range FourVector::get_xyzz()"; 
+      std::string ExceptionObject = "out_of_range FourVector::get_xyzz()";
       throw std::out_of_range(ExceptionObject);
     }
     div_result = div(cell_num, _n3*_n2*_n1);
