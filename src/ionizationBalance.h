@@ -3,14 +3,14 @@
 
 #include<vector>
 
-namespace Ionization 
+namespace Ionization
 {
-    double ionizedFraction(double nH, double T, std::vector<double> wavelength, std::vector<double> isrf);
-    
+    double ionizedFraction(double nH, double T, const std::vector<double>& wavelength, const std::vector<double>& isrf);
+
     double crossSection(double lambda);
-    
+
     double recombinationRate(double T);
-    
+
     double testIonization();
 }
 

@@ -11,8 +11,8 @@ namespace {
 	const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
 }
 
-TwoLevel::TwoLevel(double n, const std::vector<double>& wavelength, const std::vector<double>& isrf)
-	: _n(n), _isrf(isrf), _wavelength(wavelength), _T(0)
+TwoLevel::TwoLevel(const std::vector<double>& wavelength, const std::vector<double>& isrf)
+	: _isrf(isrf), _wavelength(wavelength), _n(0), _nc(0),  _T(0)
 {
 	if (_isrf.size() != _wavelength.size()) throw std::range_error("Given ISRF and wavelength vectors do not have the same size");
 
@@ -28,22 +28,35 @@ TwoLevel::TwoLevel(double n, const std::vector<double>& wavelength, const std::v
 		   2.29e-6, 0;
 }
 
-void TwoLevel::doLevels(double T)
+void TwoLevel::doLevels(double n, double nc, double T, double recombinationRate)
 {
+	_n = n;
+	_nc = nc;
 	_T = T;
-	cout << "Calculating level balance for T = "<<T<<" K"<<endl;
 
-	prepareAbsorptionMatrix();
+	// shortcut, in case of full ionization
+	if (_n <= 0.)
+	{
+		_nv = Eigen::Vector2d::Zero();
+	}
+	else
+	{
+		prepareAbsorptionMatrix();
 
-	// Calculate Cij
-	prepareCollisionMatrix();
+		// Calculate Cij
+		prepareCollisionMatrix();
 
-	cout << "Aij" << endl << _Avv << endl << endl;
-	cout << "BPij" << endl << _BPvv << endl << endl;
-	cout << "Cij" << endl << _Cvv << endl << endl;
+		cout << "Aij" << endl << _Avv << endl << endl;
+		cout << "BPij" << endl << _BPvv << endl << endl;
+		cout << "Cij" << endl << _Cvv << endl << endl;
 
-	// Calculate Fij and bi and solve F.n = b
-	solveRateEquations(Eigen::Vector2d::Zero(2), 0);
+		// Calculate Fij and bi and solve F.n = b
+		// The ionization rate calculation makes no distinction between the levels.
+		// Therefore, the sink term is the same for each level. Moreover, total source = total sink
+		// so we want sink*n0 + sink*n1 = source => sink = source / n because n0/n + n1/n = 1
+		solveRateEquations(Eigen::Vector2d(0.1*recombinationRate, 0.9*recombinationRate),
+				Eigen::Vector2d(recombinationRate/_n, recombinationRate/_n), 0);
+	}
 }
 
 double TwoLevel::bolometricEmission(size_t upper, size_t lower) const
@@ -132,7 +145,8 @@ void TwoLevel::prepareAbsorptionMatrix()
 			std::vector<double> integrand;
 			integrand.reserve(_isrf.size());
 			for (size_t n = 0; n < _isrf.size(); n++) integrand.push_back(phi(n) * _isrf[n]);
-			_BPvv(i, j) = NumUtils::integrate<double>(_wavelength, integrand);
+			// Make sure that isrf is in specific intensity units
+			_BPvv(i, j) = Constant::LIGHT / Constant::FPI * NumUtils::integrate<double>(_wavelength, integrand);
 
 			// Multiply by Bij in terms of Aij, valid for i > j
 			double nu_ij = (_Ev(i) - _Ev(j)) / Constant::PLANCK;
@@ -157,13 +171,13 @@ void TwoLevel::prepareCollisionMatrix()
 	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
 	double bigGamma10 = (_T - 1000) / 9000 * 2.15 + (10000 - _T) / 9000 * 1.58;
 
-	double C10 = beta / sqrt(_T) * bigGamma10 / _gv(1) * _n;
+	double C10 = beta / sqrt(_T) * bigGamma10 / _gv(1) * _nc;
 	double C01 = C10 * _gv(1) / _gv(0) * exp(-(_Ev(1) - _Ev(0)) / Constant::BOLTZMAN / _T);
 	_Cvv << 0, C01,
 			C10, 0;
 }
 
-void TwoLevel::solveRateEquations(Eigen::Vector2d ne_np_alpha, size_t chooseConsvEq)
+void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d sinkTerm, size_t chooseConsvEq)
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j
@@ -174,7 +188,8 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d ne_np_alpha, size_t chooseCons
 	Eigen::MatrixXd dep = Mvv.colwise().sum().asDiagonal();
 	cout << "dep" << endl << dep << endl << endl;
 	Mvv -= Mvv.colwise().sum().asDiagonal();
-	Eigen::VectorXd b(-ne_np_alpha);
+	Mvv -= sinkTerm.asDiagonal();
+	Eigen::VectorXd b(-sourceTerm);
 
 	// Replace row by a conservation equation
 	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());

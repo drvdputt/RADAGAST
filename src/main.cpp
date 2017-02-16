@@ -13,7 +13,7 @@ int main(int argc, char* argv[])
     //  printf("%f", Photoelectric::chargeBalanceTest());
     //  printf("%f\n", Ionization::testIonization());
 
-	Testing::testTwoLevel();
+	Testing::testGasSpecies();
 
 	return 0;
 }
