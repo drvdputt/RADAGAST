@@ -7,15 +7,14 @@ class TwoLevel
 {
 public:
 	// Creates an object that represents a two-level (component of a) medium. The level population equilibrium
-	// will be calculated using the wavelength grid and isrf (specific intensity) supplied as arguments
-	// of the constructor. The level populations can be repeatedly computed for different temperatures,
-	// while isrf stays constant.
-	TwoLevel(const std::vector<double>& wavelength, const std::vector<double>& isrf);
+	// will be calculated using the wavelength grid supplied as arguments
+	// of the constructor.
+	TwoLevel(const std::vector<double>& wavelengthv);
 
-	// Calculates the level populations for a certain electron temperature. When ionization comes into play,
+	// Calculates the level populations for a certain electron temperature and isrf. When ionization comes into play,
 	// the recombination and ionization rates will act as source and sink terms for the levels. In this model,
-	// the source and sink terms are equal between the levels, hence only a number is needed for them.
-	void doLevels(double n, double nc, double T, double recombinationRate);
+	// the source and sink terms are considered equal across the levels, hence only a number is needed for them.
+	void doLevels(double n, double nc, double T, const std::vector<double>& isrf, double recombinationRate);
 
 	// Useful for the thermal balance. Is much faster than the calculation of the full emissio spectrum.
 	double bolometricEmission(size_t upper, size_t lower) const;
@@ -33,7 +32,7 @@ private:
 
 	// Fill in the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the Aij)
 	// and Pij is the line power (isrf integrated over the line profile)
-	void prepareAbsorptionMatrix();
+	void prepareAbsorptionMatrix(const std::vector<double>& isrf);
 
 	// Fill in the collision rates Cij
 	// Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np
@@ -53,8 +52,8 @@ private:
 	// Constants, set at construction:
 	//--------------------------------
 
-	// Isrf and Wavelength grid
-	const std::vector<double>& _isrf, _wavelength;
+	// Wavelength grid
+	const std::vector<double>& _wavelength;
 	// Energy levels (constant)
 	Eigen::Vector2d _Ev;
 	// Level degeneracy (constant)
@@ -65,7 +64,7 @@ private:
 	//----------------------------------------------------------
 	// To be set/calculated at every iteration
 	//----------------------------------------------------------
-	// (i.e. everything that depends on the temperature and densities)
+	// (i.e. everything that can change during the simulation / depends on the cell)
 	// Total density
 	double _n;
 	// Density of collision partners (in this simple model, all partners are treated the same)

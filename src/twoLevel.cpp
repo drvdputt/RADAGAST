@@ -11,11 +11,9 @@ namespace {
 	const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
 }
 
-TwoLevel::TwoLevel(const std::vector<double>& wavelength, const std::vector<double>& isrf)
-	: _isrf(isrf), _wavelength(wavelength), _n(0), _nc(0),  _T(0)
+TwoLevel::TwoLevel(const std::vector<double>& wavelength)
+	: _wavelength(wavelength), _n(0), _nc(0), _T(0)
 {
-	if (_isrf.size() != _wavelength.size()) throw std::range_error("Given ISRF and wavelength vectors do not have the same size");
-
 	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
 	// this makes collisional deexcitation important for densities > 20-50 / cm3
 	// Level and transition information
@@ -28,8 +26,10 @@ TwoLevel::TwoLevel(const std::vector<double>& wavelength, const std::vector<doub
 		   2.29e-6, 0;
 }
 
-void TwoLevel::doLevels(double n, double nc, double T, double recombinationRate)
+void TwoLevel::doLevels(double n, double nc, double T, const std::vector<double>& isrf, double recombinationRate)
 {
+	if (isrf.size() != _wavelength.size()) throw std::range_error("Given ISRF and wavelength vectors do not have the same size");
+
 	_n = n;
 	_nc = nc;
 	_T = T;
@@ -41,7 +41,8 @@ void TwoLevel::doLevels(double n, double nc, double T, double recombinationRate)
 	}
 	else
 	{
-		prepareAbsorptionMatrix();
+		// Calculate BijPij (needs to be redone at each temperature because the line profile can change)
+		prepareAbsorptionMatrix(isrf);
 
 		// Calculate Cij
 		prepareCollisionMatrix();
@@ -132,7 +133,7 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	return profile;
 }
 
-void TwoLevel::prepareAbsorptionMatrix()
+void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& isrf)
 {
 	// Calculate product of Bij and Pij = integral(phi * I_lambda)
 	for (int i = 0; i < _BPvv.rows(); i++)
@@ -143,8 +144,8 @@ void TwoLevel::prepareAbsorptionMatrix()
 			// Calculate Pij for the lower triangle (= stimulated emission)
 			Eigen::ArrayXd phi = lineProfile(i, j);
 			std::vector<double> integrand;
-			integrand.reserve(_isrf.size());
-			for (size_t n = 0; n < _isrf.size(); n++) integrand.push_back(phi(n) * _isrf[n]);
+			integrand.reserve(isrf.size());
+			for (size_t n = 0; n < isrf.size(); n++) integrand.push_back(phi(n) * isrf[n]);
 			// Make sure that isrf is in specific intensity units
 			_BPvv(i, j) = Constant::LIGHT / Constant::FPI * NumUtils::integrate<double>(_wavelength, integrand);
 
@@ -185,8 +186,8 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 
 	// See equation for Fij (37) in document
 	// = subtract departure rate from level i to all other levels
-	Eigen::MatrixXd dep = Mvv.colwise().sum().asDiagonal();
-	cout << "dep" << endl << dep << endl << endl;
+	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
+	cout << "departure" << endl << departureDiagonal << endl << endl;
 	Mvv -= Mvv.colwise().sum().asDiagonal();
 	Mvv -= sinkTerm.asDiagonal();
 	Eigen::VectorXd b(-sourceTerm);

@@ -114,8 +114,8 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
   template <typename T> vector <int> sortID_src(vector <T>&vect);
   template <typename T> void sortIndexOnVector(vector <T> & vect, vector <int> & index, int beg, int end);
   template <typename T, typename T1, typename T2> T integrate (const vector <T1>& x, const vector <T2>& y);
-  template <typename T> vector <T> interpol (vector <T>& v, vector <T>& x,
-				       vector <T>& u,
+  template <typename T> vector <T> interpol (const vector <T>& v, const vector <T>& x,
+				       const vector <T>& u,
 				       int LoEx=2, int HiEx=2);
   template <typename T> void interpolr (vector <T>& v, vector <T>& x,
 					vector <T>& u, int LoEx=2, int HiEx=2);
@@ -308,8 +308,8 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 
   // ****************************************************************************
   // Interpolate - should be fast enough for small vectors.
-  template <typename T> vector <T> interpol (vector <T>& v, vector <T>& x,
-				       vector <T>& u,
+  template <typename T> vector <T> interpol (const vector <T>& v, const vector <T>& x,
+				       const vector <T>& u,
 				       int LoEx, int HiEx)
     {
 
@@ -332,7 +332,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
       for (uint i=0;i<u.size();++i) {
 /* 	cout << i << endl; */
 	if (u[i] < x[0]) { // extrapolate to left.
-/* 	  cout << "left" << endl; */
+// 	  cout << "left" << endl;
 	  switch (LoEx) {
 	  case -1 :
 	    r[i] = static_cast<T>(0);
@@ -345,7 +345,7 @@ namespace NumUtils { // Define a namespace to avoid confusion with other
 	  }
 	} else {
 	  if (u[i] > x[x.size()-1]) { // extrapolate right.
-/* 	    cout << "right" << endl; */
+// 	    cout << "right" << endl;
 	    switch (HiEx) {
 	    case -1 :
 	      r[i] = static_cast<T>(0);

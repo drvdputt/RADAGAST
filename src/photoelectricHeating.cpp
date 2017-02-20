@@ -1,6 +1,7 @@
 
 #include "NumUtils.h"
 #include "Testing.h"
+#include "PhotoelectricHeating.h"
 
 #include <iostream>
 #include <fstream>
@@ -9,7 +10,6 @@
 #include <exception>
 #include <iomanip>
 #include <ios>
-#include "PhotoelectricHeating.h"
 
 //#define EXACTGRID
 
@@ -22,16 +22,16 @@ namespace {
 
     // Grain properties to use for tests (more detailes in generateQabs)
     const bool _carbonaceous = true;
-    const double _W = _carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
+    const double _workFunction = _carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
 
     // Radiation field to use for test (more details in generateISRF)
     const double _Tc = 3.e4;
     const double _G0 = 2.45e0;
 
     // Wavelength grid to use for tests
-    const size_t _Nlambda = 1000;
-    double _lambdaMin = 0.0912 * Constant::UM_CM; // cutoff at 13.6 eV
-    double _lambdaMax = 10 * Constant::UM_CM;
+    const size_t _nWav = 1000;
+    double _minWav = 0.0912 * Constant::UM_CM; // cutoff at 13.6 eV
+    double _maxWav = 10 * Constant::UM_CM;
 
     vector<double> _lambdav, _av;
     vector<vector<double>> _Qabsvv, _Qscavv, _asymmparvv;
@@ -106,9 +106,9 @@ namespace {
         }
     }
 
-    std::vector<double> generateQabs(double a, std::vector<double>& wavelength)
+    std::vector<double> generateQabs(double a, std::vector<double>& wavelengthv)
     {
-        vector<double> Qabs(wavelength.size());
+        vector<double> Qabs(wavelengthv.size());
         vector<double> QabsFromFileForA(_lambdav.size());
 
         // very simple model
@@ -136,64 +136,16 @@ namespace {
         return QabsFromFileForA;
 # endif
 
-        Qabs = NumUtils::interpol<double>(QabsFromFileForA, _lambdav, wavelength, -1, -1);
+        Qabs = NumUtils::interpol<double>(QabsFromFileForA, _lambdav, wavelengthv, -1, -1);
 
         ofstream qabsfile;
         std::stringstream filename;
         filename << "/Users/drvdputt/Testing/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
         qabsfile.open(filename.str());
-        for (size_t i = 0; i < wavelength.size(); i++) qabsfile << wavelength[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
+        for (size_t i = 0; i < wavelengthv.size(); i++) qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
         qabsfile.close();
 
         return Qabs;
-    }
-
-    std::vector<double> generateISRF(std::vector<double>& wavelength)
-    {
-        // A blackbody
-        vector<double> isrf = NumUtils::bbodyCGS<double>(wavelength, _Tc);
-
-        // Convert to energy density
-        for (double& d : isrf) d *= Constant::FPI / Constant::LIGHT;
-
-        // Cut out the UV part
-        size_t i = 0;
-        size_t startUV, endUV;
-        while (wavelength[i] < 912 * Constant::ANG_CM && i < isrf.size()) i++;
-        startUV = i > 0 ? i - 1 : 0;
-        while (wavelength[i] < 2400 * Constant::ANG_CM && i < isrf.size()) i++;
-        endUV = i + 1;
-
-        vector<double> wavelengthUV(wavelength.begin() + startUV, wavelength.begin() + endUV);
-        vector<double> isrfUV(isrf.begin() + startUV, isrf.begin() + endUV);
-        cout << "UV goes from " << startUV << " (" << wavelengthUV[0] * Constant::CM_UM << ")"
-             << " to " << endUV << "("<< wavelengthUV[wavelengthUV.size() - 1] * Constant::CM_UM << ")" << endl;
-
-        // Integrate over the UV only
-        double UVdensity = NumUtils::integrate<double>(wavelengthUV, isrfUV);
-        double currentG0 = UVdensity / Constant::HABING;
-
-        // Rescale to _G0
-        for (double& d : isrf) d *= _G0 / currentG0;
-
-        vector<double> wavelengthUVbis(wavelength.begin() + startUV, wavelength.begin() + endUV);
-        vector<double> isrfUVbis(isrf.begin() + startUV, isrf.begin() + endUV);
-
-        // Integrate over the UV only
-        double UVIntensitybis = NumUtils::integrate<double>(wavelengthUVbis, isrfUVbis);
-        cout << "Normalized spectrum uv = "<< UVIntensitybis << " (" <<  UVIntensitybis / Constant::HABING << " habing)"<< endl;
-
-        // Write out the ISRF
-        std::ofstream out;
-        out.open("/Users/drvdputt/Testing/isrf.txt");
-        for (size_t b = 0; b < isrf.size(); b++)
-            out << wavelength[b] << '\t' << isrf[b] << '\n';
-        out.close();
-        out.open("/Users/drvdputt/Testing/isrfUV.txt");
-        for (size_t b = 0; b < isrfUV.size(); b++)
-            out << wavelengthUV[b] << '\t'<< isrfUV[b] << '\n';
-
-        return isrf;
     }
 }
 
@@ -204,11 +156,11 @@ double Photoelectric::ionizationPotential(double a, int Z)
     if (Z >= 0)
     {
         // use the same expression for carbonaceous and silicate
-        ip_v += _W + (Z + 2) * e2a * 0.3 * Constant::ANG_CM / a;  // WD01 eq 2
+        ip_v += _workFunction + (Z + 2) * e2a * 0.3 * Constant::ANG_CM / a;  // WD01 eq 2
     }
     else if (_carbonaceous)
     {
-        ip_v += _W - e2a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
+        ip_v += _workFunction - e2a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
     }
     else // if silicate
     {
@@ -217,10 +169,10 @@ double Photoelectric::ionizationPotential(double a, int Z)
     return ip_v;
 }
 
-double Photoelectric::heatingRateAZ(double a, int Z, std::vector<double>& wavelength, std::vector<double>& Qabs, std::vector<double>& isrf)
+double Photoelectric::heatingRateAZ(double a, int Z, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf)
 {
     const double e2a = Constant::ESQUARE / a;
-    size_t nLambda = wavelength.size();
+    size_t nLambda = wavelengthv.size();
 
     // Calculate the integrandum at the frequencies of the wavelength grid
     vector<double> peIntegrandv(nLambda, 0);
@@ -237,7 +189,7 @@ double Photoelectric::heatingRateAZ(double a, int Z, std::vector<double>& wavele
 
     for (size_t lambda_index = 0; lambda_index < nLambda; lambda_index++)
     {
-        double hnu = Constant::PLANCKLIGHT / wavelength[lambda_index];
+        double hnu = Constant::PLANCKLIGHT / wavelengthv[lambda_index];
 
         // No contribution below the photoelectric threshold
         if (hnu > hnu_pet)
@@ -277,28 +229,28 @@ double Photoelectric::heatingRateAZ(double a, int Z, std::vector<double>& wavele
         }
     }
 
-    double peIntegral = Constant::PI * a*a * Constant::LIGHT * NumUtils::integrate<double>(wavelength, peIntegrandv);
+    double peIntegral = Constant::PI * a*a * Constant::LIGHT * NumUtils::integrate<double>(wavelengthv, peIntegrandv);
 
     // Constant factor from sigma_pdt moved in front of integral
-    double pdIntegral = Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT * NumUtils::integrate<double>(wavelength, pdIntegrandv) : 0;
+    double pdIntegral = Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT * NumUtils::integrate<double>(wavelengthv, pdIntegrandv) : 0;
 
     return peIntegral + pdIntegral;
 }
 
-double Photoelectric::heatingRateA(double a, std::vector<double>& wavelength, std::vector<double>& Qabs, std::vector<double>& isrf)
+double Photoelectric::heatingRateA(double a, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf)
 {
     double totalHeatingForGrainSize = 0;
 
     vector<double> fZ;
     int Zmin, Zmax;
-    chargeBalance(a, wavelength, Qabs, isrf, Zmax, Zmin, fZ);
+    chargeBalance(a, wavelengthv, Qabs, isrf, Zmax, Zmin, fZ);
 
     printf("Z in (%d, %d)\n", Zmin, Zmax);
 
     for(int z = Zmin; z <= Zmax; z++)
     {
         double fz = fZ[z - Zmin];
-        double heatAZ = heatingRateAZ(a, z, wavelength, Qabs, isrf);
+        double heatAZ = heatingRateAZ(a, z, wavelengthv, Qabs, isrf);
         totalHeatingForGrainSize += fz * heatAZ;
     }
 
@@ -322,17 +274,17 @@ double Photoelectric::heatingRateA(double a, std::vector<double>& wavelength, st
     return totalHeatingForGrainSize;
 }
 
-double Photoelectric::heatingRate(std::vector<double>& wavelength, std::vector<double>& Qabs, std::vector<double>& isrf)
+double Photoelectric::heatingRate(std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf)
 {
     // Need size distribution
 
     return 0.;
 }
 
-double Photoelectric::emissionRate(double a, int Z, std::vector<double> &wavelength, std::vector<double> &Qabs, std::vector<double> &isrf)
+double Photoelectric::emissionRate(double a, int Z, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf)
 {
     const double e2a = Constant::ESQUARE / a;
-    size_t nLambda = wavelength.size();
+    size_t nLambda = wavelengthv.size();
 
     // Calculate the integrandum at the frequencies of the wavelength grid
     vector<double> peIntegrandv(nLambda, 0);
@@ -349,7 +301,7 @@ double Photoelectric::emissionRate(double a, int Z, std::vector<double> &wavelen
 
     for (size_t lambda_index = 0; lambda_index < nLambda; lambda_index++)
     {
-        double hnu = Constant::PLANCKLIGHT / wavelength[lambda_index];
+        double hnu = Constant::PLANCKLIGHT / wavelengthv[lambda_index];
 
         // No contribution below the photoelectric threshold
         if (hnu > hnu_pet)
@@ -382,10 +334,10 @@ double Photoelectric::emissionRate(double a, int Z, std::vector<double> &wavelen
         }
     }
 
-    double peIntegral = Constant::PI * a*a * Constant::LIGHT * NumUtils::integrate<double>(wavelength, peIntegrandv);
+    double peIntegral = Constant::PI * a*a * Constant::LIGHT * NumUtils::integrate<double>(wavelengthv, peIntegrandv);
 
     // Constant factor from sigma_pdt moved in front of integral
-    double pdIntegral = Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT * NumUtils::integrate<double>(wavelength, pdIntegrandv) : 0;
+    double pdIntegral = Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT * NumUtils::integrate<double>(wavelengthv, pdIntegrandv) : 0;
     return peIntegral + pdIntegral;
 }
 
@@ -427,7 +379,7 @@ double Photoelectric::yield(double a, int Z, double hnuDiff, double Elow, double
     // Calculate y0 from eq 9, 16, 17
     double thetaOverW = hnuDiff;
     if (Z >= 0) thetaOverW += (Z + 1) * Constant::ESQUARE / a; // eq 9
-    thetaOverW /= _W;
+    thetaOverW /= _workFunction;
     double thetaOverWtothe5th = thetaOverW * thetaOverW;
     thetaOverWtothe5th *= thetaOverWtothe5th * thetaOverW;
 
@@ -556,17 +508,17 @@ double Photoelectric::recombinationCoolingRate(double a, const std::vector<doubl
     return Constant::PI * a*a * particleSum + secondTerm;
 }
 
-void Photoelectric::chargeBalance(double a, std::vector<double>& wavelength, std::vector<double>& Qabs, std::vector<double>& isrf,
+void Photoelectric::chargeBalance(double a, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf,
                                   int& resultZmax, int& resultZmin, std::vector<double>& resultfZ)
 {
     // Express a in angstroms
     double aA = a / Constant::ANG_CM;
 
     // Shortest wavelength = highest possible energy of a photon
-    double hnumax = Constant::PLANCKLIGHT / wavelength[0];
+    double hnumax = Constant::PLANCKLIGHT / wavelengthv[0];
 
     // The maximum charge is one more than the highest charge which still allows ionization by photons of hnumax
-    resultZmax = floor( ((hnumax - _W) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) / (1 + .3 / aA) );
+    resultZmax = floor( ((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) / (1 + .3 / aA) );
 
     // The minimum charge is the most negative charge for which autoionization does not occur
     resultZmin = minimumCharge(a);
@@ -588,7 +540,7 @@ void Photoelectric::chargeBalance(double a, std::vector<double>& wavelength, std
     while(current != lowerbound)
     {
         // Upward ratio in detailed balance equation
-        double Jpe = emissionRate(a, current, wavelength, Qabs, isrf);
+        double Jpe = emissionRate(a, current, wavelengthv, Qabs, isrf);
         double Jion = collisionalChargingRate(a, current, 1, Constant::HMASS_CGS);
         double Je = collisionalChargingRate(a, current + 1, -1, Constant::ELECTRONMASS);
         double factor = (Jpe + Jion) / Je;
@@ -610,7 +562,7 @@ void Photoelectric::chargeBalance(double a, std::vector<double>& wavelength, std
     // Z > centerZ
     for (int z = centerZ + 1; z <= resultZmax; z++)
     {
-        double Jpe = emissionRate(a, z - 1, wavelength, Qabs, isrf);
+        double Jpe = emissionRate(a, z - 1, wavelengthv, Qabs, isrf);
         double Jion = collisionalChargingRate(a, z - 1, 1, Constant::HMASS_CGS);
         double Je = collisionalChargingRate(a, z, -1, Constant::ELECTRONMASS);
         //cout << "z = "<<z<<" Jpe = "<<Jpe<<" Jion = "<<Jion<<" Je = "<<Je<<endl;
@@ -635,7 +587,7 @@ void Photoelectric::chargeBalance(double a, std::vector<double>& wavelength, std
     // Z < centerZ
     for (int z = centerZ - 1; z >= resultZmin; z--)
     {
-        double Jpe = emissionRate(a, z, wavelength, Qabs, isrf);
+        double Jpe = emissionRate(a, z, wavelengthv, Qabs, isrf);
         double Jion = collisionalChargingRate(a, z, 1, Constant::HMASS_CGS);
         double Je = collisionalChargingRate(a, z + 1, -1, Constant::ELECTRONMASS);
         int index = z - resultZmin;
@@ -734,11 +686,11 @@ double Photoelectric::heatingRateTest(std::string filename)
 #ifdef EXACTGRID
     vector<double> wavelength = _lambdav;
 #else
-    vector<double> wavelength = Testing::generateWavelengthGrid(_Nlambda, _lambdaMin, _lambdaMax);
+    vector<double> wavelength = Testing::generateWavelengthGrid(_nWav, _minWav, _maxWav);
 #endif
 
     // Input spectrum
-    vector<double> isrf = generateISRF(wavelength);
+    vector<double> isrf = Testing::generateISRF(wavelength, _Tc, _G0);
     cout << "Made isrf \n";
 
     // Grain sizes for test
@@ -790,11 +742,11 @@ double Photoelectric::chargeBalanceTest()
 #ifdef EXACTGRID
     vector<double> wavelength = _lambdav;
 #else
-    vector<double> wavelength = Testing::generateWavelengthGrid(_Nlambda, _lambdaMin, _lambdaMax);
+    vector<double> wavelength = Testing::generateWavelengthGrid(_nWav, _minWav, _maxWav);
 #endif
 
     // Input spectrum
-    vector<double> isrf = generateISRF(wavelength);
+    vector<double> isrf = Testing::generateISRF(wavelength, _Tc, _G0);
 
     // Grain size
     double a = 200. * Constant::ANG_CM;

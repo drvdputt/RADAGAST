@@ -126,9 +126,9 @@ void Testing::testTwoLevel()
 	const std::vector<double>& isrf = generateISRF(wavelength, Tc, G0);
 
 	double n = 25;
-	TwoLevel tl(wavelength, isrf);
+	TwoLevel tl(wavelength);
 
-	tl.doLevels(n, n, 50000, 0);
+	tl.doLevels(n, n, 50000, isrf, 0);
 
 	double lum = tl.bolometricEmission(1, 0);
 	const std::vector<double>& lumv = tl.calculateEmission();
@@ -152,8 +152,8 @@ void Testing::testTwoLevel()
 void Testing::testGasSpecies()
 {
 	double Tc = 10000;
-	double G0 = 0.5;
-	double n = 0.24;
+	double G0 = 0.1;
+	double n = 10.;
 	double expectedTemperature = 1000;
 
 	vector<double> wavelength = generateWavelengthGrid(200, 0.01 * Constant::UM_CM, 200 * Constant::UM_CM);
@@ -163,12 +163,13 @@ void Testing::testGasSpecies()
 	lineWidthv.reserve(lineWavev.size());
 	for (double wav : lineWavev)
 		lineWidthv.push_back(4.5 * wav * thermalFactor);
-	refineWavelengthGrid(wavelength, 8, 2, lineWavev, lineWidthv);
+	refineWavelengthGrid(wavelength, 12, 2, lineWavev, lineWidthv);
+
+	GasSpecies gs(wavelength);
 
 	vector<double> isrf = generateISRF(wavelength, Tc, G0);
 
-	GasSpecies gs(n, isrf, wavelength);
-	gs.solveBalance();
+	gs.solveBalance(n, isrf);
 
 	const vector<double>& lumv = gs.emissivity();
 	const vector<double>& opv = gs.opacity();

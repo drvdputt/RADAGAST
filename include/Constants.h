@@ -13,11 +13,10 @@ namespace Constant {
   const double SOL_RAD=6.955e+10;              // Solar radius in cm.
   const double SOL_MASS=1.9891e+33;            // Solar mass in gm.
   const double HMASS_AMU=1.0078250321;         // Hydrogen mass in atomic mass units.
-  const double HMASS_CGS=1.67353263e-24;       // Hydrogen mass in gm. 
-  const double FINESTRUCTURE = .0072973525664;
+  const double HMASS_CGS=1.67353263e-24;       // Hydrogen mass in gm.
 
   // Conversion factors and common constant combinations.
-  const double PLANCKLIGHT=(PLANCK)*(LIGHT);   // hc in erg cm 
+  const double PLANCKLIGHT=(PLANCK)*(LIGHT);   // hc in erg cm
   const double IPLANCKLIGHT=1.0/(PLANCKLIGHT); // 1/hc
   const double FPI=4.0*(PI);                   // 4pi
   const double FPI_HC=FPI*IPLANCKLIGHT;        // 4pi/hc
@@ -31,16 +30,17 @@ namespace Constant {
   const double AU_CM=1.49597871e+13;            // AU --> cm
   const double PC_CM=3.08567758e+18;            // Parsec --> cm
   const double JY_CGS=1.0e-23;                 // Constants without wave conversion.
-  const double MKS_CGS=10.0; 
+  const double MKS_CGS=10.0;
   const double U_J=(FPI)/(LIGHT);              // Convert Energy Density to Field
-  const double VFAC=(FPI)/3.0;                 // Volume factor (4/3)*pi 
+  const double VFAC=(FPI)/3.0;                 // Volume factor (4/3)*pi
   const double ERG_EV=6.24150974e11;           // Ergs -> electron volts
 
   // New constants
   const double HABING = 5.33e-14; // 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
-  const double ESQUARE = Constant::FINESTRUCTURE * Constant::PLANCKLIGHT / 2 / Constant::PI; // electron charge square in cgs (I think cgs uses Gaussian units or something)
   const double ELECTRONMASS = 9.1094e-28; // electron mass in grams
-
+  const double FINESTRUCTURE = .0072973525664;
+  const double RYDBERG = 13.605693009 / ERG_EV;
+  const double ESQUARE = Constant::FINESTRUCTURE * Constant::PLANCKLIGHT / 2 / Constant::PI; // electron charge square in cgs (I think cgs uses Gaussian units or something)
 }
 
 #endif
