@@ -14,16 +14,26 @@ namespace {
 TwoLevel::TwoLevel(const std::vector<double>& wavelength)
 	: _wavelength(wavelength), _n(0), _nc(0), _T(0)
 {
-	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
-	// this makes collisional deexcitation important for densities > 20-50 / cm3
-	// Level and transition information
-	_Ev << 0, .00786 / Constant::ERG_EV;
-	_gv << 1, 1;
-	_nv << _n, 0;
+//	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
+//	// this makes collisional deexcitation important for densities > 20-50 / cm3
+//	// Level and transition information
+//	_Ev << 0, .00786 / Constant::ERG_EV;
+//	_gv << 1, 1;
+//	_nv << _n, 0;
 
 	// The only spontaneous transition is A_10
+//	_Avv << 0, 0,
+//		   2.29e-6, 0;
+
+
+	// Lyman alpha (1s and 2p) model
+	// Energy in cm^-1, so multiply with hc
+	_Ev << 0., 82258.9191133 * Constant::PLANCKLIGHT;
+	_gv << 1, 3;
+	_nv << _n, 0;
+
 	_Avv << 0, 0,
-		   2.29e-6, 0;
+			6.2649e+08, 0;
 }
 
 void TwoLevel::doLevels(double n, double nc, double T, const std::vector<double>& isrf, double recombinationRate)
@@ -108,7 +118,7 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 		double deltaNu = Constant::LIGHT / _wavelength[n] - nu0;
 
 		// When we are very far in the tail, just skip the calculation
-		if (std::abs(deltaNu) > 20 * sumWidths) profile(n) = 0.;
+		if (false)/*(std::abs(deltaNu) > 20 * sumWidths)*/ profile(n) = 0.;
 
 //		// If natural+collisional effect dominates, ignore the Gaussian component.
 //		if (halfWidth > 1e4 * sigma_nu)

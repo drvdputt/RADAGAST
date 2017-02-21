@@ -151,19 +151,30 @@ void Testing::testTwoLevel()
 
 void Testing::testGasSpecies()
 {
-	double Tc = 10000;
-	double G0 = 0.1;
-	double n = 10.;
+	double Tc = 100000;
+	double G0 = 0.0001;
+	double n = 0.025;
 	double expectedTemperature = 1000;
 
 	vector<double> wavelength = generateWavelengthGrid(200, 0.01 * Constant::UM_CM, 200 * Constant::UM_CM);
-	vector<double> lineWavev = {157.740709 * Constant::UM_CM};
+//	vector<double> lineWavev = {157.740709 * Constant::UM_CM};
+
+	const double lineWindowFactor = 5;
+	vector<double> lineWavev = {1. / 82258.9191133};
+	vector<double> decayRatev = {6.2649e+08};
+
 	double thermalFactor = sqrt(Constant::BOLTZMAN * expectedTemperature / Constant::HMASS_CGS / Constant::LIGHT/Constant::LIGHT);
+
 	vector<double> lineWidthv;
 	lineWidthv.reserve(lineWavev.size());
-	for (double wav : lineWavev)
-		lineWidthv.push_back(4.5 * wav * thermalFactor);
-	refineWavelengthGrid(wavelength, 12, 2, lineWavev, lineWidthv);
+	for (size_t l = 0; l < lineWavev.size(); l++)
+	{
+		double wav = lineWavev[l];
+		cout << "thermal width " << wav * thermalFactor << " natural width " << wav*wav / Constant::LIGHT * decayRatev[l] << endl;
+		lineWidthv.push_back(lineWindowFactor * (wav * thermalFactor + wav*wav / Constant::LIGHT * decayRatev[l]));
+	}
+
+	refineWavelengthGrid(wavelength, 13, 2, lineWavev, lineWidthv);
 
 	GasSpecies gs(wavelength);
 

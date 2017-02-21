@@ -12,11 +12,11 @@
 using namespace std;
 
 GasSpecies::GasSpecies(const vector<double>& wavelengthv)
-	: _wavelengthv(wavelengthv), _n(0), _ionizedFraction(0), _levels(wavelengthv)
+	: _wavelengthv(wavelengthv), _n(0), _T(0), _ionizedFraction(0), _levels(wavelengthv)
 {
 	// Read the free-bound continuum data from Ercolano and Storey (2006)
 	// Adapted from NEBULAR source code by M. Schirmer (2016)
-	int numcol, numrow;
+	size_t numcol, numrow;
 	vector<vector<double>> fileGammaDaggervv;
 	vector<double> fileFrequencyv;
 
@@ -51,7 +51,10 @@ GasSpecies::GasSpecies(const vector<double>& wavelengthv)
 				int flag;
 				double energy;
 				iss >> flag >> energy;
-				fileFrequencyv.push_back(energy * Constant::RYDBERG / Constant::PLANCK);
+
+				double frequency = energy * Constant::RYDBERG / Constant::PLANCK;
+				fileFrequencyv.push_back(frequency);
+				if (flag) _thresholdv.push_back(frequency);
 
 				auto it = fileGammaDaggervv[lineNr - 2].begin();
 				double gammaDagger;
@@ -77,7 +80,7 @@ GasSpecies::GasSpecies(const vector<double>& wavelengthv)
 	// Now resample this data according to the wavelength grid
 	_gammaDaggervv.resize(_wavelengthv.size(), vector<double>(numcol, 0));
 
-	// First, construct the corresponding frequency grid
+	// First, from the wavelength grid, construct the desired frequency grid
 	// (we may switch to frequencies for everything in the future, as these conversions are often needed)
 	vector<double> frequencyv;
 	frequencyv.reserve(_wavelengthv.size());
@@ -86,6 +89,7 @@ GasSpecies::GasSpecies(const vector<double>& wavelengthv)
 
 	cout << "frequency range from file: " << fileFrequencyv[0] << " to " << fileFrequencyv[fileFrequencyv.size()-1] << endl;
 	cout << "frequency range: " << frequencyv[0] << " to " << frequencyv[frequencyv.size()-1] << endl;
+
 	// Then, apply a linear interpolation on every column
 	for (size_t col = 0; col < numcol; col++)
 	{
@@ -113,6 +117,9 @@ GasSpecies::GasSpecies(const vector<double>& wavelengthv)
 
 	// Now reverse the order to make the row indices correspond to wavelength indices
 	reverse(_gammaDaggervv.begin(), _gammaDaggervv.end());
+	// and convert the threshold frequencies to wavelengths
+	for (double& t : _thresholdv) t = Constant::LIGHT / t;
+	reverse(_thresholdv.begin(), _thresholdv.end());
 }
 
 void GasSpecies::solveBalance(double n, const vector<double>& isrf)
@@ -120,19 +127,34 @@ void GasSpecies::solveBalance(double n, const vector<double>& isrf)
 	_n = n;
 
 	// Initial guess for the temperature
-	double T = 1000;
+	_T = 500;
 
-	calculateDensities(T, isrf);
+	calculateDensities(_T, isrf);
 }
 
 vector<double> GasSpecies::emissivity() const
 {
-	return _levels.calculateEmission();
+	vector<double> result;
+	const vector<double>& lineEmv = _levels.calculateEmission();
+	const vector<double>& contEmv = continuumEmissivity(_T);
+	for (size_t i = 0; i < _wavelengthv.size(); i++)
+	{
+		result.push_back(lineEmv[i] + contEmv[i]);
+	}
+	return result;
 }
 
 vector<double> GasSpecies::opacity() const
 {
-	return _levels.calculateOpacity();
+	vector<double> result;
+	result.reserve(_wavelengthv.size());
+	const vector<double>& lineOp = _levels.calculateOpacity();
+	for (size_t i = 0; i < _wavelengthv.size(); i++)
+	{
+		double ionizOp_i = _n * (1 - _ionizedFraction) * Ionization::crossSection(_wavelengthv[i]);
+		result.push_back(ionizOp_i + lineOp[i]);
+	}
+	return result;
 }
 
 void GasSpecies::calculateDensities(double T, const vector<double>& isrf)
@@ -149,29 +171,56 @@ void GasSpecies::calculateDensities(double T, const vector<double>& isrf)
 	_levels.doLevels(nAtomic, nTotal, T, isrf, np_ne_alpha);
 }
 
-vector<double> GasSpecies::continuumEmissivity(double T)
+vector<double> GasSpecies::continuumEmissivity(double T) const
 {
-	// Interpolate linearly between the log-temperature grid points
 	double logT = log10(T);
-	size_t iRight = NumUtils::index(logT, _logTemperaturev);
-	bool edge = false;
-	if (iTleft == 0)
-	{
-		edge = true;
-	}
-	if (iTleft == _logTemperaturev.size() - 1)
-	{
-		edge = true;
-	}
-	double Tleft = _logTemperaturev[iTleft];
-	double Tright =
 
-	vector<double> result(_wavelengthv.size());
+	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
+	{
+		cout << "Warning: temperature " << T << " is outside of data range for free-bound continuum" << endl;
+		return vector<double>(_wavelengthv.size(), 0.);
+	}
+
+	vector<double> result;
+	result.reserve(_wavelengthv.size());
+
+	// Find the grid point to the right of the requested log-temperature
+	size_t iRight = NumUtils::index(logT, _logTemperaturev);
+	// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
+	double wRight = (T - _logTemperaturev[iRight - 1]) / (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+
+	// We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the data
+	double Ttothe3_2 = pow(T, 1.5);
+	double kT = Constant::BOLTZMAN * T;
+	// "the nearest threshold of lower energy" i.e. then next threshold wavelength
+	double tWav = 0;
+	double tE;
+
 	for (size_t iWav = 0; iWav < _wavelengthv.size(); iWav++)
 	{
-		const vector<double>& gammaDaggerv = _gammaDaggervv[iWav];
+		double wav = _wavelengthv[iWav];
 
+		// Interpolate gamma^dagger linearly in log T space
+		double gammaDagger = (_gammaDaggervv[iWav][iRight - 1] * (1 - wRight)
+				+ _gammaDaggervv[iWav][iRight] * wRight);
 
+		// Skip over zero data, or when we are past the last threshold
+		if (!gammaDagger || wav > _thresholdv.back())
+		{
+			result.push_back(0.);
+		}
+		else
+		{
+			// find a new tWav every time we pass a new threshold
+			if (wav > tWav)
+			{
+				tWav = *upper_bound(_thresholdv.begin(), _thresholdv.end(), wav);
+				tE = Constant::PLANCKLIGHT / tWav;
+			}
+			double E = Constant::PLANCKLIGHT / wav;
+			double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
+			result.push_back(gammaDagger / normalizationFactor);
+		}
 	}
-	return result
+	return result;
 }

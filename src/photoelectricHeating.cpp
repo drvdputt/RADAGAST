@@ -126,10 +126,10 @@ namespace {
         else // interpolated from data
         {
             size_t a_index = NumUtils::index<double>(a, _av);
-            double normedDistance = (a - _av[a_index - 1]) / (_av[a_index] - _av[a_index - 1]);
-            // interpolate the values from the file for as specific grain size
+            double normalDistance = (a - _av[a_index - 1]) / (_av[a_index] - _av[a_index - 1]);
+            // interpolate the values from the file for a specific grain size
             for (size_t i = 0; i < _lambdav.size(); i++)
-                QabsFromFileForA[i] = _Qabsvv[i][a_index - 1] * (1 - normedDistance) + _Qabsvv[i][a_index] * normedDistance;
+                QabsFromFileForA[i] = _Qabsvv[i][a_index - 1] * (1 - normalDistance) + _Qabsvv[i][a_index] * normalDistance;
         }
 
 # ifdef EXACTGRID
