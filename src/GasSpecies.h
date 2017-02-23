@@ -9,7 +9,7 @@ class GasSpecies {
 public:
 	GasSpecies(const std::vector<double>& wavelengthv);
 
-	void solveBalance(double n, const std::vector<double>& isrf);
+	void solveBalance(double n, double Tinit, const std::vector<double>& isrf);
 
 	std::vector<double> emissivity() const;
 	std::vector<double> opacity() const;
@@ -18,8 +18,10 @@ private:
 	// Calculates the ionization fraction and level populations for a certain electron temperature and isrf
 	void calculateDensities(double T, const std::vector<double>& isrf);
 
-	// Calculate the emissivity, interpolated from data
-	std::vector<double> continuumEmissivity(double T) const;
+	// Calculate the emission coefficient for the optical continuum, interpolated from data.
+	// Returned in units [density^-1][power]/[wavelength interval] cm^3 erg / s / cm.
+	// The emissivity ([power][density]/[wavelength interval]) can be obtained by multiplying this value with ne_np
+	std::vector<double> continuumEmissionCoeff(double T) const;
 
 	// To be set in constructor
 	const std::vector<double>& _wavelengthv;

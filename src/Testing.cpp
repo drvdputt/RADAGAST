@@ -128,7 +128,7 @@ void Testing::testTwoLevel()
 	double n = 25;
 	TwoLevel tl(wavelength);
 
-	tl.doLevels(n, n, 50000, isrf, 0);
+	tl.doLevels(n, n, 50000, isrf, vector<double>(2, 0), vector<double>(2, 0));
 
 	double lum = tl.bolometricEmission(1, 0);
 	const std::vector<double>& lumv = tl.calculateEmission();
@@ -151,12 +151,12 @@ void Testing::testTwoLevel()
 
 void Testing::testGasSpecies()
 {
-	double Tc = 100000;
-	double G0 = 0.0001;
-	double n = 0.025;
-	double expectedTemperature = 1000;
+	double Tc = 10000;
+	double G0 = 1e-5;
+	double n = 1.1e-5;
+	double expectedTemperature = 100;
 
-	vector<double> wavelength = generateWavelengthGrid(200, 0.01 * Constant::UM_CM, 200 * Constant::UM_CM);
+	vector<double> wavelength = generateWavelengthGrid(2000, 0.01 * Constant::UM_CM, 200 * Constant::UM_CM);
 //	vector<double> lineWavev = {157.740709 * Constant::UM_CM};
 
 	const double lineWindowFactor = 5;
@@ -180,7 +180,7 @@ void Testing::testGasSpecies()
 
 	vector<double> isrf = generateISRF(wavelength, Tc, G0);
 
-	gs.solveBalance(n, isrf);
+	gs.solveBalance(n, expectedTemperature, isrf);
 
 	const vector<double>& lumv = gs.emissivity();
 	const vector<double>& opv = gs.opacity();
@@ -193,9 +193,9 @@ void Testing::testGasSpecies()
 	for(size_t w = 0; w < lumv.size(); w++)
 	{
 		em_out.precision(9);
-		em_out << scientific << wavelength[w] << '\t'<< lumv[w] << endl;
+		em_out << scientific << wavelength[w] * Constant::CM_UM << '\t'<< wavelength[w] * lumv[w] << endl;
 		op_out.precision(9);
-		op_out << scientific << wavelength[w] << '\t'<< opv[w] << endl;
+		op_out << scientific << wavelength[w] * Constant::CM_UM << '\t'<< opv[w] << endl;
 	}
 	em_out.close();
 	op_out.close();

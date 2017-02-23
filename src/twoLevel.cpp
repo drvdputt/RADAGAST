@@ -25,7 +25,6 @@ TwoLevel::TwoLevel(const std::vector<double>& wavelength)
 //	_Avv << 0, 0,
 //		   2.29e-6, 0;
 
-
 	// Lyman alpha (1s and 2p) model
 	// Energy in cm^-1, so multiply with hc
 	_Ev << 0., 82258.9191133 * Constant::PLANCKLIGHT;
@@ -36,9 +35,10 @@ TwoLevel::TwoLevel(const std::vector<double>& wavelength)
 			6.2649e+08, 0;
 }
 
-void TwoLevel::doLevels(double n, double nc, double T, const std::vector<double>& isrf, double recombinationRate)
+void TwoLevel::doLevels(double n, double nc, double T, const vector<double>& isrf, const vector<double>& source, const vector<double>& sink)
 {
-	if (isrf.size() != _wavelength.size()) throw std::range_error("Given ISRF and wavelength vectors do not have the same size");
+	if (isrf.size() != _wavelength.size()) throw range_error("Given ISRF and wavelength vectors do not have the same size");
+	if (source.size() != 2 || sink.size() != 2) throw range_error("Source and/or sink term vector(s) of wrong size");
 
 	_n = n;
 	_nc = nc;
@@ -62,17 +62,16 @@ void TwoLevel::doLevels(double n, double nc, double T, const std::vector<double>
 		cout << "Cij" << endl << _Cvv << endl << endl;
 
 		// Calculate Fij and bi and solve F.n = b
-		// The ionization rate calculation makes no distinction between the levels.
-		// Therefore, the sink term is the same for each level. Moreover, total source = total sink
-		// so we want sink*n0 + sink*n1 = source => sink = source / n because n0/n + n1/n = 1
-		solveRateEquations(Eigen::Vector2d(0.1*recombinationRate, 0.9*recombinationRate),
-				Eigen::Vector2d(recombinationRate/_n, recombinationRate/_n), 0);
+		solveRateEquations(
+				Eigen::Vector2d(source.data()),
+				Eigen::Vector2d(sink.data()),
+				0);
 	}
 }
 
 double TwoLevel::bolometricEmission(size_t upper, size_t lower) const
 {
-	return (_Ev(upper) - _Ev(lower)) * Constant::FPI * _nv(upper) * _Avv(1,0);
+	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1,0);
 }
 
 std::vector<double> TwoLevel::calculateEmission() const
@@ -109,28 +108,16 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
 
-	// Get an order of magnitude guess of the total width: Gamma / 2 + sigma_nu
-	double sumWidths = halfWidth + sigma_nu;
-
 	Eigen::ArrayXd profile(_wavelength.size());
 	for (size_t n = 0; n < _wavelength.size(); n++)
 	{
 		double deltaNu = Constant::LIGHT / _wavelength[n] - nu0;
 
 		// When we are very far in the tail, just skip the calculation
-		if (false)/*(std::abs(deltaNu) > 20 * sumWidths)*/ profile(n) = 0.;
-
-//		// If natural+collisional effect dominates, ignore the Gaussian component.
-//		if (halfWidth > 1e4 * sigma_nu)
-//		{
-//			return halfWidth / Constant::PI / (deltaNu*deltaNu + halfWidth*halfWidth); // Lorentz
-//		}
-//		// If thermal+turbulent effect dominates, ignore the Lorentzian component.
-//		else if (decayRate < 1e-4 * sigma_nu)
-//		{
-//			return std::exp(-deltaNu*deltaNu / 2. / sigma_nu/sigma_nu) / SQRT2PI / sigma_nu; // Gauss
-//		}
-//		// When both components are important, use this approximation of the Voigt profile
+		if (false)/*(std::abs(deltaNu) > 20 * sumWidths)*/
+		{
+			profile(n) = 0.;
+		}
 		else
 		{
 			profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) / SQRT2PI / sigma_nu;
@@ -173,19 +160,20 @@ void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& isrf)
 
 void TwoLevel::prepareCollisionMatrix()
 {
-	// Need separate contributions for number of protons and electrons
-	// Toy implementation below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf
-	// is actually for electron collisions only, but let's treat all collision partners this way for now
-	double beta = 8.629e-6;
-
-	// also take some values from the bottom of page 4
-	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
-	double bigGamma10 = (_T - 1000) / 9000 * 2.15 + (10000 - _T) / 9000 * 1.58;
-
-	double C10 = beta / sqrt(_T) * bigGamma10 / _gv(1) * _nc;
-	double C01 = C10 * _gv(1) / _gv(0) * exp(-(_Ev(1) - _Ev(0)) / Constant::BOLTZMAN / _T);
-	_Cvv << 0, C01,
-			C10, 0;
+//	// Need separate contributions for number of protons and electrons
+//	// Toy implementation below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf
+//	// is actually for electron collisions only, but let's treat all collision partners this way for now
+//	double beta = 8.629e-6;
+//
+//	// also take some values from the bottom of page 4
+//	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
+//	double bigGamma10 = (_T - 1000) / 9000 * 2.15 + (10000 - _T) / 9000 * 1.58;
+//
+//	double C10 = beta / sqrt(_T) * bigGamma10 / _gv(1) * _nc;
+//	double C01 = C10 * _gv(1) / _gv(0) * exp(-(_Ev(1) - _Ev(0)) / Constant::BOLTZMAN / _T);
+//	_Cvv << 0, C01,
+//			C10, 0;
+	_Cvv << 0,0,0,0;
 }
 
 void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d sinkTerm, size_t chooseConsvEq)
@@ -197,8 +185,9 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	// See equation for Fij (37) in document
 	// = subtract departure rate from level i to all other levels
 	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
+	cout << "Mij" << endl << Mvv << endl << endl;
 	cout << "departure" << endl << departureDiagonal << endl << endl;
-	Mvv -= Mvv.colwise().sum().asDiagonal();
+	Mvv -= departureDiagonal;
 	Mvv -= sinkTerm.asDiagonal();
 	Eigen::VectorXd b(-sourceTerm);
 
@@ -206,17 +195,28 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());
 	b(chooseConsvEq) = _n;
 
-	std::cout << "System to solve:\n" << Mvv << "\n" << b << std::endl;
+	std::cout << "System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl;
 
 	_nv = Mvv.colPivHouseholderQr().solve(b);
-
 	cout << "nv" << endl << _nv << endl;
+	double relative_error = (Mvv*_nv - b).norm() / b.norm(); // norm() is L2 norm
+	cout << "The relative error is: " << relative_error << endl;
+
+	// use explicit formula when this row has very large coefficients (only works if chooseConsvEq = 0)
+	// otherwise there can be problems when subtracting the doubles from each other
+	// not sure how I will solve this for more general systems
+	if (abs(max( Mvv(1, 0), Mvv(1, 1) )) > 1e15 )
+	{
+		cout << "Overriding with explicit solution" << endl;
+		_nv(0) = (-Mvv(1, 1)*_n - sinkTerm(1)) / (-Mvv(1, 1) + Mvv(1, 0));
+		_nv(1) = _n - _nv(0);
+		cout << "nv" << endl << _nv << endl;
+		relative_error = (Mvv*_nv - b).norm() / b.norm(); // norm() is L2 norm
+		cout << "The relative error is: " << relative_error << endl;
+	}
 	cout << "from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl;
-
-	//cout << "from explicit formula nu / nl: " << _gv(1) / _gv(0) * exp((_Ev(0) - _Ev(1)) / _T / Constant::BOLTZMAN) / (1 + _Avv(1,0) / _Cvv(1,0)) << endl;
-	cout << "from explicit formula nu / nl: " << (_Cvv(0,1) + _BPvv(0,1)) / (_Avv(1,0) + _Cvv(1,0) + _BPvv(1,0)) << endl;
+	cout << "Directly from coefficients (no sources) nu / nl: " << (_Cvv(0,1) + _BPvv(0,1)) / (_Avv(1,0) + _Cvv(1,0) + _BPvv(1,0)) << endl;
 }
-
 
 
 

@@ -12,9 +12,10 @@ public:
 	TwoLevel(const std::vector<double>& wavelengthv);
 
 	// Calculates the level populations for a certain electron temperature and isrf. When ionization comes into play,
-	// the recombination and ionization rates will act as source and sink terms for the levels. In this model,
-	// the source and sink terms are considered equal across the levels, hence only a number is needed for them.
-	void doLevels(double n, double nc, double T, const std::vector<double>& isrf, double recombinationRate);
+	// the recombination and ionization rates will act as source and sink terms for the levels. Therefore,
+	// external sources or sink rates can be passed using vectors containing one number for each level.
+	void doLevels(double n, double nc, double T, const std::vector<double>& isrf,
+			const std::vector<double>& source, const std::vector<double>& sink);
 
 	// Useful for the thermal balance. Is much faster than the calculation of the full emissio spectrum.
 	double bolometricEmission(size_t upper, size_t lower) const;
