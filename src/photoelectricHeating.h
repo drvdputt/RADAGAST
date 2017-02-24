@@ -4,6 +4,8 @@
 #include <vector>
 #include <cstring>
 
+// TODO: convert everything to frequency units
+
 namespace Photoelectric {
 // Functions to calculate the heating rate according to the recipe by Weingartner and Draine (2001)
 

@@ -227,7 +227,7 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 	double kT = Constant::BOLTZMAN * T;
 	// "the nearest threshold of lower energy"
 	// i.e. the frequency in _thresholdv lower than the current one
-	int iThreshold = -1;
+	size_t iThreshold = 0;
 	double tE = 0;
 
 	ofstream out;

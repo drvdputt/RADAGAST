@@ -3,21 +3,21 @@
 #include <Eigen/Dense>
 #include <vector>
 
-class TwoLevel {
+class TwoLevel
+{
 public:
 	// Creates an object that represents a two-level (component of a) medium. The level population equilibrium
-	// will be calculated using the wavelength grid supplied as arguments
+	// will be calculated using the frequency grid supplied as argument
 	// of the constructor.
-	TwoLevel(const std::vector<double>& wavelengthv);
+	TwoLevel(const std::vector<double>& frequencyv);
 
 	// Calculates the level populations for a certain electron temperature and isrf. When ionization comes into play,
 	// the recombination and ionization rates will act as source and sink terms for the levels. Therefore,
 	// external sources or sink rates can be passed using vectors containing one number for each level.
-	void doLevels(double n, double nc, double T,
-			const std::vector<double>& isrf, const std::vector<double>& source,
-			const std::vector<double>& sink);
+	void doLevels(double n, double nc, double T, const std::vector<double>& specificIntensity,
+			const std::vector<double>& source, const std::vector<double>& sink);
 
-	// Useful for the thermal balance. Is much faster than the calculation of the full emissio spectrum.
+	// Useful for the thermal balance. Is much faster than the calculation of the full emission spectrum.
 	double bolometricEmission(size_t upper, size_t lower) const;
 
 	// The values needed for a radiative transfer cycle
@@ -33,7 +33,7 @@ private:
 
 	// Fill in the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the Aij)
 	// and Pij is the line power (isrf integrated over the line profile)
-	void prepareAbsorptionMatrix(const std::vector<double>& isrf);
+	void prepareAbsorptionMatrix(const std::vector<double>& specificIntensity);
 
 	// Fill in the collision rates Cij
 	// Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np
@@ -43,8 +43,7 @@ private:
 	// Setup and return the rate matrix M_ij = A_ji + B_ji * P_ji + C_ji.
 	// Set up F and b using M_ij and the external source term ne*np*alpha_i, due to recombination
 	// Stores the solution in the vector containing the densities _ni;
-	void solveRateEquations(Eigen::Vector2d sourceTerm,
-			Eigen::Vector2d sinkTerm, size_t chooseConsvEq);
+	void solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d sinkTerm, size_t chooseConsvEq);
 
 	///////////////
 	// Data members
@@ -55,7 +54,7 @@ private:
 	//--------------------------------
 
 	// Wavelength grid
-	const std::vector<double>& _wavelengthv;
+	const std::vector<double>& _frequencyv;
 	// Energy levels (constant)
 	Eigen::Vector2d _Ev;
 	// Level degeneracy (constant)
