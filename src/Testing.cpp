@@ -10,192 +10,175 @@
 
 using namespace std;
 
-std::vector<double> Testing::generateWavelengthGrid(size_t Nlambda, double lambdaMin, double lambdaMax)
+std::vector<double> Testing::generateFrequencyGrid(size_t nFreq, double minFreq, double maxFreq)
 {
-	vector<double> wavelength(Nlambda);
-	double lambdaStepFactor = std::pow(lambdaMax / lambdaMin, 1. / Nlambda);
-	float lambda = lambdaMin;
-	for (size_t n = 0; n < Nlambda; n++)
+	vector<double> frequencyv(nFreq);
+	double freqStepFactor = std::pow(maxFreq / minFreq, 1. / nFreq);
+	float freq = minFreq;
+	for (size_t n = 0; n < nFreq; n++)
 	{
-		wavelength[n] = lambda;
-		lambda *= lambdaStepFactor;
+		frequencyv[n] = freq;
+		freq *= freqStepFactor;
 	}
-	return wavelength;
+	return frequencyv;
 }
 
-// Help function to refine the wavelength grid
-namespace {
-	template <typename T>
-	void sorted_insert(vector<T>& vec, T elem)
-	{
-		vec.insert(upper_bound(vec.begin(), vec.end(), elem), elem);
-	}
+// Help function to refine the grid
+namespace
+{
+template<typename T>
+void sorted_insert(vector<T>& vec, T elem)
+{
+	vec.insert(upper_bound(vec.begin(), vec.end(), elem), elem);
+}
 }
 
-void Testing::refineWavelengthGrid(vector<double>& grid, size_t nPerLine, double spacingPower, vector<double> lineWavev, vector<double> lineWidthv)
+void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
+		vector<double> lineFreqv, vector<double> freqWidthv)
 {
 	// We want an odd nPerLine, so we can put 1 point in the center
-	if (!(nPerLine % 2)) nPerLine += 1;
+	if (!(nPerLine % 2))
+		nPerLine += 1;
 
-	grid.reserve(grid.size() + nPerLine * lineWavev.size());
+	grid.reserve(grid.size() + nPerLine * lineFreqv.size());
 
-	for (size_t i = 0; i < lineWavev.size(); i++)
+	for (size_t i = 0; i < lineFreqv.size(); i++)
 	{
 		// Add a point at the center of the line, while keeping the vector sorted
-		sorted_insert<double>(grid, lineWavev[i]);
+		sorted_insert<double>(grid, lineFreqv[i]);
 
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
 		{
-			cout << "Putting extra grid points at wavelengths ";
+			cout << "Putting extra grid points at frequencies ";
 			size_t nOneSide = (nPerLine - 1) / 2;
-			double a = lineWidthv[i] / pow(nOneSide, spacingPower);
+			double a = freqWidthv[i] / pow(nOneSide, spacingPower);
 			for (size_t sidePoint = 1; sidePoint <= nOneSide; sidePoint++)
 			{
 				double distance = a * pow(sidePoint, spacingPower);
 
 				// Left of center
-				double wav = lineWavev[i] - distance;
-				cout << wav * Constant::CM_UM << " ";
-				sorted_insert<double>(grid, wav);
+				double freq = lineFreqv[i] - distance;
+				cout << freq << " ";
+				sorted_insert<double>(grid, freq);
 
 				// Right of center
-				wav = lineWavev[i] + distance;
-				cout << wav * Constant::CM_UM << " ";
-				sorted_insert<double>(grid, wav);
+				freq = lineFreqv[i] + distance;
+				cout << freq << " ";
+				sorted_insert<double>(grid, freq);
 			}
 			cout << endl;
 		}
 	}
 }
 
-std::vector<double> Testing::generateISRF(const std::vector<double>& wavelength, double Tc, double G0)
+std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>& frequencyv, double Tc,
+		double G0)
 {
-	// A blackbody
-	vector<double> isrf = NumUtils::bbodyCGS<double>(wavelength, Tc);
+	// A blackbody (in specific intensity per wavelength units)
+	vector<double> wavelengthv;
+	wavelengthv.reserve(frequencyv.size());
+	for (auto rit = frequencyv.rbegin(); rit != frequencyv.rend(); rit++)
+		wavelengthv.push_back(Constant::LIGHT / *rit);
 
-	// Convert to energy density
-	for (double& d : isrf) d *= Constant::FPI / Constant::LIGHT;
+	vector<double> I_lambda = NumUtils::bbodyCGS<double>(wavelengthv, Tc);
+
+	// Convert to per frequency units using I_nu = I_lambda * lambda * lambda / c
+	vector<double> I_nu;
+	I_nu.reserve(frequencyv.size());
+	auto wavRit = wavelengthv.rbegin();
+	for (auto IlambdaRit = I_lambda.rbegin(); IlambdaRit < I_lambda.rend(); IlambdaRit++, wavRit++)
+		I_nu.push_back((*IlambdaRit) * (*wavRit) * (*wavRit) / Constant::LIGHT);
 
 	// Cut out the UV part
 	size_t i = 0;
 	size_t startUV, endUV;
-	while (wavelength[i] < 912 * Constant::ANG_CM && i < isrf.size()) i++;
+	while (wavelengthv[i] < 912 * Constant::ANG_CM && i < I_lambda.size())
+		i++;
 	startUV = i > 0 ? i - 1 : 0;
-	while (wavelength[i] < 2400 * Constant::ANG_CM && i < isrf.size()) i++;
+	while (wavelengthv[i] < 2400 * Constant::ANG_CM && i < I_lambda.size())
+		i++;
 	endUV = i + 1;
-
-	vector<double> wavelengthUV(wavelength.begin() + startUV, wavelength.begin() + endUV);
-	vector<double> isrfUV(isrf.begin() + startUV, isrf.begin() + endUV);
-	cout << "UV goes from " << startUV << " (" << wavelengthUV[0] * Constant::CM_UM << ")"
-		 << " to " << endUV << "("<< wavelengthUV[wavelengthUV.size() - 1] * Constant::CM_UM << ")" << endl;
+	cout << "UV goes from " << startUV << " to " << endUV << endl;
+	vector<double> wavelengthUV(wavelengthv.begin() + startUV, wavelengthv.begin() + endUV);
+	vector<double> isrfUV(I_lambda.begin() + startUV, I_lambda.begin() + endUV);
 
 	// Integrate over the UV only
-	double UVdensity = NumUtils::integrate<double>(wavelengthUV, isrfUV);
+	double UVdensity = Constant::FPI / Constant::LIGHT * NumUtils::integrate<double>(wavelengthUV, isrfUV);
 	double currentG0 = UVdensity / Constant::HABING;
 
 	// Rescale to _G0
-	for (double& d : isrf) d *= G0 / currentG0;
+	for (double& d : I_nu)
+		d *= G0 / currentG0;
 
-	vector<double> wavelengthUVbis(wavelength.begin() + startUV, wavelength.begin() + endUV);
-	vector<double> isrfUVbis(isrf.begin() + startUV, isrf.begin() + endUV);
+	vector<double> frequencyUV(frequencyv.rbegin() + startUV, frequencyv.rbegin() + endUV);
+	vector<double> isrfUVbis(I_nu.rbegin() + startUV, I_nu.rbegin() + endUV);
 
 	// Integrate over the UV only
-	double UVIntensitybis = NumUtils::integrate<double>(wavelengthUVbis, isrfUVbis);
-	cout << "Normalized spectrum uv = "<< UVIntensitybis << " (" <<  UVIntensitybis / Constant::HABING << " habing)"<< endl;
+	double UVdensitybis = -Constant::FPI / Constant::LIGHT
+			* NumUtils::integrate<double>(frequencyUV, isrfUVbis);
+	cout << "Normalized spectrum uv = " << UVdensitybis << " (" << UVdensitybis / Constant::HABING
+			<< " habing)" << endl;
 
 	// Write out the ISRF
 	std::ofstream out;
 	out.open("/Users/drvdputt/Testing/isrf.txt");
-	for (size_t b = 0; b < isrf.size(); b++)
-		out << wavelength[b] << '\t' << isrf[b] << '\n';
+	for (size_t b = 0; b < I_nu.size(); b++)
+		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
 	out.open("/Users/drvdputt/Testing/isrfUV.txt");
 	for (size_t b = 0; b < isrfUV.size(); b++)
-		out << wavelengthUV[b] << '\t'<< isrfUV[b] << '\n';
+		out << frequencyUV[b] << '\t' << isrfUVbis[b] << '\n';
 
-	return isrf;
-}
-
-void Testing::testTwoLevel()
-{
-	double Tc = 6000;
-	double G0 = 2000;
-
-	const std::vector<double>& wavelength = generateWavelengthGrid(200, 157.6 * Constant::UM_CM, 157.9 * Constant::UM_CM);
-	const std::vector<double>& isrf = generateISRF(wavelength, Tc, G0);
-
-	double n = 25;
-	TwoLevel tl(wavelength);
-
-	tl.doLevels(n, n, 50000, isrf, vector<double>(2, 0), vector<double>(2, 0));
-
-	double lum = tl.bolometricEmission(1, 0);
-	const std::vector<double>& lumv = tl.calculateEmission();
-	const std::vector<double>& opv = tl.calculateOpacity();
-
-	cout << "Total line emissivity " << lum << endl;
-	cout << "Integrated emissivity " << NumUtils::integrate<double>(wavelength, lumv) << endl;
-
-	ofstream em_out, op_out;
-	em_out.open("/Users/drvdputt/GasModule/bin/emission.dat");
-	op_out.open("/Users/drvdputt/GasModule/bin/opacity.dat");
-	for(size_t w = 0; w < lumv.size(); w++)
-	{
-		em_out << wavelength[w] << '\t'<< lumv[w] << endl;
-		op_out << wavelength[w] << '\t'<< opv[w] << endl;
-	}
-	em_out.close();
-	op_out.close();
+	return I_nu;
 }
 
 void Testing::testGasSpecies()
 {
 	double Tc = 10000;
-	double G0 = 1e6;
+	double G0 = 1e2;
 	double n = 1.1e1;
 	double expectedTemperature = 1000;
 
-	vector<double> wavelength = generateWavelengthGrid(2000, 0.01 * Constant::UM_CM, 200 * Constant::UM_CM);
-//	vector<double> lineWavev = {157.740709 * Constant::UM_CM};
+	vector<double> frequencyv = generateFrequencyGrid(2000, Constant::LIGHT / (200 * Constant::UM_CM),
+			Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	const double lineWindowFactor = 5;
-	vector<double> lineWavev = {1. / 82258.9191133};
-	vector<double> decayRatev = {6.2649e+08};
-
-	double thermalFactor = sqrt(Constant::BOLTZMAN * expectedTemperature / Constant::HMASS_CGS / Constant::LIGHT/Constant::LIGHT);
-
+	vector<double> lineFreqv =
+	{ Constant::LIGHT * 82258.9191133 };
+	vector<double> decayRatev =
+	{ 6.2649e+08 };
+	double thermalFactor = sqrt(Constant::BOLTZMAN * expectedTemperature / Constant::HMASS_CGS)
+			/ Constant::LIGHT;
 	vector<double> lineWidthv;
-	lineWidthv.reserve(lineWavev.size());
-	for (size_t l = 0; l < lineWavev.size(); l++)
+	lineWidthv.reserve(lineFreqv.size());
+	for (size_t l = 0; l < lineFreqv.size(); l++)
 	{
-		double wav = lineWavev[l];
-		cout << "thermal width " << wav * thermalFactor << " natural width " << wav*wav / Constant::LIGHT * decayRatev[l] << endl;
-		lineWidthv.push_back(lineWindowFactor * (wav * thermalFactor + wav*wav / Constant::LIGHT * decayRatev[l]));
+		double freq = lineFreqv[l];
+		cout << "thermal width " << freq * thermalFactor << " natural width " << decayRatev[l] << endl;
+		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
+	refineFrequencyGrid(frequencyv, 13, 2, lineFreqv, lineWidthv);
 
-	refineWavelengthGrid(wavelength, 13, 2, lineWavev, lineWidthv);
+	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
 
-	GasSpecies gs(wavelength);
-
-	vector<double> isrf = generateISRF(wavelength, Tc, G0);
-
-	gs.solveBalance(n, expectedTemperature, isrf);
+	GasSpecies gs(frequencyv);
+	gs.solveBalance(n, expectedTemperature, specificIntensity);
 
 	const vector<double>& lumv = gs.emissivity();
 	const vector<double>& opv = gs.opacity();
 
-	cout << "Integrated emissivity " << NumUtils::integrate<double>(wavelength, lumv) << endl;
+	cout << "Integrated emissivity " << NumUtils::integrate<double>(frequencyv, lumv) << endl;
 
 	ofstream em_out, op_out;
 	em_out.open("/Users/drvdputt/GasModule/bin/emission.dat");
 	op_out.open("/Users/drvdputt/GasModule/bin/opacity.dat");
-	for(size_t w = 0; w < lumv.size(); w++)
+	for (size_t w = 0; w < lumv.size(); w++)
 	{
 		em_out.precision(9);
-		em_out << scientific << wavelength[w] * Constant::CM_UM << '\t'<< lumv[w] << endl;
+		em_out << scientific << frequencyv[w] << '\t' << lumv[w] << endl;
 		op_out.precision(9);
-		op_out << scientific << wavelength[w] * Constant::CM_UM << '\t'<< opv[w] << endl;
+		op_out << scientific << frequencyv[w] << '\t' << opv[w] << endl;
 	}
 	em_out.close();
 	op_out.close();

@@ -686,11 +686,11 @@ double Photoelectric::heatingRateTest(std::string filename)
 #ifdef EXACTGRID
     vector<double> wavelength = _lambdav;
 #else
-    vector<double> wavelength = Testing::generateWavelengthGrid(_nWav, _minWav, _maxWav);
+    vector<double> wavelength = Testing::generateFrequencyGrid(_nWav, _minWav, _maxWav);
 #endif
 
     // Input spectrum
-    vector<double> isrf = Testing::generateISRF(wavelength, _Tc, _G0);
+    vector<double> isrf = Testing::generateSpecificIntensity(wavelength, _Tc, _G0);
     cout << "Made isrf \n";
 
     // Grain sizes for test
@@ -742,11 +742,11 @@ double Photoelectric::chargeBalanceTest()
 #ifdef EXACTGRID
     vector<double> wavelength = _lambdav;
 #else
-    vector<double> wavelength = Testing::generateWavelengthGrid(_nWav, _minWav, _maxWav);
+    vector<double> wavelength = Testing::generateFrequencyGrid(_nWav, _minWav, _maxWav);
 #endif
 
     // Input spectrum
-    vector<double> isrf = Testing::generateISRF(wavelength, _Tc, _G0);
+    vector<double> isrf = Testing::generateSpecificIntensity(wavelength, _Tc, _G0);
 
     // Grain size
     double a = 200. * Constant::ANG_CM;
