@@ -136,9 +136,9 @@ std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>
 void Testing::testGasSpecies()
 {
 	double Tc = 10000;
-	double G0 = 1e2;
-	double n = 1.1e1;
-	double expectedTemperature = 1000;
+	double G0 = 1e5;
+	double n = 1.1e5;
+	double expectedTemperature = 10000;
 
 	vector<double> frequencyv = generateFrequencyGrid(2000, Constant::LIGHT / (200 * Constant::UM_CM),
 			Constant::LIGHT / (0.01 * Constant::UM_CM));
@@ -175,10 +175,12 @@ void Testing::testGasSpecies()
 	op_out.open("/Users/drvdputt/GasModule/bin/opacity.dat");
 	for (size_t w = 0; w < lumv.size(); w++)
 	{
+		double wav = Constant::LIGHT / frequencyv[w] * Constant::CM_UM;
+		double freq = frequencyv[w];
 		em_out.precision(9);
-		em_out << scientific << frequencyv[w] << '\t' << lumv[w] << endl;
+		em_out << scientific << wav << '\t' << freq*lumv[w] << endl;
 		op_out.precision(9);
-		op_out << scientific << frequencyv[w] << '\t' << opv[w] << endl;
+		op_out << scientific << wav << '\t' << opv[w] << endl;
 	}
 	em_out.close();
 	op_out.close();

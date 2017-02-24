@@ -132,14 +132,14 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv)
 #endif /*_PRINT_CONTINUUM_DATA_*/
 }
 
-void GasSpecies::solveBalance(double n, double Tinit, const vector<double>& isrf)
+void GasSpecies::solveBalance(double n, double Tinit, const vector<double>& specificIntensity)
 {
 	_n = n;
 
 	// Initial guess for the temperature
 	_T = Tinit;
 
-	calculateDensities(_T, isrf);
+	calculateDensities(_T, specificIntensity);
 }
 
 vector<double> GasSpecies::emissivity() const
@@ -257,20 +257,20 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 					// find the next threshold of lower frequency
 					// (don't just pick the next one, as this wouldn't work with very coarse grids)
 					iThreshold = NumUtils::index<double>(freq, _thresholdv) - 1;
-					tE = Constant::PLANCKLIGHT / _thresholdv[iThreshold];
+					tE = Constant::PLANCK * _thresholdv[iThreshold];
 				}
 			}
 			// When we have just moved past the last threshold, set the index one last time
 			else if (iThreshold < _thresholdv.size() - 1)
 			{
 				iThreshold = _thresholdv.size() - 1;
-				tE = Constant::PLANCKLIGHT / _thresholdv.back();
+				tE = Constant::PLANCK * _thresholdv.back();
 			}
-			double E = Constant::PLANCKLIGHT / freq;
+			double E = Constant::PLANCK * freq;
 
 			double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
 			double gammaNu = gammaDagger / normalizationFactor;
-			out << Constant::LIGHT/freq << "\t" << gammaNu / 1.e-40 << endl;
+			out << freq << "\t" << gammaNu / 1.e-40 << endl;
 			result.push_back(gammaNu);
 		}
 	}
