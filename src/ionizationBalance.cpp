@@ -22,17 +22,24 @@ double Ionization::ionizedFraction(double nH, double T, const vector<double>& wa
 
 double Ionization::crossSection(double wavelength)
 {
-    double E0 = 4.298e-1 / Constant::ERG_EV;
-    double sigma0 = 5.475e4;
-    double ya = 3.288e1;
-    double P = 2.963;
+	if (wavelength > 912 * Constant::ANG_CM)
+	{
+		return 0;
+	}
+	else
+	{
+		double E0 = 4.298e-1 / Constant::ERG_EV;
+		double sigma0 = 5.475e4;
+		double ya = 3.288e1;
+		double P = 2.963;
 
-    double x = Constant::PLANCKLIGHT / wavelength / E0;
-    double y = x;
+		double x = Constant::PLANCKLIGHT / wavelength / E0;
+		double y = x;
 
-    double Fy = (x - 1)*(x - 1) * pow(y, 0.5 * P - 5.5) * pow(1 + sqrt(y / ya), -P);
+		double Fy = (x - 1)*(x - 1) * pow(y, 0.5 * P - 5.5) * pow(1 + sqrt(y / ya), -P);
 
-    return sigma0 * Fy * 1e-18;
+		return sigma0 * Fy * 1e-18;
+	}
 }
 
 double Ionization::recombinationRate(double T)

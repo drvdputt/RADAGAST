@@ -174,7 +174,7 @@ vector<double> GasSpecies::opacity() const
 	const vector<double>& lineOp = _levels.calculateOpacity();
 	for (size_t i = 0; i < _wavelengthv.size(); i++)
 	{
-		double ionizOp_i = _n * (1 - _ionizedFraction) * Ionization::crossSection(_wavelengthv[i]);
+		double ionizOp_i = _n * (1. - _ionizedFraction) * Ionization::crossSection(_wavelengthv[i]);
 		result.push_back(ionizOp_i + lineOp[i]);
 	}
 	return result;
@@ -189,7 +189,7 @@ void GasSpecies::calculateDensities(double T, const vector<double>& isrf)
 	cout << "Ionized fraction = " << _ionizedFraction << endl;
 
 	double nAtomic = _n * (1 - _ionizedFraction);
-	// For now we can sum over the collision partners, as TwoLevel threats all collision parnters in the same way
+	// For now we can sum over the collision partners, as TwoLevel threats all collision partners in the same way
 	// neutral + ion + electron densities
 	double nTotal = (1 + _ionizedFraction) * _n;
 

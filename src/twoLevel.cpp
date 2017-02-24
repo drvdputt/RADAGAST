@@ -12,7 +12,7 @@ namespace {
 }
 
 TwoLevel::TwoLevel(const std::vector<double>& wavelength)
-	: _wavelength(wavelength), _n(0), _nc(0), _T(0)
+	: _wavelengthv(wavelength), _n(0), _nc(0), _T(0)
 {
 //	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
 //	// this makes collisional deexcitation important for densities > 20-50 / cm3
@@ -37,7 +37,7 @@ TwoLevel::TwoLevel(const std::vector<double>& wavelength)
 
 void TwoLevel::doLevels(double n, double nc, double T, const vector<double>& isrf, const vector<double>& source, const vector<double>& sink)
 {
-	if (isrf.size() != _wavelength.size()) throw range_error("Given ISRF and wavelength vectors do not have the same size");
+	if (isrf.size() != _wavelengthv.size()) throw range_error("Given ISRF and wavelength vectors do not have the same size");
 	if (source.size() != 2 || sink.size() != 2) throw range_error("Source and/or sink term vector(s) of wrong size");
 
 	_n = n;
@@ -86,7 +86,7 @@ std::vector<double> TwoLevel::calculateEmission() const
 std::vector<double> TwoLevel::calculateOpacity() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
-	double constantFactor = Constant::LIGHT*Constant::LIGHT / 8. / Constant::PI / nu_ij*nu_ij * _Avv(1,0);
+	double constantFactor = Constant::LIGHT*Constant::LIGHT / 8. / Constant::PI / nu_ij/nu_ij * _Avv(1,0);
 	double densityFactor = _nv(0)*_gv(1)/_gv(0) - _nv(1);
 	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0);
 	return std::vector<double>(result.data(), result.data() + result.size());
@@ -108,10 +108,10 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
 
-	Eigen::ArrayXd profile(_wavelength.size());
-	for (size_t n = 0; n < _wavelength.size(); n++)
+	Eigen::ArrayXd profile(_wavelengthv.size());
+	for (size_t n = 0; n < _wavelengthv.size(); n++)
 	{
-		double deltaNu = Constant::LIGHT / _wavelength[n] - nu0;
+		double deltaNu = Constant::LIGHT / _wavelengthv[n] - nu0;
 
 		// When we are very far in the tail, just skip the calculation
 		if (false)/*(std::abs(deltaNu) > 20 * sumWidths)*/
@@ -123,10 +123,10 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 			profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) / SQRT2PI / sigma_nu;
 			// phi_lambda dlambda = -phi_nu dnu
 			// phi_lambda = -phi_nu * d(c / lambda)/dlambda = phi_nu * c / lambda^2
-			profile(n) *= Constant::LIGHT / _wavelength[n] / _wavelength[n];
+			profile(n) *= Constant::LIGHT / _wavelengthv[n] / _wavelengthv[n];
 		}
 	}
-	cout << "line profile norm = " << NumUtils::integrate<double>(_wavelength, std::vector<double>(profile.data(), profile.data() + profile.size())) << endl;
+	cout << "line profile norm = " << NumUtils::integrate<double>(_wavelengthv, std::vector<double>(profile.data(), profile.data() + profile.size())) << endl;
 	return profile;
 }
 
@@ -142,9 +142,16 @@ void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& isrf)
 			Eigen::ArrayXd phi = lineProfile(i, j);
 			std::vector<double> integrand;
 			integrand.reserve(isrf.size());
-			for (size_t n = 0; n < isrf.size(); n++) integrand.push_back(phi(n) * isrf[n]);
-			// Make sure that isrf is in specific intensity units
-			_BPvv(i, j) = Constant::LIGHT / Constant::FPI * NumUtils::integrate<double>(_wavelength, integrand);
+			for (size_t n = 0; n < isrf.size(); n++)
+			{
+				// since our formula for B assumes a specific intensity in frequency units as measure of the radiation field,
+				// we need to compute integral I_nu(lambda) phi_lambda(lambda) dlambda
+				// I_nu(lambda) = lambda * lambda * I_lambda(lambda) / c
+				// = lambda * lambda * u_lambda(lambda) / 4pi
+				// = lambda * lambda * isrf / 4pi
+				integrand.push_back(_wavelengthv[n]*_wavelengthv[n] * phi(n) * isrf[n]);
+			}
+			_BPvv(i, j) = NumUtils::integrate<double>(_wavelengthv, integrand) / Constant::FPI;
 
 			// Multiply by Bij in terms of Aij, valid for i > j
 			double nu_ij = (_Ev(i) - _Ev(j)) / Constant::PLANCK;
