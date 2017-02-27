@@ -113,12 +113,13 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	for (size_t n = 0; n < _frequencyv.size(); n++)
 	{
 		double deltaNu = _frequencyv[n] - nu0;
-		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) / SQRT2PI
-				/ sigma_nu;
+		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu)
+				/ SQRT2PI / sigma_nu;
 	}
 	cout << "line profile norm = "
 			<< NumUtils::integrate<double>(_frequencyv,
-					std::vector<double>(profile.data(), profile.data() + profile.size())) << endl;
+					std::vector<double>(profile.data(), profile.data() + profile.size()))
+			<< endl;
 	return profile;
 }
 

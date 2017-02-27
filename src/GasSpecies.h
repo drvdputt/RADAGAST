@@ -5,7 +5,8 @@
 
 #include <vector>
 
-class GasSpecies {
+class GasSpecies
+{
 public:
 	GasSpecies(const std::vector<double>& frequencyv);
 

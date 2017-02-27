@@ -8,12 +8,12 @@
 int main(int argc, char* argv[])
 
 {
-    //  printf("%f", Photoelectric::yieldFunctionTest());
-	//  printf("%f\n", Photoelectric::heatingRateTest("/Users/drvdputt/Testing/ratetest-chargeparams/rateTest_1e4.txt"));
-    //  printf("%f", Photoelectric::chargeBalanceTest());
-    //  printf("%f\n", Ionization::testIonization());
+	//  printf("%f", Photoelectric::yieldFunctionTest());
+	Photoelectric::heatingRateTest("/Users/drvdputt/GasModule/run/rateTest.dat");
+	//  printf("%f", Photoelectric::chargeBalanceTest());
+	//  printf("%f\n", Ionization::testIonization());
 
-	Testing::testGasSpecies();
+	//Testing::testGasSpecies();
 
 	return 0;
 }

@@ -11,8 +11,8 @@
 
 using namespace std;
 
-GasSpecies::GasSpecies(const vector<double>& frequencyv)
-	: _frequencyv(frequencyv), _n(0), _T(0), _ionizedFraction(0), _levels(frequencyv)
+GasSpecies::GasSpecies(const vector<double>& frequencyv) :
+		_frequencyv(frequencyv), _n(0), _T(0), _ionizedFraction(0), _levels(frequencyv)
 {
 	// Read the free-bound continuum data from Ercolano and Storey (2006)
 	// Adapted from NEBULAR source code by M. Schirmer (2016)
@@ -22,15 +22,16 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv)
 
 	string file("/Users/drvdputt/GasModule/git/dat/t3_elec_reformat.ascii");
 	ifstream input(file);
-	if (!input) throw std::runtime_error("File " + file + " not found.");
+	if (!input)
+		throw std::runtime_error("File " + file + " not found.");
 
 	// The line number will not count any lines starting with #
 	int lineNr = 0;
 	string line;
-	while(getline(input, line))
+	while (getline(input, line))
 	{
 		istringstream iss(line);
-		if(iss.peek() != '#')
+		if (iss.peek() != '#')
 		{
 			if (lineNr == 0)
 			{
@@ -54,7 +55,8 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv)
 
 				double frequency = energy * Constant::RYDBERG / Constant::PLANCK;
 				fileFrequencyv.push_back(frequency);
-				if (flag) _thresholdv.push_back(frequency);
+				if (flag)
+					_thresholdv.push_back(frequency);
 
 				auto it = fileGammaDaggervv[lineNr - 2].begin();
 				double gammaDagger;
@@ -79,10 +81,12 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv)
 		// Extract the column
 		vector<double> column;
 		column.reserve(numrow);
-		for (size_t row = 0; row < numrow; row++) column.push_back(fileGammaDaggervv[row][col]);
+		for (size_t row = 0; row < numrow; row++)
+			column.push_back(fileGammaDaggervv[row][col]);
 
 		// Resample it
-		const vector<double>& column_resampled = NumUtils::interpol<double>(column, fileFrequencyv, frequencyv, -1, -1);
+		const vector<double>& column_resampled = NumUtils::interpol<double>(column, fileFrequencyv,
+				frequencyv, -1, -1);
 
 		// And copy it over
 		for (size_t row = 0; row < _gammaDaggervv.size(); row++)
@@ -93,25 +97,27 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv)
 #ifdef _PRINT_CONTINUUM_DATA_
 	// DEBUG: print out the table as read from the file
 	ofstream out;
-	out.open("/Users/drvdputt/GasModule/bin/loadedContinuum.dat");
+	out.open("/Users/drvdputt/GasModule/run/loadedContinuum.dat");
 	for (size_t iNu = 0; iNu < fileGammaDaggervv.size(); iNu++)
 	{
-		for(double d : fileGammaDaggervv[iNu]) out << scientific << d << '\t';
+		for (double d : fileGammaDaggervv[iNu])
+			out << scientific << d << '\t';
 		out << endl;
 	}
 	out.close();
 
 	// DEBUG: print out the interpolated table
-	out.open("/Users/drvdputt/GasModule/bin/interpolatedContinuum.dat");
+	out.open("/Users/drvdputt/GasModule/run/interpolatedContinuum.dat");
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(); iNu++)
 	{
-		for(double d : _gammaDaggervv[iNu]) out << scientific << d << '\t';
+		for (double d : _gammaDaggervv[iNu])
+			out << scientific << d << '\t';
 		out << endl;
 	}
 	out.close();
 
 	// DEBUG: Test the temperature interpolation function (at least a copy pasta of a part)
-	out.open("/Users/drvdputt/GasModule/bin/bi-interpolatedContinuum.dat");
+	out.open("/Users/drvdputt/GasModule/run/bi-interpolatedContinuum.dat");
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(); iNu++)
 	{
 		for (double logT = 2; logT < 5; logT += 0.01)
@@ -119,7 +125,8 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv)
 			// Find the grid point to the right of the requested log-temperature
 			size_t iRight = NumUtils::index(logT, _logTemperaturev);
 			// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
-			double wRight = (logT - _logTemperaturev[iRight - 1]) / (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+			double wRight = (logT - _logTemperaturev[iRight - 1])
+					/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
 
 			// Interpolate gamma^dagger linearly in log T space
 			double gammaDagger = (_gammaDaggervv[iNu][iRight - 1] * (1 - wRight)
@@ -149,11 +156,14 @@ vector<double> GasSpecies::emissivity() const
 	const vector<double>& contEmv = continuumEmissionCoeff(_T);
 	for (size_t i = 0; i < _frequencyv.size(); i++)
 	{
-		result.push_back(lineEmv[i] + _n*_n*_ionizedFraction*_ionizedFraction / Constant::FPI * contEmv[i]);
+		result.push_back(
+				lineEmv[i]
+						+ _n * _n * _ionizedFraction * _ionizedFraction
+								/ Constant::FPI * contEmv[i]);
 	}
-	cout << "line / cont = "
-			<< NumUtils::integrate<double>(_frequencyv, lineEmv) << " / "
-			<< _n*_n*_ionizedFraction*_ionizedFraction / Constant::FPI * NumUtils::integrate<double>(_frequencyv, contEmv) << endl;
+	cout << "line / cont = " << NumUtils::integrate<double>(_frequencyv, lineEmv) << " / "
+			<< _n * _n * _ionizedFraction * _ionizedFraction / Constant::FPI
+					* NumUtils::integrate<double>(_frequencyv, contEmv) << endl;
 	return result;
 }
 
@@ -183,7 +193,7 @@ void GasSpecies::calculateDensities(double T, const vector<double>& specificInte
 	// neutral + ion + electron densities
 	double nTotal = (1 + _ionizedFraction) * _n;
 
-	double ne_np = _n*_n*_ionizedFraction*_ionizedFraction;
+	double ne_np = _n * _n * _ionizedFraction * _ionizedFraction;
 	double alphaTotal = Ionization::recombinationRate(T);
 
 	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
@@ -192,14 +202,16 @@ void GasSpecies::calculateDensities(double T, const vector<double>& specificInte
 	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
 	cout << "alphaGround " << alphaGround << " alpha2p " << alpha2p << endl;
 
-	vector<double> sourcev = {ne_np * alphaGround, ne_np * alpha2p};
+	vector<double> sourcev =
+	{ ne_np * alphaGround, ne_np * alpha2p };
 
 	// The ionization rate calculation makes no distinction between the levels.
 	// When the upper level population is small, and its decay rate is large, the second term doesn't really matter.
 	// Therefore, we choose the sink to be the same for each level. Moreover, total source = total sink
 	// so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1
 	double sink = ne_np * alphaTotal / nAtomic;
-	vector<double> sinkv = {sink, sink};
+	vector<double> sinkv =
+	{ sink, sink };
 
 	_levels.doLevels(nAtomic, nTotal, T, specificIntensityv, sourcev, sinkv);
 }
@@ -210,7 +222,8 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 
 	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
 	{
-		cout << "Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl;
+		cout << "Warning: temperature " << T << "K is outside of data range for free-bound continuum"
+				<< endl;
 		return vector<double>(_frequencyv.size(), 0.);
 	}
 
@@ -220,10 +233,11 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 	// Find the grid point to the right of the requested log-temperature
 	size_t iRight = NumUtils::index(logT, _logTemperaturev);
 	// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
-	double wRight = (logT - _logTemperaturev[iRight - 1]) / (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+	double wRight = (logT - _logTemperaturev[iRight - 1])
+			/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
 
 	// We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the data
-	double Ttothe3_2 = pow(T, 3./2.);
+	double Ttothe3_2 = pow(T, 3. / 2.);
 	double kT = Constant::BOLTZMAN * T;
 	// "the nearest threshold of lower energy"
 	// i.e. the frequency in _thresholdv lower than the current one
@@ -231,7 +245,7 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 	double tE = 0;
 
 	ofstream out;
-	out.open("/Users/drvdputt/GasModule/bin/gammanu.dat");
+	out.open("/Users/drvdputt/GasModule/run/gammanu.dat");
 
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{

@@ -10,10 +10,10 @@
 
 using namespace std;
 
-std::vector<double> Testing::generateFrequencyGrid(size_t nFreq, double minFreq, double maxFreq)
+vector<double> Testing::generateFrequencyGrid(size_t nFreq, double minFreq, double maxFreq)
 {
 	vector<double> frequencyv(nFreq);
-	double freqStepFactor = std::pow(maxFreq / minFreq, 1. / nFreq);
+	double freqStepFactor = std::pow(maxFreq / minFreq, 1. / (nFreq - 1));
 	float freq = minFreq;
 	for (size_t n = 0; n < nFreq; n++)
 	{
@@ -21,6 +21,15 @@ std::vector<double> Testing::generateFrequencyGrid(size_t nFreq, double minFreq,
 		freq *= freqStepFactor;
 	}
 	return frequencyv;
+}
+
+vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
+{
+	vector<double> wavelengthv;
+	wavelengthv.reserve(frequencyv.size());
+	for (auto rit = frequencyv.rbegin(); rit != frequencyv.rend(); rit++)
+		wavelengthv.push_back(Constant::LIGHT / *rit);
+	return wavelengthv;
 }
 
 // Help function to refine the grid
@@ -104,7 +113,8 @@ std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>
 	vector<double> isrfUV(I_lambda.begin() + startUV, I_lambda.begin() + endUV);
 
 	// Integrate over the UV only
-	double UVdensity = Constant::FPI / Constant::LIGHT * NumUtils::integrate<double>(wavelengthUV, isrfUV);
+	double UVdensity = Constant::FPI / Constant::LIGHT
+			* NumUtils::integrate<double>(wavelengthUV, isrfUV);
 	double currentG0 = UVdensity / Constant::HABING;
 
 	// Rescale to _G0
@@ -122,15 +132,32 @@ std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>
 
 	// Write out the ISRF
 	std::ofstream out;
-	out.open("/Users/drvdputt/Testing/isrf.txt");
+	out.open("/Users/drvdputt/GasModule/run/isrf.txt");
 	for (size_t b = 0; b < I_nu.size(); b++)
 		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
-	out.open("/Users/drvdputt/Testing/isrfUV.txt");
+	out.open("/Users/drvdputt/GasModule/run/isrfUV.txt");
 	for (size_t b = 0; b < isrfUV.size(); b++)
 		out << frequencyUV[b] << '\t' << isrfUVbis[b] << '\n';
 
 	return I_nu;
+}
+
+vector<double> Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv,
+		const vector<double>& specificIntensity_nu)
+{
+	vector<double> I_lambda;
+	I_lambda.reserve(frequencyv.size());
+	auto fRit = frequencyv.rbegin();
+	auto InuRit = specificIntensity_nu.rbegin();
+	while (InuRit != specificIntensity_nu.rend())
+	{
+		double freq = *fRit;
+		I_lambda.push_back(*InuRit * freq * freq / Constant::LIGHT);
+		InuRit++;
+		fRit++;
+	}
+	return I_lambda;
 }
 
 void Testing::testGasSpecies()
@@ -155,7 +182,8 @@ void Testing::testGasSpecies()
 	for (size_t l = 0; l < lineFreqv.size(); l++)
 	{
 		double freq = lineFreqv[l];
-		cout << "thermal width " << freq * thermalFactor << " natural width " << decayRatev[l] << endl;
+		cout << "thermal width " << freq * thermalFactor << " natural width " << decayRatev[l]
+				<< endl;
 		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
 	refineFrequencyGrid(frequencyv, 13, 2, lineFreqv, lineWidthv);
@@ -171,16 +199,16 @@ void Testing::testGasSpecies()
 	cout << "Integrated emissivity " << NumUtils::integrate<double>(frequencyv, lumv) << endl;
 
 	ofstream em_out, op_out;
-	em_out.open("/Users/drvdputt/GasModule/bin/emission.dat");
-	op_out.open("/Users/drvdputt/GasModule/bin/opacity.dat");
-	for (size_t w = 0; w < lumv.size(); w++)
+	em_out.open("/Users/drvdputt/GasModule/run/emission.dat");
+	op_out.open("/Users/drvdputt/GasModule/run/opacity.dat");
+	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
-		double wav = Constant::LIGHT / frequencyv[w] * Constant::CM_UM;
-		double freq = frequencyv[w];
+		double freq = frequencyv[iFreq];
+		double wav = Constant::LIGHT / freq;
 		em_out.precision(9);
-		em_out << scientific << wav << '\t' << freq*lumv[w] << endl;
+		em_out << scientific << freq << '\t' << lumv[iFreq] << endl;
 		op_out.precision(9);
-		op_out << scientific << wav << '\t' << opv[w] << endl;
+		op_out << scientific << freq << '\t' << opv[iFreq] << endl;
 	}
 	em_out.close();
 	op_out.close();

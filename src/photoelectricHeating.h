@@ -4,20 +4,25 @@
 #include <vector>
 #include <cstring>
 
-// TODO: convert everything to frequency units
+// TODO: convert everything to frequency units, or write interface
 
-namespace Photoelectric {
+namespace Photoelectric
+{
 // Functions to calculate the heating rate according to the recipe by Weingartner and Draine (2001)
 
 double ionizationPotential(double a, int Z);
 
-double heatingRateAZ(double a, int Z, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf);
+double heatingRateAZ(double a, int Z, const std::vector<double>& energyDensity_lambda,
+		const std::vector<double>& Qabs, const std::vector<double>& isrf);
 
-double heatingRateA(double a, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf);
+double heatingRateA(double a, const std::vector<double>& wavelengthv, const std::vector<double>& Qabs,
+		const std::vector<double>& energyDensity_lambda);
 
-double heatingRate(std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf);
+double heatingRate(const std::vector<double>& wavelengthv, const std::vector<double>& Qabs,
+		const std::vector<double>& isrf);
 
-double emissionRate(double a, int Z, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf);
+double emissionRate(double a, int Z, const std::vector<double>& wavelengthv, const std::vector<double>& Qabs,
+		const std::vector<double>& isrf);
 
 double energyIntegral(double Elow, double Ehigh, double Emin, double Emax);
 
@@ -33,8 +38,9 @@ double lambdaTilde(double tau, double ksi);
 
 double recombinationCoolingRate(double a, const std::vector<double>& fZ, int Zmin);
 
-void chargeBalance(double a, std::vector<double>& wavelengthv, std::vector<double>& Qabs, std::vector<double>& isrf,
-                   int& resultZmax, int& resultZmin, std::vector<double>& resultfZ);
+void chargeBalance(double a, const std::vector<double>& wavelengthv, const std::vector<double>& Qabs,
+		const std::vector<double>& isrf, int& resultZmax, int& resultZmin,
+		std::vector<double>& resultfZ);
 
 double yieldFunctionTest();
 
