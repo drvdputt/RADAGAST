@@ -9,10 +9,42 @@
 #include <exception>
 #include <algorithm>
 
+namespace
+{
+
+template<typename T>
+T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax, T xMin)
+{
+	if (xInit > xMax || xInit < xMin)
+		throw "xInit is out of given range for binary search";
+
+	double upperbound = xMax;
+	double lowerbound = xMin;
+	double current = xInit;
+
+	while (upperbound - lowerbound > xTolerance)
+	{
+		// Indicates whether the (unknown) final value lies above or below the current one
+		double iCompare = searchDirection(current);
+
+		if (iCompare > 0)
+			lowerbound = current;
+		else if (iCompare < 0)
+			upperbound = current;
+		else
+			return current;
+
+		current = (lowerbound + upperbound) / 2.;
+	}
+	return current;
+}
+}
+
 using namespace std;
 
 GasSpecies::GasSpecies(const vector<double>& frequencyv) :
-		_frequencyv(frequencyv), _n(0), _T(0), _ionizedFraction(0), _levels(frequencyv)
+		_frequencyv(frequencyv), _n(0), _p_specificIntensityv(nullptr), _T(0), _ionizedFraction(0), _levels(
+				frequencyv)
 {
 	// Read the free-bound continuum data from Ercolano and Storey (2006)
 	// Adapted from NEBULAR source code by M. Schirmer (2016)
@@ -42,10 +74,7 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 			{
 				double log10T;
 				while (iss >> log10T)
-				{
 					_logTemperaturev.push_back(log10T);
-				}
-				cout << endl;
 			}
 			if (lineNr > 1)
 			{
@@ -93,7 +122,7 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 			_gammaDaggervv[row][col] = column_resampled[row];
 	}
 
-#define _PRINT_CONTINUUM_DATA_
+//#define _PRINT_CONTINUUM_DATA_
 #ifdef _PRINT_CONTINUUM_DATA_
 	// DEBUG: print out the table as read from the file
 	ofstream out;
@@ -101,7 +130,7 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 	for (size_t iNu = 0; iNu < fileGammaDaggervv.size(); iNu++)
 	{
 		for (double d : fileGammaDaggervv[iNu])
-			out << scientific << d << '\t';
+		out << scientific << d << '\t';
 		out << endl;
 	}
 	out.close();
@@ -111,7 +140,7 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(); iNu++)
 	{
 		for (double d : _gammaDaggervv[iNu])
-			out << scientific << d << '\t';
+		out << scientific << d << '\t';
 		out << endl;
 	}
 	out.close();
@@ -126,7 +155,7 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 			size_t iRight = NumUtils::index(logT, _logTemperaturev);
 			// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
 			double wRight = (logT - _logTemperaturev[iRight - 1])
-					/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+			/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
 
 			// Interpolate gamma^dagger linearly in log T space
 			double gammaDagger = (_gammaDaggervv[iNu][iRight - 1] * (1 - wRight)
@@ -141,12 +170,51 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 
 void GasSpecies::solveBalance(double n, double Tinit, const vector<double>& specificIntensity)
 {
+	const double Tmax = 1000000.;
+	const double Tmin = 10;
+	const double logTmax = log10(Tmax);
+	const double logTmin = log10(Tmin);
+
 	_n = n;
+	_p_specificIntensityv = &specificIntensity;
 
-	// Initial guess for the temperature
-	_T = Tinit;
+	// Do a binary search in logT space
+	double logTinit = log10(Tinit);
 
-	calculateDensities(_T, specificIntensity);
+	// Lambda function that will be used by the search algorithm.
+	// The state of the system will be updated every time the algorithm calls this function.
+	// The return value indicates whether the temperature should increase (net absorption)
+	// or decrease (net emission).
+	function<int(double)> evaluateBalance = [this] (double logT) -> int
+	{
+		calculateDensities(pow(10., logT));
+		double netPowerIn = bolometricAbsorption() - bolometricEmission();
+		cout << "logT = " << logT << "; netHeating = " << netPowerIn << endl << endl;
+		return (netPowerIn > 0) - (netPowerIn < 0);
+	};
+
+	double logTfinal = binaryIntervalSearch<double>(evaluateBalance, logTinit, 1.e-6, logTmax, logTmin);
+
+	// Evaluate the densities for one last time, using the final temperature
+	calculateDensities(pow(10., logTfinal));
+}
+
+void GasSpecies::testHeatingCurve()
+{
+	int samples = 1000;
+	double factor = pow(1000000./10., 1./samples);
+	ofstream out;
+	out.open("/Users/drvdputt/GasModule/run/heating.dat");
+	double T = 10;
+	for (int s = 0; s < samples; s++, T *= factor)
+	{
+		calculateDensities(T);
+		double abs = bolometricAbsorption();
+		double em = bolometricEmission();
+		double netPowerIn = abs - em;
+		string tab = "\t";
+		out << T << tab << netPowerIn << tab << abs << tab << em << tab << _ionizedFraction << endl;
+	}
 }
 
 vector<double> GasSpecies::emissivity() const
@@ -156,15 +224,20 @@ vector<double> GasSpecies::emissivity() const
 	const vector<double>& contEmv = continuumEmissionCoeff(_T);
 	for (size_t i = 0; i < _frequencyv.size(); i++)
 	{
-		result.push_back(
-				lineEmv[i]
-						+ _n * _n * _ionizedFraction * _ionizedFraction
-								/ Constant::FPI * contEmv[i]);
+		double np_ne = _n * _n * _ionizedFraction * _ionizedFraction;
+		result.push_back(lineEmv[i] + np_ne * contEmv[i] / Constant::FPI);
 	}
+
 	cout << "line / cont = " << NumUtils::integrate<double>(_frequencyv, lineEmv) << " / "
 			<< _n * _n * _ionizedFraction * _ionizedFraction / Constant::FPI
 					* NumUtils::integrate<double>(_frequencyv, contEmv) << endl;
 	return result;
+}
+
+double GasSpecies::bolometricEmission() const
+{
+	const vector<double>& em = emissivity();
+	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, em);
 }
 
 vector<double> GasSpecies::opacity() const
@@ -180,11 +253,29 @@ vector<double> GasSpecies::opacity() const
 	return result;
 }
 
-void GasSpecies::calculateDensities(double T, const vector<double>& specificIntensityv)
+double GasSpecies::bolometricAbsorption() const
 {
+	const vector<double>& op = opacity();
+	vector<double> integrand;
+	integrand.reserve(op.size());
+	auto opacityIt = op.begin();
+	auto opEnd = op.end();
+	auto intensityIt = _p_specificIntensityv->begin();
+	while (opacityIt != opEnd)
+	{
+		integrand.push_back(*opacityIt * *intensityIt);
+		opacityIt++;
+		intensityIt++;
+	}
+	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, integrand);
+}
+
+void GasSpecies::calculateDensities(double T)
+{
+	_T = T;
 	cout << "Calculating state for T = " << T << "K" << endl;
 
-	_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, specificIntensityv);
+	_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, *_p_specificIntensityv);
 
 	cout << "Ionized fraction = " << _ionizedFraction << endl;
 
@@ -200,7 +291,7 @@ void GasSpecies::calculateDensities(double T, const vector<double>& specificInte
 	double T4 = T / 1.e4;
 	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
 	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-	cout << "alphaGround " << alphaGround << " alpha2p " << alpha2p << endl;
+	//cout << "alphaGround " << alphaGround << " alpha2p " << alpha2p << endl;
 
 	vector<double> sourcev =
 	{ ne_np * alphaGround, ne_np * alpha2p };
@@ -213,7 +304,7 @@ void GasSpecies::calculateDensities(double T, const vector<double>& specificInte
 	vector<double> sinkv =
 	{ sink, sink };
 
-	_levels.doLevels(nAtomic, nTotal, T, specificIntensityv, sourcev, sinkv);
+	_levels.doLevels(nAtomic, nTotal, T, *_p_specificIntensityv, sourcev, sinkv);
 }
 
 vector<double> GasSpecies::continuumEmissionCoeff(double T) const
@@ -291,3 +382,5 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 	out.close();
 	return result;
 }
+
+

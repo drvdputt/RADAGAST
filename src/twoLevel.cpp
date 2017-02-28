@@ -60,9 +60,10 @@ void TwoLevel::doLevels(double n, double nc, double T, const vector<double>& spe
 		// Calculate Cij
 		prepareCollisionMatrix();
 
-		cout << "Aij" << endl << _Avv << endl << endl;
-		cout << "BPij" << endl << _BPvv << endl << endl;
-		cout << "Cij" << endl << _Cvv << endl << endl;
+
+//		cout << "Aij" << endl << _Avv << endl << endl;
+//		cout << "BPij" << endl << _BPvv << endl << endl;
+//		cout << "Cij" << endl << _Cvv << endl << endl;
 
 		// Calculate Fij and bi and solve F.n = b
 		solveRateEquations(Eigen::Vector2d(source.data()), Eigen::Vector2d(sink.data()), 0);
@@ -180,8 +181,8 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	// See equation for Fij (37) in document
 	// = subtract departure rate from level i to all other levels
 	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
-	cout << "Mij" << endl << Mvv << endl << endl;
-	cout << "departure" << endl << departureDiagonal << endl << endl;
+//	cout << "Mij" << endl << Mvv << endl << endl;
+//	cout << "departure" << endl << departureDiagonal << endl << endl;
 	Mvv -= departureDiagonal;
 	Mvv -= sinkTerm.asDiagonal();
 	Eigen::VectorXd b(-sourceTerm);
@@ -190,12 +191,12 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());
 	b(chooseConsvEq) = _n;
 
-	std::cout << "System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl;
+//	std::cout << "System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl;
 
 	_nv = Mvv.colPivHouseholderQr().solve(b);
-	cout << "nv" << endl << _nv << endl;
-	double relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-	cout << "The relative error is: " << relative_error << endl;
+//	cout << "nv" << endl << _nv << endl;
+//	double relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
+//	cout << "The relative error is: " << relative_error << endl;
 
 	// use explicit formula when this row has very large coefficients (only works if chooseConsvEq = 0)
 	// otherwise there can be problems when subtracting the doubles from each other
@@ -206,10 +207,10 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 		_nv(0) = (-Mvv(1, 1) * _n - sinkTerm(1)) / (-Mvv(1, 1) + Mvv(1, 0));
 		_nv(1) = _n - _nv(0);
 		cout << "nv" << endl << _nv << endl;
-		relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-		cout << "The relative error is: " << relative_error << endl;
+//		relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
+//		cout << "The relative error is: " << relative_error << endl;
 	}
-	cout << "from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl;
-	cout << "Directly from coefficients (no sources) nu / nl: "
-			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl;
+//	cout << "from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl;
+//	cout << "Directly from coefficients (no sources) nu / nl: "
+//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl;
 }

@@ -59,7 +59,6 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
 		{
-			cout << "Putting extra grid points at frequencies ";
 			size_t nOneSide = (nPerLine - 1) / 2;
 			double a = freqWidthv[i] / pow(nOneSide, spacingPower);
 			for (size_t sidePoint = 1; sidePoint <= nOneSide; sidePoint++)
@@ -68,15 +67,12 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 
 				// Left of center
 				double freq = lineFreqv[i] - distance;
-				cout << freq << " ";
 				sorted_insert<double>(grid, freq);
 
 				// Right of center
 				freq = lineFreqv[i] + distance;
-				cout << freq << " ";
 				sorted_insert<double>(grid, freq);
 			}
-			cout << endl;
 		}
 	}
 }
@@ -163,9 +159,9 @@ vector<double> Testing::freqToWavSpecificIntensity(const vector<double>& frequen
 void Testing::testGasSpecies()
 {
 	double Tc = 10000;
-	double G0 = 1e5;
-	double n = 1.1e5;
-	double expectedTemperature = 10000;
+	double G0 = 1e0;
+	double n = 1.e1;
+	double expectedTemperature = 1000;
 
 	vector<double> frequencyv = generateFrequencyGrid(2000, Constant::LIGHT / (200 * Constant::UM_CM),
 			Constant::LIGHT / (0.01 * Constant::UM_CM));
@@ -175,7 +171,7 @@ void Testing::testGasSpecies()
 	{ Constant::LIGHT * 82258.9191133 };
 	vector<double> decayRatev =
 	{ 6.2649e+08 };
-	double thermalFactor = sqrt(Constant::BOLTZMAN * expectedTemperature / Constant::HMASS_CGS)
+	double thermalFactor = sqrt(Constant::BOLTZMAN * 100000 / Constant::HMASS_CGS)
 			/ Constant::LIGHT;
 	vector<double> lineWidthv;
 	lineWidthv.reserve(lineFreqv.size());
@@ -186,7 +182,7 @@ void Testing::testGasSpecies()
 				<< endl;
 		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
-	refineFrequencyGrid(frequencyv, 13, 2, lineFreqv, lineWidthv);
+	refineFrequencyGrid(frequencyv, 101, 2, lineFreqv, lineWidthv);
 
 	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
 
@@ -212,4 +208,9 @@ void Testing::testGasSpecies()
 	}
 	em_out.close();
 	op_out.close();
+
+	cout << "----------------------------------" << endl;
+	cout << "plotting heating curve..." << endl;
+
+	gs.testHeatingCurve();
 }
