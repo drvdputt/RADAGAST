@@ -13,6 +13,7 @@ std::vector<double> freqToWavSpecificIntensity(const std::vector<double>& freque
 		const std::vector<double>& specificIntensity_nu);
 
 void testGasSpecies();
+void testIonizationCrossSection();
 }
 
 #endif

@@ -14,6 +14,6 @@ int main()
 	//  printf("%f\n", Ionization::testIonization());
 
 	Testing::testGasSpecies();
-
+	//Testing::testIonizationCrossSection();
 	return 0;
 }

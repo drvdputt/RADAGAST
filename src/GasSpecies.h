@@ -12,10 +12,17 @@ public:
 
 	void solveBalance(double n, double Tinit, const std::vector<double>& specificIntensity);
 
-	std::vector<double> emissivity() const;
-	double bolometricEmission() const;
-	std::vector<double> opacity() const;
-	double bolometricAbsorption() const;
+	std::vector<double> emissivityv() const;
+	std::vector<double> opacityv() const;
+
+	double emission() const;
+	double absorption() const;
+
+	double lineEmission() const;
+	double lineAbsorption() const;
+
+	double continuumEmission() const;
+	double continuumAbsorption() const;
 
 	void testHeatingCurve();
 
@@ -23,10 +30,10 @@ private:
 	// Calculates the ionization fraction and level populations for a certain electron temperature and isrf
 	void calculateDensities(double T);
 
-	// Calculate the emission coefficient for the optical continuum, interpolated from data.
+	// Calculate the emission coefficient for the optical recombination continuum, interpolated from data.
 	// Returned in units [density^-1][power]/[frequency interval] cm^3 erg / s / cm.
 	// The emissivity ([power][density]/[frequency interval]) can be obtained by multiplying this value with ne_np
-	std::vector<double> continuumEmissionCoeff(double T) const;
+	std::vector<double> recombinationEmissionCoeff(double T) const;
 
 	// To be set in constructor
 	const std::vector<double>& _frequencyv;

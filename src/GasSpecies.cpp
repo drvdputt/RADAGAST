@@ -1,6 +1,5 @@
 #include "Constants.h"
 #include "GasSpecies.h"
-#include "IonizationBalance.h"
 #include "NumUtils.h"
 #include <fstream>
 #include <iostream>
@@ -8,6 +7,8 @@
 #include <vector>
 #include <exception>
 #include <algorithm>
+#include "IonizationBalance.h"
+#include "ReadData.h"
 
 namespace
 {
@@ -48,56 +49,16 @@ GasSpecies::GasSpecies(const vector<double>& frequencyv) :
 {
 	// Read the free-bound continuum data from Ercolano and Storey (2006)
 	// Adapted from NEBULAR source code by M. Schirmer (2016)
-	size_t numcol, numrow;
-	vector<vector<double>> fileGammaDaggervv;
 	vector<double> fileFrequencyv;
+	vector<vector<double>> fileGammaDaggervv;
 
 	string file("/Users/drvdputt/GasModule/git/dat/t3_elec_reformat.ascii");
-	ifstream input(file);
-	if (!input)
-		throw std::runtime_error("File " + file + " not found.");
+	ReadData::recombinationContinuum(file, fileFrequencyv, _thresholdv, _logTemperaturev,
+			fileGammaDaggervv);
 
-	// The line number will not count any lines starting with #
-	int lineNr = 0;
-	string line;
-	while (getline(input, line))
-	{
-		istringstream iss(line);
-		if (iss.peek() != '#')
-		{
-			if (lineNr == 0)
-			{
-				iss >> numcol >> numrow;
-				fileGammaDaggervv.resize(numrow, std::vector<double>(numcol, 0.));
-			}
-			if (lineNr == 1)
-			{
-				double log10T;
-				while (iss >> log10T)
-					_logTemperaturev.push_back(log10T);
-			}
-			if (lineNr > 1)
-			{
-				int flag;
-				double energy;
-				iss >> flag >> energy;
+	size_t numcol = _logTemperaturev.size();
+	size_t numrow = fileFrequencyv.size();
 
-				double frequency = energy * Constant::RYDBERG / Constant::PLANCK;
-				fileFrequencyv.push_back(frequency);
-				if (flag)
-					_thresholdv.push_back(frequency);
-
-				auto it = fileGammaDaggervv[lineNr - 2].begin();
-				double gammaDagger;
-				while (iss >> gammaDagger)
-				{
-					*it = gammaDagger;
-					it++;
-				}
-			}
-			lineNr++;
-		}
-	}
 	// Now resample this data according to the frequency grid
 	_gammaDaggervv.resize(_frequencyv.size(), vector<double>(numcol, 0));
 
@@ -185,66 +146,41 @@ void GasSpecies::solveBalance(double n, double Tinit, const vector<double>& spec
 	// The state of the system will be updated every time the algorithm calls this function.
 	// The return value indicates whether the temperature should increase (net absorption)
 	// or decrease (net emission).
-	function<int(double)> evaluateBalance = [this] (double logT) -> int
+	int counter;
+	function<int(double)> evaluateBalance = [this, &counter] (double logT) -> int
 	{
+		counter++;
 		calculateDensities(pow(10., logT));
-		double netPowerIn = bolometricAbsorption() - bolometricEmission();
-		cout << "logT = " << logT << "; netHeating = " << netPowerIn << endl << endl;
+		double netPowerIn = absorption() - emission();
+		cout << "Cycle " << counter << ": logT = " << logT << "; netHeating = "
+		<< netPowerIn << endl << endl;
 		return (netPowerIn > 0) - (netPowerIn < 0);
 	};
 
-	double logTfinal = binaryIntervalSearch<double>(evaluateBalance, logTinit, 1.e-6, logTmax, logTmin);
+	double logTfinal = binaryIntervalSearch<double>(evaluateBalance, logTinit, 4.e-3, logTmax, logTmin);
 
 	// Evaluate the densities for one last time, using the final temperature
 	calculateDensities(pow(10., logTfinal));
 }
 
-void GasSpecies::testHeatingCurve()
-{
-	int samples = 1000;
-	double factor = pow(1000000./10., 1./samples);
-	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/heating.dat");
-	double T = 10;
-	for (int s = 0; s < samples; s++, T *= factor)
-	{
-		calculateDensities(T);
-		double abs = bolometricAbsorption();
-		double em = bolometricEmission();
-		double netPowerIn = abs - em;
-		string tab = "\t";
-		out << T << tab << netPowerIn << tab << abs << tab << em << tab << _ionizedFraction << endl;
-	}
-}
-
-vector<double> GasSpecies::emissivity() const
+vector<double> GasSpecies::emissivityv() const
 {
 	vector<double> result;
-	const vector<double>& lineEmv = _levels.calculateEmission();
-	const vector<double>& contEmv = continuumEmissionCoeff(_T);
+	const vector<double>& lineEmv = _levels.emissivityv();
+	const vector<double>& contCoeffv = recombinationEmissionCoeff(_T);
 	for (size_t i = 0; i < _frequencyv.size(); i++)
 	{
 		double np_ne = _n * _n * _ionizedFraction * _ionizedFraction;
-		result.push_back(lineEmv[i] + np_ne * contEmv[i] / Constant::FPI);
+		result.push_back(lineEmv[i] + np_ne * contCoeffv[i] / Constant::FPI);
 	}
-
-	cout << "line / cont = " << NumUtils::integrate<double>(_frequencyv, lineEmv) << " / "
-			<< _n * _n * _ionizedFraction * _ionizedFraction / Constant::FPI
-					* NumUtils::integrate<double>(_frequencyv, contEmv) << endl;
 	return result;
 }
 
-double GasSpecies::bolometricEmission() const
-{
-	const vector<double>& em = emissivity();
-	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, em);
-}
-
-vector<double> GasSpecies::opacity() const
+vector<double> GasSpecies::opacityv() const
 {
 	vector<double> result;
 	result.reserve(_frequencyv.size());
-	const vector<double>& lineOp = _levels.calculateOpacity();
+	const vector<double>& lineOp = _levels.opacityv();
 	for (size_t i = 0; i < _frequencyv.size(); i++)
 	{
 		double ionizOp_i = _n * (1. - _ionizedFraction) * Ionization::crossSection(_frequencyv[i]);
@@ -253,21 +189,99 @@ vector<double> GasSpecies::opacity() const
 	return result;
 }
 
-double GasSpecies::bolometricAbsorption() const
+double GasSpecies::emission() const
 {
-	const vector<double>& op = opacity();
-	vector<double> integrand;
-	integrand.reserve(op.size());
-	auto opacityIt = op.begin();
-	auto opEnd = op.end();
-	auto intensityIt = _p_specificIntensityv->begin();
-	while (opacityIt != opEnd)
+	double lineEm = lineEmission();
+	double contEm = continuumEmission();
+	cout << "emission: line / cont = " << lineEm << " / " << contEm << endl;
+	return lineEm + contEm;
+}
+
+double GasSpecies::absorption() const
+{
+	double lineAbs = lineAbsorption();
+	double contAbs = continuumAbsorption();
+	cout << "absorption: line / cont = " << lineAbs << " / " << contAbs << endl;
+	return lineAbs + contAbs;
+}
+
+double GasSpecies::lineEmission() const
+{
+	const vector<double>& lineEmv = _levels.emissivityv();
+	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, lineEmv);
+}
+
+double GasSpecies::lineAbsorption() const
+{
+	const vector<double>& opv = _levels.opacityv();
+	vector<double> intensityOpacityv;
+	intensityOpacityv.reserve(opv.size());
+	auto op = opv.begin();
+	auto opEnd = opv.end();
+	auto I_nu = _p_specificIntensityv->begin();
+	while (op != opEnd)
 	{
-		integrand.push_back(*opacityIt * *intensityIt);
-		opacityIt++;
-		intensityIt++;
+		intensityOpacityv.push_back(*I_nu * *op);
+		op++;
+		I_nu++;
 	}
-	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, integrand);
+	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, intensityOpacityv);
+}
+
+double GasSpecies::continuumEmission() const
+{
+	const vector<double>& gamma_nu = recombinationEmissionCoeff(_T);
+	// emissivity = ne np / 4pi * gamma
+	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
+	return _n * _n * _ionizedFraction * _ionizedFraction
+			* NumUtils::integrate<double>(_frequencyv, gamma_nu);
+}
+
+double GasSpecies::continuumAbsorption() const
+{
+	double atomDensity = _n * (1. - _ionizedFraction);
+
+	vector<double> intensityOpacityv;
+	intensityOpacityv.reserve(_frequencyv.size());
+	auto I_nu = _p_specificIntensityv->begin();
+	for (auto freq = _frequencyv.begin(); freq != _frequencyv.end(); freq++, I_nu++)
+		intensityOpacityv.push_back(*I_nu * atomDensity * Ionization::crossSection(*freq));
+
+	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, intensityOpacityv);
+}
+
+void GasSpecies::testHeatingCurve()
+{
+	const string tab = "\t";
+	const int samples = 200;
+
+	double T = 10;
+	double factor = pow(500000. / 10., 1. / samples);
+
+	ofstream out;
+	out.open("/Users/drvdputt/GasModule/run/heating.dat");
+	out << "# frequency netHeating absorption emission" << " lineHeating lineAbsorption lineEmission"
+			<< " continuumHeating continuumAbsorption continuumEmission" << " ionizationFraction"
+			<< endl;
+	for (int s = 0; s < samples; s++, T *= factor)
+	{
+		calculateDensities(T);
+		double abs = absorption();
+		double em = emission();
+		double lineAbs = lineAbsorption();
+		double lineEm = lineEmission();
+		double contAbs = continuumAbsorption();
+		double contEm = continuumEmission();
+
+		double netHeating = abs - em;
+		double netLine = lineAbs - lineEm;
+		double netCont = contAbs - contEm;
+
+		out << T << tab << netHeating << tab << abs << tab << em << tab << netLine << tab << lineAbs
+				<< tab << lineEm << tab << netCont << tab << contAbs << tab << contEm << tab
+				<< _ionizedFraction << endl;
+	}
+	out.close();
 }
 
 void GasSpecies::calculateDensities(double T)
@@ -307,7 +321,7 @@ void GasSpecies::calculateDensities(double T)
 	_levels.doLevels(nAtomic, nTotal, T, *_p_specificIntensityv, sourcev, sinkv);
 }
 
-vector<double> GasSpecies::continuumEmissionCoeff(double T) const
+vector<double> GasSpecies::recombinationEmissionCoeff(double T) const
 {
 	double logT = log10(T);
 
@@ -382,5 +396,4 @@ vector<double> GasSpecies::continuumEmissionCoeff(double T) const
 	out.close();
 	return result;
 }
-
 

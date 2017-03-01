@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <ios>
+#include "IonizationBalance.h"
 
 using namespace std;
 
@@ -156,12 +157,24 @@ vector<double> Testing::freqToWavSpecificIntensity(const vector<double>& frequen
 	return I_lambda;
 }
 
+void Testing::testIonizationCrossSection()
+{
+	ofstream out;
+	out.open("/Users/drvdputt/GasModule/run/ionizationCrosSection.dat");
+	for (double freq = 0; freq < 6.e16; freq += 1e14)
+	{
+		double sigma = Ionization::crossSection(freq);
+		out << freq << "\t" << sigma << endl;
+	}
+	out.close();
+}
+
 void Testing::testGasSpecies()
 {
 	double Tc = 10000;
-	double G0 = 1e0;
-	double n = 1.e1;
-	double expectedTemperature = 1000;
+	double G0 = 1e1;
+	double n = 1.e3;
+	double expectedTemperature = 5000;
 
 	vector<double> frequencyv = generateFrequencyGrid(2000, Constant::LIGHT / (200 * Constant::UM_CM),
 			Constant::LIGHT / (0.01 * Constant::UM_CM));
@@ -171,7 +184,7 @@ void Testing::testGasSpecies()
 	{ Constant::LIGHT * 82258.9191133 };
 	vector<double> decayRatev =
 	{ 6.2649e+08 };
-	double thermalFactor = sqrt(Constant::BOLTZMAN * 100000 / Constant::HMASS_CGS)
+	double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS)
 			/ Constant::LIGHT;
 	vector<double> lineWidthv;
 	lineWidthv.reserve(lineFreqv.size());
@@ -182,15 +195,15 @@ void Testing::testGasSpecies()
 				<< endl;
 		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
-	refineFrequencyGrid(frequencyv, 101, 2, lineFreqv, lineWidthv);
+	refineFrequencyGrid(frequencyv, 1001, 3., lineFreqv, lineWidthv);
 
 	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
 
 	GasSpecies gs(frequencyv);
 	gs.solveBalance(n, expectedTemperature, specificIntensity);
 
-	const vector<double>& lumv = gs.emissivity();
-	const vector<double>& opv = gs.opacity();
+	const vector<double>& lumv = gs.emissivityv();
+	const vector<double>& opv = gs.opacityv();
 
 	cout << "Integrated emissivity " << NumUtils::integrate<double>(frequencyv, lumv) << endl;
 
@@ -211,6 +224,5 @@ void Testing::testGasSpecies()
 
 	cout << "----------------------------------" << endl;
 	cout << "plotting heating curve..." << endl;
-
 	gs.testHeatingCurve();
 }

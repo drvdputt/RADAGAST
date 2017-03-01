@@ -5,6 +5,9 @@
 
 #include <exception>
 #include <vector>
+#include <algorithm>
+
+//#define PRINT_MATRICES
 
 namespace
 {
@@ -59,32 +62,31 @@ void TwoLevel::doLevels(double n, double nc, double T, const vector<double>& spe
 
 		// Calculate Cij
 		prepareCollisionMatrix();
-
-
-//		cout << "Aij" << endl << _Avv << endl << endl;
-//		cout << "BPij" << endl << _BPvv << endl << endl;
-//		cout << "Cij" << endl << _Cvv << endl << endl;
-
-		// Calculate Fij and bi and solve F.n = b
+#ifdef PRINT_MATRICES
+		cout << "Aij" << endl << _Avv << endl << endl;
+		cout << "BPij" << endl << _BPvv << endl << endl;
+		cout << "Cij" << endl << _Cvv << endl << endl;
+#endif
+// Calculate Fij and bi and solve F.n = b
 		solveRateEquations(Eigen::Vector2d(source.data()), Eigen::Vector2d(sink.data()), 0);
 	}
 }
 
-double TwoLevel::bolometricEmission(size_t upper, size_t lower) const
+double TwoLevel::emission(size_t upper, size_t lower) const
 {
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
 
-std::vector<double> TwoLevel::calculateEmission() const
+std::vector<double> TwoLevel::emissivityv() const
 {
 	// There is only one line for now
-	double lineIntensity = bolometricEmission(1, 0);
+	double lineIntensity = emission(1, 0);
 	Eigen::ArrayXd result = lineIntensity * lineProfile(1, 0);
 	std::vector<double> resultv(result.data(), result.data() + result.size());
 	return resultv;
 }
 
-std::vector<double> TwoLevel::calculateOpacity() const
+std::vector<double> TwoLevel::opacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
@@ -117,11 +119,10 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu)
 				/ SQRT2PI / sigma_nu;
 	}
-	cout << "line profile norm = "
-			<< NumUtils::integrate<double>(_frequencyv,
-					std::vector<double>(profile.data(), profile.data() + profile.size()))
-			<< endl;
-	return profile;
+	double norm = NumUtils::integrate<double>(_frequencyv,
+			std::vector<double>(profile.data(), profile.data() + profile.size()));
+	cout << "line profile norm = " << norm << endl;
+	return profile / norm;
 }
 
 void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& specificIntensity)
@@ -165,50 +166,81 @@ void TwoLevel::prepareCollisionMatrix()
 //	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
 //	double bigGamma10 = (_T - 1000) / 9000 * 2.15 + (10000 - _T) / 9000 * 1.58;
 //
-//	double C10 = beta / sqrt(_T) * bigGamma10 / _gv(1) * _nc;
-//	double C01 = C10 * _gv(1) / _gv(0) * exp(-(_Ev(1) - _Ev(0)) / Constant::BOLTZMAN / _T);
-//	_Cvv << 0, C01,
-//			C10, 0;
-	_Cvv << 0, 0, 0, 0;
+//	// data from 2002-anderson
+	vector<double> electronTemperaturesEV =
+	{ .5, 1., 3., 5., 10., 15., 20., 25. };
+
+	vector<double> effectiveCollisionStrv =
+	{ 2.6e-1, 2.96e-1, 3.26e-1, 3.39e-1, 3.73e-1, 4.06e-1, 4.36e-1, 4.61e-1 };
+
+	double currentT_eV = Constant::BOLTZMAN * _T * Constant::ERG_EV;
+
+	// naively inter- and extrapolate this data linearly, just to have some form of collision coefficient
+	// (provides numerical stability)
+	size_t iRight = NumUtils::index(currentT_eV, electronTemperaturesEV);
+	if (iRight == 0)
+		iRight = 1;
+	else if (iRight == effectiveCollisionStrv.size())
+		iRight -= 1;
+
+	// Can be larger than one or lower than 0 when the given temperature is outside of the data range.
+	// In that case, a linear extrapolation is the result.
+	double wRight = (currentT_eV - electronTemperaturesEV[iRight - 1])
+			/ (electronTemperaturesEV[iRight] - electronTemperaturesEV[iRight - 1]);
+
+	double bigGamma10 = (1. - wRight) * effectiveCollisionStrv[iRight - 1]
+			+ wRight * effectiveCollisionStrv[iRight];
+
+	const double I_H_eV = 13.6058;
+	double C10 = 2.1716e-8 / _gv(1) * sqrt(I_H_eV / currentT_eV) * bigGamma10 * _nc;
+
+	double C01 = C10 * _gv(1) / _gv(0) * exp(-(_Ev(1) - _Ev(0)) / Constant::BOLTZMAN / _T);
+	_Cvv << 0, C01, C10, 0;
 }
 
 void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d sinkTerm, size_t chooseConsvEq)
 {
-	// Initialize Mij as Aji + PBji + Cji
-	// = arrival rate in level i from level j
+// Initialize Mij as Aji + PBji + Cji
+// = arrival rate in level i from level j
 	Eigen::MatrixXd Mvv(_Avv.transpose() + _BPvv.transpose() + _Cvv.transpose());
 
-	// See equation for Fij (37) in document
-	// = subtract departure rate from level i to all other levels
+// See equation for Fij (37) in document
+// subtract departure rate from level i to all other levels
 	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
-//	cout << "Mij" << endl << Mvv << endl << endl;
-//	cout << "departure" << endl << departureDiagonal << endl << endl;
 	Mvv -= departureDiagonal;
 	Mvv -= sinkTerm.asDiagonal();
 	Eigen::VectorXd b(-sourceTerm);
 
-	// Replace row by a conservation equation
+// Replace row by a conservation equation
 	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());
 	b(chooseConsvEq) = _n;
 
-//	std::cout << "System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl;
+#ifdef PRINT_MATRICES
+	std::cout << "System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl;
+#endif
 
+	// Call the linear solver
 	_nv = Mvv.colPivHouseholderQr().solve(b);
-//	cout << "nv" << endl << _nv << endl;
-//	double relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-//	cout << "The relative error is: " << relative_error << endl;
 
-	// use explicit formula when this row has very large coefficients (only works if chooseConsvEq = 0)
-	// otherwise there can be problems when subtracting the doubles from each other
-	// not sure how I will solve this for more general systems
+#ifdef PRINT_MATRICES
+	cout << "nv" << endl << _nv << endl;
+	double relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
+	cout << "The relative error is: " << relative_error << endl;
+#endif
+
+// use explicit formula when this row has very large coefficients (only works if chooseConsvEq = 0)
+// otherwise there can be problems when subtracting the doubles from each other
+// not sure how I will solve this for more general systems
 	if (abs(max(Mvv(1, 0), Mvv(1, 1))) > 1e15)
 	{
-		cout << "Overriding with explicit solution" << endl;
 		_nv(0) = (-Mvv(1, 1) * _n - sinkTerm(1)) / (-Mvv(1, 1) + Mvv(1, 0));
 		_nv(1) = _n - _nv(0);
+#ifdef PRINT_MATRICES
+		cout << "Overriding with explicit solution" << endl;
 		cout << "nv" << endl << _nv << endl;
-//		relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-//		cout << "The relative error is: " << relative_error << endl;
+		relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
+		cout << "The relative error is: " << relative_error << endl;
+#endif
 	}
 //	cout << "from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl;
 //	cout << "Directly from coefficients (no sources) nu / nl: "

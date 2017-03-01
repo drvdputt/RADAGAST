@@ -18,13 +18,13 @@ public:
 			const std::vector<double>& source, const std::vector<double>& sink);
 
 	// Useful for the thermal balance. Is much faster than the calculation of the full emission spectrum.
-	double bolometricEmission(size_t upper, size_t lower) const;
+	double emission(size_t upper, size_t lower) const;
 
 	// The values needed for a radiative transfer cycle
 	// The emission coefficient j_nu (erg/cm3/s/Hz)
-	std::vector<double> calculateEmission() const;
+	std::vector<double> emissivityv() const;
 	// The opacity alpha_nu, equivalent to kappaRho for dust (cm-1)
-	std::vector<double> calculateOpacity() const;
+	std::vector<double> opacityv() const;
 
 private:
 	// Calculates the Voigt profile for a certain line, using the wavelengthgrid supplied at construction
