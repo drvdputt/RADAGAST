@@ -1,45 +1,15 @@
 #include "Constants.h"
 #include "GasSpecies.h"
+#include "IonizationBalance.h"
 #include "NumUtils.h"
+#include "ReadData.h"
+#include <algorithm>
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include <exception>
-#include <algorithm>
-#include "IonizationBalance.h"
-#include "ReadData.h"
-
-namespace
-{
-
-template<typename T>
-T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax, T xMin)
-{
-	if (xInit > xMax || xInit < xMin)
-		throw "xInit is out of given range for binary search";
-
-	double upperbound = xMax;
-	double lowerbound = xMin;
-	double current = xInit;
-
-	while (upperbound - lowerbound > xTolerance)
-	{
-		// Indicates whether the (unknown) final value lies above or below the current one
-		double iCompare = searchDirection(current);
-
-		if (iCompare > 0)
-			lowerbound = current;
-		else if (iCompare < 0)
-			upperbound = current;
-		else
-			return current;
-
-		current = (lowerbound + upperbound) / 2.;
-	}
-	return current;
-}
-}
+#include "TemplatedUtils.h"
 
 using namespace std;
 
@@ -157,7 +127,8 @@ void GasSpecies::solveBalance(double n, double Tinit, const vector<double>& spec
 		return (netPowerIn > 0) - (netPowerIn < 0);
 	};
 
-	double logTfinal = binaryIntervalSearch<double>(evaluateBalance, logTinit, 4.e-3, logTmax, logTmin);
+	double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit, 4.e-3,
+			logTmax, logTmin);
 
 	// Evaluate the densities for one last time, using the final temperature
 	calculateDensities(pow(10., logTfinal));
@@ -298,7 +269,8 @@ void GasSpecies::calculateDensities(double T)
 	// neutral + ion + electron densities
 	double nTotal = (1 + _ionizedFraction) * _n;
 
-	double ne_np = _n * _n * _ionizedFraction * _ionizedFraction;
+	double np = _n * _ionizedFraction;
+	double ne = np;
 	double alphaTotal = Ionization::recombinationRate(T);
 
 	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
@@ -308,17 +280,19 @@ void GasSpecies::calculateDensities(double T)
 	//cout << "alphaGround " << alphaGround << " alpha2p " << alpha2p << endl;
 
 	vector<double> sourcev =
-	{ ne_np * alphaGround, ne_np * alpha2p };
+	{ ne * np * alphaGround, ne * np * alpha2p };
 
 	// The ionization rate calculation makes no distinction between the levels.
-	// When the upper level population is small, and its decay rate is large, the second term doesn't really matter.
-	// Therefore, we choose the sink to be the same for each level. Moreover, total source = total sink
+	// When the upper level population is small, and its decay rate is large,
+	// the second term doesn't really matter.
+	// Therefore, we choose the sink to be the same for each level. Moreover,
+	// total source = total sink
 	// so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1
-	double sink = ne_np * alphaTotal / nAtomic;
+	double sink = ne * np * alphaTotal / nAtomic;
 	vector<double> sinkv =
 	{ sink, sink };
 
-	_levels.doLevels(nAtomic, nTotal, T, *_p_specificIntensityv, sourcev, sinkv);
+	_levels.solveBalance(nAtomic, ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
 }
 
 vector<double> GasSpecies::recombinationEmissionCoeff(double T) const

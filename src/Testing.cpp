@@ -1,13 +1,14 @@
+#include "Constants.h"
+#include "GasSpecies.h"
+#include "IonizationBalance.h"
+#include "NumUtils.h"
 #include "Testing.h"
 #include "TwoLevel.h"
-#include "GasSpecies.h"
 
-#include <Constants.h>
-#include <NumUtils.h>
+#include <ios>
 #include <iostream>
 #include <fstream>
-#include <ios>
-#include "IonizationBalance.h"
+#include "TemplatedUtils.h"
 
 using namespace std;
 
@@ -33,16 +34,6 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 	return wavelengthv;
 }
 
-// Help function to refine the grid
-namespace
-{
-template<typename T>
-void sorted_insert(vector<T>& vec, T elem)
-{
-	vec.insert(upper_bound(vec.begin(), vec.end(), elem), elem);
-}
-}
-
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
 		vector<double> lineFreqv, vector<double> freqWidthv)
 {
@@ -55,7 +46,7 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	for (size_t i = 0; i < lineFreqv.size(); i++)
 	{
 		// Add a point at the center of the line, while keeping the vector sorted
-		sorted_insert<double>(grid, lineFreqv[i]);
+		TemplatedUtils::sorted_insert<double>(grid, lineFreqv[i]);
 
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
@@ -68,11 +59,11 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 
 				// Left of center
 				double freq = lineFreqv[i] - distance;
-				sorted_insert<double>(grid, freq);
+				TemplatedUtils::sorted_insert<double>(grid, freq);
 
 				// Right of center
 				freq = lineFreqv[i] + distance;
-				sorted_insert<double>(grid, freq);
+				TemplatedUtils::sorted_insert<double>(grid, freq);
 			}
 		}
 	}
@@ -171,10 +162,10 @@ void Testing::testIonizationCrossSection()
 
 void Testing::testGasSpecies()
 {
-	double Tc = 10000;
-	double G0 = 1e1;
-	double n = 1.e3;
-	double expectedTemperature = 5000;
+	double Tc = 30000;
+	double G0 = 1e0;
+	double n = 1e0;
+	double expectedTemperature = 10000;
 
 	vector<double> frequencyv = generateFrequencyGrid(2000, Constant::LIGHT / (200 * Constant::UM_CM),
 			Constant::LIGHT / (0.01 * Constant::UM_CM));
@@ -213,7 +204,7 @@ void Testing::testGasSpecies()
 	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
 		double freq = frequencyv[iFreq];
-		double wav = Constant::LIGHT / freq;
+		//double wav = Constant::LIGHT / freq;
 		em_out.precision(9);
 		em_out << scientific << freq << '\t' << lumv[iFreq] << endl;
 		op_out.precision(9);
@@ -222,7 +213,7 @@ void Testing::testGasSpecies()
 	em_out.close();
 	op_out.close();
 
-	cout << "----------------------------------" << endl;
-	cout << "plotting heating curve..." << endl;
-	gs.testHeatingCurve();
+//	cout << "----------------------------------" << endl;
+//	cout << "plotting heating curve..." << endl;
+//	gs.testHeatingCurve();
 }

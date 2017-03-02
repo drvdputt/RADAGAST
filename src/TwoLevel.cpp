@@ -16,7 +16,7 @@ const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::P
 }
 
 TwoLevel::TwoLevel(const std::vector<double>& frequencyv) :
-		_frequencyv(frequencyv), _n(0), _nc(0), _T(0)
+		_frequencyv(frequencyv), _n(0), _ne(0), _np(0), _T(0)
 {
 //	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
 //	// this makes collisional deexcitation important for densities > 20-50 / cm3
@@ -38,7 +38,7 @@ TwoLevel::TwoLevel(const std::vector<double>& frequencyv) :
 	_Avv << 0, 0, 6.2649e+08, 0;
 }
 
-void TwoLevel::doLevels(double n, double nc, double T, const vector<double>& specificIntensity,
+void TwoLevel::solveBalance(double n, double ne, double np, double T, const vector<double>& specificIntensity,
 		const vector<double>& source, const vector<double>& sink)
 {
 	if (specificIntensity.size() != _frequencyv.size())
@@ -47,7 +47,8 @@ void TwoLevel::doLevels(double n, double nc, double T, const vector<double>& spe
 		throw range_error("Source and/or sink term vector(s) of wrong size");
 
 	_n = n;
-	_nc = nc;
+	_ne = ne;
+	_np = np;
 	_T = T;
 
 	// shortcut, in case of full ionization
@@ -192,7 +193,8 @@ void TwoLevel::prepareCollisionMatrix()
 			+ wRight * effectiveCollisionStrv[iRight];
 
 	const double I_H_eV = 13.6058;
-	double C10 = 2.1716e-8 / _gv(1) * sqrt(I_H_eV / currentT_eV) * bigGamma10 * _nc;
+	// n-changing collisions are dominated by electrons, so multiply with _ne
+	double C10 = 2.1716e-8 / _gv(1) * sqrt(I_H_eV / currentT_eV) * bigGamma10 * _ne;
 
 	double C01 = C10 * _gv(1) / _gv(0) * exp(-(_Ev(1) - _Ev(0)) / Constant::BOLTZMAN / _T);
 	_Cvv << 0, C01, C10, 0;

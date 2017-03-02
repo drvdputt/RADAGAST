@@ -11,11 +11,14 @@ public:
 	// of the constructor.
 	TwoLevel(const std::vector<double>& frequencyv);
 
-	// Calculates the level populations for a certain electron temperature and isrf. When ionization comes into play,
+	// Calculates the level populations for a certain electron temperature and isrf.
+	// The number of electrons and protons is needed to determine the collisional transition rates.
+	// When ionization comes into play,
 	// the recombination and ionization rates will act as source and sink terms for the levels. Therefore,
 	// external sources or sink rates can be passed using vectors containing one number for each level.
-	void doLevels(double n, double nc, double T, const std::vector<double>& specificIntensity,
-			const std::vector<double>& source, const std::vector<double>& sink);
+	void solveBalance(double n, double ne, double np, double T,
+			const std::vector<double>& specificIntensity, const std::vector<double>& source,
+			const std::vector<double>& sink);
 
 	// Useful for the thermal balance. Is much faster than the calculation of the full emission spectrum.
 	double emission(size_t upper, size_t lower) const;
@@ -63,13 +66,14 @@ private:
 	Eigen::Matrix2d _Avv;
 
 	//----------------------------------------------------------
-	// To be set/calculated at every iteration
+	// To be set/calculated at every invocation of the balance calculation
 	//----------------------------------------------------------
 	// (i.e. everything that can change during the simulation / depends on the cell)
 	// Total density
 	double _n;
-	// Density of collision partners (in this simple model, all partners are treated the same)
-	double _nc;
+	// Density of collision partners, in this case electrons and protons
+	double _ne;
+	double _np;
 	// Electron temperature
 	double _T;
 	// Line-averaged intensity for each pair of levels (line shape is temperature dependent!)
@@ -78,7 +82,7 @@ private:
 	Eigen::Matrix2d _Cvv;
 
 	//-------------------------------------------------
-	// Level densities (to be calculated in doLevels())
+	// Level densities (to be calculated)
 	//-------------------------------------------------
 	Eigen::Vector2d _nv;
 };
