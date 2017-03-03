@@ -97,12 +97,24 @@ std::vector<double> TwoLevel::opacityv() const
 	return std::vector<double>(result.data(), result.data() + result.size());
 }
 
+std::vector<double> TwoLevel::scatteringOpacityv() const
+{
+	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
+	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
+			* _Avv(1, 0);
+	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
+	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
+			* radiativeDecayFraction(1, 0);
+	return std::vector<double>(result.data(), result.data() + result.size());
+}
+
 Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 {
 	double nu0 = (_Ev(upper) - _Ev(lower)) / Constant::PLANCK;
 
 	double decayRate = _Avv(upper, lower) + _Cvv(upper, lower) // decay rate of top level
 			+ _Cvv(lower, upper); // decay rate of bottom level
+			// (stimulated emission doesn't count)
 
 	double thermalVelocity = std::sqrt(Constant::BOLTZMAN * _T / Constant::HMASS_CGS);
 
@@ -124,6 +136,11 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 			std::vector<double>(profile.data(), profile.data() + profile.size()));
 	cout << "line profile norm = " << norm << endl;
 	return profile / norm;
+}
+
+double TwoLevel::radiativeDecayFraction(size_t upper, size_t lower) const
+{
+	return _Avv(upper, lower) / (_Avv.row(upper).sum() + _BPvv.row(upper).sum() + _Cvv.row(upper).sum());
 }
 
 void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& specificIntensity)

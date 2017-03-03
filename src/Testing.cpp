@@ -1,5 +1,4 @@
 #include "Constants.h"
-#include "GasSpecies.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "Testing.h"
@@ -8,6 +7,8 @@
 #include <ios>
 #include <iostream>
 #include <fstream>
+
+#include "HydrogenCalculator.h"
 #include "TemplatedUtils.h"
 
 using namespace std;
@@ -190,7 +191,7 @@ void Testing::testGasSpecies()
 
 	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
 
-	GasSpecies gs(frequencyv);
+	HydrogenCalculator gs(frequencyv);
 	gs.solveBalance(n, expectedTemperature, specificIntensity);
 
 	const vector<double>& lumv = gs.emissivityv();
