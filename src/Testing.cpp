@@ -6,10 +6,12 @@
 
 #include <ios>
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 #include "HydrogenCalculator.h"
 #include "TemplatedUtils.h"
+#include "PhotoelectricHeating.h"
 
 using namespace std;
 
@@ -176,8 +178,7 @@ void Testing::testGasSpecies()
 	{ Constant::LIGHT * 82258.9191133 };
 	vector<double> decayRatev =
 	{ 6.2649e+08 };
-	double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS)
-			/ Constant::LIGHT;
+	double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) / Constant::LIGHT;
 	vector<double> lineWidthv;
 	lineWidthv.reserve(lineFreqv.size());
 	for (size_t l = 0; l < lineFreqv.size(); l++)
@@ -191,30 +192,56 @@ void Testing::testGasSpecies()
 
 	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
 
-	HydrogenCalculator gs(frequencyv);
-	gs.solveBalance(n, expectedTemperature, specificIntensity);
+	HydrogenCalculator hc(frequencyv);
+	hc.solveBalance(n, expectedTemperature, specificIntensity);
 
-	const vector<double>& lumv = gs.emissivityv();
-	const vector<double>& opv = gs.opacityv();
+	const vector<double>& lumv = hc.emissivityv();
+	const vector<double>& opv = hc.opacityv();
+	const vector<double>& scav = hc.scatteredv();
 
 	cout << "Integrated emissivity " << NumUtils::integrate<double>(frequencyv, lumv) << endl;
 
-	ofstream em_out, op_out;
-	em_out.open("/Users/drvdputt/GasModule/run/emission.dat");
-	op_out.open("/Users/drvdputt/GasModule/run/opacity.dat");
+	ofstream out;
+	char tab = '\t';
+	out.open("/Users/drvdputt/GasModule/run/opticalProperties.dat");
 	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
 		double freq = frequencyv[iFreq];
 		//double wav = Constant::LIGHT / freq;
-		em_out.precision(9);
-		em_out << scientific << freq << '\t' << lumv[iFreq] << endl;
-		op_out.precision(9);
-		op_out << scientific << freq << '\t' << opv[iFreq] << endl;
+		out.precision(9);
+		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab << scav[iFreq]
+				<< tab << lumv[iFreq] - scav[iFreq] << endl;
 	}
-	em_out.close();
-	op_out.close();
+	out.close();
 
 //	cout << "----------------------------------" << endl;
 //	cout << "plotting heating curve..." << endl;
-//	gs.testHeatingCurve();
+//	hc.testHeatingCurve();
+}
+
+void Testing::testPhotoelectricHeating()
+{
+	PhotoelectricHeatingRecipe phr;
+	double T = 1000;
+	vector<double> G0values;
+	if (T == 1000)
+	{
+		G0values =
+		{ 2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2 };
+	}
+	if (T == 100)
+	{
+		G0values =
+		{ .75e-1, .75e0, .75e1, .75e2, .75e3};
+	}
+
+	phr.setGasTemperature(T);
+	for (double G0 : G0values)
+	{
+		phr.setG0(G0);
+		stringstream filename;
+		filename << "/Users/drvdputt/GasModule/run/photoelectricHeatingG" << setprecision(4)
+				<< scientific << G0 << ".dat";
+		phr.heatingRateTest(filename.str());
+	}
 }

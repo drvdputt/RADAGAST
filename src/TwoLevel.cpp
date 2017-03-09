@@ -78,7 +78,7 @@ double TwoLevel::emission(size_t upper, size_t lower) const
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
 
-std::vector<double> TwoLevel::emissivityv() const
+std::vector<double> TwoLevel::totalEmissivityv() const
 {
 	// There is only one line for now
 	double lineIntensity = emission(1, 0);
@@ -87,7 +87,7 @@ std::vector<double> TwoLevel::emissivityv() const
 	return resultv;
 }
 
-std::vector<double> TwoLevel::opacityv() const
+std::vector<double> TwoLevel::totalOpacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
@@ -105,6 +105,17 @@ std::vector<double> TwoLevel::scatteringOpacityv() const
 	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
 	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
 			* radiativeDecayFraction(1, 0);
+	return std::vector<double>(result.data(), result.data() + result.size());
+}
+
+std::vector<double> TwoLevel::absorptionOpacityv() const
+{
+	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
+	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
+			* _Avv(1, 0);
+	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
+	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
+			* (1 - radiativeDecayFraction(1, 0));
 	return std::vector<double>(result.data(), result.data() + result.size());
 }
 

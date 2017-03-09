@@ -14,6 +14,8 @@ std::vector<double> freqToWavSpecificIntensity(const std::vector<double>& freque
 
 void testGasSpecies();
 void testIonizationCrossSection();
+
+void testPhotoelectricHeating();
 }
 
 #endif

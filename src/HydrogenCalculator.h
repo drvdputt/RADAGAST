@@ -25,6 +25,8 @@ public:
 	// such as resonant scattering.
 	// The absorption opacity equals the total opacity minus this value.
 	std::vector<double> scatteringOpacityv() const;
+	// The amount of radiation scattered away by the scattering approach (in the same units as the emissivity)
+	std::vector<double> scatteredv() const;
 
 	// The total bolometric emission, in erg / s / cm^3, obtained by integrating the emissivity.
 	double emission() const;

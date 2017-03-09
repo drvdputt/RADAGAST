@@ -8,12 +8,12 @@
 int main()
 
 {
-	//  printf("%f", Photoelectric::yieldFunctionTest());
-	//Photoelectric::heatingRateTest("/Users/drvdputt/GasModule/run/rateTest.dat");
-	//  printf("%f", Photoelectric::chargeBalanceTest());
+	//  printf("%f", PhotoelectricHeatingRecipe::yieldFunctionTest());
+	//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
 	//  printf("%f\n", Ionization::testIonization());
 
-	Testing::testGasSpecies();
+	//Testing::testGasSpecies();
 	//Testing::testIonizationCrossSection();
+	Testing::testPhotoelectricHeating();
 	return 0;
 }
