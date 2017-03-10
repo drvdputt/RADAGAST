@@ -12,8 +12,8 @@ int main()
 	//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
 	//  printf("%f\n", Ionization::testIonization());
 
-	//Testing::testGasSpecies();
+	Testing::testHydrogenCalculator();
 	//Testing::testIonizationCrossSection();
-	Testing::testPhotoelectricHeating();
+	//Testing::testPhotoelectricHeating();
 	return 0;
 }

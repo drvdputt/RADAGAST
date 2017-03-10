@@ -1,6 +1,7 @@
 CPP=g++
 
 INCDIR=./include
+EIGENDIR=./eigen3
 
 SRCDIR=./src
 SOURCES=$(wildcard $(SRCDIR)/*cpp)
@@ -10,7 +11,7 @@ OBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
 
 PROGRAM=../bin/test
 
-CPPFLAGS=-I$(INCDIR) -O3 -std=c++11 -Wall -Wextra -Werror=return-type
+CPPFLAGS=-I$(INCDIR) -I$(EIGENDIR) -O3 -std=c++11 -Wall -Wextra -Werror=return-type
 
 all: $(PROGRAM)
 
