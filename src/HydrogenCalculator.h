@@ -29,12 +29,27 @@ public:
 	// Should provide a fast implementation to obtain the optical properties. The implementation will depend on what is stored
 	// in a GasState object. A good balance between the size of the GasState objects and the computation time needed for the
 	// optical properties needs to be found.
-	double emissivity(GasState& gs, size_t iFreq) {return gs._emissivityv[iFreq];}
-	double opacity(GasState& gs, size_t iFreq) {return gs._opacityv[iFreq];}
-	double scatteringOpacity(GasState& gs, size_t iFreq) {return gs._scatteringOpacityv[iFreq];};
+	double emissivity(const GasState& gs, size_t iFreq)
+	{
+		return gs._emissivityv[iFreq];
+	}
+	double opacity(const GasState& gs, size_t iFreq)
+	{
+		return gs._opacityv[iFreq];
+	}
+	double scatteringOpacity(const GasState& gs, size_t iFreq)
+	{
+		return gs._scatteringOpacityv[iFreq];
+	}
 
 	// Finds a new balance, using information stored in the GasState to speed up the calculation
-	void solveBalance(GasState&, double n, double Tinit, const std::vector<double>& specificIntensity);
+	void solveBalance(const GasState&, double n, double Tinit,
+			const std::vector<double>& specificIntensity);
+
+	// Used by the balance solver to calculate the ionization fraction and level populations for a certain electron temperature, under
+	// influence of a certain ISRF.
+	// Can be used by the client to manually set the temperature and calculate some properties which can be used as an initial guess.
+	void solveInitialGuess(double n, double T, const std::vector<double>& specificIntensityv);
 
 private:
 	// Give this testing function access to private members
@@ -72,7 +87,6 @@ private:
 
 	void testHeatingCurve();
 
-	// Calculates the ionization fraction and level populations for a certain electron temperature and isrf
 	void calculateDensities(double T);
 
 	// Calculate the emission coefficient for the optical recombination continuum, interpolated from data.

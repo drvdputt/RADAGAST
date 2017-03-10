@@ -1,13 +1,11 @@
 #ifndef _GASSTATE_H_
 #define _GASSTATE_H_
 
-class HydrogenCalculator;
-
 #include <vector>
 
 class GasState
 {
-	friend HydrogenCalculator;
+	friend class HydrogenCalculator;
 private:
 	// Private constructor, only to be used by friended class which acts as a factory and can fill in all the members
 	GasState(const std::vector<double>& frequencyv, const std::vector<double>& emissivityv,
