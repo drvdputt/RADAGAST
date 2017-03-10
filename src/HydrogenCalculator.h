@@ -1,6 +1,8 @@
 #ifndef _GASSPECIES_H_
 #define _GASSPECIES_H_
 
+#include "GasState.h"
+#include "Testing.h"
 #include "TwoLevel.h"
 
 #include <vector>
@@ -16,6 +18,27 @@ public:
 	// a vector containing the radiation field in specific intensity per frequency units (on the same frequency grid
 	// as the one provided at construction).
 	void solveBalance(double n, double Tinit, const std::vector<double>& specificIntensity);
+
+	// Exports the state of the gas as a compact, opaque object. Codes which make use of the gas module can use these objects to
+	// store a number of gas states. They can repeatedly give objects of this type to a single instance of the HydrogenCalculator
+	// to calculate any optical properties on-the-fly. The exact contents of a GasState and the way the optical properties are
+	// calculated (derived from densities vs caching them for example) are entirely up to the implementations of the functions
+	// below and the definition in GasState.h.
+	GasState exportState() const;
+
+	// Should provide a fast implementation to obtain the optical properties. The implementation will depend on what is stored
+	// in a GasState object. A good balance between the size of the GasState objects and the computation time needed for the
+	// optical properties needs to be found.
+	double emissivity(GasState& gs, size_t iFreq) {return gs._emissivityv[iFreq];}
+	double opacity(GasState& gs, size_t iFreq) {return gs._opacityv[iFreq];}
+	double scatteringOpacity(GasState& gs, size_t iFreq) {return gs._scatteringOpacityv[iFreq];};
+
+	// Finds a new balance, using information stored in the GasState to speed up the calculation
+	void solveBalance(GasState&, double n, double Tinit, const std::vector<double>& specificIntensity);
+
+private:
+	// Give this testing function access to private members
+	friend void Testing::testHydrogenCalculator();
 
 	// The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz.
 	std::vector<double> emissivityv() const;
@@ -49,7 +72,6 @@ public:
 
 	void testHeatingCurve();
 
-private:
 	// Calculates the ionization fraction and level populations for a certain electron temperature and isrf
 	void calculateDensities(double T);
 
@@ -58,6 +80,7 @@ private:
 	// The emissivity ([power][density]/[frequency interval]) can be obtained by multiplying this value with ne_np
 	std::vector<double> recombinationEmissionCoeffv(double T) const;
 
+private:
 	// To be set in constructor
 	const std::vector<double>& _frequencyv;
 

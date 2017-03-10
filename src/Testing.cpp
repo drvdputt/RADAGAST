@@ -163,7 +163,7 @@ void Testing::testIonizationCrossSection()
 	out.close();
 }
 
-void Testing::testGasSpecies()
+void Testing::testHydrogenCalculator()
 {
 	double Tc = 30000;
 	double G0 = 1e0;

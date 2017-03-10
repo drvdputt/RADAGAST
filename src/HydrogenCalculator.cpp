@@ -135,6 +135,11 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 	calculateDensities(pow(10., logTfinal));
 }
 
+GasState HydrogenCalculator::exportState() const
+{
+	return GasState(_frequencyv, emissivityv(), opacityv(), scatteringOpacityv());
+}
+
 vector<double> HydrogenCalculator::emissivityv() const
 {
 	vector<double> result;

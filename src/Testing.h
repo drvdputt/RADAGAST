@@ -12,7 +12,7 @@ std::vector<double> generateSpecificIntensity(const std::vector<double>& frequen
 std::vector<double> freqToWavSpecificIntensity(const std::vector<double>& frequencyv,
 		const std::vector<double>& specificIntensity_nu);
 
-void testGasSpecies();
+void testHydrogenCalculator();
 void testIonizationCrossSection();
 
 void testPhotoelectricHeating();

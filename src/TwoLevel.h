@@ -80,6 +80,7 @@ private:
 	// To be set/calculated at every invocation of the balance calculation
 	//----------------------------------------------------------
 	// (i.e. everything that can change during the simulation / depends on the cell)
+
 	// Total density
 	double _n;
 	// Density of collision partners, in this case electrons and protons
