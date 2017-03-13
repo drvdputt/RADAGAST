@@ -19,7 +19,7 @@ vector<double> Testing::generateFrequencyGrid(size_t nFreq, double minFreq, doub
 {
 	vector<double> frequencyv(nFreq);
 	double freqStepFactor = std::pow(maxFreq / minFreq, 1. / (nFreq - 1));
-	float freq = minFreq;
+	double freq = minFreq;
 	for (size_t n = 0; n < nFreq; n++)
 	{
 		frequencyv[n] = freq;
@@ -166,7 +166,7 @@ void Testing::testIonizationCrossSection()
 void Testing::testHydrogenCalculator()
 {
 	double Tc = 30000;
-	double G0 = 1e0;
+	double G0 = 0e0;
 	double n = 1e0;
 	double expectedTemperature = 10000;
 

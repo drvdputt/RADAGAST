@@ -23,8 +23,8 @@ double SpecialFunctions::voigt(double a, double u)
     x = xx / sigma / 1.41421356;
     y = lg / 2 / sigma / 1.41421356;
     double r0, r1;
-    r0 = 1.51 * exp(1.144 * r);
-    r1 = 1.60 * exp(0.554 * r);
+    r0 = 1.51 * std::exp(1.144 * r);
+    r1 = 1.60 * std::exp(0.554 * r);
 
     const double rrtpi = 0.56418958;
     double y0, y0py0, y0q;
@@ -151,7 +151,7 @@ double SpecialFunctions::voigt(double a, double u)
                     + s[j] * yf * xm[j]) / (mq[j]+y0q) + (c[j] * (pq[j] * pf[j] - y0 * yp[j])
                     - s[j] * yf * xp[j]) / (pq[j]+y0q);
             }
-            k = y * k + exp( -xq );
+            k = y * k + std::exp( -xq );
         }
     }
     return k;

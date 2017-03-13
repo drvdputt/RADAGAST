@@ -36,7 +36,7 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 }
 
 template<typename T>
-void sorted_insert(vector<T>& vec, T elem)
+void sorted_insert(std::vector<T>& vec, T elem)
 {
 	vec.insert(upper_bound(vec.begin(), vec.end(), elem), elem);
 }

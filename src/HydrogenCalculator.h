@@ -1,11 +1,14 @@
 #ifndef _GASSPECIES_H_
 #define _GASSPECIES_H_
 
+#define VERBOSE
+
 #include "GasState.h"
 #include "Testing.h"
-#include "TwoLevel.h"
 
 #include <vector>
+
+class TwoLevel;
 
 class HydrogenCalculator
 {
@@ -13,6 +16,8 @@ public:
 	// Creates an object which can calculate the NLTE state, of a pure (ionized and atomic) hydrogen gas
 	// and the resulting opacity and emission on the provided frequency grid.
 	HydrogenCalculator(const std::vector<double>& frequencyv);
+
+	~HydrogenCalculator();
 
 	// Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature guess, and
 	// a vector containing the radiation field in specific intensity per frequency units (on the same frequency grid
@@ -25,6 +30,7 @@ public:
 	// calculated (derived from densities vs caching them for example) are entirely up to the implementations of the functions
 	// below and the definition in GasState.h.
 	GasState exportState() const;
+	GasState zeroState() const;
 
 	// Should provide a fast implementation to obtain the optical properties. The implementation will depend on what is stored
 	// in a GasState object. A good balance between the size of the GasState objects and the computation time needed for the
@@ -41,7 +47,10 @@ public:
 	{
 		return gs._scatteringOpacityv[iFreq];
 	}
-
+	double absorptionOpacity(const GasState& gs, size_t iFreq)
+	{
+		return gs._opacityv[iFreq] - gs._scatteringOpacityv[iFreq];
+	}
 	// Finds a new balance, using information stored in the GasState to speed up the calculation
 	void solveBalance(const GasState&, double n, double Tinit,
 			const std::vector<double>& specificIntensity);
@@ -115,7 +124,7 @@ private:
 	// Results of solveBalance()
 	double _T;
 	double _ionizedFraction;
-	TwoLevel _levels;
+	std::unique_ptr<TwoLevel> _levels;
 };
 
 #endif /* _GASSPECIES_H_ */

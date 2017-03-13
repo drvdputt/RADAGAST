@@ -7,7 +7,10 @@
 #include <vector>
 #include <algorithm>
 
-//#define PRINT_MATRICES
+#define PRINT_MATRICES
+#define VERBOSE
+
+using namespace std;
 
 namespace
 {
@@ -46,17 +49,14 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 	if (source.size() != 2 || sink.size() != 2)
 		throw range_error("Source and/or sink term vector(s) of wrong size");
 
+
+
 	_n = n;
 	_ne = ne;
 	_np = np;
 	_T = T;
 
-	// shortcut, in case of full ionization
-	if (_n <= 0.)
-	{
-		_nv = Eigen::Vector2d::Zero();
-	}
-	else
+	if (_n > 0)
 	{
 		// Calculate BijPij (needs to be redone at each temperature because the line profile can change)
 		prepareAbsorptionMatrix(specificIntensity);
@@ -68,8 +68,12 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 		cout << "BPij" << endl << _BPvv << endl << endl;
 		cout << "Cij" << endl << _Cvv << endl << endl;
 #endif
-// Calculate Fij and bi and solve F.n = b
+		// Calculate Fij and bi and solve F.n = b
 		solveRateEquations(Eigen::Vector2d(source.data()), Eigen::Vector2d(sink.data()), 0);
+	}
+	else
+	{
+		_nv = Eigen::Vector2d::Zero();
 	}
 }
 
@@ -145,7 +149,9 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	}
 	double norm = NumUtils::integrate<double>(_frequencyv,
 			std::vector<double>(profile.data(), profile.data() + profile.size()));
+#ifdef VERBOSE
 	cout << "line profile norm = " << norm << endl;
+#endif
 	return profile / norm;
 }
 
@@ -258,10 +264,9 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	cout << "The relative error is: " << relative_error << endl;
 #endif
 
-// use explicit formula when this row has very large coefficients (only works if chooseConsvEq = 0)
-// otherwise there can be problems when subtracting the doubles from each other
+// use explicit formula when the solution is clearly wrong (only works if chooseConsvEq = 0)
 // not sure how I will solve this for more general systems
-	if (abs(max(Mvv(1, 0), Mvv(1, 1))) > 1e15)
+	if (_nv(1) < 0)
 	{
 		_nv(0) = (-Mvv(1, 1) * _n - sinkTerm(1)) / (-Mvv(1, 1) + Mvv(1, 0));
 		_nv(1) = _n - _nv(0);

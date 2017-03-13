@@ -11,12 +11,12 @@
 #include <sstream>
 #include <vector>
 #include "TemplatedUtils.h"
-
+#include "TwoLevel.h"
 using namespace std;
 
 HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
 		_frequencyv(frequencyv), _n(0), _p_specificIntensityv(nullptr), _T(0), _ionizedFraction(0), _levels(
-				frequencyv)
+				std::make_unique<TwoLevel>(frequencyv))
 {
 	// Read the free-bound continuum data from Ercolano and Storey (2006)
 	// Adapted from NEBULAR source code by M. Schirmer (2016)
@@ -100,39 +100,54 @@ HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
 #endif /*PRINT_CONTINUUM_DATA*/
 }
 
+HydrogenCalculator::~HydrogenCalculator() = default;
+
 void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<double>& specificIntensity)
 {
-	const double Tmax = 1000000.;
-	const double Tmin = 10;
-	const double logTmax = log10(Tmax);
-	const double logTmin = log10(Tmin);
-
 	_n = n;
 	_p_specificIntensityv = &specificIntensity;
 
-	// Do a binary search in logT space
-	double logTinit = log10(Tinit);
+	double isrf = NumUtils::integrate<double>(_frequencyv, specificIntensity);
 
-	// Lambda function that will be used by the search algorithm.
-	// The state of the system will be updated every time the algorithm calls this function.
-	// The return value indicates whether the temperature should increase (net absorption)
-	// or decrease (net emission).
-	int counter;
-	function<int(double)> evaluateBalance = [this, &counter] (double logT) -> int
+	cout << "Solving balance under isrf of " << isrf << " erg / s / cm2 / sr" << endl;
+
+	if (_n > 0)
 	{
-		counter++;
-		calculateDensities(pow(10., logT));
-		double netPowerIn = absorption() - emission();
-		cout << "Cycle " << counter << ": logT = " << logT << "; netHeating = "
-		<< netPowerIn << endl << endl;
-		return (netPowerIn > 0) - (netPowerIn < 0);
-	};
+		const double Tmax = 1000000.;
+		const double Tmin = 10;
+		const double logTmax = log10(Tmax);
+		const double logTmin = log10(Tmin);
 
-	double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit, 4.e-3,
-			logTmax, logTmin);
+		double logTinit = log10(Tinit);
 
-	// Evaluate the densities for one last time, using the final temperature
-	calculateDensities(pow(10., logTfinal));
+		// Lambda function that will be used by the search algorithm.
+		// The state of the system will be updated every time the algorithm calls this function.
+		// The return value indicates whether the temperature should increase (net absorption)
+		// or decrease (net emission).
+		int counter;
+		function<int(double)> evaluateBalance = [this, &counter] (double logT) -> int
+		{
+			counter++;
+			calculateDensities(pow(10., logT));
+			double netPowerIn = absorption() - emission();
+#ifdef VERBOSE
+			cout << "Cycle " << counter << ": logT = " << logT << "; netHeating = "
+			<< netPowerIn << endl << endl;
+#endif
+			return (netPowerIn > 0) - (netPowerIn < 0);
+		};
+
+		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit, 4.e-3,
+				logTmax, logTmin);
+
+		// Evaluate the densities for one last time, using the final temperature
+		calculateDensities(pow(10., logTfinal));
+		cout << "Gas temperature is " << pow(10., logTfinal) << endl;
+	}
+	else
+	{
+		calculateDensities(0);
+	}
 }
 
 void HydrogenCalculator::solveInitialGuess(double n, double T, const vector<double>& p_specificIntensityv)
@@ -147,10 +162,16 @@ GasState HydrogenCalculator::exportState() const
 	return GasState(_frequencyv, emissivityv(), opacityv(), scatteringOpacityv());
 }
 
+GasState HydrogenCalculator::zeroState() const
+{
+	vector<double> zerov(_frequencyv.size(), 0);
+	return GasState(_frequencyv, zerov, zerov, zerov);
+}
+
 vector<double> HydrogenCalculator::emissivityv() const
 {
 	vector<double> result;
-	const vector<double>& lineEmv = _levels.totalEmissivityv();
+	const vector<double>& lineEmv = _levels->totalEmissivityv();
 	const vector<double>& contCoeffv = recombinationEmissionCoeffv(_T);
 	for (size_t i = 0; i < _frequencyv.size(); i++)
 	{
@@ -164,7 +185,7 @@ vector<double> HydrogenCalculator::opacityv() const
 {
 	vector<double> result;
 	result.reserve(_frequencyv.size());
-	const vector<double>& lineOp = _levels.totalOpacityv();
+	const vector<double>& lineOp = _levels->totalOpacityv();
 	for (size_t i = 0; i < _frequencyv.size(); i++)
 	{
 		double ionizOp_i = _n * (1. - _ionizedFraction) * Ionization::crossSection(_frequencyv[i]);
@@ -175,13 +196,13 @@ vector<double> HydrogenCalculator::opacityv() const
 
 vector<double> HydrogenCalculator::scatteringOpacityv() const
 {
-	return _levels.scatteringOpacityv();
+	return _levels->scatteringOpacityv();
 }
 
 vector<double> HydrogenCalculator::scatteredv() const
 {
 	// only the line can scatter
-	const vector<double>& opv = _levels.scatteringOpacityv();
+	const vector<double>& opv = _levels->scatteringOpacityv();
 	vector<double> intensityOpacityv;
 	intensityOpacityv.reserve(opv.size());
 	auto op = opv.begin();
@@ -200,7 +221,9 @@ double HydrogenCalculator::emission() const
 {
 	double lineEm = lineEmission();
 	double contEm = continuumEmission();
+#ifdef VERBOSE
 	cout << "emission: line / cont = " << lineEm << " / " << contEm << endl;
+#endif
 	return lineEm + contEm;
 }
 
@@ -208,19 +231,21 @@ double HydrogenCalculator::absorption() const
 {
 	double lineAbs = lineAbsorption();
 	double contAbs = continuumAbsorption();
+#ifdef VERBOSE
 	cout << "absorption: line / cont = " << lineAbs << " / " << contAbs << endl;
+#endif
 	return lineAbs + contAbs;
 }
 
 double HydrogenCalculator::lineEmission() const
 {
-	const vector<double>& lineEmv = _levels.totalEmissivityv();
+	const vector<double>& lineEmv = _levels->totalEmissivityv();
 	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, lineEmv);
 }
 
 double HydrogenCalculator::lineAbsorption() const
 {
-	const vector<double>& opv = _levels.totalOpacityv();
+	const vector<double>& opv = _levels->totalOpacityv();
 	vector<double> intensityOpacityv;
 	intensityOpacityv.reserve(opv.size());
 	auto op = opv.begin();
@@ -294,38 +319,49 @@ void HydrogenCalculator::testHeatingCurve()
 void HydrogenCalculator::calculateDensities(double T)
 {
 	_T = T;
-	cout << "Calculating state for T = " << T << "K" << endl;
+	if (_n > 0)
+	{
+#ifdef VERBOSE
+		cout << "Calculating state for T = " << T << "K" << endl;
+#endif
 
-	_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, *_p_specificIntensityv);
+		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, *_p_specificIntensityv);
+#ifdef VERBOSE
+		cout << "Ionized fraction = " << _ionizedFraction << endl;
+#endif
 
-	cout << "Ionized fraction = " << _ionizedFraction << endl;
+		double nAtomic = _n * (1 - _ionizedFraction);
 
-	double nAtomic = _n * (1 - _ionizedFraction);
+		double np = _n * _ionizedFraction;
+		double ne = np;
+		double alphaTotal = Ionization::recombinationRate(T);
 
-	double np = _n * _ionizedFraction;
-	double ne = np;
-	double alphaTotal = Ionization::recombinationRate(T);
+		// approximations from Draine's book, p 138, valid for 3000 to 30000 K
+		double T4 = T / 1.e4;
+		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
+		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+		//cout << "alphaGround " << alphaGround << " alpha2p " << alpha2p << endl;
 
-	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
-	double T4 = T / 1.e4;
-	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
-	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-	//cout << "alphaGround " << alphaGround << " alpha2p " << alpha2p << endl;
+		vector<double> sourcev =
+		{ ne * np * alphaGround, ne * np * alpha2p };
 
-	vector<double> sourcev =
-	{ ne * np * alphaGround, ne * np * alpha2p };
+		// The ionization rate calculation makes no distinction between the levels.
+		// When the upper level population is small, and its decay rate is large,
+		// the second term doesn't really matter.
+		// Therefore, we choose the sink to be the same for each level. Moreover,
+		// total source = total sink
+		// so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1
+		double sink = ne * np * alphaTotal / nAtomic;
+		vector<double> sinkv =
+		{ sink, sink };
 
-	// The ionization rate calculation makes no distinction between the levels.
-	// When the upper level population is small, and its decay rate is large,
-	// the second term doesn't really matter.
-	// Therefore, we choose the sink to be the same for each level. Moreover,
-	// total source = total sink
-	// so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1
-	double sink = ne * np * alphaTotal / nAtomic;
-	vector<double> sinkv =
-	{ sink, sink };
-
-	_levels.solveBalance(nAtomic, ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
+		_levels->solveBalance(nAtomic, ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
+	}
+	else
+	{
+		_ionizedFraction = 0;
+		_levels->solveBalance(0, 0, 0, 0, *_p_specificIntensityv, {0, 0}, {0, 0});
+	}
 }
 
 vector<double> HydrogenCalculator::recombinationEmissionCoeffv(double T) const
@@ -334,8 +370,10 @@ vector<double> HydrogenCalculator::recombinationEmissionCoeffv(double T) const
 
 	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
 	{
+#ifdef VERBOSE
 		cout << "Warning: temperature " << T << "K is outside of data range for free-bound continuum"
 				<< endl;
+#endif
 		return vector<double>(_frequencyv.size(), 0.);
 	}
 

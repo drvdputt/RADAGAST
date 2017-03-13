@@ -2,6 +2,8 @@
 
 #include "IonizationBalance.h"
 
+using namespace std;
+
 double Ionization::ionizedFraction(double nH, double T, const vector<double>& frequencyv,
 		const vector<double>& specificIntensityv)
 {

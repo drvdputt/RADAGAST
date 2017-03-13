@@ -12,7 +12,7 @@
 
 #include "Constants.h"
 
-using namespace std;
+//using namespace std;
 
 // needed as apples don't define unit properly (or at least like linux)
 #ifdef __APPLE__
@@ -132,16 +132,16 @@ template<typename T> inline T line(T x1, T x2, T y1, T y2, T x)
 {
 	return ((y2 - y1) / (x2 - x1) * (x - x1) + y1);
 }
-template<typename T> inline int index(T val, const vector<T>&vect)
+template<typename T> inline int index(T val, const std::vector<T>&vect)
 {
-	typename vector<T>::const_iterator idx;
+	typename std::vector<T>::const_iterator idx;
 	idx = std::lower_bound(vect.begin(), vect.end(), val);
 	return distance(vect.begin(), idx);
 }
-template<typename T> inline int rindex(T val, const vector<T>&vect)
+template<typename T> inline int rindex(T val, const std::vector<T>&vect)
 {
-	typename vector<T>::const_iterator idx;
-	idx = std::lower_bound(vect.begin(), vect.end(), val, greater<T>());
+	typename std::vector<T>::const_iterator idx;
+	idx = std::lower_bound(vect.begin(), vect.end(), val, std::greater<T>());
 	return distance(vect.begin(), idx);
 }
 // Some extrapolators.
@@ -166,37 +166,41 @@ template<typename T> inline T frootextra(T & val1, T & val2, T & val3)
 }
 
 // Functions with 'source'
-template<typename T> int maxID(vector<T>& vect);
-template<typename T> vector<int> sortID(vector<T>&vect);
-template<typename T> vector<int> sortID_src(vector<T>&vect);
-template<typename T> void sortIndexOnVector(vector<T> & vect, vector<int> & index, int beg, int end);
-template<typename T, typename T1, typename T2> T integrate(const vector<T1>& x, const vector<T2>& y);
-template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, const vector<T>& u, int LoEx =
-		2, int HiEx = 2);
-template<typename T> void interpolr(vector<T>& v, vector<T>& x, vector<T>& u, int LoEx = 2, int HiEx = 2);
-template<typename T, typename T1, typename T2> vector<T> bbodyCGS(T1 wave, vector<T2>& Temperature);
-template<typename T, typename T1, typename T2> vector<T> bbodyCGS(const vector<T1>& wave, T2 Temperature);
-template<class T, class T1, class T2, class T3> vector<T> prod_bbodyCGS(T1 wave, vector<T2>& Temperature,
-		vector<T3>& product);
-template<class T, class T1, class T2, class T3> vector<T> prod_bbodyCGS(vector<T1>& wave, T2 Temperature,
-		vector<T3>& product);
-template<class T, class T1, class T2, class T3> vector<T> add_bbodyCGS(T1 wave, vector<T2>& Temperature,
-		vector<T3>& add);
-template<class T, class T1, class T2, class T3> vector<T> add_bbodyCGS(vector<T1>& wave, T2 Temperature,
-		vector<T3>& add);
-template<typename T> string vtos(const T & value);
+template<typename T> int maxID(std::vector<T>& vect);
+template<typename T> std::vector<int> sortID(std::vector<T>&vect);
+template<typename T> std::vector<int> sortID_src(std::vector<T>&vect);
+template<typename T> void sortIndexOnvector(std::vector<T> & vect, std::vector<int> & index, int beg,
+		int end);
+template<typename T, typename T1, typename T2> T integrate(const std::vector<T1>& x,
+		const std::vector<T2>& y);
+template<typename T> std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x,
+		const std::vector<T>& u, int LoEx = 2, int HiEx = 2);
+template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx = 2,
+		int HiEx = 2);
+template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature);
+template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(const std::vector<T1>& wave,
+		T2 Temperature);
+template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(T1 wave,
+		std::vector<T2>& Temperature, std::vector<T3>& product);
+template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(std::vector<T1>& wave,
+		T2 Temperature, std::vector<T3>& product);
+template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(T1 wave,
+		std::vector<T2>& Temperature, std::vector<T3>& add);
+template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(std::vector<T1>& wave,
+		T2 Temperature, std::vector<T3>& add);
+template<typename T> std::string vtos(const T & value);
 template<typename T> class Matrix;
 template<typename T> class Cube;
 template<typename T> Matrix<T> mInvert(Matrix<T> A);
-template<typename T> vector<T> poly_fit(vector<T> x, vector<T> y, int ndegree, vector<T>& yfit,
-		vector<T>& sigma);
+template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree,
+		std::vector<T>& yfit, std::vector<T>& sigma);
 
 // ****************************************************************************
 // Function 'source' code.
 // ****************************************************************************
 
 // Simple "one-pass" algorithm for mean/variance.
-template<typename T> T stats(vector<T> & vect, T & var)
+template<typename T> T stats(std::vector<T> & vect, T & var)
 {
 	/*       T M0=vect[0]; */
 	/*       T Q0=0; */
@@ -236,21 +240,21 @@ template<typename T> T stats(vector<T> & vect, T & var)
 }
 // ****************************************************************************
 
-template<typename T> T sigma_clip(vector<T> & vect, T & hi_clip, T & lo_clip)
+template<typename T> T sigma_clip(std::vector<T> & vect, T & hi_clip, T & lo_clip)
 {
-	replace_if(vect.begin(), vect.end(), bind2nd(greater<T>(), hi_clip), NaN<T>());
-	replace_if(vect.begin(), vect.end(), bind1st(greater<T>(), lo_clip), NaN<T>());
-	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind2nd(greater<T>(),hi_clip)),vect.end()); */
-	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind1st(greater<T>(),lo_clip)),vect.end());  */
+	replace_if(vect.begin(), vect.end(), bind2nd(std::greater<T>(), hi_clip), NaN<T>());
+	replace_if(vect.begin(), vect.end(), bind1st(std::greater<T>(), lo_clip), NaN<T>());
+	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind2nd(std::greater<T>(),hi_clip)),vect.end()); */
+	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind1st(std::greater<T>(),lo_clip)),vect.end());  */
 }
 
 // "Clip" max/min values from a vector.  The nMax largest and nMin smalles values
 // are replaced with nans.
-template<typename T> void minmax_clip(vector<T> & vect, long nMin, long nMax)
+template<typename T> void minmax_clip(std::vector<T> & vect, long nMin, long nMax)
 {
 	if ((nMin + nMax) < vect.size())
 	{
-		typename vector<T>::iterator _it;
+		typename std::vector<T>::iterator _it;
 		for (long _i = 0; _i < nMin; ++_i)
 			*(min_element(vect.begin(), vect.end())) = NaN<T>();
 		for (long _i = 0; _i < nMax; ++_i)
@@ -259,12 +263,12 @@ template<typename T> void minmax_clip(vector<T> & vect, long nMin, long nMax)
 }
 
 // Get max element (index) of vector.
-template<typename T> int maxID(vector<T>& vect)
+template<typename T> int maxID(std::vector<T>& vect)
 {
 	//T theMax=-1e256;
 	int theMaxID = 0;
 	T theMax = vect[0];
-	typename vector<T>::iterator _it, _itb, _ite;
+	typename std::vector<T>::iterator _it, _itb, _ite;
 	_itb = vect.begin();
 	_ite = vect.end();
 	for (_it = _itb; _it != _ite; ++_it)
@@ -286,12 +290,12 @@ template<typename T> int maxID(vector<T>& vect)
 // ****************************************************************************
 // ****************************************************************************
 // Returns vector of indices that will sort provided vector
-template<typename T> vector<int> sortID(vector<T>&vect)
+template<typename T> std::vector<int> sortID(std::vector<T>&vect)
 {
 	int n = vect.size();
 	int i;
 	T a;
-	vector<int> retvect;
+	std::vector<int> retvect;
 	retvect.push_back(0);
 	for (int j = 1; j < n; j++)
 	{
@@ -310,19 +314,19 @@ template<typename T> vector<int> sortID(vector<T>&vect)
 }
 // ****************************************************************************
 
-template<typename T> void sortIndexOnVector(vector<T> & vect, vector<int> & index, int beg, int end)
+template<typename T> void sortIndexOnVector(std::vector<T> & vect, std::vector<int> & index, int beg, int end)
 {
 	int i;
 	T a;
 	for (int j = beg + 1; j < end; j++)
 	{
-		//cout << "assigning " << vect[index[j]] << " to a" << endl;
+		//std::cout << "assigning " << vect[index[j]] << " to a" <<  std::endl;
 		a = vect[index[j]];
 		i = j;
 		while (i > beg && vect[index[i - 1]] > a)
 		{
-			//cout << "Satisfied that " << vect[index[i-1]] << " is > " << a << endl;
-			//cout << "Swapping " << vect[index[i]] << " " << vect[index[i-1]] << endl;
+			//std::cout << "Satisfied that " << vect[index[i-1]] << " is > " << a <<  std::endl;
+			//std::cout << "Swapping " << vect[index[i]] << " " << vect[index[i-1]] <<  std::endl;
 			swap(index[i], index[i - 1]);
 			i--;
 		}
@@ -331,13 +335,13 @@ template<typename T> void sortIndexOnVector(vector<T> & vect, vector<int> & inde
 
 // ****************************************************************************
 // returns vector of indices AND Re-orders vector.
-template<typename T> vector<int> sortID_src(vector<T>&vect)
+template<typename T> std::vector<int> sortID_src(std::vector<T>&vect)
 {
 
 	int n = vect.size();
 	int i;
 	T a;
-	vector<int> retvect;
+	std::vector<int> retvect;
 	retvect.push_back(0);
 	//for (int j=0;j<n;j++) retvect.push_back(j);
 	for (int j = 1; j < n; j++)
@@ -359,11 +363,11 @@ template<typename T> vector<int> sortID_src(vector<T>&vect)
 
 // ****************************************************************************
 // Simple trapazoidal integration
-template<typename T, typename T1, typename T2> T integrate(const vector<T1>& x, const vector<T2>& y)
+template<typename T, typename T1, typename T2> T integrate(const std::vector<T1>& x, const std::vector<T2>& y)
 {
 	T answer = 0.0;
-	typename vector<T2>::const_iterator iy;
-	typename vector<T1>::const_iterator ix;
+	typename std::vector<T2>::const_iterator iy;
+	typename std::vector<T1>::const_iterator ix;
 	if (x.size() > 1)
 	{
 		iy = y.begin() + 1;
@@ -383,16 +387,16 @@ template<typename T, typename T1, typename T2> T integrate(const vector<T1>& x, 
 
 // ****************************************************************************
 // Interpolate - should be fast enough for small vectors.
-template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, const vector<T>& u, int LoEx,
-		int HiEx)
+template<typename T> std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x,
+		const std::vector<T>& u, int LoEx, int HiEx)
 {
 	if (v.size() != x.size())
 	{
-		cout << "Abscissa and ordinate lengths do not match in interpol" << endl;
+		std::cout << "Abscissa and ordinate lengths do not match in interpol" << std::endl;
 		throw "size mismatch";
 	}
-	//cout << "usize " << u.size() << " " << x.size() << endl;
-	vector<T> r(u.size());
+	//std::std::cout << "usize " << u.size() << " " << x.size() <<  std::endl;
+	std::vector<T> r(u.size());
 	T slp, extrslp1 = 0;
 	T intcpt, extrint1 = 0;
 	uint j;
@@ -403,13 +407,13 @@ template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, 
 		extrint1 = v[n] - extrslp1 * x[n];
 	}
 
-	/*       cout << "test" << endl; */
+	/*       std::cout << "test" <<  std::endl; */
 	for (uint i = 0; i < u.size(); ++i)
 	{
-		/* 	cout << i << endl; */
+		/* 	std::cout << i <<  std::endl; */
 		if (u[i] < x[0])
 		{ // extrapolate to left.
-			// 	  cout << "left" << endl;
+		  // 	  std::cout << "left" <<  std::endl;
 			switch (LoEx)
 			{
 			case -1:
@@ -426,7 +430,7 @@ template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, 
 		{
 			if (u[i] > x[x.size() - 1])
 			{ // extrapolate right.
-				// 	    cout << "right" << endl;
+			  // 	    std::cout << "right" <<  std::endl;
 				switch (HiEx)
 				{
 				case -1:
@@ -445,29 +449,29 @@ template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, 
 			}
 			else
 			{
-				/* 	    cout << "middle" << endl; */
-				/* 	    cout << i << " "; */
-				/* 	    cout.flush(); */
+				/* 	    std::cout << "middle" <<  std::endl; */
+				/* 	    std::cout << i << " "; */
+				/* 	    std::cout.flush(); */
 				j = 0;
-				/* 	    cout << endl; */
+				/* 	    std::cout <<  std::endl; */
 				while (u[i] > x[j])
 				{
-					/* 	      cout << "test1 = " << j << endl; */
+					/* 	      std::cout << "test1 = " << j <<  std::endl; */
 					j++;
 				}
 				// take care of the case where i=j=0
 				// seemed to work w/o this line on 32bit, but not 64bit (even unoptimized)
 				if (j == 0)
 					j++;
-				/* 	    cout << (u[i] > x[j]) << " " << (u[i] == x[j]) << " "; */
-				/* 	    cout << j << " "; */
-				/* 	    cout << u[i] << " " << x[j] << " "; */
-				/* 	    cout << u[i] - x[j] << " "; */
-				/* 	    cout.flush(); */
+				/* 	    std::cout << (u[i] > x[j]) << " " << (u[i] == x[j]) << " "; */
+				/* 	    std::cout << j << " "; */
+				/* 	    std::cout << u[i] << " " << x[j] << " "; */
+				/* 	    std::cout << u[i] - x[j] << " "; */
+				/* 	    std::cout.flush(); */
 				slp = (v[j] - v[j - 1]) / (x[j] - x[j - 1]);
-				/* 	    cout << slp << endl; */
+				/* 	    std::cout << slp <<  std::endl; */
 				intcpt = v[j] - slp * x[j];
-				/* 	    cout << intcpt << endl; */
+				/* 	    std::cout << intcpt <<  std::endl; */
 				r[i] = slp * u[i] + intcpt;
 			}
 		}
@@ -480,7 +484,7 @@ template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, 
 	/*       ir = r.begin(); */
 
 	/*       while ( *iul < *ix ) { // Extrapolate to the left. */
-	/* 	cout << "From the left " << *iul << " " << *ix << endl;  */
+	/* 	std::cout << "From the left " << *iul << " " << *ix <<  std::endl;  */
 	/* 	switch (LoEx) { */
 	/* 	case -1 :  // set to 0 */
 	/* 	  *ir = 0.0; */
@@ -518,7 +522,7 @@ template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, 
 	/*           *ir = slope*(*iuh)+intercept; */
 	/* 	  break; */
 	/* 	default : // Power law. */
-	/* 	  //cout << *iv << " " << *ix << " " << *iuh << " " << HiEx << endl; */
+	/* 	  //std::cout << *iv << " " << *ix << " " << *iuh << " " << HiEx <<  std::endl; */
 	/* 	  *ir = (*iv)*pow( (*iuh)/(*ix), HiEx); */
 	/* 	  break; */
 	/* 	} */
@@ -543,24 +547,25 @@ template<typename T> vector<T> interpol(const vector<T>& v, const vector<T>& x, 
 // *************************************************************************
 // Interpolate with replacement of input vector - ie. v comes out with
 // interpolated vector rather than the input vector.
-template<typename T> void interpolr(vector<T>& v, vector<T>& x, vector<T>& u, int LoEx, int HiEx)
+template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx,
+		int HiEx)
 {
 
 	if (v.size() != x.size())
 	{
-		cout << "Abscissa and ordinate lengths do not match in interpol" << endl;
+		std::cout << "Abscissa and ordinate lengths do not match in interpol" << std::endl;
 		throw "size mismatch";
 	}
 
 	// Copy input vector into a temporary vector and use v as the new vector.
-	vector<T> tmpv;
+	std::vector<T> tmpv;
 	copy(v.begin(), v.end(), back_inserter(tmpv));
 	v.erase(v.begin(), v.end());
 	v.resize(u.size());
 
 	//T slope,intercept;
 
-	typename vector<T>::iterator iu, iul, iuh, ir, ix, iv;
+	typename std::vector<T>::iterator iu, iul, iuh, ir, ix, iv;
 	// Iterators point to begining of vectors.
 	ix = x.begin();
 	iv = tmpv.begin();
@@ -569,7 +574,7 @@ template<typename T> void interpolr(vector<T>& v, vector<T>& x, vector<T>& u, in
 
 	while (*iul < *ix)
 	{ // Extrapolate to the left.
-		//cout << "EXTRAPOLATING LOW" << endl;
+	  //std::cout << "EXTRAPOLATING LOW" <<  std::endl;
 		switch (LoEx)
 		{
 		case -1:  // set to 0
@@ -631,28 +636,28 @@ template<typename T> void interpolr(vector<T>& v, vector<T>& x, vector<T>& u, in
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB as f(T) for a single wavelength
-template<typename T, typename T1, typename T2> vector<T> bbodyCGS(T1 wave, vector<T2>& Temperature)
+template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * static_cast<T>(wave));
-	/*       cout << Constant::PLANCKLIGHT << " " << Constant::BOLTZMAN << " " << wave << endl;  */
-	/*       cout << Constant::BOLTZMAN*wave << endl;  */
-	/*       cout << Constant::PLANCKLIGHT/(Constant::BOLTZMAN*wave) << endl; */
-	/*       cout << "C2 in bb: " << c2 << endl;  */
-	typename vector<T2>::iterator _itbeg, _itend, _it;
-	typename vector<T>::iterator _itBB;
-	//cout << "comp bb: " <<  c1 << " " << c2 << endl;
-	vector<T> theBB(Temperature.size());
+	/*       std::cout << Constant::PLANCKLIGHT << " " << Constant::BOLTZMAN << " " << wave <<  std::endl;  */
+	/*       std::cout << Constant::BOLTZMAN*wave <<  std::endl;  */
+	/*       std::cout << Constant::PLANCKLIGHT/(Constant::BOLTZMAN*wave) <<  std::endl; */
+	/*       std::cout << "C2 in bb: " << c2 <<  std::endl;  */
+	typename std::vector<T2>::iterator _itbeg, _itend, _it;
+	typename std::vector<T>::iterator _itBB;
+	//std::cout << "comp bb: " <<  c1 << " " << c2 <<  std::endl;
+	std::vector<T> theBB(Temperature.size());
 	_itBB = theBB.begin();
 	_itbeg = Temperature.begin();
 	_itend = Temperature.end();
 	for (_it = _itbeg; _it != _itend; ++_it, ++_itBB)
 	{
-		//cout << "INBB 1: " << static_cast<T1>(wave) << " " << c1/pow((static_cast<T1>(wave)),5) << endl;
-		//cout << (std::exp((c2/static_cast<T1>((*_it))))) << endl;
+		//std::cout << "INBB 1: " << static_cast<T1>(wave) << " " << c1/pow((static_cast<T1>(wave)),5) <<  std::endl;
+		//std::cout << (std::exp((c2/static_cast<T1>((*_it))))) <<  std::endl;
 		*_itBB = c1 / pow((wave), 5) * (1.0 / (std::exp(c2 / (*_it)) - 1.0));
-		//cout << "IN BB: " << wave << " " << *_it << " "<<  theBB[i] << endl;
+		//std::cout << "IN BB: " << wave << " " << *_it << " "<<  theBB[i] <<  std::endl;
 	}
 	return theBB;
 }
@@ -661,17 +666,17 @@ template<typename T, typename T1, typename T2> vector<T> bbodyCGS(T1 wave, vecto
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB multiplied by another vector as f(T) for a single wavelength
-template<class T, class T1, class T2, class T3> vector<T> prod_bbodyCGS(T1 wave, vector<T2>& Temperature,
-		vector<T3>& product)
+template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(T1 wave,
+		std::vector<T2>& Temperature, std::vector<T3>& product)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * static_cast<T>(wave));
-	typename vector<T2>::iterator _itbeg, _itend, _it;
-	typename vector<T3>::iterator _itp;
-	typename vector<T>::iterator _itBB;
+	typename std::vector<T2>::iterator _itbeg, _itend, _it;
+	typename std::vector<T3>::iterator _itp;
+	typename std::vector<T>::iterator _itBB;
 
-	vector<T> theBB(Temperature.size());
+	std::vector<T> theBB(Temperature.size());
 	_itBB = theBB.begin();
 	_itbeg = Temperature.begin();
 	_itend = Temperature.end();
@@ -686,17 +691,17 @@ template<class T, class T1, class T2, class T3> vector<T> prod_bbodyCGS(T1 wave,
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB summed with another vector as f(T) for a single wavelength
-template<class T, class T1, class T2, class T3> vector<T> add_bbodyCGS(T1 wave, vector<T2>& Temperature,
-		vector<T3>& add)
+template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(T1 wave,
+		std::vector<T2>& Temperature, std::vector<T3>& add)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * static_cast<T>(wave));
-	typename vector<T2>::iterator _itbeg, _itend, _it;
-	typename vector<T3>::iterator _ita;
-	typename vector<T>::iterator _itBB;
+	typename std::vector<T2>::iterator _itbeg, _itend, _it;
+	typename std::vector<T3>::iterator _ita;
+	typename std::vector<T>::iterator _itBB;
 
-	vector<T> theBB(Temperature.size());
+	std::vector<T> theBB(Temperature.size());
 	_itBB = theBB.begin();
 	_itbeg = Temperature.begin();
 	_itend = Temperature.end();
@@ -712,15 +717,16 @@ template<class T, class T1, class T2, class T3> vector<T> add_bbodyCGS(T1 wave, 
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB as f(wave) for a single T
-template<typename T, typename T1, typename T2> vector<T> bbodyCGS(const vector<T1>& wave, T2 Temperature)
+template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(const std::vector<T1>& wave,
+		T2 Temperature)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * Temperature);
-	typename vector<T1>::const_iterator _itbeg, _itend, _it;
-	typename vector<T>::iterator _itBB;
+	typename std::vector<T1>::const_iterator _itbeg, _itend, _it;
+	typename std::vector<T>::iterator _itBB;
 
-	vector<T> theBB(wave.size());
+	std::vector<T> theBB(wave.size());
 	_itBB = theBB.begin();
 	_itbeg = wave.begin();
 	_itend = wave.end();
@@ -736,17 +742,17 @@ template<typename T, typename T1, typename T2> vector<T> bbodyCGS(const vector<T
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB multiplied by another vector as f(wave) for a single T
-template<class T, class T1, class T2, class T3> vector<T> prod_bbodyCGS(vector<T1>& wave, T2 Temperature,
-		vector<T3>& product)
+template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(std::vector<T1>& wave,
+		T2 Temperature, std::vector<T3>& product)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * Temperature);
-	typename vector<T1>::iterator _itbeg, _itend, _it;
-	typename vector<T3>::iterator _itp;
-	typename vector<T>::iterator _itBB;
+	typename std::vector<T1>::iterator _itbeg, _itend, _it;
+	typename std::vector<T3>::iterator _itp;
+	typename std::vector<T>::iterator _itBB;
 
-	vector<T> theBB(wave.size());
+	std::vector<T> theBB(wave.size());
 	_itBB = theBB.begin();
 	_itbeg = wave.begin();
 	_itend = wave.end();
@@ -760,17 +766,17 @@ template<class T, class T1, class T2, class T3> vector<T> prod_bbodyCGS(vector<T
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB multiplied by another vector as f(wave) for a single T
-template<class T, class T1, class T2, class T3> vector<T> add_bbodyCGS(vector<T1>& wave, T2 Temperature,
-		vector<T3>& add)
+template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(std::vector<T1>& wave,
+		T2 Temperature, std::vector<T3>& add)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * Temperature);
-	typename vector<T1>::iterator _itbeg, _itend, _it;
-	typename vector<T3>::iterator _ita;
-	typename vector<T>::iterator _itBB;
+	typename std::vector<T1>::iterator _itbeg, _itend, _it;
+	typename std::vector<T3>::iterator _ita;
+	typename std::vector<T>::iterator _itBB;
 
-	vector<T> theBB(wave.size());
+	std::vector<T> theBB(wave.size());
 	_itBB = theBB.begin();
 	_itbeg = wave.begin();
 	_itend = wave.end();
@@ -785,9 +791,9 @@ template<class T, class T1, class T2, class T3> vector<T> add_bbodyCGS(vector<T1
 // ****************************************************************************
 // Convert value of type T to a string - useful for constructing filenames
 // out of numbers.
-template<typename T> string vtos(const T & value)
+template<typename T> std::string vtos(const T & value)
 {
-	stringstream ss;
+	std::stringstream ss;
 	ss << value;
 	return ss.str();
 }
@@ -796,29 +802,29 @@ template<typename T> string vtos(const T & value)
 // ****************************************************************************
 // Do a polynomial fit to a set of data. Simple re-write of IDL poly_fit.pro
 // TODO: add HAVEMEASUREERRORS.
-template<typename T> vector<T> poly_fit(vector<T> x, vector<T> y, int ndegree, vector<T>& yfit,
-		vector<T>& sigma)
+template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree,
+		std::vector<T>& yfit, std::vector<T>& sigma)
 {
 
 	int m = ndegree + 1;
 	int n = x.size();
-	//cout << m << " " << ndegree << endl;
-	vector<T> param(m);
+	//std::cout << m << " " << ndegree <<  std::endl;
+	std::vector<T> param(m);
 	NumUtils::Matrix<T> covar(m, m);
 
-	vector<T> b(m);
-	vector<T> z(n, 1.0);
+	std::vector<T> b(m);
+	std::vector<T> z(n, 1.0);
 	T sdev = 1.0, sdev2 = 1.0;
-	vector<T> wy = y;
-	//cout << "in polyfit 1: " << param[0] << " " << param[1] << endl;
+	std::vector<T> wy = y;
+	//std::cout << "in polyfit 1: " << param[0] << " " << param[1] <<  std::endl;
 	if (yfit.size() != n)
 	{
-		cout << "Size of fit return not equal input vector sizes; poly_fit()" << endl;
+		std::cout << "Size of fit return not equal input vector sizes; poly_fit()" << std::endl;
 		exit(8);
 	}
 	if (sigma.size() != m)
 	{
-		cout << "Size of parameter error array not equal to order+1; poly_fit()" << endl;
+		std::cout << "Size of parameter error array not equal to order+1; poly_fit()" << std::endl;
 		exit(8);
 	}
 
@@ -828,7 +834,7 @@ template<typename T> vector<T> poly_fit(vector<T> x, vector<T> y, int ndegree, v
 	for (long p = 1; p <= 2 * ndegree; p++)
 	{
 		// z=z*x
-		transform(z.begin(), z.end(), x.begin(), z.begin(), multiplies<T>());
+		transform(z.begin(), z.end(), x.begin(), z.begin(), std::multiplies<T>());
 		// b[p] = wy*z
 		if (p < m)
 			b[p] = inner_product(wy.begin(), wy.end(), z.begin(), 0.0);
@@ -848,21 +854,22 @@ template<typename T> vector<T> poly_fit(vector<T> x, vector<T> y, int ndegree, v
 	//for (int i=0;i<n;i++) yfit.push_back(param[ndegree]);
 	for (int k = ndegree - 1; k >= 0; k--)
 	{
-		transform(yfit.begin(), yfit.end(), x.begin(), yfit.begin(), multiplies<T>());
-		transform(yfit.begin(), yfit.end(), yfit.begin(), bind2nd(plus<T>(), param[k]));
+		transform(yfit.begin(), yfit.end(), x.begin(), yfit.begin(), std::multiplies<T>());
+		transform(yfit.begin(), yfit.end(), yfit.begin(), bind2nd(std::plus<T>(), param[k]));
 	}
 	// Sigma == diagonal
 	for (int i = 0; i < m; i++)
 		sigma[i] = (sqrt(abs(covar(i, i))));
 	// diff = yfit - y; chisq=SUM[(diff)^2]
-	vector<T> diff;
-	transform(yfit.begin(), yfit.end(), y.begin(), back_inserter(diff), minus<T>());
+	std::vector<T> diff;
+	transform(yfit.begin(), yfit.end(), y.begin(), back_inserter(diff), std::minus<T>());
 	T chisq = accumulate(diff.begin(), diff.end(), 0.0, NumUtils::sqSum<T>());
 	T var = (n > m) ? chisq / T(n - m) : 0.0;
-	transform(sigma.begin(), sigma.end(), sigma.begin(), bind2nd(plus<T>(), sqrt(chisq / (T) (n - m))));
+	transform(sigma.begin(), sigma.end(), sigma.begin(),
+			bind2nd(std::plus<T>(), sqrt(chisq / (T) (n - m))));
 	T yerr = sqrt(var);
 
-	//cout << "in polyfit 2: " << param[0] << " " << param[1] << endl;
+	//std::cout << "in polyfit 2: " << param[0] << " " << param[1] <<  std::endl;
 	return param;
 }
 // ****************************************************************************
@@ -874,8 +881,8 @@ template<typename T> NumUtils::Matrix<T> mInvert(NumUtils::Matrix<T> A)
 	int N = A.nRow();
 	NumUtils::Matrix<T> Ainv = A;
 	NumUtils::Matrix<T> b(N, N, 0.0);
-	vector<T> scale(N);
-	vector<int> index(N + 1);
+	std::vector<T> scale(N);
+	std::vector<int> index(N + 1);
 	for (int i = 0; i < N; i++)
 	{
 		b(i, i) = 1.0;
@@ -971,13 +978,13 @@ template<typename T> inline T& Matrix<T>::operator()(int n1_id, int n2_id)
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
-		cout << "out_of_range Matrix::operator(), element 1" << endl;
+		std::cout << "out_of_range Matrix::operator(), element 1" << std::endl;
 		std::string ExceptionObject = "out_of_range Matrix::operator(), element 1";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n2_id < 0 || n2_id >= _n2)
 	{
-		cout << "out_of_range Matrix::operator(), element 2" << endl;
+		std::cout << "out_of_range Matrix::operator(), element 2" << std::endl;
 		std::string ExceptionObject = "out_of_range Matrix::operator(), element 2";
 		throw std::out_of_range(ExceptionObject);
 	}
@@ -1047,22 +1054,22 @@ template<typename T> inline T& Cube<T>::operator()(int n1_id, int n2_id, int n3_
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
-		cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id << "," << n3_id
-				<< " " << _n1 << endl;
+		std::cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << _n1 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 1";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n2_id < 0 || n2_id >= _n2)
 	{
-		cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id << "," << n3_id
-				<< " " << _n2 << endl;
+		std::cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << _n2 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 2";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n3_id < 0 || n3_id >= _n3)
 	{
-		cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id << "," << n3_id
-				<< " " << _n3 << endl;
+		std::cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << _n3 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
@@ -1157,29 +1164,29 @@ template<typename T> inline T& FourVector<T>::operator()(int n1_id, int n2_id, i
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
-		cout << "out_of_range FourVector::operator(), element 1 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n1 << endl;
+		std::cout << "out_of_range FourVector::operator(), element 1 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << n4_id << " " << _n1 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 1";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n2_id < 0 || n2_id >= _n2)
 	{
-		cout << "out_of_range FourVector::operator(), element 2 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n2 << endl;
+		std::cout << "out_of_range FourVector::operator(), element 2 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << n4_id << " " << _n2 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 2";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n3_id < 0 || n3_id >= _n3)
 	{
-		cout << "out_of_range FourVector::operator(), element 3 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n3 << endl;
+		std::cout << "out_of_range FourVector::operator(), element 3 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << n4_id << " " << _n3 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n4_id < 0 || n4_id >= _n4)
 	{
-		cout << "out_of_range FourVector::operator(), element 4 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n4 << endl;
+		std::cout << "out_of_range FourVector::operator(), element 4 " << n1_id << "," << n2_id << ","
+				<< n3_id << " " << n4_id << " " << _n4 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
