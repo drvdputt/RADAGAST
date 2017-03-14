@@ -166,7 +166,7 @@ void Testing::testIonizationCrossSection()
 void Testing::testHydrogenCalculator()
 {
 	double Tc = 30000;
-	double G0 = 0e0;
+	double G0 = 1e0;
 	double n = 1e0;
 	double expectedTemperature = 10000;
 

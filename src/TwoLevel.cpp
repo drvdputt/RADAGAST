@@ -2,13 +2,11 @@
 #include "Constants.h"
 #include "NumUtils.h"
 #include "SpecialFunctions.h"
+#include "flags.h"
 
 #include <exception>
 #include <vector>
 #include <algorithm>
-
-#define PRINT_MATRICES
-#define VERBOSE
 
 using namespace std;
 
@@ -49,8 +47,6 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 	if (source.size() != 2 || sink.size() != 2)
 		throw range_error("Source and/or sink term vector(s) of wrong size");
 
-
-
 	_n = n;
 	_ne = ne;
 	_np = np;
@@ -58,6 +54,13 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 
 	if (_n > 0)
 	{
+		Eigen::VectorXd profile = lineProfile(1, 0);
+		double norm = NumUtils::integrate<double>(_frequencyv,
+				std::vector<double>(profile.data(), profile.data() + profile.size()));
+#ifdef REPORT_LINE_QUALITY
+		cout << "line profile norm = " << norm << endl;
+#endif
+
 		// Calculate BijPij (needs to be redone at each temperature because the line profile can change)
 		prepareAbsorptionMatrix(specificIntensity);
 
@@ -147,12 +150,7 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu)
 				/ SQRT2PI / sigma_nu;
 	}
-	double norm = NumUtils::integrate<double>(_frequencyv,
-			std::vector<double>(profile.data(), profile.data() + profile.size()));
-#ifdef VERBOSE
-	cout << "line profile norm = " << norm << endl;
-#endif
-	return profile / norm;
+	return profile;
 }
 
 double TwoLevel::radiativeDecayFraction(size_t upper, size_t lower) const

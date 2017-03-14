@@ -12,6 +12,7 @@
 #include <vector>
 #include "TemplatedUtils.h"
 #include "TwoLevel.h"
+#include "flags.h"
 using namespace std;
 
 HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
@@ -54,7 +55,6 @@ HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
 			_gammaDaggervv[row][col] = column_resampled[row];
 	}
 
-//#define PRINT_CONTINUUM_DATA
 #ifdef PRINT_CONTINUUM_DATA
 	// DEBUG: print out the table as read from the file
 	ofstream out;
@@ -104,12 +104,13 @@ HydrogenCalculator::~HydrogenCalculator() = default;
 
 void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<double>& specificIntensity)
 {
+
 	_n = n;
 	_p_specificIntensityv = &specificIntensity;
 
 	double isrf = NumUtils::integrate<double>(_frequencyv, specificIntensity);
 
-	cout << "Solving balance under isrf of " << isrf << " erg / s / cm2 / sr" << endl;
+	cout << "Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = " << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
 
 	if (_n > 0)
 	{
@@ -124,7 +125,7 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 		// The state of the system will be updated every time the algorithm calls this function.
 		// The return value indicates whether the temperature should increase (net absorption)
 		// or decrease (net emission).
-		int counter;
+		int counter = 0;
 		function<int(double)> evaluateBalance = [this, &counter] (double logT) -> int
 		{
 			counter++;
@@ -142,7 +143,6 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 
 		// Evaluate the densities for one last time, using the final temperature
 		calculateDensities(pow(10., logTfinal));
-		cout << "Gas temperature is " << pow(10., logTfinal) << endl;
 	}
 	else
 	{
@@ -159,13 +159,7 @@ void HydrogenCalculator::solveInitialGuess(double n, double T, const vector<doub
 
 GasState HydrogenCalculator::exportState() const
 {
-	return GasState(_frequencyv, emissivityv(), opacityv(), scatteringOpacityv());
-}
-
-GasState HydrogenCalculator::zeroState() const
-{
-	vector<double> zerov(_frequencyv.size(), 0);
-	return GasState(_frequencyv, zerov, zerov, zerov);
+	return GasState(_frequencyv, emissivityv(), opacityv(), scatteringOpacityv(), _T, _ionizedFraction);
 }
 
 vector<double> HydrogenCalculator::emissivityv() const

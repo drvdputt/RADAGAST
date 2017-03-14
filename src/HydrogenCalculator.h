@@ -1,11 +1,8 @@
 #ifndef _GASSPECIES_H_
 #define _GASSPECIES_H_
 
-#define VERBOSE
-
 #include "GasState.h"
 #include "Testing.h"
-
 #include <vector>
 
 class TwoLevel;
@@ -30,7 +27,6 @@ public:
 	// calculated (derived from densities vs caching them for example) are entirely up to the implementations of the functions
 	// below and the definition in GasState.h.
 	GasState exportState() const;
-	GasState zeroState() const;
 
 	// Should provide a fast implementation to obtain the optical properties. The implementation will depend on what is stored
 	// in a GasState object. A good balance between the size of the GasState objects and the computation time needed for the

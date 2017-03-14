@@ -5,6 +5,7 @@ EIGENDIR=./eigen3
 
 SRCDIR=./src
 SOURCES=$(wildcard $(SRCDIR)/*cpp)
+HEADERS=$(wildcard $(SRCDIR)/*h)
 
 OBJDIR=../obj
 OBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
@@ -18,7 +19,7 @@ all: $(PROGRAM)
 $(PROGRAM): $(OBJECTS)
 	$(CPP) -o $(@) $^
 
-$(OBJDIR)/%.o: $(SRCDIR)/%.cpp
+$(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(HEADERS)
 	$(CPP) $(CPPFLAGS) -c -o $@ $< 
 
 clean:
