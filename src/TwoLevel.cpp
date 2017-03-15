@@ -58,7 +58,7 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 		double norm = NumUtils::integrate<double>(_frequencyv,
 				std::vector<double>(profile.data(), profile.data() + profile.size()));
 #ifdef REPORT_LINE_QUALITY
-		cout << "line profile norm = " << norm << endl;
+		DEBUG("line profile norm = " << norm << endl);
 #endif
 
 		// Calculate BijPij (needs to be redone at each temperature because the line profile can change)
@@ -67,9 +67,9 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 		// Calculate Cij
 		prepareCollisionMatrix();
 #ifdef PRINT_MATRICES
-		cout << "Aij" << endl << _Avv << endl << endl;
-		cout << "BPij" << endl << _BPvv << endl << endl;
-		cout << "Cij" << endl << _Cvv << endl << endl;
+		DEBUG("Aij" << endl << _Avv << endl << endl);
+		DEBUG("BPij" << endl << _BPvv << endl << endl);
+		DEBUG("Cij" << endl << _Cvv << endl << endl);
 #endif
 		// Calculate Fij and bi and solve F.n = b
 		solveRateEquations(Eigen::Vector2d(source.data()), Eigen::Vector2d(sink.data()), 0);
@@ -250,16 +250,16 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	b(chooseConsvEq) = _n;
 
 #ifdef PRINT_MATRICES
-	std::cout << "System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl;
+	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
 #endif
 
 	// Call the linear solver
 	_nv = Mvv.colPivHouseholderQr().solve(b);
 
 #ifdef PRINT_MATRICES
-	cout << "nv" << endl << _nv << endl;
+	DEBUG("nv" << endl << _nv << endl);
 	double relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-	cout << "The relative error is: " << relative_error << endl;
+	DEBUG("The relative error is: " << relative_error << endl);
 #endif
 
 // use explicit formula when the solution is clearly wrong (only works if chooseConsvEq = 0)
@@ -269,13 +269,13 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 		_nv(0) = (-Mvv(1, 1) * _n - sinkTerm(1)) / (-Mvv(1, 1) + Mvv(1, 0));
 		_nv(1) = _n - _nv(0);
 #ifdef PRINT_MATRICES
-		cout << "Overriding with explicit solution" << endl;
-		cout << "nv" << endl << _nv << endl;
+		DEBUG("Overriding with explicit solution" << endl);
+		DEBUG("nv" << endl << _nv << endl);
 		relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-		cout << "The relative error is: " << relative_error << endl;
+		DEBUG("The relative error is: " << relative_error << endl);
 #endif
 	}
-//	cout << "from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl;
-//	cout << "Directly from coefficients (no sources) nu / nl: "
-//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl;
+//	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
+//	DEBUG("Directly from coefficients (no sources) nu / nl: "
+//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl);
 }
