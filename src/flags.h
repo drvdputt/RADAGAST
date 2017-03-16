@@ -3,17 +3,17 @@
 
 //#define SILENT
 
-//#define PRINT_CONTINUUM_DATA
-
-#define VERBOSE
-
-#define PRINT_MATRICES
-
-#define REPORT_LINE_QUALITY
-
 #ifdef SILENT
-	#define DEBUG(x)
+	#define DEBUG(x) do {} while (0)
 #else
+	#define VERBOSE
+
+	#define PRINT_MATRICES
+
+	#define REPORT_LINE_QUALITY
+
+	//#define PRINT_CONTINUUM_DATA
+
 	#define DEBUG(x) do {std::cout << x;} while (0)
 #endif
 

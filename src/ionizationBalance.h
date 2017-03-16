@@ -17,4 +17,4 @@ double recombinationRate(double T);
 const double ionizationThreshold = Constant::LIGHT / 912 / Constant::ANG_CM;
 }
 
-#endif
+#endif /* _IONIZATIONBALANCE_H_ */

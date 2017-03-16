@@ -9,4 +9,4 @@ public:
 	NLevel();
 };
 
-#endif
+#endif /* _NLEVEL_H_ */

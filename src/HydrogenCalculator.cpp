@@ -2,9 +2,9 @@
 #include "Constants.h"
 #include "flags.h"
 #include "FreeBound.h"
+#include "FreeFree.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
-#include "ReadData.h"
 #include "TemplatedUtils.h"
 #include "TwoLevel.h"
 
@@ -19,7 +19,8 @@ using namespace std;
 
 HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
 		_frequencyv(frequencyv), _n(0), _p_specificIntensityv(nullptr), _T(0), _ionizedFraction(0), _levels(
-				std::make_unique<TwoLevel>(frequencyv)), _freeBound(std::make_unique<FreeBound>(frequencyv))
+				make_unique<TwoLevel>(frequencyv)), _freeBound(
+				make_unique<FreeBound>(frequencyv)), _freeFree(make_unique<FreeFree>())
 {
 }
 
@@ -33,7 +34,8 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 #ifndef SILENT
 	double isrf = NumUtils::integrate<double>(_frequencyv, specificIntensity);
 #endif
-	DEBUG("Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = " << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
+	DEBUG("Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = "
+			<< isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
 
 	if (_n > 0)
 	{
@@ -49,19 +51,20 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 		// The return value indicates whether the temperature should increase (net absorption)
 		// or decrease (net emission).
 		int counter = 0;
-		function<int(double)> evaluateBalance = [this, &counter] (double logT) -> int
-		{
-			counter++;
-			calculateDensities(pow(10., logT));
-			double netPowerIn = absorption() - emission();
+		function<int(double)> evaluateBalance =
+				[this, &counter] (double logT) -> int
+				{
+					counter++;
+					calculateDensities(pow(10., logT));
+					double netPowerIn = absorption() - emission();
 #ifdef VERBOSE
-			DEBUG("Cycle " << counter << ": logT = " << logT << "; netHeating = " << netPowerIn << endl << endl);
+				DEBUG("Cycle " << counter << ": logT = " << logT << "; netHeating = " << netPowerIn << endl << endl);
 #endif
-			return (netPowerIn > 0) - (netPowerIn < 0);
-		};
+				return (netPowerIn > 0) - (netPowerIn < 0);
+			};
 
-		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit, 4.e-3,
-				logTmax, logTmin);
+		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit,
+				4.e-3, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature
 		calculateDensities(pow(10., logTfinal));
@@ -276,7 +279,9 @@ void HydrogenCalculator::calculateDensities(double T)
 	else
 	{
 		_ionizedFraction = 0;
-		_levels->solveBalance(0, 0, 0, 0, *_p_specificIntensityv, {0, 0}, {0, 0});
+		_levels->solveBalance(0, 0, 0, 0, *_p_specificIntensityv,
+		{ 0, 0 },
+		{ 0, 0 });
 	}
 }
 

@@ -7,6 +7,7 @@
 #include <cstring>
 
 // TODO: convert everything to frequency units, or write interface
+// TODO: consider van Hoof's correction (see GasPhysics.pdf)
 
 class PhotoelectricHeatingRecipe
 {
@@ -80,4 +81,4 @@ private:
 	std::vector<double> generateQabs(double a, const std::vector<double>& wavelengthv) const;
 };
 
-#endif
+#endif /* _PHOTOELECTRICHEATING_H_ */

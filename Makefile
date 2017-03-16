@@ -12,7 +12,7 @@ OBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
 
 PROGRAM=../bin/test
 
-CPPFLAGS=-I$(INCDIR) -I$(EIGENDIR) -O3 -std=c++14 -Wall -Wextra -Werror=return-type
+CPPFLAGS=-I$(INCDIR) -I$(EIGENDIR) -O0 -g -std=c++14 -Wall -Wextra -Werror=return-type
 
 all: $(PROGRAM)
 

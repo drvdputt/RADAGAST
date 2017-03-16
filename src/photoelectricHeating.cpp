@@ -577,11 +577,11 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 	}
 	centerZ = current;
 
-	// Apply detailed balance equation
+	// Apply detailed balance equation ...
 	bool passedMaximum = false;
 	double maximum = 0;
 	resultfZ[centerZ - resultZmin] = 1;
-	// Z > centerZ
+	// ... for Z > centerZ
 	for (int z = centerZ + 1; z <= resultZmax; z++)
 	{
 		double Jpe = emissionRate(a, z - 1, wavelengthv, Qabs, energyDensity_lambda);
@@ -606,7 +606,7 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 		}
 	}
 
-	// Z < centerZ
+	// ... for Z < centerZ
 	for (int z = centerZ - 1; z >= resultZmin; z--)
 	{
 		double Jpe = emissionRate(a, z, wavelengthv, Qabs, energyDensity_lambda);

@@ -275,7 +275,7 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 		DEBUG("The relative error is: " << relative_error << endl);
 #endif
 	}
-//	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
-//	DEBUG("Directly from coefficients (no sources) nu / nl: "
-//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl);
+	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
+	DEBUG("Directly from coefficients (no sources) nu / nl: "
+			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl);
 }

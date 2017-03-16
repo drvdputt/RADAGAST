@@ -18,4 +18,4 @@ void testIonizationCrossSection();
 void testPhotoelectricHeating();
 }
 
-#endif
+#endif /* _TESTING_H_ */

@@ -2,8 +2,10 @@
 #include "flags.h"
 #include "Constants.h"
 #include "NumUtils.h"
+#include "Table.h"
 
 #include <cmath>
+#include <fstream>
 
 using namespace std;
 
@@ -16,14 +18,14 @@ FreeBound::FreeBound(const vector<double>& frequencyv) :
 	vector<vector<double>> fileGammaDaggervv;
 
 	string file("/Users/drvdputt/GasModule/git/dat/t3_elec_reformat.ascii");
-	ReadData::recombinationContinuum(file, fileFrequencyv, _thresholdv, _logTemperaturev,
-			fileGammaDaggervv);
+	readData(file, fileFrequencyv, _thresholdv, _logTemperaturev, fileGammaDaggervv);
 
 	size_t numcol = _logTemperaturev.size();
 	size_t numrow = fileFrequencyv.size();
 
 	// Now resample this data according to the frequency grid
-	_gammaDaggervv.resize(_frequencyv.size(), vector<double>(numcol, 0));
+	size_t numFreq = _frequencyv.size();
+	_gammaDaggervv.resize(numFreq, numcol);
 
 	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to " << fileFrequencyv.back() << endl);
 
@@ -43,8 +45,8 @@ FreeBound::FreeBound(const vector<double>& frequencyv) :
 				frequencyv, -1, -1);
 
 		// And copy it over
-		for (size_t row = 0; row < _gammaDaggervv.size(); row++)
-			_gammaDaggervv[row][col] = column_resampled[row];
+		for (size_t row = 0; row < numFreq; row++)
+			_gammaDaggervv(row, col) = column_resampled[row];
 	}
 
 #ifdef PRINT_CONTINUUM_DATA
@@ -61,17 +63,17 @@ FreeBound::FreeBound(const vector<double>& frequencyv) :
 
 	// DEBUG: print out the interpolated table
 	out.open("/Users/drvdputt/GasModule/run/interpolatedContinuum.dat");
-	for (size_t iNu = 0; iNu < _gammaDaggervv.size(); iNu++)
+	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
-		for (double d : _gammaDaggervv[iNu])
-		out << scientific << d << '\t';
+		for (size_t iT = 0; iT < _gammaDaggervv.size(1); iT++)
+		out << scientific << _gammaDaggervv(iNu, iT) << '\t';
 		out << endl;
 	}
 	out.close();
 
 	// DEBUG: Test the temperature interpolation function (at least a copy pasta of a part)
 	out.open("/Users/drvdputt/GasModule/run/bi-interpolatedContinuum.dat");
-	for (size_t iNu = 0; iNu < _gammaDaggervv.size(); iNu++)
+	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
 		for (double logT = 2; logT < 5; logT += 0.01)
 		{
@@ -82,14 +84,66 @@ FreeBound::FreeBound(const vector<double>& frequencyv) :
 			/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
 
 			// Interpolate gamma^dagger linearly in log T space
-			double gammaDagger = (_gammaDaggervv[iNu][iRight - 1] * (1 - wRight)
-					+ _gammaDaggervv[iNu][iRight] * wRight);
+			double gammaDagger = (_gammaDaggervv(iNu, iRight - 1) * (1 - wRight)
+					+ _gammaDaggervv(iNu, iRight) * wRight);
 			out << scientific << gammaDagger << "\t";
 		}
 		out << endl;
 	}
 	out.close();
 #endif /*PRINT_CONTINUUM_DATA*/
+}
+
+void FreeBound::readData(string file, vector<double>& fileFrequencyv, vector<double>& fileThresholdv,
+		vector<double>& fileTemperaturev, vector<vector<double>>& fileGammaDaggervv) const
+{
+	ifstream input(file);
+	if (!input)
+		throw std::runtime_error("File " + file + " not found.");
+
+	size_t numcol, numrow;
+
+	// The line number will not count any lines starting with #
+	int lineNr = 0;
+	string line;
+	while (getline(input, line))
+	{
+		istringstream iss(line);
+		if (iss.peek() != '#')
+		{
+			if (lineNr == 0)
+			{
+				iss >> numcol >> numrow;
+				fileGammaDaggervv.resize(numrow, std::vector<double>(numcol, 0.));
+			}
+			if (lineNr == 1)
+			{
+				double log10T;
+				while (iss >> log10T)
+					fileTemperaturev.push_back(log10T);
+			}
+			if (lineNr > 1)
+			{
+				int flag;
+				double energy;
+				iss >> flag >> energy;
+
+				double frequency = energy * Constant::RYDBERG / Constant::PLANCK;
+				fileFrequencyv.push_back(frequency);
+				if (flag)
+					fileThresholdv.push_back(frequency);
+
+				auto it = fileGammaDaggervv[lineNr - 2].begin();
+				double gammaDagger;
+				while (iss >> gammaDagger)
+				{
+					*it = gammaDagger;
+					it++;
+				}
+			}
+			lineNr++;
+		}
+	}
 }
 
 vector<double> FreeBound::emissionCoefficientv(double T) const
@@ -131,8 +185,8 @@ vector<double> FreeBound::emissionCoefficientv(double T) const
 		double freq = _frequencyv[iFreq];
 
 		// Interpolate gamma^dagger linearly in log T space
-		double gammaDagger = (_gammaDaggervv[iFreq][iRight - 1] * (1 - wRight)
-				+ _gammaDaggervv[iFreq][iRight] * wRight);
+		double gammaDagger = _gammaDaggervv(iFreq, iRight - 1) * (1 - wRight)
+				+ _gammaDaggervv(iFreq, iRight) * wRight;
 
 		// Skip over zero data, or when we are below the first threshold
 		if (!gammaDagger || freq < _thresholdv[0])
