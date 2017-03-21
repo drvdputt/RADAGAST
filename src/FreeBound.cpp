@@ -146,27 +146,24 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv, vector<dou
 	}
 }
 
-vector<double> FreeBound::emissionCoefficientv(double T) const
+void FreeBound::addEmissionCoefficientv(double T, vector<double>& gamma_nuv) const
 {
 	double logT = log10(T);
 
 	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
 	{
 #ifdef VERBOSE
-		DEBUG(
-				"Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl);
+		DEBUG("Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl);
 #endif
-		return vector<double>(_frequencyv.size(), 0.);
+		return;
 	}
-
-	vector<double> result;
-	result.reserve(_frequencyv.size());
 
 	// Find the grid point to the right of the requested log-temperature
 	size_t iRight = NumUtils::index(logT, _logTemperaturev);
+	size_t iLeft = iRight - 1;
 	// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
-	double wRight = (logT - _logTemperaturev[iRight - 1])
-			/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+	double wRight = (logT - _logTemperaturev[iLeft])
+			/ (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
 
 	// We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the data
 	double Ttothe3_2 = pow(T, 3. / 2.);
@@ -177,7 +174,7 @@ vector<double> FreeBound::emissionCoefficientv(double T) const
 	double tE = 0;
 #ifdef PRINT_CONTINUUM_DATA
 	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/gammanu.dat");
+	out.open("/Users/drvdputt/GasModule/run/gammanufb.dat");
 #endif
 
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -185,13 +182,12 @@ vector<double> FreeBound::emissionCoefficientv(double T) const
 		double freq = _frequencyv[iFreq];
 
 		// Interpolate gamma^dagger linearly in log T space
-		double gammaDagger = _gammaDaggervv(iFreq, iRight - 1) * (1 - wRight)
-				+ _gammaDaggervv(iFreq, iRight) * wRight;
+		double gammaDagger = _gammaDaggervv(iFreq, iLeft)
+				+ wRight * (_gammaDaggervv(iFreq, iRight) - _gammaDaggervv(iFreq, iLeft));
 
 		// Skip over zero data, or when we are below the first threshold
 		if (!gammaDagger || freq < _thresholdv[0])
 		{
-			result.push_back(0.);
 		}
 		else
 		{
@@ -220,12 +216,11 @@ vector<double> FreeBound::emissionCoefficientv(double T) const
 #ifdef PRINT_CONTINUUM_DATA
 			out << freq << "\t" << gammaNu / 1.e-40 << endl;
 #endif
-			result.push_back(gammaNu);
+			gamma_nuv[iFreq] += gammaNu;
 		}
 	}
 #ifdef PRINT_CONTINUUM_DATA
 	out.close();
 #endif
-	return result;
 }
 

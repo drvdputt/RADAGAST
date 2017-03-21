@@ -36,11 +36,22 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 }
 
 template<typename T>
-void sorted_insert(std::vector<T>& vec, T elem)
+void sortedInsert(std::vector<T>& vec, T elem)
 {
 	vec.insert(upper_bound(vec.begin(), vec.end(), elem), elem);
 }
 
+template<typename T>
+T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight,
+		T fUpperLeft, T fUpperRight)
+{
+	T weightRight = (x - xLeft) / (xLeft - xRight);
+	T fLowerI = fLowerLeft + weightRight * (fLowerRight - fLowerLeft);
+	T fUpperI = fUpperLeft + weightRight * (fUpperRight - fUpperLeft);
+
+	T weightUpper = (y - yLow) / (yUp - yLow);
+	return fLowerI + weightUpper * (fUpperI - fLowerI);
 }
 
+} /* namespace TemplatedUtils */
 #endif /* _TEMPLATEDUTILITIES_H_ */

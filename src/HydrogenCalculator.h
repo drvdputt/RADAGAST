@@ -58,9 +58,9 @@ public:
 			const std::vector<double>& specificIntensity);
 
 	/* Used by the balance solver to calculate the ionization fraction and level populations for a certain
-	electron temperature, under influence of a certain ISRF. Can be used by the client to manually set the
-	temperature and calculate some properties which can be used as an initial guess. */
-	void solveInitialGuess(double n, double T, const std::vector<double>& specificIntensityv);
+	electron temperature, under influence of a blackbody isrf of that same temperature. Can be used by the client
+	to manually set the temperature and calculate some properties which can be used as an initial guess. */
+	void solveInitialGuess(double n, double T);
 
 
 private:
@@ -80,7 +80,7 @@ private:
 
 	/* The total bolometric emission, in erg / s / cm^3, obtained by integrating the emissivity. */
 	double emission() const;
-	/* The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity	
+	/* The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity
 	times the radiation field. */
 	double absorption() const;
 
@@ -98,6 +98,17 @@ private:
 	/* The bolometric absorption by the continuum only (= ionization heating) */
 	double continuumAbsorption() const;
 
+	double np_ne() const
+	{
+		double ne = _ionizedFraction * _n;
+		return ne*ne;
+	}
+
+	double nAtomic() const
+	{
+		return _n * (1. - _ionizedFraction);
+	}
+
 	void testHeatingCurve();
 
 	void calculateDensities(double T);
@@ -107,8 +118,8 @@ private:
 	const std::vector<double>& _frequencyv;
 
 	/* To be set on invocation of solveBalance() */
-	double _n;
-	const std::vector<double>* _p_specificIntensityv;
+	double _n{0};
+	const std::vector<double>* _p_specificIntensityv{nullptr};
 
 	/* Results of solveBalance() */
 	double _T;

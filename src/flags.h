@@ -1,16 +1,16 @@
 #ifndef _FLAGS_H_
 #define _FLAGS_H_
 
-//#define SILENT
+#define SILENT
 
 #ifdef SILENT
 	#define DEBUG(x) do {} while (0)
 #else
-	#define VERBOSE
+	//#define VERBOSE
 
-	#define PRINT_MATRICES
+	//#define PRINT_MATRICES
 
-	#define REPORT_LINE_QUALITY
+	//#define REPORT_LINE_QUALITY
 
 	//#define PRINT_CONTINUUM_DATA
 

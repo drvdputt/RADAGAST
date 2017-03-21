@@ -23,8 +23,9 @@ public:
 	 The data is intepolated ad-hoc in the temperature direction; in the frequency direction this data was
 	 already interpolated in the constructor. Returned in units [density^-1][power]/[frequency interval]
 	 cm^3 erg / s / cm. The emissivity ([power][density]/[frequency interval]) can be obtained by
-	 multiplying this value with ne_np. */
-	std::vector<double> emissionCoefficientv(double T) const;
+	 multiplying this value with ne_np / 4pi. The contribution at each frequency is added to the current
+	 contents of gamma_nu */
+	void addEmissionCoefficientv(double T, std::vector<double>& gamma_nuv) const;
 
 private:
 	/* The frequency grid onto which the data will be interpolated */

@@ -49,7 +49,7 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	for (size_t i = 0; i < lineFreqv.size(); i++)
 	{
 		// Add a point at the center of the line, while keeping the vector sorted
-		TemplatedUtils::sorted_insert<double>(grid, lineFreqv[i]);
+		TemplatedUtils::sortedInsert<double>(grid, lineFreqv[i]);
 
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
@@ -62,11 +62,11 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 
 				// Left of center
 				double freq = lineFreqv[i] - distance;
-				TemplatedUtils::sorted_insert<double>(grid, freq);
+				TemplatedUtils::sortedInsert<double>(grid, freq);
 
 				// Right of center
 				freq = lineFreqv[i] + distance;
-				TemplatedUtils::sorted_insert<double>(grid, freq);
+				TemplatedUtils::sortedInsert<double>(grid, freq);
 			}
 		}
 	}
@@ -167,10 +167,10 @@ void Testing::testHydrogenCalculator()
 {
 	double Tc = 30000;
 	double G0 = 1e0;
-	double n = 1e0;
+	double n = 1e2;
 	double expectedTemperature = 10000;
 
-	vector<double> frequencyv = generateFrequencyGrid(2000, Constant::LIGHT / (200 * Constant::UM_CM),
+	vector<double> frequencyv = generateFrequencyGrid(200, Constant::LIGHT / (1000 * Constant::UM_CM),
 			Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	const double lineWindowFactor = 5;
@@ -188,7 +188,7 @@ void Testing::testHydrogenCalculator()
 				<< endl;
 		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
-	refineFrequencyGrid(frequencyv, 1001, 3., lineFreqv, lineWidthv);
+	refineFrequencyGrid(frequencyv, 101, 3., lineFreqv, lineWidthv);
 
 	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
 
@@ -201,18 +201,25 @@ void Testing::testHydrogenCalculator()
 
 	cout << "Integrated emissivity " << NumUtils::integrate<double>(frequencyv, lumv) << endl;
 
-	ofstream out;
+	ofstream out, wavfile;
 	char tab = '\t';
 	out.open("/Users/drvdputt/GasModule/run/opticalProperties.dat");
+	out << "# 0:frequency" << tab << "1:intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)" << tab
+			<< "2:opacity alpha_nu (cm-1)" << tab << "3:scattered (erg s-1 cm-3 Hz-1 sr-1)" << tab
+			<< "4: int - sca" << endl;
+	wavfile.open("/Users/drvdputt/GasModule/run/wavelengths.dat");
 	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
 		double freq = frequencyv[iFreq];
-		//double wav = Constant::LIGHT / freq;
+		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
 		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab << scav[iFreq]
 				<< tab << lumv[iFreq] - scav[iFreq] << endl;
+		wavfile.precision(9);
+		wavfile << wav << endl;
 	}
 	out.close();
+	wavfile.close();
 
 //	cout << "----------------------------------" << endl;
 //	cout << "plotting heating curve..." << endl;
@@ -227,12 +234,12 @@ void Testing::testPhotoelectricHeating()
 	if (T == 1000)
 	{
 		G0values =
-		{ 2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2 };
+		{	2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
 	}
 	if (T == 100)
 	{
 		G0values =
-		{ .75e-1, .75e0, .75e1, .75e2, .75e3};
+		{	.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
 	phr.setGasTemperature(T);

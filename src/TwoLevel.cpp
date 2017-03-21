@@ -16,7 +16,7 @@ const double SQRT2PI = 2.50662827463;
 const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
 }
 
-TwoLevel::TwoLevel(const std::vector<double>& frequencyv) :
+TwoLevel::TwoLevel(const vector<double>& frequencyv) :
 		_frequencyv(frequencyv), _n(0), _ne(0), _np(0), _T(0)
 {
 //	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
@@ -54,18 +54,21 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 
 	if (_n > 0)
 	{
+		// Calculate Cij (needs to happen bfore the first call to the line profile. Maybe the dependencies need to be made
+		// clearer by adopting a more functional programming-like style)
+		prepareCollisionMatrix();
+
+#ifdef REPORT_LINE_QUALITY
 		Eigen::VectorXd profile = lineProfile(1, 0);
 		double norm = NumUtils::integrate<double>(_frequencyv,
-				std::vector<double>(profile.data(), profile.data() + profile.size()));
-#ifdef REPORT_LINE_QUALITY
+				vector<double>(profile.data(), profile.data() + profile.size()));
 		DEBUG("line profile norm = " << norm << endl);
 #endif
 
 		// Calculate BijPij (needs to be redone at each temperature because the line profile can change)
+		// Also needs the Cij to calculate collisional broadening
 		prepareAbsorptionMatrix(specificIntensity);
 
-		// Calculate Cij
-		prepareCollisionMatrix();
 #ifdef PRINT_MATRICES
 		DEBUG("Aij" << endl << _Avv << endl << endl);
 		DEBUG("BPij" << endl << _BPvv << endl << endl);
@@ -85,26 +88,26 @@ double TwoLevel::emission(size_t upper, size_t lower) const
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
 
-std::vector<double> TwoLevel::totalEmissivityv() const
+vector<double> TwoLevel::totalEmissivityv() const
 {
 	// There is only one line for now
 	double lineIntensity = emission(1, 0);
 	Eigen::ArrayXd result = lineIntensity * lineProfile(1, 0);
-	std::vector<double> resultv(result.data(), result.data() + result.size());
+	vector<double> resultv(result.data(), result.data() + result.size());
 	return resultv;
 }
 
-std::vector<double> TwoLevel::totalOpacityv() const
+vector<double> TwoLevel::totalOpacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
 			* _Avv(1, 0);
 	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
 	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0);
-	return std::vector<double>(result.data(), result.data() + result.size());
+	return vector<double>(result.data(), result.data() + result.size());
 }
 
-std::vector<double> TwoLevel::scatteringOpacityv() const
+vector<double> TwoLevel::scatteringOpacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
@@ -112,10 +115,10 @@ std::vector<double> TwoLevel::scatteringOpacityv() const
 	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
 	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
 			* radiativeDecayFraction(1, 0);
-	return std::vector<double>(result.data(), result.data() + result.size());
+	return vector<double>(result.data(), result.data() + result.size());
 }
 
-std::vector<double> TwoLevel::absorptionOpacityv() const
+vector<double> TwoLevel::absorptionOpacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
@@ -123,7 +126,7 @@ std::vector<double> TwoLevel::absorptionOpacityv() const
 	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
 	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
 			* (1 - radiativeDecayFraction(1, 0));
-	return std::vector<double>(result.data(), result.data() + result.size());
+	return vector<double>(result.data(), result.data() + result.size());
 }
 
 Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
@@ -134,7 +137,7 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 			+ _Cvv(lower, upper); // decay rate of bottom level
 			// (stimulated emission doesn't count)
 
-	double thermalVelocity = std::sqrt(Constant::BOLTZMAN * _T / Constant::HMASS_CGS);
+	double thermalVelocity = sqrt(Constant::BOLTZMAN * _T / Constant::HMASS_CGS);
 
 	// Half the FWHM of the Lorentz
 	double halfWidth = decayRate / Constant::FPI;
@@ -147,8 +150,8 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	for (size_t n = 0; n < _frequencyv.size(); n++)
 	{
 		double deltaNu = _frequencyv[n] - nu0;
-		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu)
-				/ SQRT2PI / sigma_nu;
+		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
+				one_sqrt2sigma * deltaNu) / SQRT2PI / sigma_nu;
 	}
 	return profile;
 }
@@ -158,7 +161,7 @@ double TwoLevel::radiativeDecayFraction(size_t upper, size_t lower) const
 	return _Avv(upper, lower) / (_Avv.row(upper).sum() + _BPvv.row(upper).sum() + _Cvv.row(upper).sum());
 }
 
-void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& specificIntensity)
+void TwoLevel::prepareAbsorptionMatrix(const vector<double>& specificIntensity)
 {
 	// Calculate product of Bij and Pij = integral(phi * I_nu)
 	for (int i = 0; i < _BPvv.rows(); i++)
@@ -168,7 +171,7 @@ void TwoLevel::prepareAbsorptionMatrix(const std::vector<double>& specificIntens
 		{
 			// Calculate Pij for the lower triangle (= stimulated emission)
 			Eigen::ArrayXd phi = lineProfile(i, j);
-			std::vector<double> integrand;
+			vector<double> integrand;
 			integrand.reserve(specificIntensity.size());
 			for (size_t n = 0; n < specificIntensity.size(); n++)
 			{
@@ -275,7 +278,7 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 		DEBUG("The relative error is: " << relative_error << endl);
 #endif
 	}
-	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
-	DEBUG("Directly from coefficients (no sources) nu / nl: "
-			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl);
+//	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
+//	DEBUG("Directly from coefficients (no sources) nu / nl: "
+//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0)) << endl);
 }
