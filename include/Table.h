@@ -7,13 +7,13 @@
 #define TABLE_HPP
 
 #include "TableImpl.h"
-#include <numeric>
+#include "Array.h"
+
 #include <array>
 #include <functional>
+#include <numeric>
 #include <type_traits>
 #include <valarray>
-
-using Array = std::valarray<double>;
 
 ////////////////////////////////////////////////////////////////////
 

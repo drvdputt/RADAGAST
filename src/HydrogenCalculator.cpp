@@ -97,13 +97,13 @@ void HydrogenCalculator::solveInitialGuess(double n, double T)
 
 GasState HydrogenCalculator::exportState() const
 {
-	if (_n > 0)
-		return GasState(_frequencyv, emissivityv(), opacityv(), scatteringOpacityv(), _T,
+	if (_n > 0 && _p_specificIntensityv != nullptr)
+		return GasState(_frequencyv, *_p_specificIntensityv, emissivityv(), opacityv(), scatteringOpacityv(), _T,
 				_ionizedFraction);
 	else
 	{
 		vector<double> zero(_frequencyv.size(), 0);
-		return GasState(_frequencyv, zero, zero, zero, 0, 0);
+		return GasState(_frequencyv, zero, zero, zero, zero, 0, 0);
 	}
 }
 
@@ -147,7 +147,7 @@ vector<double> HydrogenCalculator::scatteringOpacityv() const
 
 vector<double> HydrogenCalculator::scatteredv() const
 {
-// only the line can scatter
+	// only the line can scatter
 	const vector<double>& opv = _levels->scatteringOpacityv();
 	vector<double> intensityOpacityv;
 	intensityOpacityv.reserve(opv.size());

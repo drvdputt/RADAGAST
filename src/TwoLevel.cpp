@@ -1,6 +1,7 @@
 #include "TwoLevel.h"
 #include "Constants.h"
 #include "NumUtils.h"
+#include "Sanity.h"
 #include "SpecialFunctions.h"
 #include "flags.h"
 
@@ -9,6 +10,8 @@
 #include <algorithm>
 
 using namespace std;
+
+#define SOLUTION_TOLERANCE 0.1
 
 namespace
 {
@@ -83,7 +86,7 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 	}
 }
 
-double TwoLevel::emission(size_t upper, size_t lower) const
+double TwoLevel::lineIntensity(size_t upper, size_t lower) const
 {
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
@@ -91,8 +94,8 @@ double TwoLevel::emission(size_t upper, size_t lower) const
 vector<double> TwoLevel::totalEmissivityv() const
 {
 	// There is only one line for now
-	double lineIntensity = emission(1, 0);
-	Eigen::ArrayXd result = lineIntensity * lineProfile(1, 0);
+	double intensity = lineIntensity(1, 0);
+	Eigen::ArrayXd result = intensity * lineProfile(1, 0);
 	vector<double> resultv(result.data(), result.data() + result.size());
 	return resultv;
 }
@@ -259,24 +262,31 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	// Call the linear solver
 	_nv = Mvv.colPivHouseholderQr().solve(b);
 
-#ifdef PRINT_MATRICES
 	DEBUG("nv" << endl << _nv << endl);
-	double relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-	DEBUG("The relative error is: " << relative_error << endl);
-#endif
+	double err0, err1;
+	Eigen::Vector2d diff = Mvv * _nv - b;
+	err0 = diff(0) / b(0);
+	err1 = diff(1) / b(1);
+ 	DEBUG("The relative errors are: " << err0 << " and " << err1 << endl);
 
-// use explicit formula when the solution is clearly wrong (only works if chooseConsvEq = 0)
+// use explicit formula when the solution is clearly wrong
 // not sure how I will solve this for more general systems
-	if (_nv(1) < 0)
+	if (abs(err0) > SOLUTION_TOLERANCE || abs(err1) > SOLUTION_TOLERANCE)
 	{
-		_nv(0) = (-Mvv(1, 1) * _n - sinkTerm(1)) / (-Mvv(1, 1) + Mvv(1, 0));
-		_nv(1) = _n - _nv(0);
-#ifdef PRINT_MATRICES
-		DEBUG("Overriding with explicit solution" << endl);
-		DEBUG("nv" << endl << _nv << endl);
-		relative_error = (Mvv * _nv - b).norm() / b.norm(); // norm() is L2 norm
-		DEBUG("The relative error is: " << relative_error << endl);
+//		double nv0 = (-Mvv(1, 1) * _n - b(1) / (-Mvv(1, 1) + Mvv(1, 0));
+//		double nv1 = _n - nv0;
+		double nv1 = (Mvv(1, 0) * _n - b(1)) / (Mvv(1, 0) - Mvv(1, 1));
+		double nv0 = _n - nv1;
+#ifdef REPORT_OVERRIDE
+		Sanity::reportOverridden("nv(0)", _nv(0), nv0, "numerical errors where too high.");
+		Sanity::reportOverridden("nv(1)", _nv(1), nv1, "numerical errors where too high.");
 #endif
+		_nv(0) = nv0;
+		_nv(1) = nv1;
+		diff = Mvv * _nv - b;
+		err0 = diff(0) / b(0);
+		err1 = diff(1) / b(1);
+		DEBUG("The relative errors are: " << err0 << " and " << err1 << endl);
 	}
 //	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
 //	DEBUG("Directly from coefficients (no sources) nu / nl: "

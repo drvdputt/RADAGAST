@@ -21,7 +21,7 @@ public:
 
 	/* Useful for the thermal balance. Is much faster than the calculation of the full emission spectrum.
 	*/
-	double emission(size_t upper, size_t lower) const;
+	double lineIntensity(size_t upper, size_t lower) const;
 
 	/* The values needed for a radiative transfer cycle */
 

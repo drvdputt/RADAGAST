@@ -165,13 +165,13 @@ void Testing::testIonizationCrossSection()
 
 void Testing::testHydrogenCalculator()
 {
-	double Tc = 30000;
-	double G0 = 1e0;
-	double n = 1e2;
-	double expectedTemperature = 10000;
+	double Tc = 2000;
+	double G0 = 1e-60;
+	double n = 1e1;
+	double expectedTemperature = 6000;
 
 	vector<double> frequencyv = generateFrequencyGrid(200, Constant::LIGHT / (1000 * Constant::UM_CM),
-			Constant::LIGHT / (0.01 * Constant::UM_CM));
+			Constant::LIGHT / (0.1 * Constant::UM_CM));
 
 	const double lineWindowFactor = 5;
 	vector<double> lineFreqv =
@@ -213,8 +213,10 @@ void Testing::testHydrogenCalculator()
 		double freq = frequencyv[iFreq];
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
+		double effective = lumv[iFreq] - scav[iFreq];
+		effective = effective > 0 ? effective : 0;
 		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab << scav[iFreq]
-				<< tab << lumv[iFreq] - scav[iFreq] << endl;
+				<< tab << lumv[iFreq] - scav[iFreq] << tab << effective << endl;
 		wavfile.precision(9);
 		wavfile << wav << endl;
 	}
