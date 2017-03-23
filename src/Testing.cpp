@@ -1,26 +1,25 @@
 #include "Constants.h"
+#include "HydrogenCalculator.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
+#include "PhotoelectricHeating.h"
+#include "TemplatedUtils.h"
 #include "Testing.h"
 #include "TwoLevel.h"
 
+#include <fstream>
+#include <iomanip>
 #include <ios>
 #include <iostream>
-#include <iomanip>
-#include <fstream>
-
-#include "HydrogenCalculator.h"
-#include "TemplatedUtils.h"
-#include "PhotoelectricHeating.h"
 
 using namespace std;
 
-vector<double> Testing::generateFrequencyGrid(size_t nFreq, double minFreq, double maxFreq)
+vector<double> Testing::generateGeometricGridv(size_t nPoints, double min, double max)
 {
-	vector<double> frequencyv(nFreq);
-	double freqStepFactor = std::pow(maxFreq / minFreq, 1. / (nFreq - 1));
-	double freq = minFreq;
-	for (size_t n = 0; n < nFreq; n++)
+	vector<double> frequencyv(nPoints);
+	double freqStepFactor = std::pow(max / min, 1. / (nPoints - 1));
+	double freq = min;
+	for (size_t n = 0; n < nPoints; n++)
 	{
 		frequencyv[n] = freq;
 		freq *= freqStepFactor;
@@ -49,7 +48,7 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	for (size_t i = 0; i < lineFreqv.size(); i++)
 	{
 		// Add a point at the center of the line, while keeping the vector sorted
-		TemplatedUtils::sortedInsert<double>(lineFreqv[i], grid);
+		TemplatedUtils::sortedInsert<double, vector<double>>(lineFreqv[i], grid);
 
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
@@ -72,36 +71,30 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	}
 }
 
-std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>& frequencyv, double Tc,
-		double G0)
+Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, double Tc, double G0)
 {
 	// A blackbody (in specific intensity per wavelength units)
-	vector<double> wavelengthv;
-	wavelengthv.reserve(frequencyv.size());
-	for (auto rit = frequencyv.rbegin(); rit != frequencyv.rend(); rit++)
-		wavelengthv.push_back(Constant::LIGHT / *rit);
-
+	vector<double> wavelengthv = freqToWavGrid(frequencyv);
 	vector<double> I_lambda = NumUtils::bbodyCGS<double>(wavelengthv, Tc);
 
 	// Convert to per frequency units using I_nu = I_lambda * lambda * lambda / c
-	vector<double> I_nu;
-	I_nu.reserve(frequencyv.size());
-	auto wavRit = wavelengthv.rbegin();
-	for (auto IlambdaRit = I_lambda.rbegin(); IlambdaRit < I_lambda.rend(); IlambdaRit++, wavRit++)
-		I_nu.push_back((*IlambdaRit) * (*wavRit) * (*wavRit) / Constant::LIGHT);
+	Array I_nu(frequencyv.size());
+	for (size_t iWav = 0; iWav < wavelengthv.size(); iWav++)
+		I_nu[frequencyv.size() - iWav - 1] = I_lambda[iWav] * wavelengthv[iWav] * wavelengthv[iWav]
+				/ Constant::LIGHT;
 
 	// Cut out the UV part
 	size_t i = 0;
-	size_t startUV, endUV;
+	size_t startLambdaUV, endLambdaUV;
 	while (wavelengthv[i] < 912 * Constant::ANG_CM && i < I_lambda.size())
 		i++;
-	startUV = i > 0 ? i - 1 : 0;
+	startLambdaUV = i > 0 ? i - 1 : 0;
 	while (wavelengthv[i] < 2400 * Constant::ANG_CM && i < I_lambda.size())
 		i++;
-	endUV = i + 1;
-	cout << "UV goes from " << startUV << " to " << endUV << endl;
-	vector<double> wavelengthUV(wavelengthv.begin() + startUV, wavelengthv.begin() + endUV);
-	vector<double> isrfUV(I_lambda.begin() + startUV, I_lambda.begin() + endUV);
+	endLambdaUV = i + 1;
+	cout << "UV goes from " << startLambdaUV << " to " << endLambdaUV << endl;
+	vector<double> wavelengthUV(wavelengthv.begin() + startLambdaUV, wavelengthv.begin() + endLambdaUV);
+	vector<double> isrfUV(I_lambda.begin() + startLambdaUV, I_lambda.begin() + endLambdaUV);
 
 	// Integrate over the UV only
 	double UVdensity = Constant::FPI / Constant::LIGHT
@@ -109,11 +102,10 @@ std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>
 	double currentG0 = UVdensity / Constant::HABING;
 
 	// Rescale to _G0
-	for (double& d : I_nu)
-		d *= G0 / currentG0;
+	I_nu *= G0 / currentG0;
 
-	vector<double> frequencyUV(frequencyv.rbegin() + startUV, frequencyv.rbegin() + endUV);
-	vector<double> isrfUVbis(I_nu.rbegin() + startUV, I_nu.rbegin() + endUV);
+	vector<double> frequencyUV(end(frequencyv) - endLambdaUV - 1, end(frequencyv) - startLambdaUV - 1);
+	vector<double> isrfUVbis(end(I_nu) - endLambdaUV - 1, end(I_nu) - startLambdaUV - 1);
 
 	// Integrate over the UV only
 	double UVdensitybis = -Constant::FPI / Constant::LIGHT
@@ -134,19 +126,13 @@ std::vector<double> Testing::generateSpecificIntensity(const std::vector<double>
 	return I_nu;
 }
 
-vector<double> Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv,
-		const vector<double>& specificIntensity_nu)
+Array Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv, const Array& specificIntensity_nu)
 {
-	vector<double> I_lambda;
-	I_lambda.reserve(frequencyv.size());
-	auto fRit = frequencyv.rbegin();
-	auto InuRit = specificIntensity_nu.rbegin();
-	while (InuRit != specificIntensity_nu.rend())
+	Array I_lambda(frequencyv.size());
+	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
 	{
-		double freq = *fRit;
-		I_lambda.push_back(*InuRit * freq * freq / Constant::LIGHT);
-		InuRit++;
-		fRit++;
+		I_lambda[I_lambda.size() - iFreq - 1] = specificIntensity_nu[iFreq] * frequencyv[iFreq]
+				* frequencyv[iFreq] / Constant::LIGHT;
 	}
 	return I_lambda;
 }
@@ -165,13 +151,14 @@ void Testing::testIonizationCrossSection()
 
 void Testing::testHydrogenCalculator()
 {
-	double Tc = 2000;
-	double G0 = 1e-60;
-	double n = 1e1;
+	double Tc = 30000;
+	double G0 = 1e0;
+	double n = 1e0;
 	double expectedTemperature = 6000;
 
-	vector<double> frequencyv = generateFrequencyGrid(200, Constant::LIGHT / (1000 * Constant::UM_CM),
-			Constant::LIGHT / (0.1 * Constant::UM_CM));
+	vector<double> tempFrequencyv = generateGeometricGridv(200,
+			Constant::LIGHT / (1000 * Constant::UM_CM),
+			Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	const double lineWindowFactor = 5;
 	vector<double> lineFreqv =
@@ -188,18 +175,19 @@ void Testing::testHydrogenCalculator()
 				<< endl;
 		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
-	refineFrequencyGrid(frequencyv, 101, 3., lineFreqv, lineWidthv);
+	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
 
-	vector<double> specificIntensity = generateSpecificIntensity(frequencyv, Tc, G0);
+	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
+	Array specificIntensityv = generateSpecificIntensityv(tempFrequencyv, Tc, G0);
 
 	HydrogenCalculator hc(frequencyv);
-	hc.solveBalance(n, expectedTemperature, specificIntensity);
+	hc.solveBalance(n, expectedTemperature, specificIntensityv);
 
-	const vector<double>& lumv = hc.emissivityv();
-	const vector<double>& opv = hc.opacityv();
-	const vector<double>& scav = hc.scatteredv();
+	const Array& lumv = hc.emissivityv();
+	const Array& opv = hc.opacityv();
+	const Array& scav = hc.scatteredv();
 
-	cout << "Integrated emissivity " << NumUtils::integrate<double>(frequencyv, lumv) << endl;
+	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, lumv) << endl;
 
 	ofstream out, wavfile;
 	char tab = '\t';

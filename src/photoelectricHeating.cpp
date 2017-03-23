@@ -91,7 +91,8 @@ void PhotoelectricHeatingRecipe::readQabs() const
 		d *= 100.; // m to cm
 }
 
-std::vector<double> PhotoelectricHeatingRecipe::generateQabs(double a, const std::vector<double>& wavelengthv) const
+std::vector<double> PhotoelectricHeatingRecipe::generateQabsv(double a,
+		const std::vector<double>& wavelengthv) const
 {
 	vector<double> Qabs(wavelengthv.size());
 	vector<double> QabsFromFileForA(_filelambdav.size());
@@ -128,10 +129,10 @@ std::vector<double> PhotoelectricHeatingRecipe::generateQabs(double a, const std
 	ofstream qabsfile;
 	std::stringstream filename;
 	filename << "/Users/drvdputt/GasModule/run/multi-qabs/qabs_a" << setfill('0') << setw(8)
-			<< setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+	<< setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 	qabsfile.open(filename.str());
 	for (size_t i = 0; i < wavelengthv.size(); i++)
-		qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
+	qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
 	qabsfile.close();
 #endif
 	return Qabs;
@@ -257,7 +258,7 @@ double PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<doub
 	std::ofstream outvar;
 	std::stringstream filename;
 	filename << "/Users/drvdputt/GasModule/run/multi-fz/fz_a" << setfill('0') << setw(8)
-			<< setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+	<< setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 	outvar.open(filename.str());
 	outvar << "# carbon = " << _carbonaceous << endl;
 	outvar << "# a = " << a << endl;
@@ -267,7 +268,7 @@ double PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<doub
 	outvar << "# Tgas = " << _gasTemperature << endl;
 
 	for (int z = Zmin; z <= Zmax; z++)
-		outvar << z << '\t' << fZ[z - Zmin] << '\n';
+	outvar << z << '\t' << fZ[z - Zmin] << '\n';
 	outvar.close();
 #endif
 
@@ -487,7 +488,8 @@ double PhotoelectricHeatingRecipe::lambdaTilde(double tau, double ksi) const
 	}
 }
 
-double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const std::vector<double>& fZ, int Zmin) const
+double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const std::vector<double>& fZ,
+		int Zmin) const
 {
 	double kT = Constant::BOLTZMAN * _gasTemperature;
 	double eightkT3DivPi = 8 * kT * kT * kT / Constant::PI;
@@ -710,17 +712,17 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	readQabs();
 
 	// Wavelength grid
-	const vector<double>& frequencyv = Testing::generateFrequencyGrid(_nWav, Constant::LIGHT / _maxWav,
+	const vector<double>& frequencyv = Testing::generateGeometricGridv(_nWav, Constant::LIGHT / _maxWav,
 			Constant::LIGHT / _minWav);
 	// Input spectrum
-	const vector<double>& specificIntensityv = Testing::generateSpecificIntensity(frequencyv, _Tc, _G0);
+	const Array& specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, _G0);
 
 	// Convert to wavelength units
 	const vector<double>& wavelengthv = Testing::freqToWavGrid(frequencyv);
-	vector<double> energyDensity_lambda = Testing::freqToWavSpecificIntensity(frequencyv,
-			specificIntensityv);
-	for (double& d : energyDensity_lambda)
-		d *= Constant::FPI / Constant::LIGHT;
+	Array tempEnergyDensity_lambda = Constant::FPI / Constant::LIGHT
+			* Testing::freqToWavSpecificIntensity(frequencyv, specificIntensityv);
+	const vector<double> energyDensity_lambda(begin(tempEnergyDensity_lambda),
+			end(tempEnergyDensity_lambda));
 	cout << "Made isrf \n";
 
 //	ofstream spectrumout;
@@ -747,7 +749,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	for (size_t m = 0; m < Na; m++)
 	{
 		// Absorption spectrum
-		vector<double> Qabs = generateQabs(a, wavelengthv);
+		vector<double> Qabs = generateQabsv(a, wavelengthv);
 
 		vector<double> QabsTimesUlambda(Qabs.size());
 		for (size_t n = 0; n < Qabs.size(); n++)
@@ -780,26 +782,27 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest() const
 
 	// Wavelength grid
 #ifdef EXACTGRID
-	vector<double> wavelength = _filelambdav;
+	vector<double> wavelengthv = _filelambdav;
 #else
-	vector<double> wavelength = Testing::generateFrequencyGrid(_nWav, _minWav, _maxWav);
+	vector<double> wavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
 #endif
 
 	// Input spectrum
-	vector<double> isrf = Testing::generateSpecificIntensity(wavelength, _Tc, _G0);
+	Array tempIsrf = Testing::generateSpecificIntensityv(wavelengthv, _Tc, _G0);
+	vector<double> isrfv(begin(tempIsrf), end(tempIsrf));
 
 	// Grain size
 	double a = 200. * Constant::ANG_CM;
 
 	// Absorption spectrum
-	vector<double> Qabs = generateQabs(a, wavelength);
+	vector<double> Qabsv = generateQabsv(a, wavelengthv);
 
 	// Calculate charge distribution
-	vector<double> fZ;
+	vector<double> fZv;
 	int Zmax, Zmin;
-	chargeBalance(a, wavelength, Qabs, isrf, Zmax, Zmin, fZ);
+	chargeBalance(a, wavelengthv, Qabsv, isrfv, Zmax, Zmin, fZv);
 
-	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZ.size() << std::endl;
+	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << std::endl;
 
 	std::ofstream out;
 	out.open("/Users/drvdputt/GasModule/run/fZ.txt");
@@ -811,7 +814,7 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest() const
 	out << "# Tgas = " << _gasTemperature << endl;
 
 	for (int z = Zmin; z <= Zmax; z++)
-		out << z << '\t' << fZ[z - Zmin] << '\n';
+		out << z << '\t' << fZv[z - Zmin] << '\n';
 	out.close();
 
 	return 0.;

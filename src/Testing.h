@@ -7,12 +7,12 @@
 
 namespace Testing
 {
-Array generateFrequencyGrid(size_t nFreq, double minFreq, double maxFreq);
-Array freqToWavGrid(const Array& frequencyv);
-void refineFrequencyGrid(Array& grid, size_t nPerLine, double spacingPower,
+std::vector<double> generateGeometricGridv(size_t nFreq, double minFreq, double maxFreq);
+std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
+void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower,
 		std::vector<double> lineFreqv, std::vector<double> lineWidthv);
-Array generateSpecificIntensity(const Array& frequencyv, double Tc, double G0);
-Array freqToWavSpecificIntensity(const Array& frequencyv,
+Array generateSpecificIntensityv(const std::vector<double>& frequencyv, double Tc, double G0);
+Array freqToWavSpecificIntensity(const std::vector<double>& frequencyv,
 		const Array& specificIntensity_nu);
 
 void testHydrogenCalculator();

@@ -29,7 +29,7 @@ FreeBound::FreeBound(const Array& frequencyv) :
 
 	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to " << fileFrequencyv.back() << endl);
 
-	DEBUG("frequency range: " << _frequencyv[0] << " to " << _frequencyv.back() << endl);
+	DEBUG("frequency range: " << _frequencyv[0] << " to " << _frequencyv[_frequencyv.size() - 1] << endl);
 
 	// Then, apply a linear interpolation across the frequencies (rows) for every temperature (column)
 	for (size_t col = 0; col < numcol; col++)
@@ -153,7 +153,8 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
 	{
 #ifdef VERBOSE
-		DEBUG("Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl);
+		DEBUG(
+				"Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl);
 #endif
 		return;
 	}

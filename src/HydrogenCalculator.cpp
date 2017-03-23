@@ -32,7 +32,7 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const std::valarra
 	_p_specificIntensityv = &specificIntensity;
 
 #ifndef SILENT
-	double isrf = NumUtils::integrate<double>(_frequencyv, specificIntensity);
+	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensity);
 #endif
 	DEBUG(
 			"Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = " << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);

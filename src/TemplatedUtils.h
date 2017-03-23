@@ -5,6 +5,7 @@
 #include <functional>
 #include <iterator>
 #include <valarray>
+#include <vector>
 
 namespace TemplatedUtils
 {
@@ -42,9 +43,9 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 
 /* Only works with containers which support the insert function */
 template<typename T, typename T1>
-void inline sortedInsert(T elem, const T1& container)
+void inline sortedInsert(T elem, T1& container)
 {
-	container.insert(upper_bound(std::begin(container), std::end(container), elem), elem);
+	container.insert(std::upper_bound(std::begin(container), std::end(container), elem), elem);
 }
 
 template<typename T>

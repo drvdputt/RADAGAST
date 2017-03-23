@@ -40,7 +40,7 @@ public:
 private:
 	/* Calculates the Voigt profile for a certain line, using the wavelengthgrid supplied at construction
 	 and the current temperature and collision rates. */
-	Eigen::ArrayXd lineProfile(size_t upper, size_t lower) const;
+	Array lineProfile(size_t upper, size_t lower) const;
 
 	/* Calculates the contribution of A_ul to the total decay rate. This will determine the probability
 	 that a photon is re-emitted. */

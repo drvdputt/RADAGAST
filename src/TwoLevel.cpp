@@ -1,13 +1,13 @@
 #include "TwoLevel.h"
 #include "Constants.h"
-#include "NumUtils.h"
+#include "flags.h"
 #include "Sanity.h"
 #include "SpecialFunctions.h"
-#include "flags.h"
+#include "TemplatedUtils.h"
 
+#include <algorithm>
 #include <exception>
 #include <vector>
-#include <algorithm>
 
 using namespace std;
 
@@ -19,7 +19,7 @@ const double SQRT2PI = 2.50662827463;
 const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
 }
 
-TwoLevel::TwoLevel(const vector<double>& frequencyv) :
+TwoLevel::TwoLevel(const Array& frequencyv) :
 		_frequencyv(frequencyv), _n(0), _ne(0), _np(0), _T(0)
 {
 //	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
@@ -42,8 +42,8 @@ TwoLevel::TwoLevel(const vector<double>& frequencyv) :
 	_Avv << 0, 0, 6.2649e+08, 0;
 }
 
-void TwoLevel::solveBalance(double n, double ne, double np, double T, const vector<double>& specificIntensity,
-		const vector<double>& source, const vector<double>& sink)
+void TwoLevel::solveBalance(double n, double ne, double np, double T, const Array& specificIntensity,
+		const Array& source, const Array& sink)
 {
 	if (specificIntensity.size() != _frequencyv.size())
 		throw range_error("Given ISRF and wavelength vectors do not have the same size");
@@ -62,9 +62,7 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 		prepareCollisionMatrix();
 
 #ifdef REPORT_LINE_QUALITY
-		Eigen::VectorXd profile = lineProfile(1, 0);
-		double norm = NumUtils::integrate<double>(_frequencyv,
-				vector<double>(profile.data(), profile.data() + profile.size()));
+		double norm = TemplatedUtils::integrate<double>(_frequencyv, lineProfile(1, 0));
 		DEBUG("line profile norm = " << norm << endl);
 #endif
 
@@ -78,7 +76,8 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T, const vect
 		DEBUG("Cij" << endl << _Cvv << endl << endl);
 #endif
 		// Calculate Fij and bi and solve F.n = b
-		solveRateEquations(Eigen::Vector2d(source.data()), Eigen::Vector2d(sink.data()), 0);
+		solveRateEquations(Eigen::Map<const Eigen::Vector2d>(&source[0]),
+				Eigen::Map<const Eigen::Vector2d>(&sink[0]), 0);
 	}
 	else
 	{
@@ -91,48 +90,33 @@ double TwoLevel::lineIntensity(size_t upper, size_t lower) const
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
 
-vector<double> TwoLevel::totalEmissivityv() const
+Array TwoLevel::totalEmissivityv() const
 {
 	// There is only one line for now
 	double intensity = lineIntensity(1, 0);
-	Eigen::ArrayXd result = intensity * lineProfile(1, 0);
-	vector<double> resultv(result.data(), result.data() + result.size());
-	return resultv;
+	return intensity * lineProfile(1, 0);
 }
 
-vector<double> TwoLevel::totalOpacityv() const
+Array TwoLevel::totalOpacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
 			* _Avv(1, 0);
 	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
-	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0);
-	return vector<double>(result.data(), result.data() + result.size());
+	return constantFactor * densityFactor * lineProfile(1, 0);
 }
 
-vector<double> TwoLevel::scatteringOpacityv() const
+Array TwoLevel::scatteringOpacityv() const
 {
-	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
-	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
-			* _Avv(1, 0);
-	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
-	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
-			* radiativeDecayFraction(1, 0);
-	return vector<double>(result.data(), result.data() + result.size());
+	return totalOpacityv() * radiativeDecayFraction(1, 0);
 }
 
-vector<double> TwoLevel::absorptionOpacityv() const
+Array TwoLevel::absorptionOpacityv() const
 {
-	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
-	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
-			* _Avv(1, 0);
-	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
-	Eigen::ArrayXd result = constantFactor * densityFactor * lineProfile(1, 0)
-			* (1 - radiativeDecayFraction(1, 0));
-	return vector<double>(result.data(), result.data() + result.size());
+	return totalOpacityv() * (1 - radiativeDecayFraction(1, 0));
 }
 
-Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
+Array TwoLevel::lineProfile(size_t upper, size_t lower) const
 {
 	double nu0 = (_Ev(upper) - _Ev(lower)) / Constant::PLANCK;
 
@@ -149,12 +133,12 @@ Eigen::ArrayXd TwoLevel::lineProfile(size_t upper, size_t lower) const
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
 
-	Eigen::ArrayXd profile(_frequencyv.size());
+	Array profile(_frequencyv.size());
 	for (size_t n = 0; n < _frequencyv.size(); n++)
 	{
 		double deltaNu = _frequencyv[n] - nu0;
-		profile(n) = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
-				one_sqrt2sigma * deltaNu) / SQRT2PI / sigma_nu;
+		profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu)
+				/ SQRT2PI / sigma_nu;
 	}
 	return profile;
 }
@@ -164,7 +148,7 @@ double TwoLevel::radiativeDecayFraction(size_t upper, size_t lower) const
 	return _Avv(upper, lower) / (_Avv.row(upper).sum() + _BPvv.row(upper).sum() + _Cvv.row(upper).sum());
 }
 
-void TwoLevel::prepareAbsorptionMatrix(const vector<double>& specificIntensity)
+void TwoLevel::prepareAbsorptionMatrix(const Array& specificIntensity)
 {
 	// Calculate product of Bij and Pij = integral(phi * I_nu)
 	for (int i = 0; i < _BPvv.rows(); i++)
@@ -173,14 +157,8 @@ void TwoLevel::prepareAbsorptionMatrix(const vector<double>& specificIntensity)
 		for (int j = 0; j < i; j++)
 		{
 			// Calculate Pij for the lower triangle (= stimulated emission)
-			Eigen::ArrayXd phi = lineProfile(i, j);
-			vector<double> integrand;
-			integrand.reserve(specificIntensity.size());
-			for (size_t n = 0; n < specificIntensity.size(); n++)
-			{
-				integrand.push_back(phi(n) * specificIntensity[n]);
-			}
-			_BPvv(i, j) = NumUtils::integrate<double>(_frequencyv, integrand);
+			_BPvv(i, j) = TemplatedUtils::integrate<double, Array, Array>(_frequencyv,
+					lineProfile(i, j) * specificIntensity);
 
 			// Multiply by Bij in terms of Aij, valid for i > j
 			double nu_ij = (_Ev(i) - _Ev(j)) / Constant::PLANCK;
@@ -216,7 +194,7 @@ void TwoLevel::prepareCollisionMatrix()
 
 	// naively inter- and extrapolate this data linearly, just to have some form of collision coefficient
 	// (provides numerical stability)
-	size_t iRight = NumUtils::index(currentT_eV, electronTemperaturesEV);
+	size_t iRight = TemplatedUtils::index(currentT_eV, electronTemperaturesEV);
 	if (iRight == 0)
 		iRight = 1;
 	else if (iRight == effectiveCollisionStrv.size())
@@ -267,7 +245,7 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	Eigen::Vector2d diff = Mvv * _nv - b;
 	err0 = diff(0) / b(0);
 	err1 = diff(1) / b(1);
- 	DEBUG("The relative errors are: " << err0 << " and " << err1 << endl);
+	DEBUG("The relative errors are: " << err0 << " and " << err1 << endl);
 
 // use explicit formula when the solution is clearly wrong
 // not sure how I will solve this for more general systems

@@ -96,7 +96,7 @@ private:
 
 	// Data to use for tests
 	void readQabs() const;
-	std::vector<double> generateQabs(double a, const std::vector<double>& wavelengthv) const;
+	std::vector<double> generateQabsv(double a, const std::vector<double>& wavelengthv) const;
 };
 
 #endif /* _PHOTOELECTRICHEATING_H_ */
