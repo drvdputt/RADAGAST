@@ -67,7 +67,7 @@ const double gamma_nu_constantFactor = 32 * Constant::PI * e6 / 3. / Constant::E
 const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / Constant::PLANCK
 		/ Constant::LIGHT * sqrt_2piOver3m;
 
-FreeFree::FreeFree(const vector<double>& frequencyv) :
+FreeFree::FreeFree(const Array& frequencyv) :
 		_frequencyv(frequencyv)
 {
 	readData("/Users/drvdputt/GasModule/git/dat/gauntff_merged_Z01.dat");
@@ -162,7 +162,7 @@ void FreeFree::readData(const string& file)
 #endif
 }
 
-void FreeFree::addEmissionCoefficientv(double T, vector<double>& gamma_nuv) const
+void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 {
 	// gamma is fixed for a given temperature
 	double kT = Constant::BOLTZMAN * T;
@@ -188,7 +188,7 @@ void FreeFree::addEmissionCoefficientv(double T, vector<double>& gamma_nuv) cons
 #endif
 }
 
-void FreeFree::addOpacityCoefficientv(double T, vector<double>& opCoeffv) const
+void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 {
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
@@ -203,7 +203,8 @@ void FreeFree::addOpacityCoefficientv(double T, vector<double>& opCoeffv) const
 		double u = Constant::PLANCK * nu / kT;
 		double logu = log10(u);
 		// C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
-		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u) * gauntFactor(logu, loggamma2);
+		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u)
+				* gauntFactor(logu, loggamma2);
 #ifdef PRINT_CONTINUUM_DATA
 		out << _frequencyv[iFreq] << "\t" << opCoeffNu << endl;
 #endif
@@ -218,30 +219,30 @@ void FreeFree::addOpacityCoefficientv(double T, vector<double>& opCoeffv) const
 double FreeFree::gauntFactor(double logu, double logg2) const
 {
 // Throw an error if out of range for now. Maybe allow extrapolation later.
-if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
-	throw runtime_error("Log(gamma^2) or log(u) out of range");
+	if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
+		throw runtime_error("Log(gamma^2) or log(u) out of range");
 
 // Find the gamma^2-index to the right of logg2 , maximum the max column index)
-int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
+	int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
 // should be at least 1 (to extrapolate left)
-iRight = max(iRight, 1);
+	iRight = max(iRight, 1);
 // cannot be larger than the max column index
-iRight = min(iRight, static_cast<int>(_fileGauntFactorvv.size(1) - 1));
-int iLeft = iRight - 1;
-double xRight = _loggamma2Min + _logStep * iRight;
-double xLeft = xRight - _logStep;
+	iRight = min(iRight, static_cast<int>(_fileGauntFactorvv.size(1) - 1));
+	int iLeft = iRight - 1;
+	double xRight = _loggamma2Min + _logStep * iRight;
+	double xLeft = xRight - _logStep;
 
 // Find the u-index above u
-int iUpper = ceil((logu - _loguMin) / _logStep);
-iUpper = max(iUpper, 1);
-iUpper = min(iUpper, static_cast<int>(_fileGauntFactorvv.size(0) - 1));
-int iLower = iUpper - 1;
-double yUp = _loguMin + _logStep * iUpper;
-double yLow = yUp - _logStep;
+	int iUpper = ceil((logu - _loguMin) / _logStep);
+	iUpper = max(iUpper, 1);
+	iUpper = min(iUpper, static_cast<int>(_fileGauntFactorvv.size(0) - 1));
+	int iLower = iUpper - 1;
+	double yUp = _loguMin + _logStep * iUpper;
+	double yLow = yUp - _logStep;
 
-double gff = TemplatedUtils::interpolateRectangular<double>(logg2, logu, xLeft, xRight, yLow, yUp,
-		_fileGauntFactorvv(iLower, iLeft), _fileGauntFactorvv(iLower, iRight),
-		_fileGauntFactorvv(iUpper, iLeft), _fileGauntFactorvv(iUpper, iRight));
+	double gff = TemplatedUtils::interpolateRectangular<double>(logg2, logu, xLeft, xRight, yLow, yUp,
+			_fileGauntFactorvv(iLower, iLeft), _fileGauntFactorvv(iLower, iRight),
+			_fileGauntFactorvv(iUpper, iLeft), _fileGauntFactorvv(iUpper, iRight));
 
-return exp(gff);
+	return exp(gff);
 }

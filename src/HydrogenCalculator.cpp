@@ -17,7 +17,7 @@
 
 using namespace std;
 
-HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
+HydrogenCalculator::HydrogenCalculator(const Array& frequencyv) :
 		_frequencyv(frequencyv), _levels(make_unique < TwoLevel > (frequencyv)), _freeBound(
 				make_unique < FreeBound > (frequencyv)), _freeFree(
 				make_unique < FreeFree > (frequencyv))
@@ -26,7 +26,7 @@ HydrogenCalculator::HydrogenCalculator(const vector<double>& frequencyv) :
 
 HydrogenCalculator::~HydrogenCalculator() = default;
 
-void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<double>& specificIntensity)
+void HydrogenCalculator::solveBalance(double n, double Tinit, const std::valarray<double>& specificIntensity)
 {
 	_n = n;
 	_p_specificIntensityv = &specificIntensity;
@@ -46,10 +46,9 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 
 		double logTinit = log10(Tinit);
 
-		// Lambda function that will be used by the search algorithm.
-		// The state of the system will be updated every time the algorithm calls this function.
-		// The return value indicates whether the temperature should increase (net absorption)
-		// or decrease (net emission).
+		/* Lambda function that will be used by the search algorithm. The state of the system will be
+		 updated every time the algorithm calls this function. The return value indicates whether the
+		 temperature should increase (net absorption) or decrease (net emission). */
 		int counter = 0;
 		function<int(double)> evaluateBalance =
 				[this, &counter] (double logT) -> int
@@ -66,7 +65,7 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit,
 				4.e-3, logTmax, logTmin);
 
-		// Evaluate the densities for one last time, using the final temperature
+		// Evaluate the densities for one last time, using the final temperature.
 		calculateDensities(pow(10., logTfinal));
 	}
 	else
@@ -78,7 +77,7 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const vector<doubl
 void HydrogenCalculator::solveInitialGuess(double n, double T)
 {
 	_n = n;
-	vector<double> isrfGuess(_frequencyv.size(), 0);
+	Array isrfGuess(_frequencyv.size());
 	// i'll implement this somewhere else later
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
@@ -98,69 +97,52 @@ void HydrogenCalculator::solveInitialGuess(double n, double T)
 GasState HydrogenCalculator::exportState() const
 {
 	if (_n > 0 && _p_specificIntensityv != nullptr)
-		return GasState(_frequencyv, *_p_specificIntensityv, emissivityv(), opacityv(), scatteringOpacityv(), _T,
-				_ionizedFraction);
+		return GasState(_frequencyv, *_p_specificIntensityv, emissivityv(), opacityv(),
+				scatteringOpacityv(), _T, _ionizedFraction);
 	else
 	{
-		vector<double> zero(_frequencyv.size(), 0);
-		return GasState(_frequencyv, zero, zero, zero, zero, 0, 0);
+		Array zerov(_frequencyv.size());
+		return GasState(_frequencyv, zerov, zerov, zerov, zerov, 0, 0);
 	}
 }
 
-vector<double> HydrogenCalculator::emissivityv() const
+Array HydrogenCalculator::emissivityv() const
 {
-	vector<double> result;
-	const vector<double>& lineEmv = _levels->totalEmissivityv();
-	vector<double> contEmCoeffv(_frequencyv.size());
+	const Array& lineEmv = _levels->totalEmissivityv();
+	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(_T, contEmCoeffv);
 	_freeFree->addEmissionCoefficientv(_T, contEmCoeffv);
-
-	double np_neOverFourPi = np_ne() / Constant::FPI;
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
-	{
-		result.push_back(lineEmv[iFreq] + np_neOverFourPi * contEmCoeffv[iFreq]);
-	}
-	return result;
+	return lineEmv + (np_ne() / Constant::FPI) * contEmCoeffv;
 }
 
-vector<double> HydrogenCalculator::opacityv() const
+Array HydrogenCalculator::opacityv() const
 {
-	vector<double> result;
-	result.reserve(_frequencyv.size());
-	const vector<double>& lineOp = _levels->totalOpacityv();
-	vector<double> contOpCoeffv(_frequencyv.size(), 0);
+	const Array& lineOp = _levels->totalOpacityv();
+
+	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(_T, contOpCoeffv);
 	double npne = np_ne();
 	double n_H0 = nAtomic();
+
+	Array totalOp(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
-		double ionizOp_i = n_H0 * Ionization::crossSection(_frequencyv[iFreq]);
-		result.push_back(ionizOp_i + npne * contOpCoeffv[iFreq] + lineOp[iFreq]);
+		double ionizOp_iFreq = n_H0 * Ionization::crossSection(_frequencyv[iFreq]);
+		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
 	}
-	return result;
+	return totalOp;
 }
 
-vector<double> HydrogenCalculator::scatteringOpacityv() const
+Array HydrogenCalculator::scatteringOpacityv() const
 {
 	return _levels->scatteringOpacityv();
 }
 
-vector<double> HydrogenCalculator::scatteredv() const
+Array HydrogenCalculator::scatteredv() const
 {
-	// only the line can scatter
-	const vector<double>& opv = _levels->scatteringOpacityv();
-	vector<double> intensityOpacityv;
-	intensityOpacityv.reserve(opv.size());
-	auto op = opv.begin();
-	auto opEnd = opv.end();
-	auto I_nu = _p_specificIntensityv->begin();
-	while (op != opEnd)
-	{
-		intensityOpacityv.push_back(*I_nu * *op);
-		op++;
-		I_nu++;
-	}
-	return intensityOpacityv;
+	// only the lines can scatter
+	const Array& scaOp = _levels->scatteringOpacityv();
+	return *_p_specificIntensityv * scaOp;
 }
 
 double HydrogenCalculator::emission() const
@@ -185,57 +167,43 @@ double HydrogenCalculator::absorption() const
 
 double HydrogenCalculator::lineEmission() const
 {
-	const vector<double>& lineEmv = _levels->totalEmissivityv();
-	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, lineEmv);
+	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, _levels->totalEmissivityv());
 }
 
 double HydrogenCalculator::lineAbsorption() const
 {
-	const vector<double>& opv = _levels->totalOpacityv();
-	vector<double> intensityOpacityv;
-	intensityOpacityv.reserve(opv.size());
-	auto op = opv.begin();
-	auto opEnd = opv.end();
-	auto I_nu = _p_specificIntensityv->begin();
-	while (op != opEnd)
-	{
-		intensityOpacityv.push_back(*I_nu * *op);
-		op++;
-		I_nu++;
-	}
-	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	Array intensityOpacityv = *_p_specificIntensityv * _levels->totalOpacityv();
+	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 
 double HydrogenCalculator::continuumEmission() const
 {
-	vector<double> gamma_nuv(_frequencyv.size(), 0);
+	Array gamma_nuv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(_T, gamma_nuv);
 	_freeFree->addEmissionCoefficientv(_T, gamma_nuv);
 
 // emissivity = ne np / 4pi * gamma
 // total emission = 4pi integral(emissivity) = ne np integral(gamma)
-	return np_ne() * NumUtils::integrate<double>(_frequencyv, gamma_nuv);
+	return np_ne() * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
 }
 
 double HydrogenCalculator::continuumAbsorption() const
 {
-	double n_H0 = nAtomic();
-	double npne = np_ne();
+	const Array& I_nu = *_p_specificIntensityv;
 
-	vector<double> freefreeOpCoefv(_frequencyv.size(), 0);
+	double npne = np_ne();
+	double nH0 = nAtomic();
+	Array freefreeOpCoefv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(_T, freefreeOpCoefv);
 
-	vector<double> intensityOpacityv;
-	intensityOpacityv.reserve(_frequencyv.size());
-
-	auto I_nu = _p_specificIntensityv->begin();
-	auto ffOpCoef_nu = freefreeOpCoefv.begin();
-	for (auto freq = _frequencyv.begin(); freq != _frequencyv.end(); freq++, I_nu++)
+	Array intensityOpacityv(_frequencyv.size());
+	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
-		double totalOpacity = n_H0 * Ionization::crossSection(*freq) + npne * *ffOpCoef_nu;
-		intensityOpacityv.push_back(*I_nu * totalOpacity);
+		double totalOpacity = nH0 * Ionization::crossSection(_frequencyv[iFreq])
+				+ npne * freefreeOpCoefv[iFreq];
+		intensityOpacityv[iFreq] = I_nu[iFreq] * totalOpacity;
 	}
-	return Constant::FPI * NumUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 
 void HydrogenCalculator::testHeatingCurve()
@@ -297,18 +265,17 @@ void HydrogenCalculator::calculateDensities(double T)
 		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
 //DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
 
-		vector<double> sourcev =
-		{ ne * np * alphaGround, ne * np * alpha2p };
+		Array sourcev(
+		{ ne * np * alphaGround, ne * np * alpha2p });
 
-// The ionization rate calculation makes no distinction between the levels.
-// When the upper level population is small, and its decay rate is large,
-// the second term doesn't really matter.
-// Therefore, we choose the sink to be the same for each level. Moreover,
-// total source = total sink
-// so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1
+		/* The ionization rate calculation makes no distinction between the levels. When the upper
+		 level population is small, and its decay rate is large, the second term doesn't really matter.
+		 Therefore, we choose the sink to be the same for each level. Moreover, total source = total
+		 sink so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1.
+		 */
 		double sink = ne * np * alphaTotal / nAtomic();
-		vector<double> sinkv =
-		{ sink, sink };
+		Array sinkv(
+		{ sink, sink });
 
 		_levels->solveBalance(nAtomic(), ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
 	}

@@ -10,7 +10,7 @@ class FreeBound
 public:
 	/* Creates an object and reads in the free-bound continuum emission data. The data is interpolated for
 	 every frequency on the grid, and stored for the temperatures contained in the file. */
-	FreeBound(const std::vector<double>& frequencyv);
+	FreeBound(const Array& frequencyv);
 
 private:
 	/* Function that reads the data. To be called in the constructor*/
@@ -25,11 +25,11 @@ public:
 	 cm^3 erg / s / cm. The emissivity ([power][density]/[frequency interval]) can be obtained by
 	 multiplying this value with ne_np / 4pi. The contribution at each frequency is added to the current
 	 contents of gamma_nu */
-	void addEmissionCoefficientv(double T, std::vector<double>& gamma_nuv) const;
+	void addEmissionCoefficientv(double T, Array& gamma_nuv) const;
 
 private:
 	/* The frequency grid onto which the data will be interpolated */
-	const std::vector<double>& _frequencyv;
+	const Array& _frequencyv;
 
 	/* Data to be loaded in constructor body. First index is for frequency, second for temperature */
 	Table<2> _gammaDaggervv;

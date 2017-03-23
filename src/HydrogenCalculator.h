@@ -4,8 +4,6 @@
 #include "Array.h"
 #include "GasState.h"
 #include "Testing.h"
-#include <vector>
-#include <unistd.h>
 
 class TwoLevel;
 class FreeBound;
@@ -60,9 +58,10 @@ public:
 		return 100 * (gs._opacityv[iFreq] - gs._scatteringOpacityv[iFreq]);
 	}
 
-	/* Finds a new balance, using information stored in the GasState to speed up the calculation. */
+	/* Finds a new balance, using information stored in the GasState to speed up the calculation. Write
+	 std::valarray here instead of Array, because this is an interface function. */
 	void solveBalance(const GasState&, double n, double Tinit,
-			const std::vector<double>& specificIntensity);
+			const std::valarray<double>& specificIntensity);
 
 	/* Used by the balance solver to calculate the ionization fraction and level populations for a certain
 	 electron temperature, under influence of a blackbody isrf of that same temperature. Can be used by the client
@@ -74,15 +73,15 @@ private:
 	friend void Testing::testHydrogenCalculator();
 
 	/* The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
-	std::vector<double> emissivityv() const;
+	Array emissivityv() const;
 	/* The total opacity at each frequency in 1 / cm */
-	std::vector<double> opacityv() const;
+	Array opacityv() const;
 	/* The scattering opacity used to simulate re-emission of line photons,
 	 such as resonant scattering. The absorption opacity equals the total opacity minus this value. */
-	std::vector<double> scatteringOpacityv() const;
+	Array scatteringOpacityv() const;
 	/* The amount of radiation scattered away by the scattering approach (in the same units as the
 	 emissivity) */
-	std::vector<double> scatteredv() const;
+	Array scatteredv() const;
 
 	/* The total bolometric emission, in erg / s / cm^3, obtained by integrating the emissivity. */
 	double emission() const;
@@ -99,9 +98,9 @@ private:
 	/*  Taking the difference of the above two terms will cancel out the contributions of the
 	 "scattered" photons and yield the heating/cooling contribution by the lines. */
 
-	/* The bolometric emission by the continuum only (= cooling by recombination continuum) */
+	/* The bolometric emission by the continuum only (= cooling by recombination + free-free continuum) */
 	double continuumEmission() const;
-	/* The bolometric absorption by the continuum only (= ionization heating) */
+	/* The bolometric absorption by the continuum only (= ionization + free-free heating) */
 	double continuumAbsorption() const;
 
 	double np_ne() const
@@ -121,12 +120,12 @@ private:
 
 private:
 	/* To be set in constructor */
-	const std::vector<double>& _frequencyv;
+	const Array& _frequencyv;
 
 	/* To be set on invocation of solveBalance() */
 	double _n
 	{ 0 };
-	const std::vector<double>* _p_specificIntensityv
+	const Array* _p_specificIntensityv
 	{ nullptr };
 
 	/* Results of solveBalance() */

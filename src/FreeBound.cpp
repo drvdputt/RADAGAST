@@ -9,7 +9,7 @@
 
 using namespace std;
 
-FreeBound::FreeBound(const vector<double>& frequencyv) :
+FreeBound::FreeBound(const Array& frequencyv) :
 		_frequencyv(frequencyv)
 {
 // Read the free-bound continuum data from Ercolano and Storey (2006)
@@ -42,7 +42,7 @@ FreeBound::FreeBound(const vector<double>& frequencyv) :
 
 		// Resample it
 		const vector<double>& column_resampled = NumUtils::interpol<double>(column, fileFrequencyv,
-				frequencyv, -1, -1);
+				vector<double>(begin(frequencyv), end(frequencyv)), -1, -1);
 
 		// And copy it over
 		for (size_t row = 0; row < numFreq; row++)
@@ -146,7 +146,7 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv, vector<dou
 	}
 }
 
-void FreeBound::addEmissionCoefficientv(double T, vector<double>& gamma_nuv) const
+void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 {
 	double logT = log10(T);
 
