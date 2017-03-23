@@ -1,6 +1,11 @@
 #ifndef _TEMPLATEDUTILITIES_H_
 #define _TEMPLATEDUTILITIES_H_
 
+#include <algorithm>
+#include <functional>
+#include <iterator>
+#include <valarray>
+
 namespace TemplatedUtils
 {
 
@@ -35,10 +40,11 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 	return current;
 }
 
-template<typename T>
-void sortedInsert(std::vector<T>& vec, T elem)
+/* Only works with containers which support the insert function */
+template<typename T, typename T1>
+void inline sortedInsert(T elem, const T1& container)
 {
-	vec.insert(upper_bound(vec.begin(), vec.end(), elem), elem);
+	container.insert(upper_bound(std::begin(container), std::end(container), elem), elem);
 }
 
 template<typename T>
@@ -72,6 +78,13 @@ T integrate(const T1& xContainer, const T2& yContainer)
 		answer = yContainer[0];
 	}
 	return answer;
+}
+
+/* Finds the index of the first element >= val, in the iterable container `container'. */
+template<typename T, typename T1> inline size_t index(T val, const T1& container)
+{
+	auto idx = std::lower_bound(std::begin(container), std::end(container), val);
+	return std::distance(std::begin(container), idx);
 }
 
 } /* namespace TemplatedUtils */

@@ -1,18 +1,18 @@
-#include "NumUtils.h"
+#include "TemplatedUtils.h"
 
 #include "IonizationBalance.h"
 
 using namespace std;
 
-double Ionization::ionizedFraction(double nH, double T, const vector<double>& frequencyv,
-		const vector<double>& specificIntensityv)
+double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
+		const Array& specificIntensityv)
 {
 	size_t nFreq = frequencyv.size();
-	vector<double> integrand(nFreq, 0);
-	for (size_t n = NumUtils::index(ionizationThreshold, frequencyv); n < nFreq; n++)
+	Array integrand(nFreq);
+	for (size_t n = TemplatedUtils::index<double>(ionizationThreshold, frequencyv); n < nFreq; n++)
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
 
-	double C = Constant::FPI / Constant::PLANCK * NumUtils::integrate<double>(frequencyv, integrand)
+	double C = Constant::FPI / Constant::PLANCK * TemplatedUtils::integrate<double>(frequencyv, integrand)
 			/ recombinationRate(T);
 
 	// np^2 = (nH - np) * integral / alpha = (nH - np) * C

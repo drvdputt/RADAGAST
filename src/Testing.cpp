@@ -49,7 +49,7 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	for (size_t i = 0; i < lineFreqv.size(); i++)
 	{
 		// Add a point at the center of the line, while keeping the vector sorted
-		TemplatedUtils::sortedInsert<double>(grid, lineFreqv[i]);
+		TemplatedUtils::sortedInsert<double>(lineFreqv[i], grid);
 
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
@@ -62,11 +62,11 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 
 				// Left of center
 				double freq = lineFreqv[i] - distance;
-				TemplatedUtils::sortedInsert<double>(grid, freq);
+				TemplatedUtils::sortedInsert<double>(freq, grid);
 
 				// Right of center
 				freq = lineFreqv[i] + distance;
-				TemplatedUtils::sortedInsert<double>(grid, freq);
+				TemplatedUtils::sortedInsert<double>(freq, grid);
 			}
 		}
 	}
