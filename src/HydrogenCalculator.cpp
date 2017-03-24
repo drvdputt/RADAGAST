@@ -148,7 +148,7 @@ void HydrogenCalculator::calculateDensities(double T)
 
 Array HydrogenCalculator::emissivityv() const
 {
-	const Array& lineEmv = _levels->totalEmissivityv();
+	const Array& lineEmv = _levels->emissivityv();
 	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(_temperature, contEmCoeffv);
 	_freeFree->addEmissionCoefficientv(_temperature, contEmCoeffv);
@@ -157,7 +157,7 @@ Array HydrogenCalculator::emissivityv() const
 
 Array HydrogenCalculator::opacityv() const
 {
-	const Array& lineOp = _levels->totalOpacityv();
+	const Array& lineOp = _levels->opacityv();
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(_temperature, contOpCoeffv);
@@ -207,12 +207,12 @@ double HydrogenCalculator::absorption() const
 
 double HydrogenCalculator::lineEmission() const
 {
-	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, _levels->totalEmissivityv());
+	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, _levels->emissivityv());
 }
 
 double HydrogenCalculator::lineAbsorption() const
 {
-	Array intensityOpacityv = *_p_specificIntensityv * _levels->totalOpacityv();
+	Array intensityOpacityv = *_p_specificIntensityv * _levels->opacityv();
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 

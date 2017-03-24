@@ -90,14 +90,14 @@ double TwoLevel::lineIntensity(size_t upper, size_t lower) const
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
 
-Array TwoLevel::totalEmissivityv() const
+Array TwoLevel::emissivityv() const
 {
 	// There is only one line for now
 	double intensity = lineIntensity(1, 0);
 	return intensity * lineProfile(1, 0);
 }
 
-Array TwoLevel::totalOpacityv() const
+Array TwoLevel::opacityv() const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij / nu_ij
@@ -108,12 +108,12 @@ Array TwoLevel::totalOpacityv() const
 
 Array TwoLevel::scatteringOpacityv() const
 {
-	return totalOpacityv() * radiativeDecayFraction(1, 0);
+	return opacityv() * radiativeDecayFraction(1, 0);
 }
 
 Array TwoLevel::absorptionOpacityv() const
 {
-	return totalOpacityv() * (1 - radiativeDecayFraction(1, 0));
+	return opacityv() * (1 - radiativeDecayFraction(1, 0));
 }
 
 Array TwoLevel::lineProfile(size_t upper, size_t lower) const

@@ -17,8 +17,8 @@ public:
 	 into play, the recombination and ionization rates will act as source and sink terms for the levels.
 	 Therefore, external sources or sink rates can be passed using vectors containing one number for each
 	 level. */
-	void solveBalance(double n, double ne, double np, double T, const Array& specificIntensity,
-			const Array& source, const Array& sink);
+	void solveBalance(double n, double ne, double np, double T, const Array& specificIntensityv,
+			const Array& sourcev, const Array& sinkv);
 
 	/* Useful for the thermal balance. Is much faster than the calculation of the full emission spectrum.
 	 */
@@ -27,10 +27,10 @@ public:
 	/* The values needed for a radiative transfer cycle */
 
 	/* The emission coefficient j_nu (erg/cm3/s/Hz) */
-	Array totalEmissivityv() const;
+	Array emissivityv() const;
 
 	/* The opacity alpha_nu, equivalent to kappaRho for dust (cm-1) */
-	Array totalOpacityv() const;
+	Array opacityv() const;
 
 	/* The part of the opacity which acts as a source of scattering. This scattering is equivalent to the
 	 immediate emission of a photon by the line that just absorbed it. */
