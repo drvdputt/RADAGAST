@@ -451,7 +451,7 @@ double PhotoelectricHeatingRecipe::collisionalChargingRate(double a, int Z, int 
 	double kT = Constant::BOLTZMAN * _gasTemperature;
 
 	double tau = a * kT / Constant::ESQUARE / z_i / z_i; // notes eq 38 (akT / q = akT / e^2 / z^2)
-	double ksi = (double) Z / (double) z_i; // notes eq 39 (Ze / q = Z / z)
+	double ksi = static_cast<double>(Z) / static_cast<double>(z_i); // notes eq 39 (Ze / q = Z / z)
 
 	double Jtilde;
 	if (ksi < 0)

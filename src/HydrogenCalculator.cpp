@@ -26,13 +26,13 @@ HydrogenCalculator::HydrogenCalculator(const Array& frequencyv) :
 
 HydrogenCalculator::~HydrogenCalculator() = default;
 
-void HydrogenCalculator::solveBalance(double n, double Tinit, const std::valarray<double>& specificIntensity)
+void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& specificIntensityv)
 {
 	_n = n;
-	_p_specificIntensityv = &specificIntensity;
+	_p_specificIntensityv = &specificIntensityv;
 
 #ifndef SILENT
-	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensity);
+	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
 #endif
 	DEBUG(
 			"Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = " << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
@@ -74,6 +74,11 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const std::valarra
 	}
 }
 
+void HydrogenCalculator::solveBalance(const GasState& gs, double n, double Tinit, const Array& specificIntensityv)
+{
+	solveBalance(n, Tinit, specificIntensityv);
+}
+
 void HydrogenCalculator::solveInitialGuess(double n, double T)
 {
 	_n = n;
@@ -94,15 +99,50 @@ void HydrogenCalculator::solveInitialGuess(double n, double T)
 	_p_specificIntensityv = nullptr;
 }
 
-GasState HydrogenCalculator::exportState() const
+void HydrogenCalculator::calculateDensities(double T)
 {
-	if (_n > 0 && _p_specificIntensityv != nullptr)
-		return GasState(_frequencyv, *_p_specificIntensityv, emissivityv(), opacityv(),
-				scatteringOpacityv(), _T, _ionizedFraction);
+	_temperature = T;
+	if (_n > 0)
+	{
+#ifdef VERBOSE
+		DEBUG("Calculating state for T = " << T << "K" << endl);
+#endif
+
+		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, *_p_specificIntensityv);
+#ifdef VERBOSE
+		DEBUG("Ionized fraction = " << _ionizedFraction << endl);
+#endif
+
+		double np = _n * _ionizedFraction;
+		double ne = np;
+		double alphaTotal = Ionization::recombinationRate(T);
+
+// approximations from Draine's book, p 138, valid for 3000 to 30000 K
+		double T4 = T / 1.e4;
+		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
+		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+//DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
+
+		Array sourcev(
+		{ ne * np * alphaGround, ne * np * alpha2p });
+
+		/* The ionization rate calculation makes no distinction between the levels. When the upper
+		 level population is small, and its decay rate is large, the second term doesn't really matter.
+		 Therefore, we choose the sink to be the same for each level. Moreover, total source = total
+		 sink so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1.
+		 */
+		double sink = ne * np * alphaTotal / nAtomic();
+		Array sinkv(
+		{ sink, sink });
+
+		_levels->solveBalance(nAtomic(), ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
+	}
 	else
 	{
-		Array zerov(_frequencyv.size());
-		return GasState(_frequencyv, zerov, zerov, zerov, zerov, 0, 0);
+		_ionizedFraction = 0;
+		_levels->solveBalance(0, 0, 0, _temperature, *_p_specificIntensityv,
+		{ 0, 0 },
+		{ 0, 0 });
 	}
 }
 
@@ -110,8 +150,8 @@ Array HydrogenCalculator::emissivityv() const
 {
 	const Array& lineEmv = _levels->totalEmissivityv();
 	Array contEmCoeffv(_frequencyv.size());
-	_freeBound->addEmissionCoefficientv(_T, contEmCoeffv);
-	_freeFree->addEmissionCoefficientv(_T, contEmCoeffv);
+	_freeBound->addEmissionCoefficientv(_temperature, contEmCoeffv);
+	_freeFree->addEmissionCoefficientv(_temperature, contEmCoeffv);
 	return lineEmv + (np_ne() / Constant::FPI) * contEmCoeffv;
 }
 
@@ -120,7 +160,7 @@ Array HydrogenCalculator::opacityv() const
 	const Array& lineOp = _levels->totalOpacityv();
 
 	Array contOpCoeffv(_frequencyv.size());
-	_freeFree->addOpacityCoefficientv(_T, contOpCoeffv);
+	_freeFree->addOpacityCoefficientv(_temperature, contOpCoeffv);
 	double npne = np_ne();
 	double n_H0 = nAtomic();
 
@@ -179,8 +219,8 @@ double HydrogenCalculator::lineAbsorption() const
 double HydrogenCalculator::continuumEmission() const
 {
 	Array gamma_nuv(_frequencyv.size());
-	_freeBound->addEmissionCoefficientv(_T, gamma_nuv);
-	_freeFree->addEmissionCoefficientv(_T, gamma_nuv);
+	_freeBound->addEmissionCoefficientv(_temperature, gamma_nuv);
+	_freeFree->addEmissionCoefficientv(_temperature, gamma_nuv);
 
 // emissivity = ne np / 4pi * gamma
 // total emission = 4pi integral(emissivity) = ne np integral(gamma)
@@ -194,7 +234,7 @@ double HydrogenCalculator::continuumAbsorption() const
 	double npne = np_ne();
 	double nH0 = nAtomic();
 	Array freefreeOpCoefv(_frequencyv.size());
-	_freeFree->addOpacityCoefficientv(_T, freefreeOpCoefv);
+	_freeFree->addOpacityCoefficientv(_temperature, freefreeOpCoefv);
 
 	Array intensityOpacityv(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -239,52 +279,5 @@ void HydrogenCalculator::testHeatingCurve()
 				<< _ionizedFraction << endl;
 	}
 	out.close();
-}
-
-void HydrogenCalculator::calculateDensities(double T)
-{
-	_T = T;
-	if (_n > 0)
-	{
-#ifdef VERBOSE
-		DEBUG("Calculating state for T = " << T << "K" << endl);
-#endif
-
-		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, *_p_specificIntensityv);
-#ifdef VERBOSE
-		DEBUG("Ionized fraction = " << _ionizedFraction << endl);
-#endif
-
-		double np = _n * _ionizedFraction;
-		double ne = np;
-		double alphaTotal = Ionization::recombinationRate(T);
-
-// approximations from Draine's book, p 138, valid for 3000 to 30000 K
-		double T4 = T / 1.e4;
-		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
-		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-//DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
-
-		Array sourcev(
-		{ ne * np * alphaGround, ne * np * alpha2p });
-
-		/* The ionization rate calculation makes no distinction between the levels. When the upper
-		 level population is small, and its decay rate is large, the second term doesn't really matter.
-		 Therefore, we choose the sink to be the same for each level. Moreover, total source = total
-		 sink so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1.
-		 */
-		double sink = ne * np * alphaTotal / nAtomic();
-		Array sinkv(
-		{ sink, sink });
-
-		_levels->solveBalance(nAtomic(), ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
-	}
-	else
-	{
-		_ionizedFraction = 0;
-		_levels->solveBalance(0, 0, 0, _T, *_p_specificIntensityv,
-		{ 0, 0 },
-		{ 0, 0 });
-	}
 }
 

@@ -119,8 +119,8 @@ void FreeFree::readData(const string& file)
 	getline(input, line);
 	istringstream(line) >> _logStep;
 
-	_loggamma2Max = _loggamma2Min + (double) (np_gam2 - 1) * _logStep;
-	_loguMax = _loguMin + (double) (np_u - 1) * _logStep;
+	_loggamma2Max = _loggamma2Min + static_cast<double>(np_gam2 - 1) * _logStep;
+	_loguMax = _loguMin + static_cast<double>(np_u - 1) * _logStep;
 
 	/* read atomic number when present */
 	if (magic == gaunt_magic2)
