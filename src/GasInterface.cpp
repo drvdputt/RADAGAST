@@ -4,15 +4,15 @@
 
 using namespace std;
 
-GasInterface::GasInterface(const valarray<double>& frequencyv) :
-		_frequencyv(frequencyv), _hc(make_unique < HydrogenCalculator > (frequencyv))
+GasInterface::GasInterface(const valarray<double>& frequencyv)
+                : _frequencyv(frequencyv), _hc(make_unique<HydrogenCalculator>(frequencyv))
 {
 }
 
 GasInterface::~GasInterface() = default;
 
 void GasInterface::updateGasState(GasState& gs, double density, double Tinit,
-		const valarray<double>& specificIntensityv)
+                                  const valarray<double>& specificIntensityv)
 {
 	gs._previousISRFv = specificIntensityv;
 	if (density > 0)

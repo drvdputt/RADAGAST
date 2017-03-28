@@ -1,19 +1,18 @@
 #include "FreeBound.h"
-#include "flags.h"
 #include "Constants.h"
 #include "NumUtils.h"
 #include "Table.h"
+#include "flags.h"
 
 #include <cmath>
 #include <fstream>
 
 using namespace std;
 
-FreeBound::FreeBound(const Array& frequencyv) :
-		_frequencyv(frequencyv)
+FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 {
-// Read the free-bound continuum data from Ercolano and Storey (2006)
-// Adapted from NEBULAR source code by M. Schirmer (2016)
+	// Read the free-bound continuum data from Ercolano and Storey (2006)
+	// Adapted from NEBULAR source code by M. Schirmer (2016)
 	vector<double> fileFrequencyv;
 	vector<vector<double>> fileGammaDaggervv;
 
@@ -27,11 +26,14 @@ FreeBound::FreeBound(const Array& frequencyv) :
 	size_t numFreq = _frequencyv.size();
 	_gammaDaggervv.resize(numFreq, numcol);
 
-	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to " << fileFrequencyv.back() << endl);
+	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to " << fileFrequencyv.back()
+	                                    << endl);
 
-	DEBUG("frequency range: " << _frequencyv[0] << " to " << _frequencyv[_frequencyv.size() - 1] << endl);
+	DEBUG("frequency range: " << _frequencyv[0] << " to " << _frequencyv[_frequencyv.size() - 1]
+	                          << endl);
 
-	// Then, apply a linear interpolation across the frequencies (rows) for every temperature (column)
+	// Then, apply a linear interpolation across the frequencies (rows) for every temperature
+	// (column)
 	for (size_t col = 0; col < numcol; col++)
 	{
 		// Extract the column
@@ -41,8 +43,9 @@ FreeBound::FreeBound(const Array& frequencyv) :
 			column.push_back(fileGammaDaggervv[row][col]);
 
 		// Resample it
-		const vector<double>& column_resampled = NumUtils::interpol<double>(column, fileFrequencyv,
-				vector<double>(begin(frequencyv), end(frequencyv)), -1, -1);
+		const vector<double>& column_resampled = NumUtils::interpol<double>(
+		                column, fileFrequencyv,
+		                vector<double>(begin(frequencyv), end(frequencyv)), -1, -1);
 
 		// And copy it over
 		for (size_t row = 0; row < numFreq; row++)
@@ -56,7 +59,7 @@ FreeBound::FreeBound(const Array& frequencyv) :
 	for (size_t iNu = 0; iNu < fileGammaDaggervv.size(); iNu++)
 	{
 		for (double d : fileGammaDaggervv[iNu])
-		out << scientific << d << '\t';
+			out << scientific << d << '\t';
 		out << endl;
 	}
 	out.close();
@@ -66,7 +69,7 @@ FreeBound::FreeBound(const Array& frequencyv) :
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
 		for (size_t iT = 0; iT < _gammaDaggervv.size(1); iT++)
-		out << scientific << _gammaDaggervv(iNu, iT) << '\t';
+			out << scientific << _gammaDaggervv(iNu, iT) << '\t';
 		out << endl;
 	}
 	out.close();
@@ -79,13 +82,14 @@ FreeBound::FreeBound(const Array& frequencyv) :
 		{
 			// Find the grid point to the right of the requested log-temperature
 			size_t iRight = NumUtils::index(logT, _logTemperaturev);
-			// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
-			double wRight = (logT - _logTemperaturev[iRight - 1])
-			/ (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+			// The weight of the point to the right (= 1 if T is Tright, = 0 if T is
+			// Tleft)
+			double wRight = (logT - _logTemperaturev[iRight - 1]) /
+			                (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
 
 			// Interpolate gamma^dagger linearly in log T space
-			double gammaDagger = (_gammaDaggervv(iNu, iRight - 1) * (1 - wRight)
-					+ _gammaDaggervv(iNu, iRight) * wRight);
+			double gammaDagger = (_gammaDaggervv(iNu, iRight - 1) * (1 - wRight) +
+			                      _gammaDaggervv(iNu, iRight) * wRight);
 			out << scientific << gammaDagger << "\t";
 		}
 		out << endl;
@@ -94,8 +98,9 @@ FreeBound::FreeBound(const Array& frequencyv) :
 #endif /*PRINT_CONTINUUM_DATA*/
 }
 
-void FreeBound::readData(string file, vector<double>& fileFrequencyv, vector<double>& fileThresholdv,
-		vector<double>& fileTemperaturev, vector<vector<double>>& fileGammaDaggervv) const
+void FreeBound::readData(string file, vector<double>& fileFrequencyv,
+                         vector<double>& fileThresholdv, vector<double>& fileTemperaturev,
+                         vector<vector<double>>& fileGammaDaggervv) const
 {
 	ifstream input(file);
 	if (!input)
@@ -153,8 +158,8 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
 	{
 #ifdef VERBOSE
-		DEBUG(
-				"Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl);
+		DEBUG("Warning: temperature "
+		      << T << "K is outside of data range for free-bound continuum" << endl);
 #endif
 		return;
 	}
@@ -163,10 +168,11 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	size_t iRight = NumUtils::index(logT, _logTemperaturev);
 	size_t iLeft = iRight - 1;
 	// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
-	double wRight = (logT - _logTemperaturev[iLeft])
-			/ (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
+	double wRight = (logT - _logTemperaturev[iLeft]) /
+	                (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
 
-	// We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the data
+	// We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the
+	// data
 	double Ttothe3_2 = pow(T, 3. / 2.);
 	double kT = Constant::BOLTZMAN * T;
 	// "the nearest threshold of lower energy"
@@ -183,8 +189,9 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 		double freq = _frequencyv[iFreq];
 
 		// Interpolate gamma^dagger linearly in log T space
-		double gammaDagger = _gammaDaggervv(iFreq, iLeft)
-				+ wRight * (_gammaDaggervv(iFreq, iRight) - _gammaDaggervv(iFreq, iLeft));
+		double gammaDagger = _gammaDaggervv(iFreq, iLeft) +
+		                     wRight * (_gammaDaggervv(iFreq, iRight) -
+		                               _gammaDaggervv(iFreq, iLeft));
 
 		// Skip over zero data, or when we are below the first threshold
 		if (!gammaDagger || freq < _thresholdv[0])
@@ -192,19 +199,22 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 		}
 		else
 		{
-			// If the last threshold hasn't been passed yet, check if we have passed the next (i + 1)
+			// If the last threshold hasn't been passed yet, check if we have passed the
+			// next (i + 1)
 			if (freq < _thresholdv.back())
 			{
 				// This block must only be executed when a new threshold is passed
 				if (freq > _thresholdv[iThreshold + 1])
 				{
 					// find the next threshold of lower frequency
-					// (don't just pick the next one, as this wouldn't work with very coarse grids)
+					// (don't just pick the next one, as this wouldn't work with
+					// very coarse grids)
 					iThreshold = NumUtils::index<double>(freq, _thresholdv) - 1;
 					tE = Constant::PLANCK * _thresholdv[iThreshold];
 				}
 			}
-			// When we have just moved past the last threshold, set the index one last time
+			// When we have just moved past the last threshold, set the index one last
+			// time
 			else if (iThreshold < _thresholdv.size() - 1)
 			{
 				iThreshold = _thresholdv.size() - 1;
@@ -224,4 +234,3 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	out.close();
 #endif
 }
-

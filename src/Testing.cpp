@@ -1,10 +1,10 @@
+#include "Testing.h"
 #include "Constants.h"
 #include "HydrogenCalculator.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "PhotoelectricHeating.h"
 #include "TemplatedUtils.h"
-#include "Testing.h"
 #include "TwoLevel.h"
 
 #include <fstream>
@@ -37,7 +37,7 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 }
 
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
-		vector<double> lineFreqv, vector<double> freqWidthv)
+                                  vector<double> lineFreqv, vector<double> freqWidthv)
 {
 	// We want an odd nPerLine, so we can put 1 point in the center
 	if (!(nPerLine % 2))
@@ -80,8 +80,8 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	// Convert to per frequency units using I_nu = I_lambda * lambda * lambda / c
 	Array I_nu(frequencyv.size());
 	for (size_t iWav = 0; iWav < wavelengthv.size(); iWav++)
-		I_nu[frequencyv.size() - iWav - 1] = I_lambda[iWav] * wavelengthv[iWav] * wavelengthv[iWav]
-				/ Constant::LIGHT;
+		I_nu[frequencyv.size() - iWav - 1] = I_lambda[iWav] * wavelengthv[iWav] *
+		                                     wavelengthv[iWav] / Constant::LIGHT;
 
 	// Cut out the UV part
 	size_t i = 0;
@@ -93,25 +93,27 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 		i++;
 	endLambdaUV = i + 1;
 	cout << "UV goes from " << startLambdaUV << " to " << endLambdaUV << endl;
-	vector<double> wavelengthUV(wavelengthv.begin() + startLambdaUV, wavelengthv.begin() + endLambdaUV);
+	vector<double> wavelengthUV(wavelengthv.begin() + startLambdaUV,
+	                            wavelengthv.begin() + endLambdaUV);
 	vector<double> isrfUV(I_lambda.begin() + startLambdaUV, I_lambda.begin() + endLambdaUV);
 
 	// Integrate over the UV only
-	double UVdensity = Constant::FPI / Constant::LIGHT
-			* NumUtils::integrate<double>(wavelengthUV, isrfUV);
+	double UVdensity = Constant::FPI / Constant::LIGHT *
+	                   NumUtils::integrate<double>(wavelengthUV, isrfUV);
 	double currentG0 = UVdensity / Constant::HABING;
 
 	// Rescale to _G0
 	I_nu *= G0 / currentG0;
 
-	vector<double> frequencyUV(end(frequencyv) - endLambdaUV - 1, end(frequencyv) - startLambdaUV - 1);
+	vector<double> frequencyUV(end(frequencyv) - endLambdaUV - 1,
+	                           end(frequencyv) - startLambdaUV - 1);
 	vector<double> isrfUVbis(end(I_nu) - endLambdaUV - 1, end(I_nu) - startLambdaUV - 1);
 
 	// Integrate over the UV only
-	double UVdensitybis = -Constant::FPI / Constant::LIGHT
-			* NumUtils::integrate<double>(frequencyUV, isrfUVbis);
-	cout << "Normalized spectrum uv = " << UVdensitybis << " (" << UVdensitybis / Constant::HABING
-			<< " habing)" << endl;
+	double UVdensitybis = -Constant::FPI / Constant::LIGHT *
+	                      NumUtils::integrate<double>(frequencyUV, isrfUVbis);
+	cout << "Normalized spectrum uv = " << UVdensitybis << " ("
+	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
 	std::ofstream out;
@@ -126,13 +128,15 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	return I_nu;
 }
 
-Array Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv, const Array& specificIntensity_nu)
+Array Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv,
+                                          const Array& specificIntensity_nu)
 {
 	Array I_lambda(frequencyv.size());
 	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
 	{
-		I_lambda[I_lambda.size() - iFreq - 1] = specificIntensity_nu[iFreq] * frequencyv[iFreq]
-				* frequencyv[iFreq] / Constant::LIGHT;
+		I_lambda[I_lambda.size() - iFreq - 1] = specificIntensity_nu[iFreq] *
+		                                        frequencyv[iFreq] * frequencyv[iFreq] /
+		                                        Constant::LIGHT;
 	}
 	return I_lambda;
 }
@@ -156,23 +160,22 @@ void Testing::testHydrogenCalculator()
 	double n = 1e0;
 	double expectedTemperature = 6000;
 
-	vector<double> tempFrequencyv = generateGeometricGridv(200,
-			Constant::LIGHT / (1000 * Constant::UM_CM),
-			Constant::LIGHT / (0.01 * Constant::UM_CM));
+	vector<double> tempFrequencyv =
+	                generateGeometricGridv(200, Constant::LIGHT / (1000 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	const double lineWindowFactor = 5;
-	vector<double> lineFreqv =
-	{ Constant::LIGHT * 82258.9191133 };
-	vector<double> decayRatev =
-	{ 6.2649e+08 };
-	double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) / Constant::LIGHT;
+	vector<double> lineFreqv = {Constant::LIGHT * 82258.9191133};
+	vector<double> decayRatev = {6.2649e+08};
+	double thermalFactor =
+	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) / Constant::LIGHT;
 	vector<double> lineWidthv;
 	lineWidthv.reserve(lineFreqv.size());
 	for (size_t l = 0; l < lineFreqv.size(); l++)
 	{
 		double freq = lineFreqv[l];
-		cout << "thermal width " << freq * thermalFactor << " natural width " << decayRatev[l]
-				<< endl;
+		cout << "thermal width " << freq * thermalFactor << " natural width "
+		     << decayRatev[l] << endl;
 		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
 	}
 	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
@@ -187,14 +190,15 @@ void Testing::testHydrogenCalculator()
 	const Array& opv = hc.opacityv();
 	const Array& scav = hc.scatteredv();
 
-	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, lumv) << endl;
+	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, lumv)
+	     << endl;
 
 	ofstream out, wavfile;
 	char tab = '\t';
 	out.open("/Users/drvdputt/GasModule/run/opticalProperties.dat");
 	out << "# 0:frequency" << tab << "1:intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)" << tab
-			<< "2:opacity alpha_nu (cm-1)" << tab << "3:scattered (erg s-1 cm-3 Hz-1 sr-1)" << tab
-			<< "4: int - sca" << endl;
+	    << "2:opacity alpha_nu (cm-1)" << tab << "3:scattered (erg s-1 cm-3 Hz-1 sr-1)" << tab
+	    << "4: int - sca" << endl;
 	wavfile.open("/Users/drvdputt/GasModule/run/wavelengths.dat");
 	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
@@ -203,8 +207,8 @@ void Testing::testHydrogenCalculator()
 		out.precision(9);
 		double effective = lumv[iFreq] - scav[iFreq];
 		effective = effective > 0 ? effective : 0;
-		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab << scav[iFreq]
-				<< tab << lumv[iFreq] - scav[iFreq] << tab << effective << endl;
+		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab
+		    << scav[iFreq] << tab << lumv[iFreq] - scav[iFreq] << tab << effective << endl;
 		wavfile.precision(9);
 		wavfile << wav << endl;
 	}
@@ -223,13 +227,11 @@ void Testing::testPhotoelectricHeating()
 	vector<double> G0values;
 	if (T == 1000)
 	{
-		G0values =
-		{	2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
+		G0values = {2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
 	}
 	if (T == 100)
 	{
-		G0values =
-		{	.75e-1, .75e0, .75e1, .75e2, .75e3};
+		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
 	phr.setGasTemperature(T);
@@ -238,7 +240,7 @@ void Testing::testPhotoelectricHeating()
 		phr.setG0(G0);
 		stringstream filename;
 		filename << "/Users/drvdputt/GasModule/run/photoelectricHeatingG" << setprecision(4)
-				<< scientific << G0 << ".dat";
+		         << scientific << G0 << ".dat";
 		phr.heatingRateTest(filename.str());
 	}
 }

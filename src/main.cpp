@@ -9,7 +9,7 @@
 
 void handler(int sig)
 {
-	void *array[10];
+	void* array[10];
 	size_t size;
 
 	// get void*'s for all entries on the stack
@@ -29,7 +29,7 @@ int main()
 	//  printf("%f\n", Ionization::testIonization());
 
 	Testing::testHydrogenCalculator();
-	//Testing::testIonizationCrossSection();
-	//Testing::testPhotoelectricHeating();
+	// Testing::testIonizationCrossSection();
+	// Testing::testPhotoelectricHeating();
 	return 0;
 }

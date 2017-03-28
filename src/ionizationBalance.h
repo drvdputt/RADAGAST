@@ -7,7 +7,7 @@
 namespace Ionization
 {
 double ionizedFraction(double nH, double T, const Array& frequencyv,
-		const Array& specificIntensityv);
+                       const Array& specificIntensityv);
 
 double crossSection(double frequency);
 

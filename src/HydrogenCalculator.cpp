@@ -1,12 +1,12 @@
 #include "HydrogenCalculator.h"
 #include "Constants.h"
-#include "flags.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "TwoLevel.h"
+#include "flags.h"
 
 #include <algorithm>
 #include <exception>
@@ -17,10 +17,10 @@
 
 using namespace std;
 
-HydrogenCalculator::HydrogenCalculator(const Array& frequencyv) :
-		_frequencyv(frequencyv), _levels(make_unique < TwoLevel > (frequencyv)), _freeBound(
-				make_unique < FreeBound > (frequencyv)), _freeFree(
-				make_unique < FreeFree > (frequencyv))
+HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
+                : _frequencyv(frequencyv), _levels(make_unique<TwoLevel>(frequencyv)),
+                  _freeBound(make_unique<FreeBound>(frequencyv)),
+                  _freeFree(make_unique<FreeFree>(frequencyv))
 {
 }
 
@@ -34,8 +34,9 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& speci
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
 #endif
-	DEBUG(
-			"Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = " << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
+	DEBUG("Solving balance under isrf of "
+	      << isrf << " erg / s / cm2 / sr = "
+	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
 
 	if (_n > 0)
 	{
@@ -46,24 +47,25 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& speci
 
 		double logTinit = log10(Tinit);
 
-		/* Lambda function that will be used by the search algorithm. The state of the system will be
-		 updated every time the algorithm calls this function. The return value indicates whether the
-		 temperature should increase (net absorption) or decrease (net emission). */
+		/* Lambda function that will be used by the search algorithm. The state of the
+		 system will be updated every time the algorithm calls this function. The return
+		 value indicates whether the temperature should increase (net absorption) or
+		 decrease (net emission). */
 		int counter = 0;
-		function<int(double)> evaluateBalance =
-				[this, &counter] (double logT) -> int
-				{
-					counter++;
-					calculateDensities(pow(10., logT));
-					double netPowerIn = absorption() - emission();
+		function<int(double)> evaluateBalance = [this, &counter](double logT) -> int {
+			counter++;
+			calculateDensities(pow(10., logT));
+			double netPowerIn = absorption() - emission();
 #ifdef VERBOSE
-				DEBUG("Cycle " << counter << ": logT = " << logT << "; netHeating = " << netPowerIn << endl << endl);
+			DEBUG("Cycle " << counter << ": logT = " << logT
+			               << "; netHeating = " << netPowerIn << endl
+			               << endl);
 #endif
-				return (netPowerIn > 0) - (netPowerIn < 0);
-			};
+			return (netPowerIn > 0) - (netPowerIn < 0);
+		};
 
-		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateBalance, logTinit,
-				4.e-3, logTmax, logTmin);
+		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(
+		                evaluateBalance, logTinit, 4.e-3, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
 		calculateDensities(pow(10., logTfinal));
@@ -74,7 +76,8 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& speci
 	}
 }
 
-void HydrogenCalculator::solveBalance(const GasState& gs, double n, double Tinit, const Array& specificIntensityv)
+void HydrogenCalculator::solveBalance(const GasState& gs, double n, double Tinit,
+                                      const Array& specificIntensityv)
 {
 	solveBalance(n, Tinit, specificIntensityv);
 }
@@ -87,8 +90,9 @@ void HydrogenCalculator::solveInitialGuess(double n, double T)
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
 		double freq = _frequencyv[iFreq];
-		isrfGuess[iFreq] = 2 * Constant::PLANCK * freq * freq * freq / Constant::LIGHT
-				/ Constant::LIGHT / expm1(Constant::PLANCK * freq / Constant::BOLTZMAN / T);
+		isrfGuess[iFreq] = 2 * Constant::PLANCK * freq * freq * freq / Constant::LIGHT /
+		                   Constant::LIGHT /
+		                   expm1(Constant::PLANCK * freq / Constant::BOLTZMAN / T);
 	}
 
 	// this should be different too. Maybe work with shared pointers or something. Or dump
@@ -108,7 +112,8 @@ void HydrogenCalculator::calculateDensities(double T)
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 #endif
 
-		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv, *_p_specificIntensityv);
+		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv,
+		                                               *_p_specificIntensityv);
 #ifdef VERBOSE
 		DEBUG("Ionized fraction = " << _ionizedFraction << endl);
 #endif
@@ -117,32 +122,31 @@ void HydrogenCalculator::calculateDensities(double T)
 		double ne = np;
 		double alphaTotal = Ionization::recombinationRate(T);
 
-// approximations from Draine's book, p 138, valid for 3000 to 30000 K
+		// approximations from Draine's book, p 138, valid for 3000 to 30000 K
 		double T4 = T / 1.e4;
-		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
+		double alphaGround = 1.58e-13 *
+		                     pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
 		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-//DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
+		// DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
 
-		Array sourcev(
-		{ ne * np * alphaGround, ne * np * alpha2p });
+		Array sourcev({ne * np * alphaGround, ne * np * alpha2p});
 
-		/* The ionization rate calculation makes no distinction between the levels. When the upper
-		 level population is small, and its decay rate is large, the second term doesn't really matter.
-		 Therefore, we choose the sink to be the same for each level. Moreover, total source = total
-		 sink so we want sink*n0 + sink*n1 = source => sink = totalsource / n because n0/n + n1/n = 1.
+		/* The ionization rate calculation makes no distinction between the levels. When the
+		 upper level population is small, and its decay rate is large, the second term
+		 doesn't really matter. Therefore, we choose the sink to be the same for each level.
+		 Moreover, total source = total sink so we want sink*n0 + sink*n1 = source => sink =
+		 totalsource / n because n0/n + n1/n = 1.
 		 */
 		double sink = ne * np * alphaTotal / nAtomic();
-		Array sinkv(
-		{ sink, sink });
+		Array sinkv({sink, sink});
 
 		_levels->solveBalance(nAtomic(), ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
 	}
 	else
 	{
 		_ionizedFraction = 0;
-		_levels->solveBalance(0, 0, 0, _temperature, *_p_specificIntensityv,
-		{ 0, 0 },
-		{ 0, 0 });
+		_levels->solveBalance(0, 0, 0, _temperature, *_p_specificIntensityv, {0, 0},
+		                      {0, 0});
 	}
 }
 
@@ -173,10 +177,7 @@ Array HydrogenCalculator::opacityv() const
 	return totalOp;
 }
 
-Array HydrogenCalculator::scatteringOpacityv() const
-{
-	return _levels->scatteringOpacityv();
-}
+Array HydrogenCalculator::scatteringOpacityv() const { return _levels->scatteringOpacityv(); }
 
 Array HydrogenCalculator::scatteredv() const
 {
@@ -207,7 +208,8 @@ double HydrogenCalculator::absorption() const
 
 double HydrogenCalculator::lineEmission() const
 {
-	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, _levels->emissivityv());
+	return Constant::FPI *
+	       TemplatedUtils::integrate<double>(_frequencyv, _levels->emissivityv());
 }
 
 double HydrogenCalculator::lineAbsorption() const
@@ -222,8 +224,8 @@ double HydrogenCalculator::continuumEmission() const
 	_freeBound->addEmissionCoefficientv(_temperature, gamma_nuv);
 	_freeFree->addEmissionCoefficientv(_temperature, gamma_nuv);
 
-// emissivity = ne np / 4pi * gamma
-// total emission = 4pi integral(emissivity) = ne np integral(gamma)
+	// emissivity = ne np / 4pi * gamma
+	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
 	return np_ne() * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
 }
 
@@ -239,8 +241,8 @@ double HydrogenCalculator::continuumAbsorption() const
 	Array intensityOpacityv(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
-		double totalOpacity = nH0 * Ionization::crossSection(_frequencyv[iFreq])
-				+ npne * freefreeOpCoefv[iFreq];
+		double totalOpacity = nH0 * Ionization::crossSection(_frequencyv[iFreq]) +
+		                      npne * freefreeOpCoefv[iFreq];
 		intensityOpacityv[iFreq] = I_nu[iFreq] * totalOpacity;
 	}
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
@@ -257,9 +259,9 @@ void HydrogenCalculator::testHeatingCurve()
 	ofstream out;
 	out.open("/Users/drvdputt/GasModule/run/heating.dat");
 	out << "# 0frequency 1netHeating 2absorption 3emission"
-			<< " 4lineHeating 5lineAbsorption 6lineEmission"
-			<< " 7continuumHeating 8continuumAbsorption 9continuumEmission"
-			<< " 10ionizationFraction" << endl;
+	    << " 4lineHeating 5lineAbsorption 6lineEmission"
+	    << " 7continuumHeating 8continuumAbsorption 9continuumEmission"
+	    << " 10ionizationFraction" << endl;
 	for (int s = 0; s < samples; s++, T *= factor)
 	{
 		calculateDensities(T);
@@ -274,10 +276,9 @@ void HydrogenCalculator::testHeatingCurve()
 		double netLine = lineAbs - lineEm;
 		double netCont = contAbs - contEm;
 
-		out << T << tab << netHeating << tab << abs << tab << em << tab << netLine << tab << lineAbs
-				<< tab << lineEm << tab << netCont << tab << contAbs << tab << contEm << tab
-				<< _ionizedFraction << endl;
+		out << T << tab << netHeating << tab << abs << tab << em << tab << netLine << tab
+		    << lineAbs << tab << lineEm << tab << netCont << tab << contAbs << tab << contEm
+		    << tab << _ionizedFraction << endl;
 	}
 	out.close();
 }
-

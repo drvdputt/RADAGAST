@@ -10,11 +10,11 @@
 namespace TemplatedUtils
 {
 
-/* Performs a search by bisection on a continuous interval between xMax and xMin. The function given as
-argument should be a decreasing function which indicates in which direction the search should proceed, and
-hence has a zero at the final value of T. The bisection will start from xInit, and continues until the final
-value of x is constrained to an interval of width xTolerance. */
-template<typename T>
+/* Performs a search by bisection on a continuous interval between xMax and xMin. The function given
+as argument should be a decreasing function which indicates in which direction the search should
+proceed, and hence has a zero at the final value of T. The bisection will start from xInit, and
+continues until the final value of x is constrained to an interval of width xTolerance. */
+template <typename T>
 T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax, T xMin)
 {
 	if (xInit > xMax || xInit < xMin)
@@ -42,15 +42,14 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 }
 
 /* Only works with containers which support the insert function */
-template<typename T, typename T1>
-void inline sortedInsert(T elem, T1& container)
+template <typename T, typename T1> void inline sortedInsert(T elem, T1& container)
 {
 	container.insert(std::upper_bound(std::begin(container), std::end(container), elem), elem);
 }
 
-template<typename T>
+template <typename T>
 T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight,
-		T fUpperLeft, T fUpperRight)
+                         T fUpperLeft, T fUpperRight)
 {
 	T weightRight = (x - xLeft) / (xLeft - xRight);
 	T fLowerI = fLowerLeft + weightRight * (fLowerRight - fLowerLeft);
@@ -60,9 +59,10 @@ T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLef
 	return fLowerI + weightUpper * (fUpperI - fLowerI);
 }
 
-/* Trapezoidal integration over two containers. xContainer and yContainer should be the same size, and support
-iteration using std::begin and std::end. Should work with vector and valarray for T1 and T2. */
-template<typename T, typename T1, typename T2>
+/* Trapezoidal integration over two containers. xContainer and yContainer should be the same size,
+and support iteration using std::begin and std::end. Should work with vector and valarray for T1 and
+T2. */
+template <typename T, typename T1, typename T2>
 T integrate(const T1& xContainer, const T2& yContainer)
 {
 	T answer = 0.0;
@@ -82,7 +82,7 @@ T integrate(const T1& xContainer, const T2& yContainer)
 }
 
 /* Finds the index of the first element >= val, in the iterable container `container'. */
-template<typename T, typename T1> inline size_t index(T val, const T1& container)
+template <typename T, typename T1> inline size_t index(T val, const T1& container)
 {
 	auto idx = std::lower_bound(std::begin(container), std::end(container), val);
 	return std::distance(std::begin(container), idx);

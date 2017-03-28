@@ -10,8 +10,8 @@ namespace Sanity
 {
 void reportOverridden(std::string name, double original, double replacement, std::string reason)
 {
-	std::cout << std::scientific << name << "has been overridden from " << original << " to " << replacement << " because "
-			<< reason << std::endl;
+	std::cout << std::scientific << name << "has been overridden from " << original << " to "
+	          << replacement << " because " << reason << std::endl;
 }
 } /* namespace Sanity */
 #endif /* _SRC_SANITY_H_ */

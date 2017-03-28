@@ -2,13 +2,13 @@
 
 #include "NumUtils.h"
 #include "Testing.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
 #include <cmath>
 #include <exception>
+#include <fstream>
 #include <iomanip>
 #include <ios>
+#include <iostream>
+#include <sstream>
 
 //#define EXACTGRID
 
@@ -60,7 +60,7 @@ void PhotoelectricHeatingRecipe::readQabs() const
 	for (size_t i = 0; i < _Na; i++)
 	{
 		file >> _fileav[i];
-		_fileav[i] *= 1e-6;     // convert from micron to m
+		_fileav[i] *= 1e-6;  // convert from micron to m
 		getline(file, line); // ignore anything else on this line
 
 		for (int k = kbeg; k != kend; k += kinc)
@@ -68,7 +68,7 @@ void PhotoelectricHeatingRecipe::readQabs() const
 			if (skip1)
 				file >> dummy;
 			file >> _filelambdav[k];
-			_filelambdav[k] *= 1e-6;     // convert from micron to m
+			_filelambdav[k] *= 1e-6; // convert from micron to m
 			if (skip2)
 				file >> dummy;
 			file >> _Qabsvv[k][i];
@@ -91,18 +91,20 @@ void PhotoelectricHeatingRecipe::readQabs() const
 		d *= 100.; // m to cm
 }
 
-std::vector<double> PhotoelectricHeatingRecipe::generateQabsv(double a,
-		const std::vector<double>& wavelengthv) const
+std::vector<double>
+PhotoelectricHeatingRecipe::generateQabsv(double a, const std::vector<double>& wavelengthv) const
 {
 	vector<double> Qabs(wavelengthv.size());
 	vector<double> QabsFromFileForA(_filelambdav.size());
 
 	// very simple model
-//        for (size_t i = 0; i < wavelength.size(); i++)
-//        {
-//            Qabs[i] = .75;
-//            if (a < 100 * Constant::ANG_CM) Qabs[i] *= a / 100 / Constant::ANG_CM; // this works pretty well to simulate the leveling off of the heating efficiency at 1000 Ang
-//        }
+	//        for (size_t i = 0; i < wavelength.size(); i++)
+	//        {
+	//            Qabs[i] = .75;
+	//            if (a < 100 * Constant::ANG_CM) Qabs[i] *= a / 100 / Constant::ANG_CM; // this
+	//            works pretty well to simulate the leveling off of the heating efficiency at
+	//            1000 Ang
+	//        }
 
 	if (a <= _fileav[0]) // extrapolate propto a
 	{
@@ -112,27 +114,27 @@ std::vector<double> PhotoelectricHeatingRecipe::generateQabsv(double a,
 	else // interpolated from data
 	{
 		size_t a_index = NumUtils::index<double>(a, _fileav);
-		double normalDistance = (a - _fileav[a_index - 1])
-				/ (_fileav[a_index] - _fileav[a_index - 1]);
+		double normalDistance = (a - _fileav[a_index - 1]) /
+		                        (_fileav[a_index] - _fileav[a_index - 1]);
 		// interpolate the values from the file for a specific grain size
 		for (size_t i = 0; i < _filelambdav.size(); i++)
-			QabsFromFileForA[i] = _Qabsvv[i][a_index - 1] * (1 - normalDistance)
-					+ _Qabsvv[i][a_index] * normalDistance;
+			QabsFromFileForA[i] = _Qabsvv[i][a_index - 1] * (1 - normalDistance) +
+			                      _Qabsvv[i][a_index] * normalDistance;
 	}
 
-# ifdef EXACTGRID
+#ifdef EXACTGRID
 	return QabsFromFileForA;
-# endif
+#endif
 
 	Qabs = NumUtils::interpol<double>(QabsFromFileForA, _filelambdav, wavelengthv, -1, -1);
 #ifdef PLOT_QABS
 	ofstream qabsfile;
 	std::stringstream filename;
 	filename << "/Users/drvdputt/GasModule/run/multi-qabs/qabs_a" << setfill('0') << setw(8)
-	<< setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 	qabsfile.open(filename.str());
 	for (size_t i = 0; i < wavelengthv.size(); i++)
-	qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
+		qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
 	qabsfile.close();
 #endif
 	return Qabs;
@@ -145,7 +147,7 @@ double PhotoelectricHeatingRecipe::ionizationPotential(double a, int Z) const
 	if (Z >= 0)
 	{
 		// use the same expression for carbonaceous and silicate
-		ip_v += _workFunction + (Z + 2) * e2a * 0.3 * Constant::ANG_CM / a;  // WD01 eq 2
+		ip_v += _workFunction + (Z + 2) * e2a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
 	}
 	else if (_carbonaceous)
 	{
@@ -158,8 +160,10 @@ double PhotoelectricHeatingRecipe::ionizationPotential(double a, int Z) const
 	return ip_v;
 }
 
-double PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vector<double>& wavelengthv,
-		const std::vector<double>& Qabs, const std::vector<double>& energyDensity_lambda) const
+double
+PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vector<double>& wavelengthv,
+                                          const std::vector<double>& Qabs,
+                                          const std::vector<double>& energyDensity_lambda) const
 {
 	const double e2a = Constant::ESQUARE / a;
 	size_t nLambda = wavelengthv.size();
@@ -171,7 +175,10 @@ double PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vec
 	// Quantities independent of nu
 	double ip_v = ionizationPotential(a, Z);
 
-	double Emin = Z >= 0 ? 0 : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75)); // WD01 eq 7
+	double Emin = Z >= 0 ? 0
+	                     : -(Z + 1) * e2a /
+	                                              (1 + std::pow(27. * Constant::ANG_CM / a,
+	                                                            0.75)); // WD01 eq 7
 
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -192,14 +199,17 @@ double PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vec
 
 			// Calculate y2 from eq 11
 			double Ediff = Ehigh - Elow;
-			double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff / Ediff : 1;
+			double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff /
+			                                            Ediff
+			                   : 1;
 
 			// The integral over the electron energy distribution
 			double IntE = energyIntegral(Elow, Ehigh, Emin, Emax);
 			double Y = yield(a, Z, hnuDiff, Elow, Ehigh);
 
-			peIntegrandv[lambda_index] = Y * Qabs[lambda_index]
-					* energyDensity_lambda[lambda_index] / hnu * IntE / y2;
+			peIntegrandv[lambda_index] = Y * Qabs[lambda_index] *
+			                             energyDensity_lambda[lambda_index] / hnu *
+			                             IntE / y2;
 		}
 
 		if (Z < 0)
@@ -215,26 +225,30 @@ double PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vec
 				double denom = 1 + x * x / 3;
 				double sigma_pdt = x / denom / denom; // eq 20
 
-				pdIntegrandv[lambda_index] = sigma_pdt * energyDensity_lambda[lambda_index]
-						/ hnu * (hnu - hnu_pdt + Emin);
+				pdIntegrandv[lambda_index] = sigma_pdt *
+				                             energyDensity_lambda[lambda_index] /
+				                             hnu * (hnu - hnu_pdt + Emin);
 			}
 		}
 	}
 
-	double peIntegral = Constant::PI * a * a * Constant::LIGHT
-			* NumUtils::integrate<double>(wavelengthv, peIntegrandv);
+	double peIntegral = Constant::PI * a * a * Constant::LIGHT *
+	                    NumUtils::integrate<double>(wavelengthv, peIntegrandv);
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
-			Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT
-						* NumUtils::integrate<double>(wavelengthv, pdIntegrandv) :
-				0;
+	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
+	                                                NumUtils::integrate<double>(wavelengthv,
+	                                                                            pdIntegrandv)
+	                      : 0;
 
 	return peIntegral + pdIntegral;
 }
 
-double PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<double>& wavelengthv,
-		const std::vector<double>& Qabs, const std::vector<double>& energyDensity_lambda) const
+double
+PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<double>& wavelengthv,
+                                         const std::vector<double>& Qabs,
+                                         const std::vector<double>& energyDensity_lambda) const
 {
 	double totalHeatingForGrainSize = 0;
 
@@ -252,13 +266,14 @@ double PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<doub
 	}
 
 	// The net heating rate
-	totalHeatingForGrainSize -= recombinationCoolingRate(a, fZ, Zmin); // eq 41 without denominator
+	totalHeatingForGrainSize -=
+	                recombinationCoolingRate(a, fZ, Zmin); // eq 41 without denominator
 
 #ifdef PLOT_FZ
 	std::ofstream outvar;
 	std::stringstream filename;
 	filename << "/Users/drvdputt/GasModule/run/multi-fz/fz_a" << setfill('0') << setw(8)
-	<< setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 	outvar.open(filename.str());
 	outvar << "# carbon = " << _carbonaceous << endl;
 	outvar << "# a = " << a << endl;
@@ -268,7 +283,7 @@ double PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<doub
 	outvar << "# Tgas = " << _gasTemperature << endl;
 
 	for (int z = Zmin; z <= Zmax; z++)
-	outvar << z << '\t' << fZ[z - Zmin] << '\n';
+		outvar << z << '\t' << fZ[z - Zmin] << '\n';
 	outvar.close();
 #endif
 
@@ -276,15 +291,18 @@ double PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<doub
 }
 
 double PhotoelectricHeatingRecipe::heatingRate(const std::vector<double>& wavelengthv,
-		const std::vector<double>& Qabs, const std::vector<double>& isrf) const
+                                               const std::vector<double>& Qabs,
+                                               const std::vector<double>& isrf) const
 {
 	// Need size distribution
 
 	return 0.;
 }
 
-double PhotoelectricHeatingRecipe::emissionRate(double a, int Z, const std::vector<double>& wavelengthv,
-		const std::vector<double>& Qabs, const std::vector<double>& isrf) const
+double PhotoelectricHeatingRecipe::emissionRate(double a, int Z,
+                                                const std::vector<double>& wavelengthv,
+                                                const std::vector<double>& Qabs,
+                                                const std::vector<double>& isrf) const
 {
 	const double e2a = Constant::ESQUARE / a;
 	size_t nLambda = wavelengthv.size();
@@ -296,7 +314,10 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z, const std::vect
 	// Quantities independent of nu
 	double ip_v = ionizationPotential(a, Z);
 
-	double Emin = Z >= 0 ? 0 : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75)); // WD01 eq 7
+	double Emin = Z >= 0 ? 0
+	                     : -(Z + 1) * e2a /
+	                                              (1 + std::pow(27. * Constant::ANG_CM / a,
+	                                                            0.75)); // WD01 eq 7
 
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -316,7 +337,8 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z, const std::vect
 			// The integral over the electron energy distribution
 			double Y = yield(a, Z, hnuDiff, Elow, Ehigh);
 
-			peIntegrandv[lambda_index] = Y * Qabs[lambda_index] * isrf[lambda_index] / hnu;
+			peIntegrandv[lambda_index] =
+			                Y * Qabs[lambda_index] * isrf[lambda_index] / hnu;
 		}
 
 		if (Z < 0)
@@ -337,18 +359,20 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z, const std::vect
 		}
 	}
 
-	double peIntegral = Constant::PI * a * a * Constant::LIGHT
-			* NumUtils::integrate<double>(wavelengthv, peIntegrandv);
+	double peIntegral = Constant::PI * a * a * Constant::LIGHT *
+	                    NumUtils::integrate<double>(wavelengthv, peIntegrandv);
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
-			Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT
-						* NumUtils::integrate<double>(wavelengthv, pdIntegrandv) :
-				0;
+	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
+	                                                NumUtils::integrate<double>(wavelengthv,
+	                                                                            pdIntegrandv)
+	                      : 0;
 	return peIntegral + pdIntegral;
 }
 
-double PhotoelectricHeatingRecipe::energyIntegral(double Elow, double Ehigh, double Emin, double Emax) const
+double PhotoelectricHeatingRecipe::energyIntegral(double Elow, double Ehigh, double Emin,
+                                                  double Emax) const
 {
 	double Ediff = Ehigh - Elow;
 	double Ediff3 = Ediff * Ediff * Ediff;
@@ -357,13 +381,14 @@ double PhotoelectricHeatingRecipe::energyIntegral(double Elow, double Ehigh, dou
 	// integral f(E)dE is of the form a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2 -min2)
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
-	return 6 / Ediff3
-			* (-(Emax2 * Emax2 - Emin2 * Emin2) / 4.
-					+ (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3.
-					- Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	return 6 / Ediff3 *
+	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
+	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
-double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double Elow, double Ehigh) const
+double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double Elow,
+                                         double Ehigh) const
 {
 	if (hnuDiff < 0)
 		throw std::range_error("Frequency is smaller than photoelectric threshold.");
@@ -375,8 +400,8 @@ double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double
 	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
 
 	// Calculate y1 from grain properties and eq 13, 14
-	//double imaginaryRefIndex = 1; // should be wavelength-dependent
-	//double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
+	// double imaginaryRefIndex = 1; // should be wavelength-dependent
+	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
 	const double la = 100 * Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
 	double beta = a / la;
 	const double le = 10 * Constant::ANG_CM;
@@ -384,8 +409,8 @@ double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double
 
 	double alpha2 = alpha * alpha;
 	double beta2 = beta * beta;
-	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha))
-			/ (beta2 - 2. * beta - 2. * expm1(-beta));
+	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
+	            (beta2 - 2. * beta - 2. * expm1(-beta));
 
 	// Calculate y0 from eq 9, 16, 17
 	double thetaOverW = hnuDiff;
@@ -444,14 +469,17 @@ double PhotoelectricHeatingRecipe::stickingCoefficient(double a, int Z, int z_i)
 		return 1;
 }
 
-double PhotoelectricHeatingRecipe::collisionalChargingRate(double a, int Z, int z_i, double m_i) const
+double PhotoelectricHeatingRecipe::collisionalChargingRate(double a, int Z, int z_i,
+                                                           double m_i) const
 {
 	double stick = stickingCoefficient(a, Z, z_i);
 
 	double kT = Constant::BOLTZMAN * _gasTemperature;
 
-	double tau = a * kT / Constant::ESQUARE / z_i / z_i; // notes eq 38 (akT / q = akT / e^2 / z^2)
-	double ksi = static_cast<double>(Z) / static_cast<double>(z_i); // notes eq 39 (Ze / q = Z / z)
+	double tau = a * kT / Constant::ESQUARE / z_i /
+	             z_i; // notes eq 38 (akT / q = akT / e^2 / z^2)
+	double ksi = static_cast<double>(Z) /
+	             static_cast<double>(z_i); // notes eq 39 (Ze / q = Z / z)
 
 	double Jtilde;
 	if (ksi < 0)
@@ -479,8 +507,8 @@ double PhotoelectricHeatingRecipe::lambdaTilde(double tau, double ksi) const
 	}
 	else if (ksi > 0)
 	{
-		return (2. + ksi / tau) * (1. + 1. / sqrt(3. / 2. / tau + 3. * ksi))
-				* exp(-ksi / (1. + 1. / sqrt(ksi)) / tau);
+		return (2. + ksi / tau) * (1. + 1. / sqrt(3. / 2. / tau + 3. * ksi)) *
+		       exp(-ksi / (1. + 1. / sqrt(ksi)) / tau);
 	}
 	else
 	{
@@ -489,7 +517,7 @@ double PhotoelectricHeatingRecipe::lambdaTilde(double tau, double ksi) const
 }
 
 double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const std::vector<double>& fZ,
-		int Zmin) const
+                                                            int Zmin) const
 {
 	double kT = Constant::BOLTZMAN * _gasTemperature;
 	double eightkT3DivPi = 8 * kT * kT * kT / Constant::PI;
@@ -498,7 +526,8 @@ double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const std:
 
 	double particleSum = 0;
 
-	// tau = akT / q^2 = akT / e^2 (this needs to change when ions with charges > 1 are introduced)
+	// tau = akT / q^2 = akT / e^2 (this needs to change when ions with charges > 1 are
+	// introduced)
 	double tau = a * kT / Constant::ESQUARE;
 
 	// electrons
@@ -520,15 +549,17 @@ double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const std:
 	particleSum += _electronDensity * sqrt(eightkT3DivPi / Constant::HMASS_CGS) * Zsum;
 
 	// EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
-	double secondTerm = fZ[0] * collisionalChargingRate(a, Zmin, -1, Constant::ELECTRONMASS)
-			* ionizationPotential(a, Zmin - 1);
+	double secondTerm = fZ[0] * collisionalChargingRate(a, Zmin, -1, Constant::ELECTRONMASS) *
+	                    ionizationPotential(a, Zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
 }
 
 void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<double>& wavelengthv,
-		const std::vector<double>& Qabs, const std::vector<double>& energyDensity_lambda,
-		int& resultZmax, int& resultZmin, std::vector<double>& resultfZ) const
+                                               const std::vector<double>& Qabs,
+                                               const std::vector<double>& energyDensity_lambda,
+                                               int& resultZmax, int& resultZmin,
+                                               std::vector<double>& resultfZ) const
 {
 	// Express a in angstroms
 	double aA = a / Constant::ANG_CM;
@@ -536,10 +567,11 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 	// Shortest wavelength = highest possible energy of a photon
 	double hnumax = Constant::PLANCKLIGHT / wavelengthv[0];
 
-	// The maximum charge is one more than the highest charge which still allows ionization by photons of hnumax
+	// The maximum charge is one more than the highest charge which still allows ionization by
+	// photons of hnumax
 	resultZmax = floor(
-			((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA)
-					/ (1 + .3 / aA));
+	                ((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) /
+	                (1 + .3 / aA));
 
 	// The minimum charge is the most negative charge for which autoionization does not occur
 	resultZmin = minimumCharge(a);
@@ -548,7 +580,8 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 		throw std::range_error("Zmax is smaller than Zmin");
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
-	// We will cut off the distribution at some point past the maximum (in either the positive or the negative direction)
+	// We will cut off the distribution at some point past the maximum (in either the positive
+	// or the negative direction)
 	double lowerLimit = 1.e-6;
 	int trimLow = 0;
 	int trimHigh = resultfZ.size() - 1;
@@ -575,7 +608,8 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 			upperbound = current;
 		// Move the cursor to the center of the new bounds
 		current = floor((lowerbound + upperbound) / 2.);
-		//cout << "Searching maximum in ("<<lowerbound<<" | "<<current<<" | "<<upperbound<<")"<<endl;
+		// cout << "Searching maximum in ("<<lowerbound<<" | "<<current<<" |
+		// "<<upperbound<<")"<<endl;
 	}
 	centerZ = current;
 
@@ -589,12 +623,12 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 		double Jpe = emissionRate(a, z - 1, wavelengthv, Qabs, energyDensity_lambda);
 		double Jion = collisionalChargingRate(a, z - 1, 1, Constant::HMASS_CGS);
 		double Je = collisionalChargingRate(a, z, -1, Constant::ELECTRONMASS);
-		//cout << "z = "<<z<<" Jpe = "<<Jpe<<" Jion = "<<Jion<<" Je = "<<Je<<endl;
+		// cout << "z = "<<z<<" Jpe = "<<Jpe<<" Jion = "<<Jion<<" Je = "<<Je<<endl;
 		int index = z - resultZmin;
 		resultfZ[index] = resultfZ[index - 1] * (Jpe + Jion) / Je;
 
-		// Cut off calculation once the values past the maximum have a relative size of 1e-6 or less
-		// Detects the maximum
+		// Cut off calculation once the values past the maximum have a relative size of 1e-6
+		// or less Detects the maximum
 		if (!passedMaximum && resultfZ[index] < resultfZ[index - 1])
 		{
 			passedMaximum = true;
@@ -644,30 +678,30 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 		d /= sum;
 
 	// Test the result
-//    for (int z = resultZmin + 1; z <= resultZmax - 1; z++){
-//        double Jpe = emissionRate(a, z, wavelength, Qabs, isrf);
-//        double Jion = collisionalChargingRate(a, z, 1, Constant::HMASS_CGS);
-//        double Je = collisionalChargingRate(a, z, -1, Constant::ELECTRONMASS);
-//        int index = z - resultZmin;
-//        double departure = resultfZ[index] * (Jpe + Jion + Je);
+	//    for (int z = resultZmin + 1; z <= resultZmax - 1; z++){
+	//        double Jpe = emissionRate(a, z, wavelength, Qabs, isrf);
+	//        double Jion = collisionalChargingRate(a, z, 1, Constant::HMASS_CGS);
+	//        double Je = collisionalChargingRate(a, z, -1, Constant::ELECTRONMASS);
+	//        int index = z - resultZmin;
+	//        double departure = resultfZ[index] * (Jpe + Jion + Je);
 
-//        Jpe = emissionRate(a, z-1, wavelength, Qabs, isrf);
-//        Jion = collisionalChargingRate(a, z-1, 1, Constant::HMASS_CGS);
-//        double arrival = resultfZ[index-1] * (Jpe + Jion);
+	//        Jpe = emissionRate(a, z-1, wavelength, Qabs, isrf);
+	//        Jion = collisionalChargingRate(a, z-1, 1, Constant::HMASS_CGS);
+	//        double arrival = resultfZ[index-1] * (Jpe + Jion);
 
-//        Je = collisionalChargingRate(a, z+1, -1, Constant::ELECTRONMASS);
-//        arrival += resultfZ[index+1] * Je;
+	//        Je = collisionalChargingRate(a, z+1, -1, Constant::ELECTRONMASS);
+	//        arrival += resultfZ[index+1] * Je;
 
-//        cout << "Total change rate in population z = "<<z<<" : "<<arrival - departure<<endl;
-//    }
+	//        cout << "Total change rate in population z = "<<z<<" : "<<arrival -
+	//        departure<<endl;
+	//    }
 }
 
 double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 {
 	// Parameters
 	const int Z = 10;
-	vector<double> av =
-	{ 4e-8, 10e-8, 30e-8, 100e-8, 300e-8 };
+	vector<double> av = {4e-8, 10e-8, 30e-8, 100e-8, 300e-8};
 
 	// Plot range
 	const double hnuMin = 5 / Constant::ERG_EV;
@@ -683,7 +717,11 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 		// Quantities independent of nu
 		double ip_v = ionizationPotential(a, Z);
 
-		double Emin = Z >= 0 ? 0 : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75)); // WD01 eq 7
+		double Emin = Z >= 0 ? 0
+		                     : -(Z + 1) * e2a /
+		                                              (1 +
+		                                               std::pow(27. * Constant::ANG_CM / a,
+		                                                        0.75)); // WD01 eq 7
 
 		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -697,8 +735,8 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 			double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
 
 			if (hnuDiff > 0)
-				out << hnu * Constant::ERG_EV << '\t' << yield(a, Z, hnuDiff, Elow, Ehigh)
-						<< '\n';
+				out << hnu * Constant::ERG_EV << '\t'
+				    << yield(a, Z, hnuDiff, Elow, Ehigh) << '\n';
 			hnu += step;
 		}
 		out << '\n';
@@ -712,24 +750,25 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	readQabs();
 
 	// Wavelength grid
-	const vector<double>& frequencyv = Testing::generateGeometricGridv(_nWav, Constant::LIGHT / _maxWav,
-			Constant::LIGHT / _minWav);
+	const vector<double>& frequencyv = Testing::generateGeometricGridv(
+	                _nWav, Constant::LIGHT / _maxWav, Constant::LIGHT / _minWav);
 	// Input spectrum
 	const Array& specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, _G0);
 
 	// Convert to wavelength units
 	const vector<double>& wavelengthv = Testing::freqToWavGrid(frequencyv);
-	Array tempEnergyDensity_lambda = Constant::FPI / Constant::LIGHT
-			* Testing::freqToWavSpecificIntensity(frequencyv, specificIntensityv);
+	Array tempEnergyDensity_lambda =
+	                Constant::FPI / Constant::LIGHT *
+	                Testing::freqToWavSpecificIntensity(frequencyv, specificIntensityv);
 	const vector<double> energyDensity_lambda(begin(tempEnergyDensity_lambda),
-			end(tempEnergyDensity_lambda));
+	                                          end(tempEnergyDensity_lambda));
 	cout << "Made isrf \n";
 
-//	ofstream spectrumout;
-//	spectrumout.open("/Users/drvdputt/GasModule/run/u_lambda.dat");
-//	for (size_t i = 0; i < wavelengthv.size(); i++)
-//		spectrumout << wavelengthv[i] * Constant::CM_UM << '\t' << energyDensity_lambda[i] << endl;
-//	spectrumout.close();
+	//	ofstream spectrumout;
+	//	spectrumout.open("/Users/drvdputt/GasModule/run/u_lambda.dat");
+	//	for (size_t i = 0; i < wavelengthv.size(); i++)
+	//		spectrumout << wavelengthv[i] * Constant::CM_UM << '\t' <<
+	//energyDensity_lambda[i] << endl; 	spectrumout.close();
 
 	// Grain sizes for test
 	double aMin = 1.5 * Constant::ANG_CM;
@@ -740,8 +779,8 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	std::ofstream outRate;
 	outRate.open(filename);
 
-//	ofstream outAvgQabs;
-//	outAvgQabs.open("/Users/drvdputt/GasModule/run/avgQabsInterp.txt");
+	//	ofstream outAvgQabs;
+	//	outAvgQabs.open("/Users/drvdputt/GasModule/run/avgQabsInterp.txt");
 
 	double aStepFactor = std::pow(aMax / aMin, 1. / Na);
 	double a = aMin;
@@ -760,16 +799,18 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 
 		cout << "Size " << a / Constant::ANG_CM << endl;
 		outRate << a / Constant::ANG_CM << '\t'
-				<< PhotoelectricHeatingRecipe::heatingRateA(a, wavelengthv, Qabs,
-						energyDensity_lambda) / totalAbsorbed << '\n';
-//		double u = NumUtils::integrate<double>(wavelengthv, energyDensity_lambda);
-//		double avgQabs = uTimesAvgQabs / u;
-//		outAvgQabs << a / Constant::ANG_CM << '\t' << avgQabs << endl;
+		        << PhotoelectricHeatingRecipe::heatingRateA(a, wavelengthv, Qabs,
+		                                                    energyDensity_lambda) /
+		                                totalAbsorbed
+		        << '\n';
+		//		double u = NumUtils::integrate<double>(wavelengthv,
+		//energyDensity_lambda); 		double avgQabs = uTimesAvgQabs / u;
+		//		outAvgQabs << a / Constant::ANG_CM << '\t' << avgQabs << endl;
 		a *= aStepFactor;
 	}
 	outRate.close();
 	cout << "Wrote " << filename << endl;
-//	outAvgQabs.close();
+	//	outAvgQabs.close();
 	cout << "Wrote avgQabsInterp.txt" << endl;
 
 	cout << "Charging parameter = " << _G0 * sqrt(_gasTemperature) / _electronDensity << endl;
@@ -780,7 +821,7 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest() const
 {
 	readQabs();
 
-	// Wavelength grid
+// Wavelength grid
 #ifdef EXACTGRID
 	vector<double> wavelengthv = _filelambdav;
 #else
@@ -802,7 +843,8 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest() const
 	int Zmax, Zmin;
 	chargeBalance(a, wavelengthv, Qabsv, isrfv, Zmax, Zmin, fZv);
 
-	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << std::endl;
+	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size()
+	          << std::endl;
 
 	std::ofstream out;
 	out.open("/Users/drvdputt/GasModule/run/fZ.txt");

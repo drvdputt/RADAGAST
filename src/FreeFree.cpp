@@ -31,9 +31,9 @@
 /*
  If you use any of these data in a scientific publication, please refer to
 
- van Hoof P.A.M., Williams R.J.R., Volk K., Chatzikos M., Ferland G.J., Lykins M., Porter R.L., Wang Y.
- Accurate determination of the free-free Gaunt factor, I -- non-relativistic Gaunt factors
- 2014, MNRAS, 444, 420
+ van Hoof P.A.M., Williams R.J.R., Volk K., Chatzikos M., Ferland G.J., Lykins M., Porter R.L., Wang
+ Y. Accurate determination of the free-free Gaunt factor, I -- non-relativistic Gaunt factors 2014,
+ MNRAS, 444, 420
 
  van Hoof P.A.M., Ferland G.J., Williams R.J.R., Volk K., Chatzikos M., Lykins M., Porter R.L.
  Accurate determination of the free-free Gaunt factor, II -- relativistic Gaunt factors
@@ -42,8 +42,8 @@
 
 #include "FreeFree.h"
 #include "Constants.h"
-#include "flags.h"
 #include "TemplatedUtils.h"
+#include "flags.h"
 
 #include <cassert>
 #include <fstream>
@@ -55,27 +55,28 @@ using namespace std;
 #define NP_GAM2 81
 #define NP_U 146
 
-// See equations for free-free in gasphysics document, or in Rybicki and Lightman equations 5.14a and 5.18a
+// See equations for free-free in gasphysics document, or in Rybicki and Lightman equations 5.14a
+// and 5.18a
 const double e6 = Constant::ESQUARE * Constant::ESQUARE * Constant::ESQUARE;
 const double c3 = Constant::LIGHT * Constant::LIGHT * Constant::LIGHT;
 const double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
 
 // 32pi e^6 / 3mc^3 * sqrt(2pi / 3m)
-const double gamma_nu_constantFactor = 32 * Constant::PI * e6 / 3. / Constant::ELECTRONMASS / c3
-		* sqrt_2piOver3m;
+const double gamma_nu_constantFactor =
+                32 * Constant::PI * e6 / 3. / Constant::ELECTRONMASS / c3 * sqrt_2piOver3m;
 // 4 e^6 / 3mhc * sqrt(2pi / 3m)
-const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / Constant::PLANCK
-		/ Constant::LIGHT * sqrt_2piOver3m;
+const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / Constant::PLANCK /
+                                        Constant::LIGHT * sqrt_2piOver3m;
 
-FreeFree::FreeFree(const Array& frequencyv) :
-		_frequencyv(frequencyv)
+FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 {
 	readData("/Users/drvdputt/GasModule/git/dat/gauntff_merged_Z01.dat");
 }
 
 void FreeFree::readData(const string& file)
 {
-	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444 420)
+	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
+	// 420)
 	ifstream input;
 	input.open(file);
 	if (!input)
@@ -150,9 +151,9 @@ void FreeFree::readData(const string& file)
 #ifdef PRINT_CONTINUUM_DATA
 	ofstream out;
 	out.open("/Users/drvdputt/GasModule/run/gauntff.dat");
-	for (size_t ipu=0; ipu < np_u; ipu++)
+	for (size_t ipu = 0; ipu < np_u; ipu++)
 	{
-		for (size_t ipg2=0; ipg2 < np_gam2; ++ipg2)
+		for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
 		{
 			out << _fileGauntFactorvv(ipu, ipg2) << '\t';
 		}
@@ -177,7 +178,8 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	{
 		double u = Constant::PLANCK * _frequencyv[iFreq] / kT;
 		double logu = log10(u);
-		double gammaNu = gamma_nu_constantFactor / sqrtkT * exp(-u) * gauntFactor(logu, loggamma2);
+		double gammaNu = gamma_nu_constantFactor / sqrtkT * exp(-u) *
+		                 gauntFactor(logu, loggamma2);
 #ifdef PRINT_CONTINUUM_DATA
 		out << _frequencyv[iFreq] << "\t" << gammaNu / 1.e-40 << endl;
 #endif
@@ -203,8 +205,8 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 		double u = Constant::PLANCK * nu / kT;
 		double logu = log10(u);
 		// C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
-		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u)
-				* gauntFactor(logu, loggamma2);
+		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u) *
+		                   gauntFactor(logu, loggamma2);
 #ifdef PRINT_CONTINUUM_DATA
 		out << _frequencyv[iFreq] << "\t" << opCoeffNu << endl;
 #endif
@@ -213,26 +215,25 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 #ifdef PRINT_CONTINUUM_DATA
 	out.close();
 #endif
-
 }
 
 double FreeFree::gauntFactor(double logu, double logg2) const
 {
-// Throw an error if out of range for now. Maybe allow extrapolation later.
+	// Throw an error if out of range for now. Maybe allow extrapolation later.
 	if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
 		throw runtime_error("Log(gamma^2) or log(u) out of range");
 
-// Find the gamma^2-index to the right of logg2 , maximum the max column index)
+	// Find the gamma^2-index to the right of logg2 , maximum the max column index)
 	int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
-// should be at least 1 (to extrapolate left)
+	// should be at least 1 (to extrapolate left)
 	iRight = max(iRight, 1);
-// cannot be larger than the max column index
+	// cannot be larger than the max column index
 	iRight = min(iRight, static_cast<int>(_fileGauntFactorvv.size(1) - 1));
 	int iLeft = iRight - 1;
 	double xRight = _loggamma2Min + _logStep * iRight;
 	double xLeft = xRight - _logStep;
 
-// Find the u-index above u
+	// Find the u-index above u
 	int iUpper = ceil((logu - _loguMin) / _logStep);
 	iUpper = max(iUpper, 1);
 	iUpper = min(iUpper, static_cast<int>(_fileGauntFactorvv.size(0) - 1));
@@ -240,9 +241,10 @@ double FreeFree::gauntFactor(double logu, double logg2) const
 	double yUp = _loguMin + _logStep * iUpper;
 	double yLow = yUp - _logStep;
 
-	double gff = TemplatedUtils::interpolateRectangular<double>(logg2, logu, xLeft, xRight, yLow, yUp,
-			_fileGauntFactorvv(iLower, iLeft), _fileGauntFactorvv(iLower, iRight),
-			_fileGauntFactorvv(iUpper, iLeft), _fileGauntFactorvv(iUpper, iRight));
+	double gff = TemplatedUtils::interpolateRectangular<double>(
+	                logg2, logu, xLeft, xRight, yLow, yUp, _fileGauntFactorvv(iLower, iLeft),
+	                _fileGauntFactorvv(iLower, iRight), _fileGauntFactorvv(iUpper, iLeft),
+	                _fileGauntFactorvv(iUpper, iRight));
 
 	return exp(gff);
 }

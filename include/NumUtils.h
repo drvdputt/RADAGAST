@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <cmath>
 #include <iostream>
-#include <cmath>
 #include <numeric>
 #include <sstream>
 #include <stdexcept>
@@ -12,7 +11,7 @@
 
 #include "Constants.h"
 
-//using namespace std;
+// using namespace std;
 
 // needed as apples don't define unit properly (or at least like linux)
 #ifdef __APPLE__
@@ -30,177 +29,138 @@ namespace NumUtils
 // ****************************************************************************
 // Template prototypes.
 // **********************************************************************
-template<class T>
-class sqSum
+template <class T> class sqSum
 {
 public:
-	T operator()(T sum, T val)
-	{
-		return sum + val * val;
-	}
+	T operator()(T sum, T val) { return sum + val * val; }
 };
-template<class T>
-class Square
+template <class T> class Square
 {
 public:
-	T operator()(T val)
-	{
-		return val * val;
-	}
+	T operator()(T val) { return val * val; }
 };
-template<class T>
-class inverse
+template <class T> class inverse
 {
 public:
-	T operator()(T val)
-	{
-		return 1 / val;
-	}
+	T operator()(T val) { return 1 / val; }
 };
-template<class T>
-class exp
+template <class T> class exp
 {
 public:
-	T operator()(T val)
-	{
-		return std::exp(val);
-	}
+	T operator()(T val) { return std::exp(val); }
 };
-template<class T>
-class ln
+template <class T> class ln
 {
 public:
-	T operator()(T val)
-	{
-		return std::log(val);
-	}
+	T operator()(T val) { return std::log(val); }
 };
-template<class T>
-class pow10
+template <class T> class pow10
 {
 public:
-	T operator()(T val)
-	{
-		return std::pow(10, val);
-	}
+	T operator()(T val) { return std::pow(10, val); }
 };
-template<class T>
-class log10
+template <class T> class log10
 {
 public:
-	T operator()(T val)
-	{
-		return std::log10(val);
-	}
+	T operator()(T val) { return std::log10(val); }
 };
-template<class T>
-class isNan
+template <class T> class isNan
 {
 public:
-	bool operator()(T val)
-	{
-		return val != val;
-	}
+	bool operator()(T val) { return val != val; }
 };
-template<class T>
-class invmult
+template <class T> class invmult
 {
 public:
-	T operator()(T val1, T val2)
-	{
-		return val1 / val2;
-	}
+	T operator()(T val1, T val2) { return val1 / val2; }
 };
 
-template<class T> void swap(T & a, T & b)
+template <class T> void swap(T& a, T& b)
 {
 	T tmp = a;
 	a = b;
 	b = tmp;
 }
 
-template<typename T> inline T NaN()
-{
-	return strtod("NaN", NULL);
-}
+template <typename T> inline T NaN() { return strtod("NaN", NULL); }
 
-template<typename T> inline T binrepl(T & val1, T & val2)
+template <typename T> inline T binrepl(T& val1, T& val2)
 {
 	return (val1 <= val2) ? Constant::PLANCKLIGHT : 0.0;
 }
-template<typename T> inline T line(T x1, T x2, T y1, T y2, T x)
+template <typename T> inline T line(T x1, T x2, T y1, T y2, T x)
 {
 	return ((y2 - y1) / (x2 - x1) * (x - x1) + y1);
 }
-template<typename T> inline int index(T val, const std::vector<T>&vect)
+template <typename T> inline int index(T val, const std::vector<T>& vect)
 {
 	typename std::vector<T>::const_iterator idx;
 	idx = std::lower_bound(vect.begin(), vect.end(), val);
 	return distance(vect.begin(), idx);
 }
-template<typename T> inline int rindex(T val, const std::vector<T>&vect)
+template <typename T> inline int rindex(T val, const std::vector<T>& vect)
 {
 	typename std::vector<T>::const_iterator idx;
 	idx = std::lower_bound(vect.begin(), vect.end(), val, std::greater<T>());
 	return distance(vect.begin(), idx);
 }
 // Some extrapolators.
-template<typename T> inline T lextra(T & val1, T & val2, T & val3)
-{
-	return val1 * val2 / val3;
-}
-template<typename T> inline T cextra(T & val1, T & val2, T & val3)
+template <typename T> inline T lextra(T& val1, T& val2, T& val3) { return val1 * val2 / val3; }
+template <typename T> inline T cextra(T& val1, T& val2, T& val3)
 {
 	T ratio = val2 / val3;
 	return val1 * ratio * ratio * ratio;
 }
-template<typename T> inline T qextra(T & val1, T & val2, T & val3)
+template <typename T> inline T qextra(T& val1, T& val2, T& val3)
 {
 	T ratio = val2 / val3;
 	return val1 * ratio * ratio * ratio * ratio;
 }
-template<typename T> inline T frootextra(T & val1, T & val2, T & val3)
+template <typename T> inline T frootextra(T& val1, T& val2, T& val3)
 {
 	T ratio = val2 / val3;
 	return val1 * sqrt(sqrt(ratio));
 }
 
 // Functions with 'source'
-template<typename T> int maxID(std::vector<T>& vect);
-template<typename T> std::vector<int> sortID(std::vector<T>&vect);
-template<typename T> std::vector<int> sortID_src(std::vector<T>&vect);
-template<typename T> void sortIndexOnvector(std::vector<T> & vect, std::vector<int> & index, int beg,
-		int end);
-template<typename T, typename T1, typename T2> T integrate(const std::vector<T1>& x,
-		const std::vector<T2>& y);
-template<typename T> std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x,
-		const std::vector<T>& u, int LoEx = 2, int HiEx = 2);
-template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx = 2,
-		int HiEx = 2);
-template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature);
-template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(const std::vector<T1>& wave,
-		T2 Temperature);
-template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(T1 wave,
-		std::vector<T2>& Temperature, std::vector<T3>& product);
-template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(std::vector<T1>& wave,
-		T2 Temperature, std::vector<T3>& product);
-template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(T1 wave,
-		std::vector<T2>& Temperature, std::vector<T3>& add);
-template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(std::vector<T1>& wave,
-		T2 Temperature, std::vector<T3>& add);
-template<typename T> std::string vtos(const T & value);
-template<typename T> class Matrix;
-template<typename T> class Cube;
-template<typename T> Matrix<T> mInvert(Matrix<T> A);
-template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree,
-		std::vector<T>& yfit, std::vector<T>& sigma);
+template <typename T> int maxID(std::vector<T>& vect);
+template <typename T> std::vector<int> sortID(std::vector<T>& vect);
+template <typename T> std::vector<int> sortID_src(std::vector<T>& vect);
+template <typename T>
+void sortIndexOnvector(std::vector<T>& vect, std::vector<int>& index, int beg, int end);
+template <typename T, typename T1, typename T2>
+T integrate(const std::vector<T1>& x, const std::vector<T2>& y);
+template <typename T>
+std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const std::vector<T>& u,
+                        int LoEx = 2, int HiEx = 2);
+template <typename T>
+void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx = 2, int HiEx = 2);
+template <typename T, typename T1, typename T2>
+std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature);
+template <typename T, typename T1, typename T2>
+std::vector<T> bbodyCGS(const std::vector<T1>& wave, T2 Temperature);
+template <class T, class T1, class T2, class T3>
+std::vector<T> prod_bbodyCGS(T1 wave, std::vector<T2>& Temperature, std::vector<T3>& product);
+template <class T, class T1, class T2, class T3>
+std::vector<T> prod_bbodyCGS(std::vector<T1>& wave, T2 Temperature, std::vector<T3>& product);
+template <class T, class T1, class T2, class T3>
+std::vector<T> add_bbodyCGS(T1 wave, std::vector<T2>& Temperature, std::vector<T3>& add);
+template <class T, class T1, class T2, class T3>
+std::vector<T> add_bbodyCGS(std::vector<T1>& wave, T2 Temperature, std::vector<T3>& add);
+template <typename T> std::string vtos(const T& value);
+template <typename T> class Matrix;
+template <typename T> class Cube;
+template <typename T> Matrix<T> mInvert(Matrix<T> A);
+template <typename T>
+std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree, std::vector<T>& yfit,
+                        std::vector<T>& sigma);
 
 // ****************************************************************************
 // Function 'source' code.
 // ****************************************************************************
 
 // Simple "one-pass" algorithm for mean/variance.
-template<typename T> T stats(std::vector<T> & vect, T & var)
+template <typename T> T stats(std::vector<T>& vect, T& var)
 {
 	/*       T M0=vect[0]; */
 	/*       T Q0=0; */
@@ -228,29 +188,31 @@ template<typename T> T stats(std::vector<T> & vect, T & var)
 		}
 		else
 		{
-			M1 = M0 + (vect[i] - M0) / (T) (i + 1 - nNaN);
-			Q1 = Q0 + ((T) (i - nNaN)) * pow((vect[i] - M0), 2) / (T) (i + 1 - nNaN);
+			M1 = M0 + (vect[i] - M0) / (T)(i + 1 - nNaN);
+			Q1 = Q0 + ((T)(i - nNaN)) * pow((vect[i] - M0), 2) / (T)(i + 1 - nNaN);
 			M0 = M1;
 			Q0 = Q1;
 		}
 	}
-	var = sqrt(Q1 / (T) (vect.size() - 1 - nNaN));
+	var = sqrt(Q1 / (T)(vect.size() - 1 - nNaN));
 
 	return M1;
 }
 // ****************************************************************************
 
-template<typename T> T sigma_clip(std::vector<T> & vect, T & hi_clip, T & lo_clip)
+template <typename T> T sigma_clip(std::vector<T>& vect, T& hi_clip, T& lo_clip)
 {
 	replace_if(vect.begin(), vect.end(), bind2nd(std::greater<T>(), hi_clip), NaN<T>());
 	replace_if(vect.begin(), vect.end(), bind1st(std::greater<T>(), lo_clip), NaN<T>());
-	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind2nd(std::greater<T>(),hi_clip)),vect.end()); */
-	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind1st(std::greater<T>(),lo_clip)),vect.end());  */
+	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind2nd(std::greater<T>(),hi_clip)),vect.end());
+	 */
+	/*       vect.erase(remove_if(vect.begin(),vect.end(),bind1st(std::greater<T>(),lo_clip)),vect.end());
+	 */
 }
 
 // "Clip" max/min values from a vector.  The nMax largest and nMin smalles values
 // are replaced with nans.
-template<typename T> void minmax_clip(std::vector<T> & vect, long nMin, long nMax)
+template <typename T> void minmax_clip(std::vector<T>& vect, long nMin, long nMax)
 {
 	if ((nMin + nMax) < vect.size())
 	{
@@ -263,9 +225,9 @@ template<typename T> void minmax_clip(std::vector<T> & vect, long nMin, long nMa
 }
 
 // Get max element (index) of vector.
-template<typename T> int maxID(std::vector<T>& vect)
+template <typename T> int maxID(std::vector<T>& vect)
 {
-	//T theMax=-1e256;
+	// T theMax=-1e256;
 	int theMaxID = 0;
 	T theMax = vect[0];
 	typename std::vector<T>::iterator _it, _itb, _ite;
@@ -279,7 +241,7 @@ template<typename T> int maxID(std::vector<T>& vect)
 			theMaxID = distance(_itb, _it);
 		}
 	}
-	//for (int i=0;i<vect.size();i++) {
+	// for (int i=0;i<vect.size();i++) {
 	//	if (vect[i] > theMax) {
 	//	  theMax=vect[i];
 	//	  theMaxID=i;
@@ -290,7 +252,7 @@ template<typename T> int maxID(std::vector<T>& vect)
 // ****************************************************************************
 // ****************************************************************************
 // Returns vector of indices that will sort provided vector
-template<typename T> std::vector<int> sortID(std::vector<T>&vect)
+template <typename T> std::vector<int> sortID(std::vector<T>& vect)
 {
 	int n = vect.size();
 	int i;
@@ -304,7 +266,7 @@ template<typename T> std::vector<int> sortID(std::vector<T>&vect)
 		i = j;
 		while (i > 0 && vect[retvect[i - 1]] > a)
 		{
-			//retvect[i+1] = retvect[i];
+			// retvect[i+1] = retvect[i];
 			swap(retvect[i], retvect[i - 1]);
 			i--;
 		}
@@ -314,19 +276,21 @@ template<typename T> std::vector<int> sortID(std::vector<T>&vect)
 }
 // ****************************************************************************
 
-template<typename T> void sortIndexOnVector(std::vector<T> & vect, std::vector<int> & index, int beg, int end)
+template <typename T>
+void sortIndexOnVector(std::vector<T>& vect, std::vector<int>& index, int beg, int end)
 {
 	int i;
 	T a;
 	for (int j = beg + 1; j < end; j++)
 	{
-		//std::cout << "assigning " << vect[index[j]] << " to a" <<  std::endl;
+		// std::cout << "assigning " << vect[index[j]] << " to a" <<  std::endl;
 		a = vect[index[j]];
 		i = j;
 		while (i > beg && vect[index[i - 1]] > a)
 		{
-			//std::cout << "Satisfied that " << vect[index[i-1]] << " is > " << a <<  std::endl;
-			//std::cout << "Swapping " << vect[index[i]] << " " << vect[index[i-1]] <<  std::endl;
+			// std::cout << "Satisfied that " << vect[index[i-1]] << " is > " << a <<
+			// std::endl;  std::cout << "Swapping " << vect[index[i]] << " " <<
+			// vect[index[i-1]] <<  std::endl;
 			swap(index[i], index[i - 1]);
 			i--;
 		}
@@ -335,7 +299,7 @@ template<typename T> void sortIndexOnVector(std::vector<T> & vect, std::vector<i
 
 // ****************************************************************************
 // returns vector of indices AND Re-orders vector.
-template<typename T> std::vector<int> sortID_src(std::vector<T>&vect)
+template <typename T> std::vector<int> sortID_src(std::vector<T>& vect)
 {
 
 	int n = vect.size();
@@ -343,7 +307,7 @@ template<typename T> std::vector<int> sortID_src(std::vector<T>&vect)
 	T a;
 	std::vector<int> retvect;
 	retvect.push_back(0);
-	//for (int j=0;j<n;j++) retvect.push_back(j);
+	// for (int j=0;j<n;j++) retvect.push_back(j);
 	for (int j = 1; j < n; j++)
 	{
 		retvect.push_back(j);
@@ -363,7 +327,8 @@ template<typename T> std::vector<int> sortID_src(std::vector<T>&vect)
 
 // ****************************************************************************
 // Simple trapazoidal integration
-template<typename T, typename T1, typename T2> T integrate(const std::vector<T1>& x, const std::vector<T2>& y)
+template <typename T, typename T1, typename T2>
+T integrate(const std::vector<T1>& x, const std::vector<T2>& y)
 {
 	T answer = 0.0;
 	typename std::vector<T2>::const_iterator iy;
@@ -387,15 +352,16 @@ template<typename T, typename T1, typename T2> T integrate(const std::vector<T1>
 
 // ****************************************************************************
 // Interpolate - should be fast enough for small vectors.
-template<typename T> std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x,
-		const std::vector<T>& u, int LoEx, int HiEx)
+template <typename T>
+std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const std::vector<T>& u,
+                        int LoEx, int HiEx)
 {
 	if (v.size() != x.size())
 	{
 		std::cout << "Abscissa and ordinate lengths do not match in interpol" << std::endl;
 		throw "size mismatch";
 	}
-	//std::std::cout << "usize " << u.size() << " " << x.size() <<  std::endl;
+	// std::std::cout << "usize " << u.size() << " " << x.size() <<  std::endl;
 	std::vector<T> r(u.size());
 	T slp, extrslp1 = 0;
 	T intcpt, extrint1 = 0;
@@ -460,10 +426,12 @@ template<typename T> std::vector<T> interpol(const std::vector<T>& v, const std:
 					j++;
 				}
 				// take care of the case where i=j=0
-				// seemed to work w/o this line on 32bit, but not 64bit (even unoptimized)
+				// seemed to work w/o this line on 32bit, but not 64bit (even
+				// unoptimized)
 				if (j == 0)
 					j++;
-				/* 	    std::cout << (u[i] > x[j]) << " " << (u[i] == x[j]) << " "; */
+				/* 	    std::cout << (u[i] > x[j]) << " " << (u[i] == x[j]) <<
+				 * " "; */
 				/* 	    std::cout << j << " "; */
 				/* 	    std::cout << u[i] << " " << x[j] << " "; */
 				/* 	    std::cout << u[i] - x[j] << " "; */
@@ -547,8 +515,8 @@ template<typename T> std::vector<T> interpol(const std::vector<T>& v, const std:
 // *************************************************************************
 // Interpolate with replacement of input vector - ie. v comes out with
 // interpolated vector rather than the input vector.
-template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx,
-		int HiEx)
+template <typename T>
+void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx, int HiEx)
 {
 
 	if (v.size() != x.size())
@@ -563,7 +531,7 @@ template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::v
 	v.erase(v.begin(), v.end());
 	v.resize(u.size());
 
-	//T slope,intercept;
+	// T slope,intercept;
 
 	typename std::vector<T>::iterator iu, iul, iuh, ir, ix, iv;
 	// Iterators point to begining of vectors.
@@ -574,10 +542,10 @@ template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::v
 
 	while (*iul < *ix)
 	{ // Extrapolate to the left.
-	  //std::cout << "EXTRAPOLATING LOW" <<  std::endl;
+	  // std::cout << "EXTRAPOLATING LOW" <<  std::endl;
 		switch (LoEx)
 		{
-		case -1:  // set to 0
+		case -1: // set to 0
 			*ir = 0.0;
 			break;
 		case 0: // Constant extrapolation
@@ -629,35 +597,37 @@ template<typename T> void interpolr(std::vector<T>& v, std::vector<T>& x, std::v
 		*ir = ((*iu) - (*(ix))) * ((*(iv)) - (*(iv - 1))) / ((*(ix)) - (*(ix - 1))) + (*iv);
 		ir++;
 	}
-
 }
 // ****************************************************************************
 
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB as f(T) for a single wavelength
-template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature)
+template <typename T, typename T1, typename T2>
+std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
 	T c2 = Constant::PLANCKLIGHT / (Constant::BOLTZMAN * static_cast<T>(wave));
-	/*       std::cout << Constant::PLANCKLIGHT << " " << Constant::BOLTZMAN << " " << wave <<  std::endl;  */
+	/*       std::cout << Constant::PLANCKLIGHT << " " << Constant::BOLTZMAN << " " << wave <<
+	 * std::endl;  */
 	/*       std::cout << Constant::BOLTZMAN*wave <<  std::endl;  */
 	/*       std::cout << Constant::PLANCKLIGHT/(Constant::BOLTZMAN*wave) <<  std::endl; */
 	/*       std::cout << "C2 in bb: " << c2 <<  std::endl;  */
 	typename std::vector<T2>::iterator _itbeg, _itend, _it;
 	typename std::vector<T>::iterator _itBB;
-	//std::cout << "comp bb: " <<  c1 << " " << c2 <<  std::endl;
+	// std::cout << "comp bb: " <<  c1 << " " << c2 <<  std::endl;
 	std::vector<T> theBB(Temperature.size());
 	_itBB = theBB.begin();
 	_itbeg = Temperature.begin();
 	_itend = Temperature.end();
 	for (_it = _itbeg; _it != _itend; ++_it, ++_itBB)
 	{
-		//std::cout << "INBB 1: " << static_cast<T1>(wave) << " " << c1/pow((static_cast<T1>(wave)),5) <<  std::endl;
-		//std::cout << (std::exp((c2/static_cast<T1>((*_it))))) <<  std::endl;
+		// std::cout << "INBB 1: " << static_cast<T1>(wave) << " " <<
+		// c1/pow((static_cast<T1>(wave)),5) <<  std::endl;  std::cout <<
+		// (std::exp((c2/static_cast<T1>((*_it))))) <<  std::endl;
 		*_itBB = c1 / pow((wave), 5) * (1.0 / (std::exp(c2 / (*_it)) - 1.0));
-		//std::cout << "IN BB: " << wave << " " << *_it << " "<<  theBB[i] <<  std::endl;
+		// std::cout << "IN BB: " << wave << " " << *_it << " "<<  theBB[i] <<  std::endl;
 	}
 	return theBB;
 }
@@ -666,8 +636,8 @@ template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(T1 wave, 
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB multiplied by another vector as f(T) for a single wavelength
-template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(T1 wave,
-		std::vector<T2>& Temperature, std::vector<T3>& product)
+template <class T, class T1, class T2, class T3>
+std::vector<T> prod_bbodyCGS(T1 wave, std::vector<T2>& Temperature, std::vector<T3>& product)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
@@ -691,8 +661,8 @@ template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(T1 
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB summed with another vector as f(T) for a single wavelength
-template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(T1 wave,
-		std::vector<T2>& Temperature, std::vector<T3>& add)
+template <class T, class T1, class T2, class T3>
+std::vector<T> add_bbodyCGS(T1 wave, std::vector<T2>& Temperature, std::vector<T3>& add)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
@@ -717,8 +687,8 @@ template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(T1 w
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB as f(wave) for a single T
-template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(const std::vector<T1>& wave,
-		T2 Temperature)
+template <typename T, typename T1, typename T2>
+std::vector<T> bbodyCGS(const std::vector<T1>& wave, T2 Temperature)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
@@ -742,8 +712,8 @@ template<typename T, typename T1, typename T2> std::vector<T> bbodyCGS(const std
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB multiplied by another vector as f(wave) for a single T
-template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(std::vector<T1>& wave,
-		T2 Temperature, std::vector<T3>& product)
+template <class T, class T1, class T2, class T3>
+std::vector<T> prod_bbodyCGS(std::vector<T1>& wave, T2 Temperature, std::vector<T3>& product)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
@@ -766,8 +736,8 @@ template<class T, class T1, class T2, class T3> std::vector<T> prod_bbodyCGS(std
 // ****************************************************************************
 // BB inputs and outputs all in cgs - cm and erg/s/cm^2/st/cm
 // Returns BB multiplied by another vector as f(wave) for a single T
-template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(std::vector<T1>& wave,
-		T2 Temperature, std::vector<T3>& add)
+template <class T, class T1, class T2, class T3>
+std::vector<T> add_bbodyCGS(std::vector<T1>& wave, T2 Temperature, std::vector<T3>& add)
 {
 	// Wave is in CGS (cm), return in CGS: erg/cm^2/s/cm/st
 	T c1 = 2.0 * Constant::PLANCK * pow(Constant::LIGHT, 2);
@@ -791,7 +761,7 @@ template<class T, class T1, class T2, class T3> std::vector<T> add_bbodyCGS(std:
 // ****************************************************************************
 // Convert value of type T to a string - useful for constructing filenames
 // out of numbers.
-template<typename T> std::string vtos(const T & value)
+template <typename T> std::string vtos(const T& value)
 {
 	std::stringstream ss;
 	ss << value;
@@ -802,13 +772,14 @@ template<typename T> std::string vtos(const T & value)
 // ****************************************************************************
 // Do a polynomial fit to a set of data. Simple re-write of IDL poly_fit.pro
 // TODO: add HAVEMEASUREERRORS.
-template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree,
-		std::vector<T>& yfit, std::vector<T>& sigma)
+template <typename T>
+std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree, std::vector<T>& yfit,
+                        std::vector<T>& sigma)
 {
 
 	int m = ndegree + 1;
 	int n = x.size();
-	//std::cout << m << " " << ndegree <<  std::endl;
+	// std::cout << m << " " << ndegree <<  std::endl;
 	std::vector<T> param(m);
 	NumUtils::Matrix<T> covar(m, m);
 
@@ -816,15 +787,17 @@ template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y,
 	std::vector<T> z(n, 1.0);
 	T sdev = 1.0, sdev2 = 1.0;
 	std::vector<T> wy = y;
-	//std::cout << "in polyfit 1: " << param[0] << " " << param[1] <<  std::endl;
+	// std::cout << "in polyfit 1: " << param[0] << " " << param[1] <<  std::endl;
 	if (yfit.size() != n)
 	{
-		std::cout << "Size of fit return not equal input vector sizes; poly_fit()" << std::endl;
+		std::cout << "Size of fit return not equal input vector sizes; poly_fit()"
+		          << std::endl;
 		exit(8);
 	}
 	if (sigma.size() != m)
 	{
-		std::cout << "Size of parameter error array not equal to order+1; poly_fit()" << std::endl;
+		std::cout << "Size of parameter error array not equal to order+1; poly_fit()"
+		          << std::endl;
 		exit(8);
 	}
 
@@ -840,22 +813,23 @@ template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y,
 			b[p] = inner_product(wy.begin(), wy.end(), z.begin(), 0.0);
 		// sum = total(z)
 		T sum = accumulate(z.begin(), z.end(), 0.0);
-		for (int j = ((0 > (p - ndegree)) ? 0 : (p - ndegree)); j <= ((ndegree < p) ? ndegree : p);
-				j++)
+		for (int j = ((0 > (p - ndegree)) ? 0 : (p - ndegree));
+		     j <= ((ndegree < p) ? ndegree : p); j++)
 			covar(j, p - j) = sum;
 	}
 	covar = mInvert(covar);
 	for (int j = 0; j < m; j++)
 		for (int i = 0; i < m; i++)
 			param[j] += b[i] * covar(i, j);
-	//vector <double> yfit(n,param[ndegree]);
+	// vector <double> yfit(n,param[ndegree]);
 	for (int i = 0; i < n; ++i)
 		yfit[i] = param[ndegree];
-	//for (int i=0;i<n;i++) yfit.push_back(param[ndegree]);
+	// for (int i=0;i<n;i++) yfit.push_back(param[ndegree]);
 	for (int k = ndegree - 1; k >= 0; k--)
 	{
 		transform(yfit.begin(), yfit.end(), x.begin(), yfit.begin(), std::multiplies<T>());
-		transform(yfit.begin(), yfit.end(), yfit.begin(), bind2nd(std::plus<T>(), param[k]));
+		transform(yfit.begin(), yfit.end(), yfit.begin(),
+		          bind2nd(std::plus<T>(), param[k]));
 	}
 	// Sigma == diagonal
 	for (int i = 0; i < m; i++)
@@ -866,17 +840,17 @@ template<typename T> std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y,
 	T chisq = accumulate(diff.begin(), diff.end(), 0.0, NumUtils::sqSum<T>());
 	T var = (n > m) ? chisq / T(n - m) : 0.0;
 	transform(sigma.begin(), sigma.end(), sigma.begin(),
-			bind2nd(std::plus<T>(), sqrt(chisq / (T) (n - m))));
+	          bind2nd(std::plus<T>(), sqrt(chisq / (T)(n - m))));
 	T yerr = sqrt(var);
 
-	//std::cout << "in polyfit 2: " << param[0] << " " << param[1] <<  std::endl;
+	// std::cout << "in polyfit 2: " << param[0] << " " << param[1] <<  std::endl;
 	return param;
 }
 // ****************************************************************************
 
 // ****************************************************************************
 // Compute inverse of a matrix; stolen from the web... Forgot where...
-template<typename T> NumUtils::Matrix<T> mInvert(NumUtils::Matrix<T> A)
+template <typename T> NumUtils::Matrix<T> mInvert(NumUtils::Matrix<T> A)
 {
 	int N = A.nRow();
 	NumUtils::Matrix<T> Ainv = A;
@@ -941,26 +915,15 @@ template<typename T> NumUtils::Matrix<T> mInvert(NumUtils::Matrix<T> A)
 
 // ****************************************************************************
 //  Separating out header and source doesn't work so well...
-template<typename T> class Matrix: public std::vector<T>
+template <typename T> class Matrix : public std::vector<T>
 {
 
 public:
 	// Constructors/destructors.
-	Matrix() :
-			std::vector<T>()
-	{
-	}
-	Matrix(int n1, int n2, const T& ival) :
-			std::vector<T>(n1 * n2, ival), _n1(n1), _n2(n2)
-	{
-	}
-	explicit Matrix(int n1, int n2) :
-			std::vector<T>(n1 * n2), _n1(n1), _n2(n2)
-	{
-	}
-	~Matrix()
-	{
-	}
+	Matrix() : std::vector<T>() {}
+	Matrix(int n1, int n2, const T& ival) : std::vector<T>(n1 * n2, ival), _n1(n1), _n2(n2) {}
+	explicit Matrix(int n1, int n2) : std::vector<T>(n1 * n2), _n1(n1), _n2(n2) {}
+	~Matrix() {}
 	// Return reference to correct element in vector; All vector type assignments
 	//   should work.
 	T& operator()(int n1_id, int n2_id);
@@ -974,7 +937,7 @@ private:
 };
 
 //  Overload of operator()
-template<typename T> inline T& Matrix<T>::operator()(int n1_id, int n2_id)
+template <typename T> inline T& Matrix<T>::operator()(int n1_id, int n2_id)
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
@@ -992,7 +955,7 @@ template<typename T> inline T& Matrix<T>::operator()(int n1_id, int n2_id)
 }
 
 // Size the Matrix after instatiation.
-template<typename T> void Matrix<T>::MSize(int n1_id, int n2_id)
+template <typename T> void Matrix<T>::MSize(int n1_id, int n2_id)
 {
 	_n1 = n1_id;
 	_n2 = n2_id;
@@ -1000,38 +963,27 @@ template<typename T> void Matrix<T>::MSize(int n1_id, int n2_id)
 	Matrix::resize(n1_id * n2_id);
 }
 
-template<typename T> int Matrix<T>::nRow()
-{
-	return _n1;
-}
-template<typename T> int Matrix<T>::nCol()
-{
-	return _n2;
-}
+template <typename T> int Matrix<T>::nRow() { return _n1; }
+template <typename T> int Matrix<T>::nCol() { return _n2; }
 // ****************************************************************************
 
 // ****************************************************************************
 // Cube class.
-template<typename T> class Cube: public std::vector<T>
+template <typename T> class Cube : public std::vector<T>
 {
 
 public:
 	// Constructors/destructors.
-	Cube() :
-			std::vector<T>()
+	Cube() : std::vector<T>() {}
+	Cube(int n1, int n2, int n3, const T& ival)
+	                : std::vector<T>(n1 * n2 * n3, ival), _n1(n1), _n2(n2), _n3(n3)
 	{
 	}
-	Cube(int n1, int n2, int n3, const T& ival) :
-			std::vector<T>(n1 * n2 * n3, ival), _n1(n1), _n2(n2), _n3(n3)
+	explicit Cube(int n1, int n2, int n3)
+	                : std::vector<T>(n1 * n2 * n3), _n1(n1), _n2(n2), _n3(n3)
 	{
 	}
-	explicit Cube(int n1, int n2, int n3) :
-			std::vector<T>(n1 * n2 * n3), _n1(n1), _n2(n2), _n3(n3)
-	{
-	}
-	~Cube()
-	{
-	}
+	~Cube() {}
 	// Return reference to correct element in vector; All vector type assignments
 	//   should work.
 	T& operator()(int n1_id, int n2_id, int n3_id);
@@ -1041,44 +993,42 @@ public:
 	int nCol();
 	int n3rd();
 
-	void get_xyz(int cell_num, int &n1_id, int &n2_id, int &n3_id);
+	void get_xyz(int cell_num, int& n1_id, int& n2_id, int& n3_id);
 
 private:
 	// Keep track of how many elements we're allowed to have in each dimension.
 	int _n1, _n2, _n3;
-
 };
 
 // Overload of operator()
-template<typename T> inline T& Cube<T>::operator()(int n1_id, int n2_id, int n3_id)
+template <typename T> inline T& Cube<T>::operator()(int n1_id, int n2_id, int n3_id)
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
-		std::cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << _n1 << std::endl;
+		std::cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id
+		          << "," << n3_id << " " << _n1 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 1";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n2_id < 0 || n2_id >= _n2)
 	{
-		std::cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << _n2 << std::endl;
+		std::cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id
+		          << "," << n3_id << " " << _n2 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 2";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n3_id < 0 || n3_id >= _n3)
 	{
-		std::cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << _n3 << std::endl;
+		std::cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id
+		          << "," << n3_id << " " << _n3 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
 	return *(this->begin() + n3_id * _n1 * _n2 + n2_id * _n1 + n1_id);
-
 }
 
 // Size the Cube after instatiation.
-template<typename T> void Cube<T>::CSize(int n1_id, int n2_id, int n3_id)
+template <typename T> void Cube<T>::CSize(int n1_id, int n2_id, int n3_id)
 {
 	_n1 = n1_id;
 	_n2 = n2_id;
@@ -1087,23 +1037,14 @@ template<typename T> void Cube<T>::CSize(int n1_id, int n2_id, int n3_id)
 	Cube::resize(n1_id * n2_id * n3_id);
 }
 
-template<typename T> int Cube<T>::nRow()
-{
-	return _n1;
-}
-template<typename T> int Cube<T>::nCol()
-{
-	return _n2;
-}
-template<typename T> int Cube<T>::n3rd()
-{
-	return _n3;
-}
+template <typename T> int Cube<T>::nRow() { return _n1; }
+template <typename T> int Cube<T>::nCol() { return _n2; }
+template <typename T> int Cube<T>::n3rd() { return _n3; }
 
 // ****************************************************************************
 
 // given the index of the cell, return the x, y and z indices
-template<typename T> inline void Cube<T>::get_xyz(int cell_num, int &n1_id, int &n2_id, int &n3_id)
+template <typename T> inline void Cube<T>::get_xyz(int cell_num, int& n1_id, int& n2_id, int& n3_id)
 {
 	div_t div_result;
 	if (cell_num < 0 || cell_num > (int) this->size())
@@ -1121,26 +1062,22 @@ template<typename T> inline void Cube<T>::get_xyz(int cell_num, int &n1_id, int 
 
 // ****************************************************************************
 // FourVector class.
-template<typename T> class FourVector: public std::vector<T>
+template <typename T> class FourVector : public std::vector<T>
 {
 
 public:
 	// Constructors/destructors.
-	FourVector() :
-			std::vector<T>()
+	FourVector() : std::vector<T>() {}
+	FourVector(int n1, int n2, int n3, int n4, const T& ival)
+	                : std::vector<T>(n1 * n2 * n3 * n4, ival), _n1(n1), _n2(n2), _n3(n3),
+	                  _n4(n4)
 	{
 	}
-	FourVector(int n1, int n2, int n3, int n4, const T& ival) :
-			std::vector<T>(n1 * n2 * n3 * n4, ival), _n1(n1), _n2(n2), _n3(n3), _n4(n4)
+	explicit FourVector(int n1, int n2, int n3, int n4)
+	                : std::vector<T>(n1 * n2 * n3 * n4), _n1(n1), _n2(n2), _n3(n3), _n4(n4)
 	{
 	}
-	explicit FourVector(int n1, int n2, int n3, int n4) :
-			std::vector<T>(n1 * n2 * n3 * n4), _n1(n1), _n2(n2), _n3(n3), _n4(n4)
-	{
-	}
-	~FourVector()
-	{
-	}
+	~FourVector() {}
 	// Return reference to correct element in vector; All vector type assignments
 	//   should work.
 	T& operator()(int n1_id, int n2_id, int n3_id, int n4_id);
@@ -1151,51 +1088,50 @@ public:
 	int n3rd();
 	int n4th();
 
-	void get_xyzz(int cell_num, int &n1_id, int &n2_id, int &n3_id, int &n4_id);
+	void get_xyzz(int cell_num, int& n1_id, int& n2_id, int& n3_id, int& n4_id);
 
 private:
 	// Keep track of how many elements we're allowed to have in each dimension.
 	int _n1, _n2, _n3, _n4;
-
 };
 
 // Overload of operator()
-template<typename T> inline T& FourVector<T>::operator()(int n1_id, int n2_id, int n3_id, int n4_id)
+template <typename T>
+inline T& FourVector<T>::operator()(int n1_id, int n2_id, int n3_id, int n4_id)
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
-		std::cout << "out_of_range FourVector::operator(), element 1 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n1 << std::endl;
+		std::cout << "out_of_range FourVector::operator(), element 1 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << n4_id << " " << _n1 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 1";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n2_id < 0 || n2_id >= _n2)
 	{
-		std::cout << "out_of_range FourVector::operator(), element 2 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n2 << std::endl;
+		std::cout << "out_of_range FourVector::operator(), element 2 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << n4_id << " " << _n2 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 2";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n3_id < 0 || n3_id >= _n3)
 	{
-		std::cout << "out_of_range FourVector::operator(), element 3 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n3 << std::endl;
+		std::cout << "out_of_range FourVector::operator(), element 3 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << n4_id << " " << _n3 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n4_id < 0 || n4_id >= _n4)
 	{
-		std::cout << "out_of_range FourVector::operator(), element 4 " << n1_id << "," << n2_id << ","
-				<< n3_id << " " << n4_id << " " << _n4 << std::endl;
+		std::cout << "out_of_range FourVector::operator(), element 4 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << n4_id << " " << _n4 << std::endl;
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
 	return *(this->begin() + n4_id * _n1 * _n2 * _n3 + n3_id * _n1 * _n2 + n2_id * _n1 + n1_id);
-
 }
 
 // Size the FourVector after instatiation.
-template<typename T> void FourVector<T>::FVSize(int n1_id, int n2_id, int n3_id, int n4_id)
+template <typename T> void FourVector<T>::FVSize(int n1_id, int n2_id, int n3_id, int n4_id)
 {
 	_n1 = n1_id;
 	_n2 = n2_id;
@@ -1205,28 +1141,16 @@ template<typename T> void FourVector<T>::FVSize(int n1_id, int n2_id, int n3_id,
 	FourVector::resize(n1_id * n2_id * n3_id * n4_id);
 }
 
-template<typename T> int FourVector<T>::nRow()
-{
-	return _n1;
-}
-template<typename T> int FourVector<T>::nCol()
-{
-	return _n2;
-}
-template<typename T> int FourVector<T>::n3rd()
-{
-	return _n3;
-}
-template<typename T> int FourVector<T>::n4th()
-{
-	return _n4;
-}
+template <typename T> int FourVector<T>::nRow() { return _n1; }
+template <typename T> int FourVector<T>::nCol() { return _n2; }
+template <typename T> int FourVector<T>::n3rd() { return _n3; }
+template <typename T> int FourVector<T>::n4th() { return _n4; }
 
 // ****************************************************************************
 
 // given the index of the cell, return the x, y and z indices
-template<typename T> inline void FourVector<T>::get_xyzz(int cell_num, int &n1_id, int &n2_id, int &n3_id,
-		int &n4_id)
+template <typename T>
+inline void FourVector<T>::get_xyzz(int cell_num, int& n1_id, int& n2_id, int& n3_id, int& n4_id)
 {
 	div_t div_result;
 	if (cell_num < 0 || cell_num > (int) this->size())
