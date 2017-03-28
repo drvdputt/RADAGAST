@@ -1,3 +1,6 @@
+#ifndef _SPECIALFUNCTIONS_
+#define _SPECIALFUNCTIONS_
+
 #include <exception>
 #include <cmath>
 
@@ -11,7 +14,8 @@ namespace SpecialFunctions
     double voigt(double a, double u);
 }
 
-double SpecialFunctions::voigt(double a, double u)
+// inline is temporary hack
+inline double SpecialFunctions::voigt(double a, double u)
 {
     if (a<=0.0) throw std::range_error("Bad argument (a = " + std::to_string(a));
     double sigma = 1.0;
@@ -156,3 +160,5 @@ double SpecialFunctions::voigt(double a, double u)
     }
     return k;
 }
+
+#endif /* _SPECIALFUNCTIONS_ */

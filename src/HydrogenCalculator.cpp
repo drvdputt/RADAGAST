@@ -24,7 +24,7 @@ HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
 {
 }
 
-HydrogenCalculator::~HydrogenCalculator() = default;
+HydrogenCalculator::~HydrogenCalculator() {}
 
 void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& specificIntensityv)
 {

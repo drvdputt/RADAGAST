@@ -63,8 +63,8 @@ NLevel::NLevel(const Array& frequencyv) : _frequencyv(frequencyv)
 	// approximation used:
 	// A_n,2p = 3 * A_n,2s = 3/4 * A_n,2 from NIST
 
-	_BPvv = Eigen::MatrixXd::Zero(_N);
-	_Cvv = Eigen::MatrixXd::Zero(_N);
+	_BPvv = Eigen::MatrixXd::Zero(_N, _N);
+	_Cvv= Eigen::MatrixXd::Zero(_N, _N);
 }
 
 void NLevel::solveBalance(double atomDensity, double electronDensity, double protonDensity,

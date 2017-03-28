@@ -3,7 +3,7 @@
 
 #include "Constants.h"
 
-#include <cstring>
+#include <string>
 #include <vector>
 
 // TODO: convert everything to frequency units, or write interface

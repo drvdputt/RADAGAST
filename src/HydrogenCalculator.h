@@ -4,6 +4,8 @@
 #include "Array.h"
 #include "GasState.h"
 
+#include <memory>
+
 class TwoLevel;
 class FreeBound;
 class FreeFree;
@@ -100,11 +102,10 @@ private:
 
 	/* Hide the other parts of the implementation from code that includes this header
 	 to avoid the chaining of dependencies. */
-	std::unique_ptr<TwoLevel> _levels{nullptr};
-
+	std::unique_ptr<TwoLevel> _levels;
 	/* Continuum contributions */
-	std::unique_ptr<FreeBound> _freeBound{nullptr};
-	std::unique_ptr<FreeFree> _freeFree{nullptr};
+	std::unique_ptr<FreeBound> _freeBound;
+	std::unique_ptr<FreeFree> _freeFree;
 };
 
 #endif /* _HYDROGENCALCULATOR_H_ */

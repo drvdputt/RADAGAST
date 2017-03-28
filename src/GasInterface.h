@@ -3,6 +3,8 @@
 
 #include "GasState.h"
 
+#include <memory>
+
 class HydrogenCalculator;
 
 /* The interface class that other codes should use. */

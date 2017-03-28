@@ -5,6 +5,7 @@
 #include <unistd.h>
 
 #include <cstdlib>
+#include <csignal>
 #include <string>
 
 void handler(int sig)
