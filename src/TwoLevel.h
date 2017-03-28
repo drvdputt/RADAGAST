@@ -21,11 +21,6 @@ public:
 	void solveBalance(double n, double ne, double np, double T, const Array& specificIntensityv,
 	                  const Array& sourcev, const Array& sinkv);
 
-	/* Useful for the thermal balance. Is much faster than the calculation of the full emission
-	 * spectrum.
-	 */
-	double lineIntensity(size_t upper, size_t lower) const;
-
 	/* The values needed for a radiative transfer cycle */
 
 	/* The emission coefficient j_nu (erg/cm3/s/Hz) */
@@ -37,16 +32,18 @@ public:
 	/* The part of the opacity which acts as a source of scattering. This scattering is
 	 equivalent to the immediate emission of a photon by the line that just absorbed it. */
 	Array scatteringOpacityv() const;
-	Array absorptionOpacityv() const;
 
 private:
+	double lineIntensityFactor(size_t upper, size_t lower) const;
+	double lineOpacityFactor(size_t upper, size_t lower) const;
+
 	/* Calculates the Voigt profile for a certain line, using the wavelengthgrid supplied at
 	 construction and the current temperature and collision rates. */
 	Array lineProfile(size_t upper, size_t lower) const;
 
 	/* Calculates the contribution of A_ul to the total decay rate. This will determine the
 	 probability that a photon is re-emitted. */
-	double radiativeDecayFraction(size_t upper, size_t lower) const;
+	double lineDecayFraction(size_t upper, size_t lower) const;
 
 	/* Fill in the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
 	 Aij) and Pij is the line power (isrf integrated over the line profile) */

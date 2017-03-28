@@ -13,16 +13,10 @@ using namespace std;
 
 #define SOLUTION_TOLERANCE 0.1
 
-namespace
-{
-const double SQRT2PI = 2.50662827463;
-const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
-}
-
 TwoLevel::TwoLevel(const Array& frequencyv) : _frequencyv(frequencyv)
 {
 	//	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of
-	//page 4
+	// page 4
 	//	// this makes collisional deexcitation important for densities > 20-50 / cm3
 	//	// Level and transition information
 	//	_Ev << 0, .00786 / Constant::ERG_EV;
@@ -86,32 +80,24 @@ void TwoLevel::solveBalance(double n, double ne, double np, double T,
 	}
 }
 
-double TwoLevel::lineIntensity(size_t upper, size_t lower) const
+Array TwoLevel::emissivityv() const { return lineIntensityFactor(1, 0) * lineProfile(1, 0); }
+
+Array TwoLevel::opacityv() const { return lineOpacityFactor(1, 0) * lineProfile(1, 0); }
+
+Array TwoLevel::scatteringOpacityv() const { return opacityv() * lineDecayFraction(1, 0); }
+
+double TwoLevel::lineIntensityFactor(size_t upper, size_t lower) const
 {
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
 }
 
-Array TwoLevel::emissivityv() const
-{
-	// There is only one line for now
-	double intensity = lineIntensity(1, 0);
-	return intensity * lineProfile(1, 0);
-}
-
-Array TwoLevel::opacityv() const
+double TwoLevel::lineOpacityFactor(size_t upper, size_t lower) const
 {
 	double nu_ij = (_Ev(1) - _Ev(0)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
 	                        nu_ij * _Avv(1, 0);
 	double densityFactor = _nv(0) * _gv(1) / _gv(0) - _nv(1);
-	return constantFactor * densityFactor * lineProfile(1, 0);
-}
-
-Array TwoLevel::scatteringOpacityv() const { return opacityv() * radiativeDecayFraction(1, 0); }
-
-Array TwoLevel::absorptionOpacityv() const
-{
-	return opacityv() * (1 - radiativeDecayFraction(1, 0));
+	return constantFactor * densityFactor;
 }
 
 Array TwoLevel::lineProfile(size_t upper, size_t lower) const
@@ -137,18 +123,18 @@ Array TwoLevel::lineProfile(size_t upper, size_t lower) const
 		double deltaNu = _frequencyv[n] - nu0;
 		profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
 		                                     one_sqrt2sigma * deltaNu) /
-		             SQRT2PI / sigma_nu;
+		             Constant::SQRT2PI / sigma_nu;
 	}
 	return profile;
 }
 
-double TwoLevel::radiativeDecayFraction(size_t upper, size_t lower) const
+double TwoLevel::lineDecayFraction(size_t upper, size_t lower) const
 {
 	return _Avv(upper, lower) /
 	       (_Avv.row(upper).sum() + _BPvv.row(upper).sum() + _Cvv.row(upper).sum());
 }
 
-void TwoLevel::prepareAbsorptionMatrix(const Array& specificIntensity)
+void TwoLevel::prepareAbsorptionMatrix(const Array& specificIntensityv)
 {
 	// Calculate product of Bij and Pij = integral(phi * I_nu)
 	for (int i = 0; i < _BPvv.rows(); i++)
@@ -158,11 +144,12 @@ void TwoLevel::prepareAbsorptionMatrix(const Array& specificIntensity)
 		{
 			// Calculate Pij for the lower triangle (= stimulated emission)
 			_BPvv(i, j) = TemplatedUtils::integrate<double, Array, Array>(
-			                _frequencyv, lineProfile(i, j) * specificIntensity);
+			                _frequencyv, lineProfile(i, j) * specificIntensityv);
 
 			// Multiply by Bij in terms of Aij, valid for i > j
 			double nu_ij = (_Ev(i) - _Ev(j)) / Constant::PLANCK;
-			_BPvv(i, j) *= csquare_twoh / nu_ij / nu_ij / nu_ij * _Avv(i, j);
+			_BPvv(i, j) *= Constant::CSQUARE_TWOPLANCK / nu_ij / nu_ij / nu_ij *
+			               _Avv(i, j);
 
 			// Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij =
 			// Pji
@@ -178,17 +165,23 @@ void TwoLevel::prepareCollisionMatrix()
 	//	// Need separate contributions for number of protons and electrons
 	//	// Toy implementation below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf
 	//	// is actually for electron collisions only, but let's treat all collision partners
-	//this way for now 	double beta = 8.629e-6;
+	// this way for now 	double beta = 8.629e-6;
 	//
 	//	// also take some values from the bottom of page 4
 	//	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
 	//	double bigGamma10 = (_T - 1000) / 9000 * 2.15 + (10000 - _T) / 9000 * 1.58;
 	//
 	//	// data from 2002-anderson
+	// CORRECTION: need i = 3 is for the 2p state
 	vector<double> electronTemperaturesEV = {.5, 1., 3., 5., 10., 15., 20., 25.};
 
-	vector<double> effectiveCollisionStrv = {2.6e-1,  2.96e-1, 3.26e-1, 3.39e-1,
-	                                         3.73e-1, 4.06e-1, 4.36e-1, 4.61e-1};
+	//	// i = 2
+	//	vector<double> effectiveCollisionStrv = {2.6e-1,  2.96e-1, 3.26e-1, 3.39e-1,
+	//	                                         3.73e-1, 4.06e-1, 4.36e-1, 4.61e-1};
+
+	// i = 3
+	vector<double> effectiveCollisionStrv = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
+	                                         1.81e00, 2.35e00,  2.81e00,  3.20e00};
 
 	double currentT_eV = Constant::BOLTZMAN * _T * Constant::ERG_EV;
 
@@ -269,6 +262,7 @@ void TwoLevel::solveRateEquations(Eigen::Vector2d sourceTerm, Eigen::Vector2d si
 	}
 	//	DEBUG("from matrix equation nu / nl: " << _nv(1) / _nv(0) << endl);
 	//	DEBUG("Directly from coefficients (no sources) nu / nl: "
-	//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1, 0))
+	//			<< (_Cvv(0, 1) + _BPvv(0, 1)) / (_Avv(1, 0) + _Cvv(1, 0) + _BPvv(1,
+	// 0))
 	//<< endl);
 }

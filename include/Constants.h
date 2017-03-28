@@ -41,6 +41,8 @@ namespace Constant {
   const double FINESTRUCTURE = .0072973525664;
   const double RYDBERG = 13.605693009 / ERG_EV;
   const double ESQUARE = Constant::FINESTRUCTURE * Constant::PLANCKLIGHT / 2 / Constant::PI; // electron charge square in cgs (I think cgs uses Gaussian units or something)
+  const double SQRT2PI = 2.50662827463;
+  const double CSQUARE_TWOPLANCK = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
 }
 
 #endif

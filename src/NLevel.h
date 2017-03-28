@@ -22,17 +22,20 @@ public:
 	Array absorptionOpacityv() const;
 
 private:
+	double lineIntensityFactor(size_t upper, size_t lower) const;
+	double lineOpacityFactor(size_t upper, size_t lower) const;
+
 	/* Calculates the Voigt profile for a certain line, using the wavelengthgrid supplied at
 	construction and the current temperature and collision rates. */
 	Array lineProfile(size_t upper, size_t lower) const;
 
-	/* Calculates the contribution of A_ul to the total decay rate. This will determine the
+	/* Calculates the contribution of A_ul to the total decay rate of u. This will determine the
 	 probability that a photon is re-emitted. */
-	double radiativeDecayFraction(size_t upper, size_t lower) const;
+	double lineDecayFraction(size_t upper, size_t lower) const;
 
 	/* Fill in the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
 	 Aij) and Pij is the line power (isrf integrated over the line profile) */
-	void prepareAbsorptionMatrix(const Array& specificIntensity);
+	void prepareAbsorptionMatrix(const Array& specificIntensityv);
 
 	/* Fill in the collision rates Cij. Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np (np
 	 is the number of collision partners). */
@@ -47,11 +50,16 @@ private:
 	/* Wavelength grid */
 	const Array& _frequencyv;
 	/* Energy levels (constant) */
+	size_t _N;
 	Eigen::VectorXd _Ev;
 	/* Level degeneracy (constant) */
 	Eigen::VectorXd _gv;
 	/* A matrix (constant, lower triangle, zero diagonal) */
 	Eigen::MatrixXd _Avv;
+	/* Spontaneous transitions that do not produce line photons, but do influence the levels. A
+	 * prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
+	 * but is about 8 s-1 for two photons*/
+	Eigen::MatrixXd _extraAvv;
 
 	/* To be set or calculated at every invocation of the balance calculation (i.e. everything
 	 that can change during the simulation or depends on the cell) */
