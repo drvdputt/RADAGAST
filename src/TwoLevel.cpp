@@ -20,7 +20,7 @@ const double csquare_twoh = Constant::LIGHT * Constant::LIGHT / 2. / Constant::P
 }
 
 TwoLevel::TwoLevel(const Array& frequencyv) :
-		_frequencyv(frequencyv), _n(0), _ne(0), _np(0), _T(0)
+		_frequencyv(frequencyv)
 {
 //	// toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page 4
 //	// this makes collisional deexcitation important for densities > 20-50 / cm3

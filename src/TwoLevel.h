@@ -72,12 +72,12 @@ private:
 	 change during the simulation or depends on the cell) */
 
 	/* Total density */
-	double _n;
+	double _n{0};
 	/* Density of collision partners, in this case electrons and protons */
-	double _ne;
-	double _np;
+	double _ne{0};
+	double _np{0};
 	/* Electron temperature */
-	double _T;
+	double _T{0};
 	/* Line-averaged intensity for each pair of levels (line shape is temperature dependent, so this has
 	 to be updated whenever it changes) */
 	Eigen::Matrix2d _BPvv;
