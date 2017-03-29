@@ -2,6 +2,9 @@
 #include "Constants.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
+#include "flags.h"
+
+#include <iostream>
 
 using namespace std;
 
@@ -61,10 +64,16 @@ NLevel::NLevel(const Array& frequencyv) : _frequencyv(frequencyv)
 
 	// clang-format on
 	// approximation used:
-	// A_n,2p = 3 * A_n,2s = 3/4 * A_n,2 from NIST
+	// A_n,2p = 3 * A_n,2s = 3/4 * (A_n,2 from NIST)
+
+	// The correct way would be to group the levels together in the way described in Hazy II,
+	// 6.11. Collision strengths need to be summed, and transition probabilities need to be
+	// averaged over. An example grouping would be ( [3d 5/2, 3/2, 1/2] [3p 3/2, 1/2] [3s 1/2] )
+	// -> ([2p 3/2, 1/2] [2s 1/2]) Not 100% sure what to to with the multiplicity of the bottom
+	// levels though
 
 	_BPvv = Eigen::MatrixXd::Zero(_N, _N);
-	_Cvv= Eigen::MatrixXd::Zero(_N, _N);
+	_Cvv = Eigen::MatrixXd::Zero(_N, _N);
 }
 
 void NLevel::solveBalance(double atomDensity, double electronDensity, double protonDensity,
@@ -115,8 +124,8 @@ void NLevel::solveBalance(double atomDensity, double electronDensity, double pro
 Array NLevel::emissivityv() const
 {
 	Array total(_frequencyv.size());
-	for (size_t lower = 0; lower < _N; lower++)
-		for (size_t upper = lower + 1; upper < _N; upper++)
+	for (int lower = 0; lower < _N; lower++)
+		for (int upper = lower + 1; upper < _N; upper++)
 			if (_Avv(upper, lower))
 				total += lineIntensityFactor(upper, lower) *
 				         lineProfile(upper, lower);
@@ -126,8 +135,8 @@ Array NLevel::emissivityv() const
 Array NLevel::opacityv() const
 {
 	Array total(_frequencyv.size());
-	for (size_t lower = 0; lower < _N; lower++)
-		for (size_t upper = lower + 1; upper < _N; upper++)
+	for (int lower = 0; lower < _N; lower++)
+		for (int upper = lower + 1; upper < _N; upper++)
 			if (_Avv(upper, lower))
 				total += lineOpacityFactor(upper, lower) *
 				         lineProfile(upper, lower);
@@ -137,8 +146,8 @@ Array NLevel::opacityv() const
 Array NLevel::scatteringOpacityv() const
 {
 	Array total(_frequencyv.size());
-	for (size_t lower = 0; lower < _N; lower++)
-		for (size_t upper = lower + 1; upper < _N; upper++)
+	for (int lower = 0; lower < _N; lower++)
+		for (int upper = lower + 1; upper < _N; upper++)
 			if (_Avv(upper, lower))
 				total += lineOpacityFactor(upper, lower) *
 				         lineProfile(upper, lower) *
@@ -198,9 +207,9 @@ double NLevel::lineDecayFraction(size_t upper, size_t lower) const
 void NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv)
 {
 	// Go over the lower triangle, without diagonal
-	for (size_t lower = 0; lower < _N; lower++)
+	for (int lower = 0; lower < _N; lower++)
 	{
-		for (size_t upper = lower + 1; upper < _N; upper++)
+		for (int upper = lower + 1; upper < _N; upper++)
 		{
 			// Calculate Pij for the lower triangle (= stimulated emission)
 			_BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
@@ -221,14 +230,81 @@ void NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv)
 	}
 }
 
+void NLevel::setElectronCollisionRate(size_t upper, size_t lower, double bigGamma)
+{
+	double kT = Constant::BOLTZMAN * _T;
+	// Equation 6.17 of Hazy II (6.6 Collision strengths)
+	_Cvv(upper, lower) = bigGamma * 8.6291e-6 / _gv(upper) / sqrt(_T) * _ne;
+	_Cvv(lower, upper) = _Cvv(upper, lower) * _gv(upper) / _gv(lower) *
+	                     exp((_Ev(lower) - _Ev(upper)) / kT);
+}
+
 void NLevel::prepareCollisionMatrix()
 {
 	// data from 2002-anderson
-	vector<double> electronTemperaturesEV = {.5, 1., 3., 5., 10., 15., 20., 25.};
+	// Electron temperatures in electron volt
+	vector<double> electronTemperaturesv_eV = {.5, 1., 3., 5., 10., 15., 20., 25.};
 
-	vector<double> effectiveCollisionStrv2s1 = {2.6e-1,  2.96e-1, 3.26e-1, 3.39e-1,
-	                                         3.73e-1, 4.06e-1, 4.36e-1, 4.61e-1};
+	double currentT_eV = Constant::BOLTZMAN * _T * Constant::ERG_EV;
 
-	vector<double> effectiveCollisionStrv2p1 = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
-	                                         1.81e00, 2.35e00,  2.81e00,  3.20e00};
+	// naively inter- and extrapolate this data linearly
+	size_t iRight = TemplatedUtils::index(currentT_eV, electronTemperaturesv_eV);
+	if (iRight == 0)
+		iRight = 1;
+	else if (iRight == electronTemperaturesv_eV.size())
+		iRight -= 1;
+	size_t iLeft = iRight - 1;
+
+	// Effective collision strength
+	vector<double> bigGamma2s1v = {2.6e-1,  2.96e-1, 3.26e-1, 3.39e-1,
+	                               3.73e-1, 4.06e-1, 4.36e-1, 4.61e-1};
+	double bigGamma2s1 = TemplatedUtils::interpolateLinear(
+	                currentT_eV, electronTemperaturesv_eV[iLeft],
+	                electronTemperaturesv_eV[iRight], bigGamma2s1v[iLeft],
+	                bigGamma2s1v[iRight]);
+	setElectronCollisionRate(2, 0, bigGamma2s1);
+
+	vector<double> bigGamma2p1v = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
+	                               1.81e00, 2.35e00,  2.81e00,  3.20e00};
+	double bigGamma2p1 = TemplatedUtils::interpolateLinear(
+	                currentT_eV, electronTemperaturesv_eV[iLeft],
+	                electronTemperaturesv_eV[iRight], bigGamma2p1v[iLeft],
+	                bigGamma2p1v[iRight]);
+	setElectronCollisionRate(1, 0, bigGamma2p1);
+
+	// Important for two-photon continuum vs lyman is the l-changing collisions between 2s and 2p
 }
+
+void NLevel::solveRateEquations(Eigen::VectorXd sourceTerm, Eigen::VectorXd sinkTerm,
+                                int chooseConsvEq)
+{
+	// Initialize Mij as Aji + PBji + Cji
+	// = arrival rate in level i from level j
+	Eigen::MatrixXd Mvv(_Avv.transpose() + _extraAvv.transpose() + _BPvv.transpose() +
+	                    _Cvv.transpose());
+
+	// See equation for Fij (37) in document
+	// subtract departure rate from level i to all other levels
+	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
+	Mvv -= departureDiagonal;
+	Mvv -= sinkTerm.asDiagonal();
+	Eigen::VectorXd b(-sourceTerm);
+
+	// Replace row by a conservation equation
+	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());
+	b(chooseConsvEq) = _n;
+
+#ifdef PRINT_MATRICES
+	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
+#endif
+
+	// Call the linear solver
+	_nv = Mvv.colPivHouseholderQr().solve(b);
+	DEBUG("nv" << endl << _nv << endl);
+
+	// Element wise relative errors
+	Eigen::ArrayXd diffv = Mvv * _nv - b;
+	Eigen::ArrayXd errv = diffv / Eigen::ArrayXd(b);
+	DEBUG("The relative errors are: " << errv << endl);
+}
+

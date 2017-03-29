@@ -37,6 +37,8 @@ private:
 	 Aij) and Pij is the line power (isrf integrated over the line profile) */
 	void prepareAbsorptionMatrix(const Array& specificIntensityv);
 
+	void setElectronCollisionRate(size_t upper, size_t lower, double bigGamma);
+
 	/* Fill in the collision rates Cij. Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np (np
 	 is the number of collision partners). */
 	void prepareCollisionMatrix();
@@ -45,12 +47,12 @@ private:
 	 + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term ne*np*alpha_i,
 	 due to recombination. Stores the solution in the vector containing the densities _ni. */
 	void solveRateEquations(Eigen::VectorXd sourceTerm, Eigen::VectorXd sinkTerm,
-	                        size_t chooseConsvEq);
+	                        int chooseConsvEq);
 
 	/* Wavelength grid */
 	const Array& _frequencyv;
 	/* Energy levels (constant) */
-	size_t _N;
+	int _N;
 	Eigen::VectorXd _Ev;
 	/* Level degeneracy (constant) */
 	Eigen::VectorXd _gv;

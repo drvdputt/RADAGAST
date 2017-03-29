@@ -215,9 +215,9 @@ void Testing::testHydrogenCalculator()
 	out.close();
 	wavfile.close();
 
-	cout << "----------------------------------" << endl;
-	cout << "plotting heating curve..." << endl;
-	hc.testHeatingCurve();
+//	cout << "----------------------------------" << endl;
+//	cout << "plotting heating curve..." << endl;
+//	hc.testHeatingCurve();
 }
 
 void Testing::testPhotoelectricHeating()

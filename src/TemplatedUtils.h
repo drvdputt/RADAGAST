@@ -47,11 +47,17 @@ template <typename T, typename T1> void inline sortedInsert(T elem, T1& containe
 	container.insert(std::upper_bound(std::begin(container), std::end(container), elem), elem);
 }
 
+template <typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRight)
+{
+	T weightRight = (x - xLeft) / (xLeft - xRight);
+	return fLeft + weightRight * (fRight - fLeft);
+}
+
 template <typename T>
 T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight,
                          T fUpperLeft, T fUpperRight)
 {
-	T weightRight = (x - xLeft) / (xLeft - xRight);
+	T weightRight = (x - xLeft) / (xRight - xLeft);
 	T fLowerI = fLowerLeft + weightRight * (fLowerRight - fLowerLeft);
 	T fUpperI = fUpperLeft + weightRight * (fUpperRight - fUpperLeft);
 

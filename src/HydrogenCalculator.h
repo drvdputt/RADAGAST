@@ -6,7 +6,7 @@
 
 #include <memory>
 
-class TwoLevel;
+class NLevel;
 class FreeBound;
 class FreeFree;
 
@@ -102,7 +102,7 @@ private:
 
 	/* Hide the other parts of the implementation from code that includes this header
 	 to avoid the chaining of dependencies. */
-	std::unique_ptr<TwoLevel> _levels;
+	std::unique_ptr<NLevel> _levels;
 	/* Continuum contributions */
 	std::unique_ptr<FreeBound> _freeBound;
 	std::unique_ptr<FreeFree> _freeFree;

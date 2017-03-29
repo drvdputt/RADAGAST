@@ -4,8 +4,8 @@
 #include "FreeFree.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
+#include "NLevel.h"
 #include "TemplatedUtils.h"
-#include "TwoLevel.h"
 #include "flags.h"
 
 #include <algorithm>
@@ -18,7 +18,7 @@
 using namespace std;
 
 HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
-                : _frequencyv(frequencyv), _levels(make_unique<TwoLevel>(frequencyv)),
+                : _frequencyv(frequencyv), _levels(make_unique<NLevel>(frequencyv)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
@@ -127,6 +127,7 @@ void HydrogenCalculator::calculateDensities(double T)
 		double alphaGround = 1.58e-13 *
 		                     pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
 		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+
 		// DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
 
 		Array sourcev({ne * np * alphaGround, ne * np * alpha2p});
