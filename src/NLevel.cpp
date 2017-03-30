@@ -15,20 +15,20 @@ const int index2p = 1;
 const int index2s = 2;
 }
 
-NLevel::NLevel(const Array& frequencyv) : _frequencyv(frequencyv)
+NLevel::NLevel(const Array& frequencyv)
+                : _frequencyv(frequencyv), _Ev(_nLv), _gv(_nLv), _nv(_nLv),
+                  _Avv(_nLv, _nLv), _extraAvv(_nLv, _nLv), _BPvv(_nLv, _nLv), _Cvv(_nLv, _nLv)
 {
 	// Using NIST data
 	// (http://physics.nist.gov/cgi-bin/ASD/lines1.pl?unit=1&line_out=0&bibrefs=1&show_obs_wl=1&show_calc_wl=1&A_out=0&intens_out=1&allowed_out=1&forbid_out=1&conf_out=1&term_out=1&enrg_out=1&J_out=1&g_out=0&spectra=H%20I)
 	// 1s, 2p, 2s
 	// 3, 4, 5
-	_N = 6;
 	_Ev << 0., 82258.9191133, 82258.9543992821, 97492.304, 102823.904, 105291.657;
 	// Energy in cm^-1, so multiply with hc
 	_Ev *= Constant::PLANCKLIGHT;
 
 	_gv << 1, 1, 3, 9, 16, 25;
 
-	_nv = Eigen::VectorXd(_Ev.size());
 	_nv(0) = _n;
 
 	double A2p1 = 6.2649e8;
@@ -79,8 +79,10 @@ NLevel::NLevel(const Array& frequencyv) : _frequencyv(frequencyv)
 	// -> ([2p 3/2, 1/2] [2s 1/2]) Not 100% sure what to to with the multiplicity of the bottom
 	// levels though
 
-	_BPvv = Eigen::MatrixXd::Zero(_N, _N);
-	_Cvv = Eigen::MatrixXd::Zero(_N, _N);
+	_BPvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
+	_Cvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
+
+	DEBUG("Constructed NLevel" << endl);
 }
 
 void NLevel::solveBalance(double atomDensity, double electronDensity, double protonDensity,
@@ -105,8 +107,18 @@ void NLevel::solveBalance(double atomDensity, double electronDensity, double pro
 		prepareCollisionMatrix();
 
 #ifdef REPORT_LINE_QUALITY
-		double norm = TemplatedUtils::integrate<double>(_frequencyv, lineProfile(1, 0));
-		DEBUG("line profile norm = " << norm << endl);
+		double maxNorm = 0, minNorm = 1e9;
+		for (int lower = 0; lower < _nLv; lower++)
+			for (int upper = lower + 1; upper < _nLv; upper++)
+				if (_Avv(upper, lower))
+				{
+					double norm = TemplatedUtils::integrate<double>(_frequencyv, lineProfile(1, 0));
+					DEBUG("Line " << upper << " --> " << lower << " has norm " << norm << endl);
+					maxNorm = max(norm, maxNorm);
+					minNorm = min(norm, minNorm);
+				}
+		DEBUG("Max profile norm = " << maxNorm << endl);
+		DEBUG("Min profile norm = " << minNorm << endl);
 #endif
 
 		// Calculate BijPij (needs to be redone at each temperature because the line profile
@@ -131,8 +143,8 @@ void NLevel::solveBalance(double atomDensity, double electronDensity, double pro
 Array NLevel::emissivityv() const
 {
 	Array total(_frequencyv.size());
-	for (int lower = 0; lower < _N; lower++)
-		for (int upper = lower + 1; upper < _N; upper++)
+	for (int lower = 0; lower < _nLv; lower++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
 			if (_Avv(upper, lower))
 				total += lineIntensityFactor(upper, lower) *
 				         lineProfile(upper, lower);
@@ -142,8 +154,8 @@ Array NLevel::emissivityv() const
 Array NLevel::opacityv() const
 {
 	Array total(_frequencyv.size());
-	for (int lower = 0; lower < _N; lower++)
-		for (int upper = lower + 1; upper < _N; upper++)
+	for (int lower = 0; lower < _nLv; lower++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
 			if (_Avv(upper, lower))
 				total += lineOpacityFactor(upper, lower) *
 				         lineProfile(upper, lower);
@@ -153,8 +165,8 @@ Array NLevel::opacityv() const
 Array NLevel::scatteringOpacityv() const
 {
 	Array total(_frequencyv.size());
-	for (int lower = 0; lower < _N; lower++)
-		for (int upper = lower + 1; upper < _N; upper++)
+	for (int lower = 0; lower < _nLv; lower++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
 			if (_Avv(upper, lower))
 				total += lineOpacityFactor(upper, lower) *
 				         lineProfile(upper, lower) *
@@ -214,9 +226,9 @@ double NLevel::lineDecayFraction(size_t upper, size_t lower) const
 void NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv)
 {
 	// Go over the lower triangle, without diagonal
-	for (int lower = 0; lower < _N; lower++)
+	for (int lower = 0; lower < _nLv; lower++)
 	{
-		for (int upper = lower + 1; upper < _N; upper++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
 		{
 			// Calculate Pij for the lower triangle (= stimulated emission)
 			_BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(

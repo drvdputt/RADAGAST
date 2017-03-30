@@ -110,21 +110,21 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	vector<double> isrfUVbis(end(I_nu) - endLambdaUV - 1, end(I_nu) - startLambdaUV - 1);
 
 	// Integrate over the UV only
-	double UVdensitybis = -Constant::FPI / Constant::LIGHT *
+	double UVdensitybis = Constant::FPI / Constant::LIGHT *
 	                      NumUtils::integrate<double>(frequencyUV, isrfUVbis);
 	cout << "Normalized spectrum uv = " << UVdensitybis << " ("
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
 	std::ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/isrf.txt");
+	out.open("isrf.txt");
 	for (size_t b = 0; b < I_nu.size(); b++)
 		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
-	out.open("/Users/drvdputt/GasModule/run/isrfUV.txt");
+	out.open("isrfUV.txt");
 	for (size_t b = 0; b < isrfUV.size(); b++)
 		out << frequencyUV[b] << '\t' << isrfUVbis[b] << '\n';
-
+	out.close();
 	return I_nu;
 }
 
@@ -144,7 +144,7 @@ Array Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv,
 void Testing::testIonizationCrossSection()
 {
 	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/ionizationCrosSection.dat");
+	out.open("ionizationCrosSection.dat");
 	for (double freq = 0; freq < 6.e16; freq += 1e14)
 	{
 		double sigma = Ionization::crossSection(freq);
@@ -161,7 +161,7 @@ void Testing::testHydrogenCalculator()
 	double expectedTemperature = 6000;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(200, Constant::LIGHT / (1000 * Constant::UM_CM),
+	                generateGeometricGridv(100000, Constant::LIGHT / (1000 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	const double lineWindowFactor = 5;
@@ -182,8 +182,10 @@ void Testing::testHydrogenCalculator()
 
 	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
 	Array specificIntensityv = generateSpecificIntensityv(tempFrequencyv, Tc, G0);
+	cout << "Generated input spectrum" << endl;
 
 	HydrogenCalculator hc(frequencyv);
+	cout << "Created HydrogenCalculator" << endl;
 	hc.solveBalance(n, expectedTemperature, specificIntensityv);
 
 	const Array& lumv = hc.emissivityv();
@@ -195,11 +197,11 @@ void Testing::testHydrogenCalculator()
 
 	ofstream out, wavfile;
 	char tab = '\t';
-	out.open("/Users/drvdputt/GasModule/run/opticalProperties.dat");
+	out.open("opticalProperties.dat");
 	out << "# 0:frequency" << tab << "1:intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)" << tab
 	    << "2:opacity alpha_nu (cm-1)" << tab << "3:scattered (erg s-1 cm-3 Hz-1 sr-1)" << tab
 	    << "4: int - sca" << endl;
-	wavfile.open("/Users/drvdputt/GasModule/run/wavelengths.dat");
+	wavfile.open("wavelengths.dat");
 	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
 		double freq = frequencyv[iFreq];

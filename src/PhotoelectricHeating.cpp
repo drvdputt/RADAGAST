@@ -30,9 +30,11 @@ void PhotoelectricHeatingRecipe::readQabs() const
 	// open the file
 	ifstream file;
 	if (_carbonaceous)
-		file.open("/Users/drvdputt/SKIRT/git/dat/GrainComposition/Draine/Gra_81.dat");
+		file.open("../git/dat/Gra_81.dat");
 	else
-		file.open("/Users/drvdputt/SKIRT/git/dat/GrainComposition/Draine/suvSil_81.dat");
+		file.open("../git/dat/suvSil_81.dat");
+	if (!file)
+		cout << "Grain data not found!" << endl;
 
 	// skip header lines and read the grid size
 	string line;

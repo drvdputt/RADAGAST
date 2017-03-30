@@ -10,7 +10,7 @@ class NLevel
 public:
 	NLevel(const Array& frequencyv);
 
-	int N() {return _N;}
+	int N() {return _nLv;}
 
 	void solveBalance(double atomDensity, double electronDensity, double protonDensity,
 	                  double T, const Array& specificIntensityv, const Array& sourcev,
@@ -54,7 +54,7 @@ private:
 	/* Wavelength grid */
 	const Array& _frequencyv;
 	/* Energy levels (constant) */
-	int _N;
+	int _nLv{6};
 	Eigen::VectorXd _Ev;
 	/* Level degeneracy (constant) */
 	Eigen::VectorXd _gv;

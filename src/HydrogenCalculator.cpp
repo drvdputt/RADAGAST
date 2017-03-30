@@ -22,6 +22,7 @@ HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
+	DEBUG("Constructed HydrogenCalculator" << endl);
 }
 
 HydrogenCalculator::~HydrogenCalculator() {}

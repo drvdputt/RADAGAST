@@ -70,15 +70,15 @@ const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / C
 
 FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 {
-	readData("/Users/drvdputt/GasModule/git/dat/gauntff_merged_Z01.dat");
+	readData("../git/dat/gauntff_merged_Z01.dat");
+	DEBUG("Constructed FreeFree" << endl);
 }
 
 void FreeFree::readData(const string& file)
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input;
-	input.open(file);
+	ifstream input(file);
 	if (!input)
 		throw std::runtime_error("File " + file + "not found.");
 
@@ -161,6 +161,7 @@ void FreeFree::readData(const string& file)
 	}
 	out.close();
 #endif
+	DEBUG("Successfully read gauntff.dat" << endl);
 }
 
 void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
