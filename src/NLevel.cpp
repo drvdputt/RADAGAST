@@ -8,6 +8,13 @@
 
 using namespace std;
 
+namespace
+{
+// commonly used indices
+const int index2p = 1;
+const int index2s = 2;
+}
+
 NLevel::NLevel(const Array& frequencyv) : _frequencyv(frequencyv)
 {
 	// Using NIST data
@@ -272,7 +279,25 @@ void NLevel::prepareCollisionMatrix()
 	                bigGamma2p1v[iRight]);
 	setElectronCollisionRate(1, 0, bigGamma2p1);
 
-	// Important for two-photon continuum vs lyman is the l-changing collisions between 2s and 2p
+	// Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
+	// 2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0
+	double mu_m = Constant::HMASS_CGS / 2 / Constant::ELECTRONMASS;
+	double constfactor = 9.93e-6 * sqrt(mu_m);
+
+	//(6n^2(n^2 - l^2 - l - 1)) (eq 44)
+	double D2p = 24;
+	// even though the second term is zero
+	double A2p = _Avv.row(index2p).sum() + _extraAvv.row(index2p).sum();
+	// (45 should be the correct one for DeltaE <<<)
+	double twolog10Rc = 10.95 + log10(_T / A2p / A2p / mu_m);
+	double q2p2s = constfactor * D2p / sqrt(_T) * (11.54 + log10(_T / D2p / mu_m) + twolog10Rc);
+	_Cvv(index2p, index2s) = _np * q2p2s;
+
+	double D2s = 24 * 3;
+	double A2s = _Avv.row(index2s).sum() + _extraAvv.row(index2s).sum();
+	twolog10Rc = 10.95 + log10(_T / A2s / A2s / mu_m);
+	double q2s2p = constfactor * D2s / sqrt(_T) * (11.54 + log10(_T / D2s / mu_m) + twolog10Rc);
+	_Cvv(index2s, index2p) = _np * q2s2p;
 }
 
 void NLevel::solveRateEquations(Eigen::VectorXd sourceTerm, Eigen::VectorXd sinkTerm,
@@ -307,4 +332,3 @@ void NLevel::solveRateEquations(Eigen::VectorXd sourceTerm, Eigen::VectorXd sink
 	Eigen::ArrayXd errv = diffv / Eigen::ArrayXd(b);
 	DEBUG("The relative errors are: " << errv << endl);
 }
-
