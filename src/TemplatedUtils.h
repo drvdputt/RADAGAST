@@ -94,6 +94,19 @@ template <typename T, typename T1> inline size_t index(T val, const T1& containe
 	return std::distance(std::begin(container), idx);
 }
 
+/* Evaluates the polynomial \Sum_{i = 0}^{coeffv.size() - 1} x^i coeffv[i] */
+template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv)
+{
+	T sum = 0;
+	T xToThei = 1;
+	for (size_t i = 0; i < coeffv.size(); i++)
+	{
+		sum += xToThei * coeffv[i];
+		xToThei *= x;
+	}
+	return sum;
+}
+
 } /* namespace TemplatedUtils */
 
 #endif /* _TEMPLATEDUTILITIES_H_ */

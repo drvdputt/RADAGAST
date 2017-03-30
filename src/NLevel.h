@@ -10,6 +10,8 @@ class NLevel
 public:
 	NLevel(const Array& frequencyv);
 
+	int N() {return _N;}
+
 	void solveBalance(double atomDensity, double electronDensity, double protonDensity,
 	                  double T, const Array& specificIntensityv, const Array& sourcev,
 	                  const Array& sinkv);

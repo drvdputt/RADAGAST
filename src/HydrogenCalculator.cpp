@@ -3,8 +3,8 @@
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "IonizationBalance.h"
-#include "NumUtils.h"
 #include "NLevel.h"
+#include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "flags.h"
 
@@ -111,7 +111,6 @@ void HydrogenCalculator::calculateDensities(double T)
 #ifdef VERBOSE
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 #endif
-
 		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv,
 		                                               *_p_specificIntensityv);
 #ifdef VERBOSE
@@ -123,14 +122,24 @@ void HydrogenCalculator::calculateDensities(double T)
 		double alphaTotal = Ionization::recombinationRate(T);
 
 		// approximations from Draine's book, p 138, valid for 3000 to 30000 K
+		// yes, this is natural log
 		double T4 = T / 1.e4;
-		double alphaGround = 1.58e-13 *
-		                     pow(T4, -0.53 - 0.17 * log(T4)); // yes, this is natural log
+		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
 		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+		double alpha2s = alpha2p / 3.; // TODO: don't forget to change this!
 
-		// DEBUG("alphaGround " << alphaGround << " alpha2p " << alpha2p << endl);
+		// 2015-Raga (A13)
+		double t = log10(T4);
+		vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
+		vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
+		vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
 
-		Array sourcev({ne * np * alphaGround, ne * np * alpha2p});
+		double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
+		double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
+		double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
+
+		Array sourcev({alphaGround, alpha2p, alpha2s, alpha3, alpha4, alpha5});
+		sourcev *= ne * np;
 
 		/* The ionization rate calculation makes no distinction between the levels. When the
 		 upper level population is small, and its decay rate is large, the second term
@@ -139,15 +148,15 @@ void HydrogenCalculator::calculateDensities(double T)
 		 totalsource / n because n0/n + n1/n = 1.
 		 */
 		double sink = ne * np * alphaTotal / nAtomic();
-		Array sinkv({sink, sink});
+		Array sinkv({sink, sink, sink, sink, sink, sink});
 
 		_levels->solveBalance(nAtomic(), ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
 	}
 	else
 	{
+		Array zero(_levels->N());
 		_ionizedFraction = 0;
-		_levels->solveBalance(0, 0, 0, _temperature, *_p_specificIntensityv, {0, 0},
-		                      {0, 0});
+		_levels->solveBalance(0, 0, 0, _temperature, *_p_specificIntensityv, zero, zero);
 	}
 }
 
