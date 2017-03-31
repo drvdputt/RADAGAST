@@ -55,7 +55,7 @@ private:
 	void fillOpticalProperties(GasState& gs) const;
 	void zeroOpticalProperties(GasState& gs) const;
 
-	const std::valarray<double>& _frequencyv;
+	std::valarray<double> _frequencyv;
 	std::unique_ptr<HydrogenCalculator> _hc{nullptr};
 };
 

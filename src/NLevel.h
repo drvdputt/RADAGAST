@@ -8,9 +8,14 @@
 class NLevel
 {
 public:
+	NLevel();
 	NLevel(const Array& frequencyv);
 
-	int N() {return _nLv;}
+	int N() const {return _nLv;}
+	Array frequencyv() const {return _frequencyv;}
+	void setFrequencyv(const Array& frequencyv) {_frequencyv = frequencyv;}
+
+	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
 
 	void solveBalance(double atomDensity, double electronDensity, double protonDensity,
 	                  double T, const Array& specificIntensityv, const Array& sourcev,
@@ -23,7 +28,12 @@ public:
 	Array scatteringOpacityv() const;
 	Array absorptionOpacityv() const;
 
+
 private:
+	/* Abstraction of the loop over all lines */
+	void forAllLinesDo(std::function<void (size_t upper, size_t lower)> thingWithLine);
+	void forAllLinesDo(std::function<void (size_t upper, size_t lower)> thingWithLine) const;
+
 	double lineIntensityFactor(size_t upper, size_t lower) const;
 	double lineOpacityFactor(size_t upper, size_t lower) const;
 
@@ -52,7 +62,7 @@ private:
 	                        int chooseConsvEq);
 
 	/* Wavelength grid */
-	const Array& _frequencyv;
+	Array _frequencyv;
 	/* Energy levels (constant) */
 	int _nLv{6};
 	Eigen::VectorXd _Ev;

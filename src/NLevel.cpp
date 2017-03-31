@@ -2,9 +2,8 @@
 #include "Constants.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-#include "flags.h"
-
 #include <iostream>
+#include "global.h"
 
 using namespace std;
 
@@ -15,9 +14,9 @@ const int index2p = 1;
 const int index2s = 2;
 }
 
-NLevel::NLevel(const Array& frequencyv)
-                : _frequencyv(frequencyv), _Ev(_nLv), _gv(_nLv), _nv(_nLv),
-                  _Avv(_nLv, _nLv), _extraAvv(_nLv, _nLv), _BPvv(_nLv, _nLv), _Cvv(_nLv, _nLv)
+NLevel::NLevel()
+                : _Ev(_nLv), _gv(_nLv), _Avv(_nLv, _nLv), _extraAvv(_nLv, _nLv),
+                  _BPvv(_nLv, _nLv), _Cvv(_nLv, _nLv), _nv(_nLv)
 {
 	// Using NIST data
 	// (http://physics.nist.gov/cgi-bin/ASD/lines1.pl?unit=1&line_out=0&bibrefs=1&show_obs_wl=1&show_calc_wl=1&A_out=0&intens_out=1&allowed_out=1&forbid_out=1&conf_out=1&term_out=1&enrg_out=1&J_out=1&g_out=0&spectra=H%20I)
@@ -85,6 +84,23 @@ NLevel::NLevel(const Array& frequencyv)
 	DEBUG("Constructed NLevel" << endl);
 }
 
+NLevel::NLevel(const Array& frequencyv) : NLevel() { _frequencyv = frequencyv; }
+
+void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const
+{
+	numLines = 0;
+	forAllLinesDo([&](size_t, size_t) { numLines++; });
+	lineFreqv.resize(numLines);
+	naturalLineWidthv.resize(numLines);
+	int index = 0;
+	forAllLinesDo([&](size_t upper, size_t lower) {
+		lineFreqv[index] = (_Ev(upper) - _Ev(lower)) / Constant::PLANCK;
+		naturalLineWidthv[index] =
+		                (_Avv(upper, lower) + _extraAvv(upper, lower)) / Constant::FPI;
+		index++;
+	});
+}
+
 void NLevel::solveBalance(double atomDensity, double electronDensity, double protonDensity,
                           double T, const Array& specificIntensityv, const Array& sourcev,
                           const Array& sinkv)
@@ -112,8 +128,10 @@ void NLevel::solveBalance(double atomDensity, double electronDensity, double pro
 			for (int upper = lower + 1; upper < _nLv; upper++)
 				if (_Avv(upper, lower))
 				{
-					double norm = TemplatedUtils::integrate<double>(_frequencyv, lineProfile(1, 0));
-					DEBUG("Line " << upper << " --> " << lower << " has norm " << norm << endl);
+					double norm = TemplatedUtils::integrate<double>(
+					                _frequencyv, lineProfile(1, 0));
+					DEBUG("Line " << upper << " --> " << lower << " has norm "
+					              << norm << endl);
 					maxNorm = max(norm, maxNorm);
 					minNorm = min(norm, minNorm);
 				}
@@ -172,6 +190,22 @@ Array NLevel::scatteringOpacityv() const
 				         lineProfile(upper, lower) *
 				         lineDecayFraction(upper, lower);
 	return total;
+}
+
+void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithLine)
+{
+	for (int lower = 0; lower < _nLv; lower++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
+			if (_Avv(upper, lower))
+				thingWithLine(upper, lower);
+}
+
+void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithLine) const
+{
+	for (int lower = 0; lower < _nLv; lower++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
+			if (_Avv(upper, lower))
+				thingWithLine(upper, lower);
 }
 
 double NLevel::lineIntensityFactor(size_t upper, size_t lower) const

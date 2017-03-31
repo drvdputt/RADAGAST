@@ -2,10 +2,9 @@
 #include "Constants.h"
 #include "NumUtils.h"
 #include "Table.h"
-#include "flags.h"
-
 #include <cmath>
 #include <fstream>
+#include "global.h"
 
 using namespace std;
 
@@ -16,8 +15,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	vector<double> fileFrequencyv;
 	vector<vector<double>> fileGammaDaggervv;
 
-	// This path only works when running from a directory next to the git source
-	string file("../git/dat/t3_elec_reformat.ascii");
+	string file(repoRoot + "/dat/t3_elec_reformat.ascii");
 	readData(file, fileFrequencyv, _thresholdv, _logTemperaturev, fileGammaDaggervv);
 
 	size_t numcol = _logTemperaturev.size();

@@ -3,11 +3,10 @@
 #include "Sanity.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-#include "flags.h"
-
 #include <algorithm>
 #include <exception>
 #include <vector>
+#include "global.h"
 
 using namespace std;
 

@@ -1,5 +1,6 @@
 #include "PhotoelectricHeating.h"
 
+#include "global.h"
 #include "NumUtils.h"
 #include "Testing.h"
 #include <cmath>
@@ -30,9 +31,9 @@ void PhotoelectricHeatingRecipe::readQabs() const
 	// open the file
 	ifstream file;
 	if (_carbonaceous)
-		file.open("../git/dat/Gra_81.dat");
+		file.open(repoRoot + "/dat/Gra_81.dat");
 	else
-		file.open("../git/dat/suvSil_81.dat");
+		file.open(repoRoot + "/dat/suvSil_81.dat");
 	if (!file)
 		cout << "Grain data not found!" << endl;
 

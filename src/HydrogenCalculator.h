@@ -17,6 +17,10 @@ public:
 	 hydrogen gas and the resulting opacity and emission on the provided frequency grid. */
 	HydrogenCalculator(const Array& frequencyv);
 
+	/* Creates a HydrogenCalculator and creates a frequency grid / adjusts the given frequency
+	 * grid (by reference) if suggestedGrid = true.*/
+	HydrogenCalculator(Array& frequencyv, bool suggestGrid);
+
 	~HydrogenCalculator();
 
 	/* Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
@@ -90,7 +94,7 @@ public:
 
 private:
 	/* To be set in constructor */
-	const Array& _frequencyv;
+	Array _frequencyv;
 
 	/* To be set on invocation of solveBalance() */
 	double _n{0};

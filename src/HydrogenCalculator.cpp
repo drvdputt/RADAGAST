@@ -6,14 +6,14 @@
 #include "NLevel.h"
 #include "NumUtils.h"
 #include "TemplatedUtils.h"
-#include "flags.h"
-
+#include "Testing.h"
 #include <algorithm>
 #include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include "global.h"
 
 using namespace std;
 
@@ -23,6 +23,32 @@ HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
 	DEBUG("Constructed HydrogenCalculator" << endl);
+}
+
+HydrogenCalculator::HydrogenCalculator(Array& frequencyv, bool suggestGrid)
+{
+	_levels = make_unique<NLevel>(frequencyv);
+
+	int numLines;
+	Array lineFreqv, lineWidthv;
+	_levels->lineInfo(numLines, lineFreqv, lineWidthv);
+
+	if (suggestGrid)
+	{
+		double lineWindowFactor = 5;
+		vector<double> gridVector(begin(frequencyv), end(frequencyv));
+		double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
+		                       Constant::LIGHT;
+		lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
+		Testing::refineFrequencyGrid(gridVector, 31, 3.,
+		                    vector<double>(begin(lineFreqv), end(lineFreqv)),
+		                    vector<double>(begin(lineWidthv), end(lineWidthv)));
+		frequencyv = Array(gridVector.data(), gridVector.size());
+	}
+	_frequencyv = frequencyv;
+	_levels = make_unique<NLevel>(frequencyv);
+	_freeBound = make_unique<FreeBound>(frequencyv);
+	_freeFree = make_unique<FreeFree>(frequencyv);
 }
 
 HydrogenCalculator::~HydrogenCalculator() {}

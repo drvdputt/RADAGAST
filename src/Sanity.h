@@ -1,10 +1,10 @@
 #ifndef _SRC_SANITY_H_
 #define _SRC_SANITY_H_
 
-#include "flags.h"
 #include <ios>
 #include <iostream>
 #include <string>
+#include "global.h"
 
 namespace Sanity
 {

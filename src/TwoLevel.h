@@ -60,7 +60,7 @@ private:
 	                        size_t chooseConsvEq);
 
 	/* Wavelength grid */
-	const Array& _frequencyv;
+	Array _frequencyv;
 	/* Energy levels (constant) */
 	Eigen::Vector2d _Ev;
 	/* Level degeneracy (constant) */

@@ -29,13 +29,13 @@ public:
 	double gauntFactor(double logu, double logg2) const;
 
 private:
-	const Array& _frequencyv;
+	Array _frequencyv;
 
 	/* The ((natural!) log of the) data read from the file, indexed on (u, gamma^2) */
 	Table<2> _fileGauntFactorvv;
 	/* The ((base 10!) log of the) minima and maxima defining the u - gamma^2 grid, as well as
 	 the step size in log space. */
-	double _loggamma2Min, _loguMin, _logStep, _loggamma2Max, _loguMax;
+	double _loggamma2Min{0}, _loguMin{0}, _logStep{0}, _loggamma2Max{0}, _loguMax{0};
 };
 
 #endif /* _SRC_FREEFREE_H_ */

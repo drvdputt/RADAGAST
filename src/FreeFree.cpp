@@ -43,12 +43,11 @@
 #include "FreeFree.h"
 #include "Constants.h"
 #include "TemplatedUtils.h"
-#include "flags.h"
-
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include "global.h"
 
 using namespace std;
 
@@ -70,7 +69,7 @@ const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / C
 
 FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 {
-	readData("../git/dat/gauntff_merged_Z01.dat");
+	readData(REPOROOT"/dat/gauntff_merged_Z01.dat");
 	DEBUG("Constructed FreeFree" << endl);
 }
 

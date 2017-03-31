@@ -24,7 +24,7 @@ void handler(int sig)
 
 int main()
 {
-	signal(SIGSEGV, handler);
+	//signal(SIGSEGV, handler);
 	//  printf("%f", PhotoelectricHeatingRecipe::yieldFunctionTest());
 	//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
 	//  printf("%f\n", Ionization::testIonization());

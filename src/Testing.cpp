@@ -157,35 +157,37 @@ void Testing::testHydrogenCalculator()
 {
 	double Tc = 30000;
 	double G0 = 1e0;
-	double n = 1e0;
+	double n = 1e2;
 	double expectedTemperature = 6000;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(100000, Constant::LIGHT / (1000 * Constant::UM_CM),
+	                generateGeometricGridv(100, Constant::LIGHT / (1000 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
 
-	const double lineWindowFactor = 5;
-	vector<double> lineFreqv = {Constant::LIGHT * 82258.9191133};
-	vector<double> decayRatev = {6.2649e+08};
-	double thermalFactor =
-	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) / Constant::LIGHT;
-	vector<double> lineWidthv;
-	lineWidthv.reserve(lineFreqv.size());
-	for (size_t l = 0; l < lineFreqv.size(); l++)
-	{
-		double freq = lineFreqv[l];
-		cout << "thermal width " << freq * thermalFactor << " natural width "
-		     << decayRatev[l] << endl;
-		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor + decayRatev[l]));
-	}
-	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
+	//	const double lineWindowFactor = 5;
+	//	vector<double> lineFreqv = {Constant::LIGHT * 82258.9191133};
+	//	vector<double> decayRatev = {6.2649e+08};
+	//	double thermalFactor =
+	//	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
+	//Constant::LIGHT; 	vector<double> lineWidthv;
+	//	lineWidthv.reserve(lineFreqv.size());
+	//	for (size_t l = 0; l < lineFreqv.size(); l++)
+	//	{
+	//		double freq = lineFreqv[l];
+	//		cout << "thermal width " << freq * thermalFactor << " natural width "
+	//		     << decayRatev[l] << endl;
+	//		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor +
+	//decayRatev[l]));
+	//	}
+	//	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
 
 	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
-	Array specificIntensityv = generateSpecificIntensityv(tempFrequencyv, Tc, G0);
+	HydrogenCalculator hc(frequencyv, true);
+	cout << "Created HydrogenCalculator" << endl;
+
+	Array specificIntensityv = generateSpecificIntensityv(vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
 	cout << "Generated input spectrum" << endl;
 
-	HydrogenCalculator hc(frequencyv);
-	cout << "Created HydrogenCalculator" << endl;
 	hc.solveBalance(n, expectedTemperature, specificIntensityv);
 
 	const Array& lumv = hc.emissivityv();
@@ -202,6 +204,7 @@ void Testing::testHydrogenCalculator()
 	    << "2:opacity alpha_nu (cm-1)" << tab << "3:scattered (erg s-1 cm-3 Hz-1 sr-1)" << tab
 	    << "4: int - sca" << endl;
 	wavfile.open("wavelengths.dat");
+	wavfile << "#wav (micron)" << tab << "freq (Hz)" << endl;
 	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
 	{
 		double freq = frequencyv[iFreq];
@@ -212,10 +215,12 @@ void Testing::testHydrogenCalculator()
 		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab
 		    << scav[iFreq] << tab << lumv[iFreq] - scav[iFreq] << tab << effective << endl;
 		wavfile.precision(9);
-		wavfile << wav << endl;
+		wavfile << wav << tab << freq << endl;
 	}
 	out.close();
 	wavfile.close();
+
+	cout << "TestHydrogenCalculator done" << endl;
 
 //	cout << "----------------------------------" << endl;
 //	cout << "plotting heating curve..." << endl;
