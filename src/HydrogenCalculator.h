@@ -26,22 +26,18 @@ public:
 	/* Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
 	 guess, and a vector containing the radiation field in specific intensity per frequency
 	 units (on the same frequency grid as the one provided at construction). */
-	void solveBalance(double n, double Tinit, const Array& specificIntensity);
-
-	/* Finds a new balance, using information stored in the GasState to speed up the
-	 * calculation. */
-	void solveBalance(const GasState&, double n, double Tinit, const Array& specificIntensity);
+	void solveBalance(GasState&, double n, double Tinit, const Array& specificIntensity);
 
 	/* Used by the balance solver to calculate the ionization fraction and level populations for
 	 a certain electron temperature, under influence of a blackbody isrf of that same
 	 temperature. Can be used by the client to manually set the temperature and calculate some
 	 properties which can be used as an initial guess. */
-	void solveInitialGuess(double n, double T);
+	void solveInitialGuess(GasState&, double n, double T);
 
 private:
 	/* Calculates all the densities for a fixed temperature. Is repeatedly called by this class.
 	 */
-	void calculateDensities(double T);
+	void calculateDensities(double n, double T, const Array& specificIntensityv, double& ionizedFraction);
 
 public:
 	/* The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
@@ -88,21 +84,13 @@ public:
 		return ne * ne;
 	}
 
-	double nAtomic() const { return _n * (1. - _ionizedFraction); }
+	double nAtomic() const { return ; }
 
 	void testHeatingCurve();
 
 private:
 	/* To be set in constructor */
 	Array _frequencyv;
-
-	/* To be set on invocation of solveBalance() */
-	double _n{0};
-	const Array* _p_specificIntensityv{nullptr};
-
-	/* Results of solveBalance() */
-	double _temperature{0};
-	double _ionizedFraction{0};
 
 	/* Hide the other parts of the implementation from code that includes this header
 	 to avoid the chaining of dependencies. */

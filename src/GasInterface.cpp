@@ -16,37 +16,18 @@ void GasInterface::updateGasState(GasState& gs, double density, double Tinit,
 {
 	gs._previousISRFv = specificIntensityv;
 	if (density > 0)
-	{
 		_hc->solveBalance(gs, density, Tinit, specificIntensityv);
-		fillOpticalProperties(gs);
-	}
 	else
-	{
 		zeroOpticalProperties(gs);
-	}
 }
 
 void GasInterface::initializeGasState(GasState& gs, double density, double temperature)
 {
 	gs._previousISRFv = Array(_frequencyv.size());
 	if (density > 0)
-	{
-		_hc->solveInitialGuess(density, temperature);
-		fillOpticalProperties(gs);
-	}
+		_hc->solveInitialGuess(GasState&, density, temperature);
 	else
-	{
 		zeroOpticalProperties(gs);
-	}
-}
-
-void GasInterface::fillOpticalProperties(GasState& gs) const
-{
-	gs._emissivityv = _hc->emissivityv();
-	gs._opacityv = _hc->opacityv();
-	gs._scatteringOpacityv = _hc->scatteringOpacityv();
-	gs._temperature = _hc->temperature();
-	gs._ionizedFraction = _hc->ionizedFraction();
 }
 
 void GasInterface::zeroOpticalProperties(GasState& gs) const

@@ -52,7 +52,6 @@ public:
 	}
 
 private:
-	void fillOpticalProperties(GasState& gs) const;
 	void zeroOpticalProperties(GasState& gs) const;
 
 	std::valarray<double> _frequencyv;

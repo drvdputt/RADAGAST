@@ -2,8 +2,8 @@
 #include "Constants.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-#include <iostream>
 #include "global.h"
+#include <iostream>
 
 using namespace std;
 
@@ -14,9 +14,7 @@ const int index2p = 1;
 const int index2s = 2;
 }
 
-NLevel::NLevel()
-                : _Ev(_nLv), _gv(_nLv), _Avv(_nLv, _nLv), _extraAvv(_nLv, _nLv),
-                  _BPvv(_nLv, _nLv), _Cvv(_nLv, _nLv), _nv(_nLv)
+NLevel::NLevel() : _Ev(_nLv), _gv(_nLv), _Avv(_nLv, _nLv), _extraAvv(_nLv, _nLv)
 {
 	// Using NIST data
 	// (http://physics.nist.gov/cgi-bin/ASD/lines1.pl?unit=1&line_out=0&bibrefs=1&show_obs_wl=1&show_calc_wl=1&A_out=0&intens_out=1&allowed_out=1&forbid_out=1&conf_out=1&term_out=1&enrg_out=1&J_out=1&g_out=0&spectra=H%20I)
@@ -27,8 +25,6 @@ NLevel::NLevel()
 	_Ev *= Constant::PLANCKLIGHT;
 
 	_gv << 1, 1, 3, 9, 16, 25;
-
-	_nv(0) = _n;
 
 	double A2p1 = 6.2649e8;
 
@@ -78,9 +74,6 @@ NLevel::NLevel()
 	// -> ([2p 3/2, 1/2] [2s 1/2]) Not 100% sure what to to with the multiplicity of the bottom
 	// levels though
 
-	_BPvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
-	_Cvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
-
 	DEBUG("Constructed NLevel" << endl);
 }
 
@@ -101,26 +94,21 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-void NLevel::solveBalance(double atomDensity, double electronDensity, double protonDensity,
-                          double T, const Array& specificIntensityv, const Array& sourcev,
+Eigen::VectorXd NLevel::solveBalance(double atomDensity, double electronDensity, double protonDensity,
+                          double temperature, const Array& specificIntensityv, const Array& sourcev,
                           const Array& sinkv)
 {
+	Eigen::VectorXd nv(_nLv);
+
 	if (specificIntensityv.size() != _frequencyv.size())
 		throw range_error("Given ISRF and wavelength vectors do not have the same size");
 	if (sourcev.size() != _Ev.size() || sinkv.size() != _Ev.size())
 		throw range_error("Source and/or sink term vector(s) of wrong size");
 
-	_n = atomDensity;
-	_ne = electronDensity;
-	_np = protonDensity;
-	_T = T;
-
-	if (_n > 0)
+	if (atomDensity > 0)
 	{
-		// Calculate Cij (needs to happen bfore the first call to the line profile. Maybe
-		// the dependencies need to be made clearer by adopting a more functional
-		// programming-like style)
-		prepareCollisionMatrix();
+		Eigen::ArrayXd Cvv(prepareCollisionMatrix(temperature, electronDensity,
+		                                          protonDensity));
 
 #ifdef REPORT_LINE_QUALITY
 		double maxNorm = 0, minNorm = 1e9;
@@ -141,54 +129,51 @@ void NLevel::solveBalance(double atomDensity, double electronDensity, double pro
 
 		// Calculate BijPij (needs to be redone at each temperature because the line profile
 		// can change) Also needs the Cij to calculate collisional broadening
-		prepareAbsorptionMatrix(specificIntensityv);
+		Eigen::MatrixXd BPvv(prepareAbsorptionMatrix(temperature, specificIntensityv, Cvv));
 
 #ifdef PRINT_MATRICES
 		DEBUG("Aij" << endl << _Avv << endl << endl);
-		DEBUG("BPij" << endl << _BPvv << endl << endl);
-		DEBUG("Cij" << endl << _Cvv << endl << endl);
+		DEBUG("BPij" << endl << BPvv << endl << endl);
+		DEBUG("Cij" << endl << Cvv << endl << endl);
 #endif
 		// Calculate Fij and bi and solve F.n = b
-		solveRateEquations(Eigen::Map<const Eigen::VectorXd>(&sourcev[0], sourcev.size()),
-		                   Eigen::Map<const Eigen::VectorXd>(&sinkv[0], sinkv.size()), 0);
+		nv = solveRateEquations(
+		                atomDensity, BPvv, Cvv,
+		                Eigen::Map<const Eigen::VectorXd>(&sourcev[0], sourcev.size()),
+		                Eigen::Map<const Eigen::VectorXd>(&sinkv[0], sinkv.size()), 0);
 	}
-	else
-	{
-		_nv = Eigen::VectorXd::Zero(_Ev.size());
-	}
+	return nv;
 }
 
-Array NLevel::emissivityv() const
+Array NLevel::emissivityv(const Eigen::VectorXd& nv, const Eigen::MatrixXd& Cvv) const
 {
 	Array total(_frequencyv.size());
 	for (int lower = 0; lower < _nLv; lower++)
 		for (int upper = lower + 1; upper < _nLv; upper++)
 			if (_Avv(upper, lower))
-				total += lineIntensityFactor(upper, lower) *
-				         lineProfile(upper, lower);
+				total += lineIntensityFactor(upper, lower, nv) *
+				         lineProfile(upper, lower, nv);
 	return total;
 }
 
-Array NLevel::opacityv() const
+Array NLevel::opacityv(const Eigen::VectorXd& nv, const Eigen::MatrixXd& Cvv) const
 {
 	Array total(_frequencyv.size());
 	for (int lower = 0; lower < _nLv; lower++)
 		for (int upper = lower + 1; upper < _nLv; upper++)
 			if (_Avv(upper, lower))
-				total += lineOpacityFactor(upper, lower) *
-				         lineProfile(upper, lower);
+				total += lineOpacityFactor(upper, lower, nv) *
+				         lineProfile(upper, lower, nv);
 	return total;
 }
 
-Array NLevel::scatteringOpacityv() const
+Array NLevel::scatteringOpacityv(double T, const Eigen::VectorXd& nv, const Eigen::MatrixXd& BPvv,
+                                 const Eigen::MatrixXd& Cvv) const
 {
 	Array total(_frequencyv.size());
-	for (int lower = 0; lower < _nLv; lower++)
-		for (int upper = lower + 1; upper < _nLv; upper++)
-			if (_Avv(upper, lower))
-				total += lineOpacityFactor(upper, lower) *
-				         lineProfile(upper, lower) *
-				         lineDecayFraction(upper, lower);
+	forAllLinesDo([&](size_t upper, size_t lower){
+		total += lineOpacityFactor(upper, lower, nv) * lineProfile(upper, lower, T, Cvv) *
+		         lineDecayFraction(upper, lower, BPvv, Cvv);};
 	return total;
 }
 
@@ -208,30 +193,31 @@ void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithL
 				thingWithLine(upper, lower);
 }
 
-double NLevel::lineIntensityFactor(size_t upper, size_t lower) const
+double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Eigen::VectorXd& nv) const
 {
-	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(upper, lower);
+	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * nv(upper) * _Avv(upper, lower);
 }
 
-double NLevel::lineOpacityFactor(size_t upper, size_t lower) const
+double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Eigen::VectorXd& nv) const
 {
 	double nu_ij = (_Ev(upper) - _Ev(lower)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
 	                        nu_ij * _Avv(upper, lower);
-	double densityFactor = _nv(lower) * _gv(upper) / _gv(lower) - _nv(upper);
+	double densityFactor = nv(lower) * _gv(upper) / _gv(lower) - nv(upper);
 	return constantFactor * densityFactor;
 }
 
-Array NLevel::lineProfile(size_t upper, size_t lower) const
+Array NLevel::lineProfile(size_t upper, size_t lower, double temperature,
+                          const Eigen::MatrixXd& Cvv) const
 {
 	double nu0 = (_Ev(upper) - _Ev(lower)) / Constant::PLANCK;
 
 	double decayRate = _Avv(upper, lower) + _extraAvv(upper, lower) +
-	                   _Cvv(upper, lower)    // decay rate of top level
-	                   + _Cvv(lower, upper); // decay rate of bottom level
+	                   Cvv(upper, lower)    // decay rate of top level
+	                   + Cvv(lower, upper); // decay rate of bottom level
 	// (stimulated emission doesn't count, as it causes no broadening)
 
-	double thermalVelocity = sqrt(Constant::BOLTZMAN * _T / Constant::HMASS_CGS);
+	double thermalVelocity = sqrt(Constant::BOLTZMAN * temperature / Constant::HMASS_CGS);
 
 	// Half the FWHM of the Lorentz
 	double halfWidth = decayRate / Constant::FPI;
@@ -251,54 +237,61 @@ Array NLevel::lineProfile(size_t upper, size_t lower) const
 	return profile;
 }
 
-double NLevel::lineDecayFraction(size_t upper, size_t lower) const
+double NLevel::lineDecayFraction(size_t upper, size_t lower, const Eigen::MatrixXd& BPvv,
+                                 const Eigen::MatrixXd& Cvv) const
 {
 	return _Avv(upper, lower) / (_Avv.row(upper).sum() + _extraAvv.row(upper).sum() +
-	                             _BPvv.row(upper).sum() + _Cvv.row(upper).sum());
+	                             BPvv.row(upper).sum() + Cvv.row(upper).sum());
 }
 
-void NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv)
+Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(double temperature, const Array& specificIntensityv,
+                                                const Eigen::MatrixXd& Cvv)
 {
+	Eigen::MatrixXd BPvv(_nLv, _nLv);
 	// Go over the lower triangle, without diagonal
 	for (int lower = 0; lower < _nLv; lower++)
 	{
 		for (int upper = lower + 1; upper < _nLv; upper++)
 		{
 			// Calculate Pij for the lower triangle (= stimulated emission)
-			_BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
-			                _frequencyv,
-			                lineProfile(upper, lower) * specificIntensityv);
+			BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
+			                _frequencyv, lineProfile(upper, lower, temperature, Cvv) *
+			                                             specificIntensityv);
 
 			// Multiply by Bij in terms of Aij, valid for i > j
 			double nu_ij = (_Ev(upper) - _Ev(lower)) / Constant::PLANCK;
-			_BPvv(upper, lower) *= Constant::CSQUARE_TWOPLANCK / nu_ij / nu_ij / nu_ij *
-			                       _Avv(upper, lower);
+			BPvv(upper, lower) *= Constant::CSQUARE_TWOPLANCK / nu_ij / nu_ij / nu_ij *
+			                      _Avv(upper, lower);
 
 			// Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij =
 			// Pji
-			_BPvv(lower, upper) = _gv(upper) / _gv(lower) * _BPvv(upper, lower);
+			BPvv(lower, upper) = _gv(upper) / _gv(lower) * BPvv(upper, lower);
 		}
 		// Set the diagonal to zero
-		_BPvv(lower, lower) = 0;
+		BPvv(lower, lower) = 0;
 	}
+	return BPvv;
 }
 
-void NLevel::setElectronCollisionRate(size_t upper, size_t lower, double bigGamma)
+Eigen::MatrixXd NLevel::prepareCollisionMatrix(double temperature, double electronDensity,
+                                               double protonDensity)
 {
-	double kT = Constant::BOLTZMAN * _T;
-	// Equation 6.17 of Hazy II (6.6 Collision strengths)
-	_Cvv(upper, lower) = bigGamma * 8.6291e-6 / _gv(upper) / sqrt(_T) * _ne;
-	_Cvv(lower, upper) = _Cvv(upper, lower) * _gv(upper) / _gv(lower) *
-	                     exp((_Ev(lower) - _Ev(upper)) / kT);
-}
+	Eigen::ArrayXd Cvv(_nLv, _nLv);
 
-void NLevel::prepareCollisionMatrix()
-{
+	auto setElectronCollisionRate = [&](size_t upper, size_t lower, double bigGamma) {
+		double kT = Constant::BOLTZMAN * temperature;
+		// Equation 6.17 of Hazy II (6.6 Collision strengths)
+		Cvv(upper, lower) = bigGamma * 8.6291e-6 / _gv(upper) / sqrt(temperature) *
+		                    electronDensity;
+		Cvv(lower, upper) = Cvv(upper, lower) * _gv(upper) / _gv(lower) *
+		                    exp((_Ev(lower) - _Ev(upper)) / kT);
+	};
+
 	// data from 2002-anderson
 	// Electron temperatures in electron volt
 	vector<double> electronTemperaturesv_eV = {.5, 1., 3., 5., 10., 15., 20., 25.};
 
-	double currentT_eV = Constant::BOLTZMAN * _T * Constant::ERG_EV;
+	double currentT_eV = Constant::BOLTZMAN * temperature * Constant::ERG_EV;
 
 	// naively inter- and extrapolate this data linearly
 	size_t iRight = TemplatedUtils::index(currentT_eV, electronTemperaturesv_eV);
@@ -335,24 +328,30 @@ void NLevel::prepareCollisionMatrix()
 	// even though the second term is zero
 	double A2p = _Avv.row(index2p).sum() + _extraAvv.row(index2p).sum();
 	// (45 should be the correct one for DeltaE <<<)
-	double twolog10Rc = 10.95 + log10(_T / A2p / A2p / mu_m);
-	double q2p2s = constfactor * D2p / sqrt(_T) * (11.54 + log10(_T / D2p / mu_m) + twolog10Rc);
-	_Cvv(index2p, index2s) = _np * q2p2s;
+	double twolog10Rc = 10.95 + log10(temperature / A2p / A2p / mu_m);
+	double q2p2s = constfactor * D2p / sqrt(temperature) *
+	               (11.54 + log10(temperature / D2p / mu_m) + twolog10Rc);
+	Cvv(index2p, index2s) = protonDensity * q2p2s;
 
 	double D2s = 24 * 3;
 	double A2s = _Avv.row(index2s).sum() + _extraAvv.row(index2s).sum();
-	twolog10Rc = 10.95 + log10(_T / A2s / A2s / mu_m);
-	double q2s2p = constfactor * D2s / sqrt(_T) * (11.54 + log10(_T / D2s / mu_m) + twolog10Rc);
-	_Cvv(index2s, index2p) = _np * q2s2p;
+	twolog10Rc = 10.95 + log10(temperature / A2s / A2s / mu_m);
+	double q2s2p = constfactor * D2s / sqrt(temperature) *
+	               (11.54 + log10(temperature / D2s / mu_m) + twolog10Rc);
+	Cvv(index2s, index2p) = protonDensity * q2s2p;
+
+	return Cvv;
 }
 
-void NLevel::solveRateEquations(Eigen::VectorXd sourceTerm, Eigen::VectorXd sinkTerm,
-                                int chooseConsvEq)
+Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv,
+                                           const Eigen::MatrixXd& Cvv,
+                                           const Eigen::VectorXd& sourceTerm,
+                                           const Eigen::VectorXd& sinkTerm, int chooseConsvEq)
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j
-	Eigen::MatrixXd Mvv(_Avv.transpose() + _extraAvv.transpose() + _BPvv.transpose() +
-	                    _Cvv.transpose());
+	Eigen::MatrixXd Mvv(_Avv.transpose() + _extraAvv.transpose() + BPvv.transpose() +
+	                    Cvv.transpose());
 
 	// See equation for Fij (37) in document
 	// subtract departure rate from level i to all other levels
@@ -363,18 +362,20 @@ void NLevel::solveRateEquations(Eigen::VectorXd sourceTerm, Eigen::VectorXd sink
 
 	// Replace row by a conservation equation
 	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());
-	b(chooseConsvEq) = _n;
+	b(chooseConsvEq) = n;
 
 #ifdef PRINT_MATRICES
 	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
 #endif
 
 	// Call the linear solver
-	_nv = Mvv.colPivHouseholderQr().solve(b);
+	Eigen::VectorXd nv = Mvv.colPivHouseholderQr().solve(b);
 	DEBUG("nv" << endl << _nv << endl);
 
 	// Element wise relative errors
-	Eigen::ArrayXd diffv = Mvv * _nv - b;
+	Eigen::ArrayXd diffv = Mvv * nv - b;
 	Eigen::ArrayXd errv = diffv / Eigen::ArrayXd(b);
 	DEBUG("The relative errors are: " << errv << endl);
+
+	return nv;
 }

@@ -53,11 +53,9 @@ HydrogenCalculator::HydrogenCalculator(Array& frequencyv, bool suggestGrid)
 
 HydrogenCalculator::~HydrogenCalculator() {}
 
-void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& specificIntensityv)
+void HydrogenCalculator::solveBalance(GasState& gs, double n, double Tinit,
+                                      const Array& specificIntensityv)
 {
-	_n = n;
-	_p_specificIntensityv = &specificIntensityv;
-
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
 #endif
@@ -65,7 +63,9 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& speci
 	      << isrf << " erg / s / cm2 / sr = "
 	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
 
-	if (_n > 0)
+	double ionizedFraction;
+
+	if (n > 0)
 	{
 		const double Tmax = 1000000.;
 		const double Tmin = 10;
@@ -79,9 +79,9 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& speci
 		 value indicates whether the temperature should increase (net absorption) or
 		 decrease (net emission). */
 		int counter = 0;
-		function<int(double)> evaluateBalance = [this, &counter](double logT) -> int {
+		function<int(double)> evaluateBalance = [&](double logT) -> int {
 			counter++;
-			calculateDensities(pow(10., logT));
+			calculateDensities(n, pow(10., logT), specificIntensityv, ionizedFraction);
 			double netPowerIn = absorption() - emission();
 #ifdef VERBOSE
 			DEBUG("Cycle " << counter << ": logT = " << logT
@@ -95,23 +95,16 @@ void HydrogenCalculator::solveBalance(double n, double Tinit, const Array& speci
 		                evaluateBalance, logTinit, 4.e-3, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
-		calculateDensities(pow(10., logTfinal));
+		calculateDensities(n, pow(10., logTfinal), specificIntensityv, ionizedFraction);
 	}
 	else
 	{
-		calculateDensities(0);
+		calculateDensities(0, 0, specificIntensityv, ionizedFraction);
 	}
 }
 
-void HydrogenCalculator::solveBalance(const GasState& gs, double n, double Tinit,
-                                      const Array& specificIntensityv)
+void HydrogenCalculator::solveInitialGuess(GasState& gs, double n, double T)
 {
-	solveBalance(n, Tinit, specificIntensityv);
-}
-
-void HydrogenCalculator::solveInitialGuess(double n, double T)
-{
-	_n = n;
 	Array isrfGuess(_frequencyv.size());
 	// i'll implement this somewhere else later
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -124,27 +117,23 @@ void HydrogenCalculator::solveInitialGuess(double n, double T)
 
 	// this should be different too. Maybe work with shared pointers or something. Or dump
 	// the idea of keeping this in the state of the HC alltogether.
-	_p_specificIntensityv = &isrfGuess;
-	solveBalance(n, T, *_p_specificIntensityv);
-	// prevent dangling pointer
-	_p_specificIntensityv = nullptr;
+	solveBalance(gs, n, T, isrfGuess);
 }
 
-void HydrogenCalculator::calculateDensities(double T)
+void HydrogenCalculator::calculateDensities(double n, double T, const Array& specificIntensityv, double& ionizedFraction)
 {
-	_temperature = T;
-	if (_n > 0)
+	if (n > 0)
 	{
 #ifdef VERBOSE
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 #endif
-		_ionizedFraction = Ionization::ionizedFraction(_n, T, _frequencyv,
-		                                               *_p_specificIntensityv);
+		ionizedFraction = Ionization::ionizedFraction(n, T, _frequencyv,
+		                                               specificIntensityv);
 #ifdef VERBOSE
 		DEBUG("Ionized fraction = " << _ionizedFraction << endl);
 #endif
 
-		double np = _n * _ionizedFraction;
+		double np = n * ionizedFraction;
 		double ne = np;
 		double alphaTotal = Ionization::recombinationRate(T);
 
@@ -174,16 +163,17 @@ void HydrogenCalculator::calculateDensities(double T)
 		 Moreover, total source = total sink so we want sink*n0 + sink*n1 = source => sink =
 		 totalsource / n because n0/n + n1/n = 1.
 		 */
-		double sink = ne * np * alphaTotal / nAtomic();
+		double nAtomic = n * (1. - ionizedFraction);
+		double sink = ne * np * alphaTotal / nAtomic;
 		Array sinkv({sink, sink, sink, sink, sink, sink});
 
-		_levels->solveBalance(nAtomic(), ne, np, T, *_p_specificIntensityv, sourcev, sinkv);
+		_levels->solveBalance(nAtomic, ne, np, T, specificIntensityv, sourcev, sinkv);
 	}
 	else
 	{
 		Array zero(_levels->N());
-		_ionizedFraction = 0;
-		_levels->solveBalance(0, 0, 0, _temperature, *_p_specificIntensityv, zero, zero);
+		ionizedFraction = 0;
+		_levels->solveBalance(0, 0, 0, T, specificIntensityv, zero, zero);
 	}
 }
 
@@ -284,7 +274,7 @@ double HydrogenCalculator::continuumAbsorption() const
 	}
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
-
+/*
 void HydrogenCalculator::testHeatingCurve()
 {
 	const string tab = "\t";
@@ -319,3 +309,4 @@ void HydrogenCalculator::testHeatingCurve()
 	}
 	out.close();
 }
+*/
