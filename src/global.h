@@ -8,7 +8,7 @@
 #endif
 const std::string repoRoot = REPOROOT;
 
-//#define SILENT
+#define SILENT
 #ifdef SILENT
 	#define DEBUG(x) do {} while (0)
 #else

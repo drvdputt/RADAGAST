@@ -105,7 +105,10 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv,
 {
 	ifstream input(file);
 	if (!input)
+	{
+		cerr << "File " + file + " not found." << endl;
 		throw std::runtime_error("File " + file + " not found.");
+	}
 
 	size_t numcol, numrow;
 

@@ -32,8 +32,8 @@ public:
 	// 1 erg / cm3 = 0.1 J / m3
 	double effectiveEmissivity_SI(const GasState& gs, size_t iFreq) const
 	{
-		double r = 0.1 * (gs._emissivityv[iFreq] -
-		                  gs._scatteringOpacityv[iFreq] * gs._previousISRFv[iFreq]);
+		double r = 0.1 * (gs._emissivityv[iFreq] /*-
+		                  gs._scatteringOpacityv[iFreq] * gs._previousISRFv[iFreq]*/);
 		return r > 0 ? r : 0;
 	}
 
@@ -44,11 +44,11 @@ public:
 	}
 	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
 	{
-		return 100 * gs._scatteringOpacityv[iFreq];
+		return 0;//100 * gs._scatteringOpacityv[iFreq];
 	}
 	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
 	{
-		return 100 * (gs._opacityv[iFreq] - gs._scatteringOpacityv[iFreq]);
+		return 100 * (gs._opacityv[iFreq] /*- gs._scatteringOpacityv[iFreq]*/);
 	}
 
 private:

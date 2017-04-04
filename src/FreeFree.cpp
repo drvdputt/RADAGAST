@@ -79,7 +79,10 @@ void FreeFree::readData(const string& file)
 	// 420)
 	ifstream input(file);
 	if (!input)
+	{
+		cerr << "File " + file + "not found." << endl;
 		throw std::runtime_error("File " + file + "not found.");
+	}
 
 	// buffer
 	string line;
@@ -98,6 +101,7 @@ void FreeFree::readData(const string& file)
 	istringstream(line) >> magic;
 	if (magic != gaunt_magic && magic != gaunt_magic2)
 	{
+		cerr << "read_table() found wrong magic number in file %s.\n" << endl;
 		throw std::runtime_error("read_table() found wrong magic number in file %s.\n");
 	}
 
