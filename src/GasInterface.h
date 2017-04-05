@@ -5,7 +5,7 @@
 
 #include <memory>
 
-class HydrogenCalculator;
+class GasInterfaceImpl;
 
 /* The interface class that other codes should use. */
 class GasInterface
@@ -30,32 +30,16 @@ public:
 	 between the size of the GasState objects and the computation time needed for the optical
 	 properties needs to be found. */
 	// 1 erg / cm3 = 0.1 J / m3
-	double effectiveEmissivity_SI(const GasState& gs, size_t iFreq) const
-	{
-		double r = 0.1 * (gs._emissivityv[iFreq] /*-
-		                  gs._scatteringOpacityv[iFreq] * gs._previousISRFv[iFreq]*/);
-		return r > 0 ? r : 0;
-	}
-
-	// 1 / cm = 100 / m
-	double opacity_SI(const GasState& gs, size_t iFreq) const
-	{
-		return 100 * gs._opacityv[iFreq];
-	}
-	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
-	{
-		return 0;//100 * gs._scatteringOpacityv[iFreq];
-	}
-	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
-	{
-		return 100 * (gs._opacityv[iFreq] /*- gs._scatteringOpacityv[iFreq]*/);
-	}
+	double effectiveEmissivity_SI(const GasState& gs, size_t iFreq) const;
+	double opacity_SI(const GasState& gs, size_t iFreq) const;
+	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
+	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
 
 private:
 	void zeroOpticalProperties(GasState& gs) const;
 
 	std::valarray<double> _frequencyv;
-	std::unique_ptr<HydrogenCalculator> _hc{nullptr};
+	std::unique_ptr<GasInterfaceImpl> _pimpl{nullptr};
 };
 
 #endif /* _SRC_GASINTERFACE_H_ */

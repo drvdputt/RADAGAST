@@ -29,7 +29,7 @@ int main()
 	//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
 	//  printf("%f\n", Ionization::testIonization());
 
-	Testing::testHydrogenCalculator();
+	Testing::testGasInterfaceImpl();
 	// Testing::testIonizationCrossSection();
 	// Testing::testPhotoelectricHeating();
 	return 0;

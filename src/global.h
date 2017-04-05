@@ -20,7 +20,7 @@ const std::string repoRoot = REPOROOT;
 
 	#define REPORT_OVERRIDE
 
-	//#define PRINT_CONTINUUM_DATA
+	#define PRINT_CONTINUUM_DATA
 
 	#define DEBUG(x) do {std::cout << x;} while (0)
 #endif

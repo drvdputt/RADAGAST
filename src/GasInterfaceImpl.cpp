@@ -1,4 +1,5 @@
-#include "HydrogenCalculator.h"
+#include "GasInterfaceImpl.h"
+
 #include "Constants.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
@@ -7,17 +8,17 @@
 #include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
+#include "global.h"
 #include <algorithm>
 #include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <vector>
-#include "global.h"
 
 using namespace std;
 
-HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
+GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
                 : _frequencyv(frequencyv), _levels(make_unique<NLevel>(frequencyv)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
@@ -25,7 +26,7 @@ HydrogenCalculator::HydrogenCalculator(const Array& frequencyv)
 	DEBUG("Constructed HydrogenCalculator" << endl);
 }
 
-HydrogenCalculator::HydrogenCalculator(Array& frequencyv, bool suggestGrid)
+GasInterfaceImpl::GasInterfaceImpl(Array& frequencyv, bool suggestGrid)
 {
 	_levels = make_unique<NLevel>(frequencyv);
 
@@ -35,14 +36,14 @@ HydrogenCalculator::HydrogenCalculator(Array& frequencyv, bool suggestGrid)
 
 	if (suggestGrid)
 	{
-		double lineWindowFactor = 5;
+		double lineWindowFactor = 8;
 		vector<double> gridVector(begin(frequencyv), end(frequencyv));
 		double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
 		                       Constant::LIGHT;
 		lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
 		Testing::refineFrequencyGrid(gridVector, 31, 3.,
-		                    vector<double>(begin(lineFreqv), end(lineFreqv)),
-		                    vector<double>(begin(lineWidthv), end(lineWidthv)));
+		                             vector<double>(begin(lineFreqv), end(lineFreqv)),
+		                             vector<double>(begin(lineWidthv), end(lineWidthv)));
 		frequencyv = Array(gridVector.data(), gridVector.size());
 	}
 	_frequencyv = frequencyv;
@@ -51,10 +52,10 @@ HydrogenCalculator::HydrogenCalculator(Array& frequencyv, bool suggestGrid)
 	_freeFree = make_unique<FreeFree>(frequencyv);
 }
 
-HydrogenCalculator::~HydrogenCalculator() {}
+GasInterfaceImpl::~GasInterfaceImpl() {}
 
-void HydrogenCalculator::solveBalance(GasState& gs, double n, double Tinit,
-                                      const Array& specificIntensityv)
+void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
+                                    const Array& specificIntensityv) const
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
@@ -63,7 +64,7 @@ void HydrogenCalculator::solveBalance(GasState& gs, double n, double Tinit,
 	      << isrf << " erg / s / cm2 / sr = "
 	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
 
-	double ionizedFraction;
+	Solution s;
 
 	if (n > 0)
 	{
@@ -81,8 +82,8 @@ void HydrogenCalculator::solveBalance(GasState& gs, double n, double Tinit,
 		int counter = 0;
 		function<int(double)> evaluateBalance = [&](double logT) -> int {
 			counter++;
-			calculateDensities(n, pow(10., logT), specificIntensityv, ionizedFraction);
-			double netPowerIn = absorption() - emission();
+			s = calculateDensities(n, pow(10., logT), specificIntensityv);
+			double netPowerIn = absorption(s) - emission(s);
 #ifdef VERBOSE
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
@@ -95,18 +96,22 @@ void HydrogenCalculator::solveBalance(GasState& gs, double n, double Tinit,
 		                evaluateBalance, logTinit, 4.e-3, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
-		calculateDensities(n, pow(10., logTfinal), specificIntensityv, ionizedFraction);
+		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv);
 	}
 	else
 	{
-		calculateDensities(0, 0, specificIntensityv, ionizedFraction);
+		s = calculateDensities(0, 0, specificIntensityv);
 	}
+
+	// Put the relevant data into the gas state
+	gs = GasState(_frequencyv, specificIntensityv, emissivityv(s), opacityv(s),
+	              scatteringOpacityv(s), s.T, s.f);
 }
 
-void HydrogenCalculator::solveInitialGuess(GasState& gs, double n, double T)
+void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
 {
 	Array isrfGuess(_frequencyv.size());
-	// i'll implement this somewhere else later
+	// i'll put this somewhere else later
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
 		double freq = _frequencyv[iFreq];
@@ -114,26 +119,28 @@ void HydrogenCalculator::solveInitialGuess(GasState& gs, double n, double T)
 		                   Constant::LIGHT /
 		                   expm1(Constant::PLANCK * freq / Constant::BOLTZMAN / T);
 	}
-
-	// this should be different too. Maybe work with shared pointers or something. Or dump
-	// the idea of keeping this in the state of the HC alltogether.
 	solveBalance(gs, n, T, isrfGuess);
 }
 
-void HydrogenCalculator::calculateDensities(double n, double T, const Array& specificIntensityv, double& ionizedFraction)
+GasInterfaceImpl::Solution
+GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIntensityv) const
 {
+	Solution s;
+	s.n = n;
+	s.T = T;
+	s.specificIntensityv = specificIntensityv;
+
 	if (n > 0)
 	{
 #ifdef VERBOSE
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 #endif
-		ionizedFraction = Ionization::ionizedFraction(n, T, _frequencyv,
-		                                               specificIntensityv);
+		s.f = Ionization::ionizedFraction(n, T, _frequencyv, specificIntensityv);
 #ifdef VERBOSE
-		DEBUG("Ionized fraction = " << _ionizedFraction << endl);
+		DEBUG("Ionized fraction = " << s.f << endl);
 #endif
 
-		double np = n * ionizedFraction;
+		double np = n * s.f;
 		double ne = np;
 		double alphaTotal = Ionization::recombinationRate(T);
 
@@ -142,7 +149,7 @@ void HydrogenCalculator::calculateDensities(double n, double T, const Array& spe
 		double T4 = T / 1.e4;
 		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
 		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-		double alpha2s = alpha2p / 3.; // TODO: don't forget to change this!
+		double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
 
 		// 2015-Raga (A13)
 		double t = log10(T4);
@@ -163,37 +170,39 @@ void HydrogenCalculator::calculateDensities(double n, double T, const Array& spe
 		 Moreover, total source = total sink so we want sink*n0 + sink*n1 = source => sink =
 		 totalsource / n because n0/n + n1/n = 1.
 		 */
-		double nAtomic = n * (1. - ionizedFraction);
-		double sink = ne * np * alphaTotal / nAtomic;
+		double nAtm = n * (1. - s.f);
+		double sink = ne * np * alphaTotal / nAtm;
 		Array sinkv({sink, sink, sink, sink, sink, sink});
 
-		_levels->solveBalance(nAtomic, ne, np, T, specificIntensityv, sourcev, sinkv);
+		s.levelSolution = _levels->solveBalance(nAtm, ne, np, T, specificIntensityv,
+		                                        sourcev, sinkv);
 	}
 	else
 	{
+		s.f = 0;
 		Array zero(_levels->N());
-		ionizedFraction = 0;
-		_levels->solveBalance(0, 0, 0, T, specificIntensityv, zero, zero);
+		s.levelSolution = _levels->solveBalance(0, 0, 0, T, specificIntensityv, zero, zero);
 	}
+	return s;
 }
 
-Array HydrogenCalculator::emissivityv() const
+Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
-	const Array& lineEmv = _levels->emissivityv();
+	const Array& lineEmv = _levels->emissivityv(s.levelSolution);
 	Array contEmCoeffv(_frequencyv.size());
-	_freeBound->addEmissionCoefficientv(_temperature, contEmCoeffv);
-	_freeFree->addEmissionCoefficientv(_temperature, contEmCoeffv);
-	return lineEmv + (np_ne() / Constant::FPI) * contEmCoeffv;
+	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
+	_freeFree->addEmissionCoefficientv(s.T, contEmCoeffv);
+	return lineEmv + (np_ne(s) / Constant::FPI) * contEmCoeffv;
 }
 
-Array HydrogenCalculator::opacityv() const
+Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
-	const Array& lineOp = _levels->opacityv();
+	const Array& lineOp = _levels->opacityv(s.levelSolution);
 
 	Array contOpCoeffv(_frequencyv.size());
-	_freeFree->addOpacityCoefficientv(_temperature, contOpCoeffv);
-	double npne = np_ne();
-	double n_H0 = nAtomic();
+	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
+	double npne = np_ne(s);
+	double n_H0 = nAtomic(s);
 
 	Array totalOp(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -204,66 +213,69 @@ Array HydrogenCalculator::opacityv() const
 	return totalOp;
 }
 
-Array HydrogenCalculator::scatteringOpacityv() const { return _levels->scatteringOpacityv(); }
-
-Array HydrogenCalculator::scatteredv() const
+Array GasInterfaceImpl::scatteringOpacityv(const Solution& s) const
 {
-	// only the lines can scatter
-	const Array& scaOp = _levels->scatteringOpacityv();
-	return *_p_specificIntensityv * scaOp;
+	return _levels->scatteringOpacityv(s.levelSolution);
 }
 
-double HydrogenCalculator::emission() const
+Array GasInterfaceImpl::scatteredv(const Solution& s) const
 {
-	double lineEm = lineEmission();
-	double contEm = continuumEmission();
+	// only the lines can scatter
+	const Array& scaOp = _levels->scatteringOpacityv(s.levelSolution);
+	return s.specificIntensityv * scaOp;
+}
+
+double GasInterfaceImpl::emission(const Solution& s) const
+{
+	double lineEm = lineEmission(s);
+	double contEm = continuumEmission(s);
 #ifdef VERBOSE
 	DEBUG("emission: line / cont = " << lineEm << " / " << contEm << endl);
 #endif
 	return lineEm + contEm;
 }
 
-double HydrogenCalculator::absorption() const
+double GasInterfaceImpl::absorption(const Solution& s) const
 {
-	double lineAbs = lineAbsorption();
-	double contAbs = continuumAbsorption();
+	double lineAbs = lineAbsorption(s);
+	double contAbs = continuumAbsorption(s);
 #ifdef VERBOSE
 	DEBUG("absorption: line / cont = " << lineAbs << " / " << contAbs << endl);
 #endif
 	return lineAbs + contAbs;
 }
 
-double HydrogenCalculator::lineEmission() const
+double GasInterfaceImpl::lineEmission(const Solution& s) const
 {
-	return Constant::FPI *
-	       TemplatedUtils::integrate<double>(_frequencyv, _levels->emissivityv());
+	return Constant::FPI * TemplatedUtils::integrate<double>(
+	                                       _frequencyv, _levels->emissivityv(s.levelSolution));
 }
 
-double HydrogenCalculator::lineAbsorption() const
+double GasInterfaceImpl::lineAbsorption(const Solution& s) const
 {
-	Array intensityOpacityv = *_p_specificIntensityv * _levels->opacityv();
+	Array intensityOpacityv = s.specificIntensityv * _levels->opacityv(s.levelSolution);
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 
-double HydrogenCalculator::continuumEmission() const
+double GasInterfaceImpl::continuumEmission(const Solution& s) const
 {
 	Array gamma_nuv(_frequencyv.size());
-	_freeBound->addEmissionCoefficientv(_temperature, gamma_nuv);
-	_freeFree->addEmissionCoefficientv(_temperature, gamma_nuv);
+	_freeBound->addEmissionCoefficientv(s.T, gamma_nuv);
+	_freeFree->addEmissionCoefficientv(s.T, gamma_nuv);
 
 	// emissivity = ne np / 4pi * gamma
 	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
-	return np_ne() * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
+	return np_ne(s) * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
 }
 
-double HydrogenCalculator::continuumAbsorption() const
+double GasInterfaceImpl::continuumAbsorption(const Solution& s) const
 {
-	const Array& I_nu = *_p_specificIntensityv;
+	const Array& I_nu = s.specificIntensityv;
 
-	double npne = np_ne();
-	double nH0 = nAtomic();
+	double npne = np_ne(s);
+	double nH0 = nAtomic(s);
 	Array freefreeOpCoefv(_frequencyv.size());
-	_freeFree->addOpacityCoefficientv(_temperature, freefreeOpCoefv);
+	_freeFree->addOpacityCoefficientv(s.T, freefreeOpCoefv);
 
 	Array intensityOpacityv(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -274,8 +286,8 @@ double HydrogenCalculator::continuumAbsorption() const
 	}
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
-/*
-void HydrogenCalculator::testHeatingCurve()
+
+void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensityv) const
 {
 	const string tab = "\t";
 	const int samples = 200;
@@ -289,15 +301,15 @@ void HydrogenCalculator::testHeatingCurve()
 	    << " 4lineHeating 5lineAbsorption 6lineEmission"
 	    << " 7continuumHeating 8continuumAbsorption 9continuumEmission"
 	    << " 10ionizationFraction" << endl;
-	for (int s = 0; s < samples; s++, T *= factor)
+	for (int N = 0; N < samples; N++, T *= factor)
 	{
-		calculateDensities(T);
-		double abs = absorption();
-		double em = emission();
-		double lineAbs = lineAbsorption();
-		double lineEm = lineEmission();
-		double contAbs = continuumAbsorption();
-		double contEm = continuumEmission();
+		Solution s = calculateDensities(n, T, specificIntensityv);
+		double abs = absorption(s);
+		double em = emission(s);
+		double lineAbs = lineAbsorption(s);
+		double lineEm = lineEmission(s);
+		double contAbs = continuumAbsorption(s);
+		double contEm = continuumEmission(s);
 
 		double netHeating = abs - em;
 		double netLine = lineAbs - lineEm;
@@ -305,8 +317,7 @@ void HydrogenCalculator::testHeatingCurve()
 
 		out << T << tab << netHeating << tab << abs << tab << em << tab << netLine << tab
 		    << lineAbs << tab << lineEm << tab << netCont << tab << contAbs << tab << contEm
-		    << tab << _ionizedFraction << endl;
+		    << tab << s.f << endl;
 	}
 	out.close();
 }
-*/

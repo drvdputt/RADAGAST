@@ -15,7 +15,7 @@ Array generateSpecificIntensityv(const std::vector<double>& frequencyv, double T
 Array freqToWavSpecificIntensity(const std::vector<double>& frequencyv,
                                  const Array& specificIntensity_nu);
 
-void testHydrogenCalculator();
+void testGasInterfaceImpl();
 void testIonizationCrossSection();
 
 void testPhotoelectricHeating();

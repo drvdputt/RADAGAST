@@ -3,9 +3,15 @@
 
 #include <valarray>
 
+namespace Testing {
+	void testGasInterfaceImpl();
+}
+
 class GasState
 {
 	friend class GasInterface;
+	friend class GasInterfaceImpl;
+	friend void Testing::testGasInterfaceImpl();
 
 public:
 	GasState() {}

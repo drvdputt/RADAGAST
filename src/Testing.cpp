@@ -1,6 +1,5 @@
 #include "Testing.h"
 #include "Constants.h"
-#include "HydrogenCalculator.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "PhotoelectricHeating.h"
@@ -11,6 +10,7 @@
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include "GasInterfaceImpl.h"
 
 using namespace std;
 
@@ -153,7 +153,7 @@ void Testing::testIonizationCrossSection()
 	out.close();
 }
 
-void Testing::testHydrogenCalculator()
+void Testing::testGasInterfaceImpl()
 {
 	double Tc = 30000;
 	double G0 = 1e0;
@@ -161,7 +161,7 @@ void Testing::testHydrogenCalculator()
 	double expectedTemperature = 6000;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(100, Constant::LIGHT / (1000 * Constant::UM_CM),
+	                generateGeometricGridv(1000, Constant::LIGHT / (1000 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	//	const double lineWindowFactor = 5;
@@ -182,17 +182,18 @@ void Testing::testHydrogenCalculator()
 	//	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
 
 	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
-	HydrogenCalculator hc(frequencyv, true);
+	GasInterfaceImpl impl(frequencyv, true);
 	cout << "Created HydrogenCalculator" << endl;
 
 	Array specificIntensityv = generateSpecificIntensityv(vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
 	cout << "Generated input spectrum" << endl;
 
-	hc.solveBalance(n, expectedTemperature, specificIntensityv);
+	GasState gs;
+	impl.solveBalance(gs, n, expectedTemperature, specificIntensityv);
 
-	const Array& lumv = hc.emissivityv();
-	const Array& opv = hc.opacityv();
-	const Array& scav = hc.scatteredv();
+	const Array& lumv = gs._emissivityv;
+	const Array& opv = gs._opacityv;
+	const Array& scav = gs._scatteringOpacityv * gs._previousISRFv;
 
 	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, lumv)
 	     << endl;

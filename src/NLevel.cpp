@@ -98,13 +98,13 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
                                   double temperature, const Array& specificIntensityv,
                                   const Array& sourcev, const Array& sinkv) const
 {
-	Solution locals;
-	locals.n = atomDensity;
-	locals.T = temperature;
-	locals.BPvv.resize(_nLv, _nLv);
-	locals.Cvv.resize(_nLv, _nLv);
-	locals.nv.resize(_nLv);
-	locals.nv(0) = atomDensity;
+	Solution sol;
+	sol.n = atomDensity;
+	sol.T = temperature;
+	sol.BPvv.resize(_nLv, _nLv);
+	sol.Cvv.resize(_nLv, _nLv);
+	sol.nv.resize(_nLv);
+	sol.nv(0) = atomDensity;
 
 	if (specificIntensityv.size() != _frequencyv.size())
 		throw range_error("Given ISRF and wavelength vectors do not have the same size");
@@ -113,13 +113,13 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 
 	if (atomDensity > 0)
 	{
-		locals.Cvv = prepareCollisionMatrix(temperature, electronDensity, protonDensity);
+		sol.Cvv = prepareCollisionMatrix(temperature, electronDensity, protonDensity);
 
 #ifdef REPORT_LINE_QUALITY
 		double maxNorm = 0, minNorm = 1e9;
 		forAllLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
-			                _frequencyv, lineProfile(upper, lower, locals));
+			                _frequencyv, lineProfile(upper, lower, sol));
 			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
@@ -130,20 +130,20 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 
 		// Calculate BijPij (needs to be redone at each temperature because the line profile
 		// can change) Also needs the Cij to calculate collisional broadening
-		locals.BPvv = prepareAbsorptionMatrix(specificIntensityv, locals.T, locals.Cvv);
+		sol.BPvv = prepareAbsorptionMatrix(specificIntensityv, sol.T, sol.Cvv);
 
 #ifdef PRINT_MATRICES
 		DEBUG("Aij" << endl << _Avv << endl << endl);
-		DEBUG("BPij" << endl << locals.BPvv << endl << endl);
-		DEBUG("Cij" << endl << locals.Cvv << endl << endl);
+		DEBUG("BPij" << endl << sol.BPvv << endl << endl);
+		DEBUG("Cij" << endl << sol.Cvv << endl << endl);
 #endif
 		// Calculate Fij and bi and solve F.n = b
-		locals.nv = solveRateEquations(
-		                locals.n, locals.BPvv, locals.Cvv,
+		sol.nv = solveRateEquations(
+		                sol.n, sol.BPvv, sol.Cvv,
 		                Eigen::Map<const Eigen::VectorXd>(&sourcev[0], sourcev.size()),
 		                Eigen::Map<const Eigen::VectorXd>(&sinkv[0], sinkv.size()), 0);
 	}
-	return locals;
+	return sol;
 }
 
 Array NLevel::emissivityv(const Solution& info) const
@@ -210,6 +210,8 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::Mat
 	                   + Cvv(lower, upper); // decay rate of bottom level
 	// (stimulated emission doesn't count, as it causes no broadening)
 
+	if (decayRate < 0) cout << _Avv << endl << _extraAvv << endl << Cvv << endl;
+
 	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
 
 	// Half the FWHM of the Lorentz
@@ -239,7 +241,7 @@ double NLevel::lineDecayFraction(size_t upper, size_t lower, const Solution& inf
 Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
                                                 const Eigen::MatrixXd& Cvv) const
 {
-	Eigen::MatrixXd BPvv(_nLv, _nLv);
+	Eigen::MatrixXd BPvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
 	forAllLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
@@ -261,7 +263,7 @@ Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv,
 Eigen::MatrixXd NLevel::prepareCollisionMatrix(double T, double electronDensity,
                                                double protonDensity) const
 {
-	Eigen::ArrayXd Cvv(_nLv, _nLv);
+	Eigen::MatrixXd Cvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
 
 	auto setElectronCollisionRate = [&](size_t upper, size_t lower, double bigGamma) {
 		double kT = Constant::BOLTZMAN * T;
