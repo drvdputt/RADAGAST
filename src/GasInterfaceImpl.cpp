@@ -4,7 +4,7 @@
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "IonizationBalance.h"
-#include "NLevel.h"
+#include "HydrogenLevels.h"
 #include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
@@ -19,7 +19,7 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
-                : _frequencyv(frequencyv), _boundBound(make_unique<NLevel>(frequencyv)),
+                : _frequencyv(frequencyv), _boundBound(make_unique<HydrogenLevels>(frequencyv)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
@@ -29,7 +29,7 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 /* there's a lot of double work happening here, but this constructor shouldn't be called too often
  */
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
-                : _boundBound(make_unique<NLevel>(frequencyv)),
+                : _boundBound(make_unique<HydrogenLevels>()),
                   _freeBound(make_unique<FreeBound>(frequencyv))
 {
 	if (improveGrid)
@@ -63,8 +63,9 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
 	else
 		_frequencyv = frequencyv;
 
+	_boundBound->setFrequencyv(_frequencyv);
+
 	// Overwrite these objects with new ones
-	_boundBound = make_unique<NLevel>(_frequencyv);
 	_freeBound = make_unique<FreeBound>(_frequencyv);
 	_freeFree = make_unique<FreeFree>(_frequencyv);
 }
@@ -197,7 +198,7 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 	else
 	{
 		s.f = 0;
-		Array zero(_boundBound->N());
+		Array zero(_boundBound->nLv());
 		s.levelSolution = _boundBound->solveBalance(0, 0, 0, T, specificIntensityv, zero,
 		                                            zero);
 	}
