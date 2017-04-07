@@ -13,7 +13,7 @@ double crossSection(double frequency);
 
 double recombinationRate(double T);
 
-const double ionizationThreshold = 3.28984196e15; // Hertz;
+const double THRESHOLD = 3.28984196e15; // Hertz;
 }
 
 #endif /* _IONIZATIONBALANCE_H_ */

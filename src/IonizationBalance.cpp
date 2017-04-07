@@ -9,7 +9,7 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
 {
 	size_t nFreq = frequencyv.size();
 	Array integrand(nFreq);
-	size_t iThres = TemplatedUtils::index<double>(ionizationThreshold, frequencyv);
+	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
 	for (size_t n = iThres; n < nFreq; n++)
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
 
@@ -26,7 +26,7 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
 
 double Ionization::crossSection(double frequency)
 {
-	if (frequency < ionizationThreshold)
+	if (frequency < THRESHOLD)
 	{
 		return 0;
 	}

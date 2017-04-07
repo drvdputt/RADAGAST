@@ -10,10 +10,17 @@ GasInterface::GasInterface(const valarray<double>& frequencyv)
 {
 }
 
+GasInterface::GasInterface(const valarray<double>& frequencyv, bool improveGrid)
+                : _frequencyv(frequencyv),
+                  _pimpl(make_unique<GasInterfaceImpl>(frequencyv, improveGrid))
+{
+	_frequencyv = _pimpl->frequencyv();
+}
+
 GasInterface::~GasInterface() = default;
 
 void GasInterface::updateGasState(GasState& gs, double density, double Tinit,
-                                  const valarray<double>& specificIntensityv)
+                                  const valarray<double>& specificIntensityv) const
 {
 	gs._previousISRFv = specificIntensityv;
 	if (density > 0)
@@ -22,7 +29,7 @@ void GasInterface::updateGasState(GasState& gs, double density, double Tinit,
 		zeroOpticalProperties(gs);
 }
 
-void GasInterface::initializeGasState(GasState& gs, double density, double temperature)
+void GasInterface::initializeGasState(GasState& gs, double density, double temperature) const
 {
 	gs._previousISRFv = Array(_frequencyv.size());
 	if (density > 0)
@@ -46,11 +53,11 @@ double GasInterface::opacity_SI(const GasState& gs, size_t iFreq) const
 }
 double GasInterface::scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
 {
-	return 0;//100 * gs._scatteringOpacityv[iFreq];
+	return 100 * gs._scatteringOpacityv[iFreq];
 }
 double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
 {
-	return 100 * (gs._opacityv[iFreq] /*- gs._scatteringOpacityv[iFreq]*/);
+	return 100 * (gs._opacityv[iFreq] - gs._scatteringOpacityv[iFreq]);
 }
 
 void GasInterface::zeroOpticalProperties(GasState& gs) const

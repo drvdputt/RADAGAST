@@ -4,6 +4,9 @@
 #include "Array.h"
 
 #include <Eigen/Dense>
+#include <array>
+#include <map>
+#include <string>
 
 class NLevel
 {
@@ -27,8 +30,8 @@ public:
 	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
 
 	Solution solveBalance(double atomDensity, double electronDensity, double protonDensity,
-	                  double T, const Array& specificIntensityv, const Array& sourcev,
-	                  const Array& sinkv) const;
+	                      double T, const Array& specificIntensityv, const Array& sourcev,
+	                      const Array& sinkv) const;
 
 	Array emissivityv(const Solution& info) const;
 	Array opacityv(const Solution& info) const;
@@ -85,6 +88,10 @@ private:
 	 * prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
 	 * but is about 8 s-1 for two photons*/
 	Eigen::MatrixXd _extraAvv;
+
+	/* A map allowing the naming of certain transitions. For every name, there can be multiple
+	 * transitions contributing. For every transition there is one pair of level indices. */
+	std::map<std::string, std::vector<std::array<size_t, 2>>> _namedTransitions;
 };
 
 #endif /* _NLEVEL_H_ */

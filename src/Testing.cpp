@@ -6,11 +6,11 @@
 #include "TemplatedUtils.h"
 #include "TwoLevel.h"
 
+#include "GasInterface.h"
 #include <fstream>
 #include <iomanip>
 #include <ios>
 #include <iostream>
-#include "GasInterfaceImpl.h"
 
 using namespace std;
 
@@ -37,7 +37,7 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 }
 
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
-                                  vector<double> lineFreqv, vector<double> freqWidthv)
+                                  Array lineFreqv, Array freqWidthv)
 {
 	// We want an odd nPerLine, so we can put 1 point in the center
 	if (!(nPerLine % 2))
@@ -161,7 +161,7 @@ void Testing::testGasInterfaceImpl()
 	double expectedTemperature = 6000;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(1000, Constant::LIGHT / (1000 * Constant::UM_CM),
+	                generateGeometricGridv(100, Constant::LIGHT / (1000 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	//	const double lineWindowFactor = 5;
@@ -169,7 +169,7 @@ void Testing::testGasInterfaceImpl()
 	//	vector<double> decayRatev = {6.2649e+08};
 	//	double thermalFactor =
 	//	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
-	//Constant::LIGHT; 	vector<double> lineWidthv;
+	// Constant::LIGHT; 	vector<double> lineWidthv;
 	//	lineWidthv.reserve(lineFreqv.size());
 	//	for (size_t l = 0; l < lineFreqv.size(); l++)
 	//	{
@@ -177,25 +177,25 @@ void Testing::testGasInterfaceImpl()
 	//		cout << "thermal width " << freq * thermalFactor << " natural width "
 	//		     << decayRatev[l] << endl;
 	//		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor +
-	//decayRatev[l]));
+	// decayRatev[l]));
 	//	}
 	//	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
 
 	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
-	GasInterfaceImpl impl(frequencyv, true);
-	cout << "Created HydrogenCalculator" << endl;
+	GasInterface gi(frequencyv, true);
+	frequencyv = gi.frequencyv();
 
-	Array specificIntensityv = generateSpecificIntensityv(vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
-	cout << "Generated input spectrum" << endl;
+	Array specificIntensityv = generateSpecificIntensityv(
+	                vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
 
 	GasState gs;
-	impl.solveBalance(gs, n, expectedTemperature, specificIntensityv);
+	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv);
 
-	const Array& lumv = gs._emissivityv;
+	const Array& emv = gs._emissivityv;
 	const Array& opv = gs._opacityv;
 	const Array& scav = gs._scatteringOpacityv * gs._previousISRFv;
 
-	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, lumv)
+	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, emv)
 	     << endl;
 
 	ofstream out, wavfile;
@@ -206,26 +206,55 @@ void Testing::testGasInterfaceImpl()
 	    << "4: int - sca" << endl;
 	wavfile.open("wavelengths.dat");
 	wavfile << "#wav (micron)" << tab << "freq (Hz)" << endl;
-	for (size_t iFreq = 0; iFreq < lumv.size(); iFreq++)
+	for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
 	{
 		double freq = frequencyv[iFreq];
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
-		double effective = lumv[iFreq] - scav[iFreq];
+		double effective = emv[iFreq] - scav[iFreq];
 		effective = effective > 0 ? effective : 0;
-		out << scientific << freq << tab << lumv[iFreq] << tab << opv[iFreq] << tab
-		    << scav[iFreq] << tab << lumv[iFreq] - scav[iFreq] << tab << effective << endl;
+		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab << opv[iFreq]
+		    << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq] << tab << effective
+		    << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}
 	out.close();
 	wavfile.close();
 
+	// Print some line intensities relative to Hbeta
+
+	double fHalpha = Constant::LIGHT / 656.453e-7;
+	double fHbeta = Constant::LIGHT / 486.264e-7;
+	double fHgamma = Constant::LIGHT / 434.165e-7;
+
+	double fLya = Constant::LIGHT / 121.567e-7;
+
+	double fPalpha = Constant::LIGHT / 1875.61e-7;
+	double fPbeta = Constant::LIGHT / 1282.16e-7;
+
+	double fBralpha = Constant::LIGHT / 4052.27e-7;
+
+	function<double(double frequency)> evaluateSpectrum = [&](double f) {
+		return TemplatedUtils::evaluateLinInterpf(f, frequencyv, emv);
+	};
+
+	double Hbeta = evaluateSpectrum(fHbeta);
+	cout << "Halpha / Hbeta " << evaluateSpectrum(fHalpha) / Hbeta << endl;
+	cout << "Hgamma / Hbeta " << evaluateSpectrum(fHgamma) / Hbeta << endl;
+
+	cout << "Lyalpha / Hbeta " << evaluateSpectrum(fLya) / Hbeta << endl;
+
+	cout << "Palpha / Hbeta " << evaluateSpectrum(fPalpha) / Hbeta << endl;
+	cout << "Pbeta / Hbeta " << evaluateSpectrum(fPbeta) / Hbeta << endl;
+
+	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
+
 	cout << "TestHydrogenCalculator done" << endl;
 
-//	cout << "----------------------------------" << endl;
-//	cout << "plotting heating curve..." << endl;
-//	hc.testHeatingCurve();
+	//	cout << "----------------------------------" << endl;
+	//	cout << "plotting heating curve..." << endl;
+	//	hc.testHeatingCurve();
 }
 
 void Testing::testPhotoelectricHeating()

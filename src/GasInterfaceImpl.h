@@ -26,7 +26,9 @@ public:
 
 	/* Creates a HydrogenCalculator and creates a frequency grid / adjusts the given frequency
 	 * grid (by reference) if suggestedGrid = true.*/
-	GasInterfaceImpl(Array& frequencyv, bool suggestGrid);
+	GasInterfaceImpl(const Array& frequencyv, bool improveGrid);
+
+	Array frequencyv() const {return _frequencyv;}
 
 	~GasInterfaceImpl();
 
@@ -95,8 +97,8 @@ private:
 	/* To be set in constructor */
 	Array _frequencyv;
 
-	/* Pointers to other parts of the impolementation, to make late initialization possible */
-	std::unique_ptr<NLevel> _levels;
+	/* Pointers to other parts of the implementation, to make late initialization possible */
+	std::unique_ptr<NLevel> _boundBound;
 	/* Continuum contributions */
 	std::unique_ptr<FreeBound> _freeBound;
 	std::unique_ptr<FreeFree> _freeFree;

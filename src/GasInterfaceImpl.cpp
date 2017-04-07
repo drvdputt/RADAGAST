@@ -19,37 +19,54 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
-                : _frequencyv(frequencyv), _levels(make_unique<NLevel>(frequencyv)),
+                : _frequencyv(frequencyv), _boundBound(make_unique<NLevel>(frequencyv)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
 	DEBUG("Constructed HydrogenCalculator" << endl);
 }
 
-GasInterfaceImpl::GasInterfaceImpl(Array& frequencyv, bool suggestGrid)
+/* there's a lot of double work happening here, but this constructor shouldn't be called too often
+ */
+GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
+                : _boundBound(make_unique<NLevel>(frequencyv)),
+                  _freeBound(make_unique<FreeBound>(frequencyv))
 {
-	_levels = make_unique<NLevel>(frequencyv);
-
-	int numLines;
-	Array lineFreqv, lineWidthv;
-	_levels->lineInfo(numLines, lineFreqv, lineWidthv);
-
-	if (suggestGrid)
+	if (improveGrid)
 	{
-		double lineWindowFactor = 8;
-		vector<double> gridVector(begin(frequencyv), end(frequencyv));
+		// Add extra points for the lines
+		int numLines;
+		Array lineFreqv, lineWidthv;
+		_boundBound->lineInfo(numLines, lineFreqv, lineWidthv);
+
+		double lineWindowFactor = 10.;
 		double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
 		                       Constant::LIGHT;
 		lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
-		Testing::refineFrequencyGrid(gridVector, 31, 3.,
-		                             vector<double>(begin(lineFreqv), end(lineFreqv)),
-		                             vector<double>(begin(lineWidthv), end(lineWidthv)));
-		frequencyv = Array(gridVector.data(), gridVector.size());
+
+		vector<double> gridVector(begin(frequencyv), end(frequencyv));
+		Testing::refineFrequencyGrid(gridVector, 31, 2.5, lineFreqv, lineWidthv);
+
+		// And for the jumps in the bound-bound spectrum
+		const Array& thresholdv = _freeBound->thresholdv();
+		// Don't bother with the last jump, because that's the end of the data
+		Array jumpFreqv(&thresholdv[0], thresholdv.size() - 2);
+		Testing::refineFrequencyGrid(gridVector, 3, 1., jumpFreqv, 1e-6 * jumpFreqv);
+
+		// And for the ionization threshold
+		Array ionThr({Ionization::THRESHOLD});
+		Testing::refineFrequencyGrid(gridVector, 3, 1., ionThr, 1e-6 * ionThr);
+
+		// Overwrite the frequencygrid with the improved one
+		_frequencyv = Array(gridVector.data(), gridVector.size());
 	}
-	_frequencyv = frequencyv;
-	_levels = make_unique<NLevel>(frequencyv);
-	_freeBound = make_unique<FreeBound>(frequencyv);
-	_freeFree = make_unique<FreeFree>(frequencyv);
+	else
+		_frequencyv = frequencyv;
+
+	// Overwrite these objects with new ones
+	_boundBound = make_unique<NLevel>(_frequencyv);
+	_freeBound = make_unique<FreeBound>(_frequencyv);
+	_freeFree = make_unique<FreeFree>(_frequencyv);
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() {}
@@ -174,21 +191,22 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 		double sink = ne * np * alphaTotal / nAtm;
 		Array sinkv({sink, sink, sink, sink, sink, sink});
 
-		s.levelSolution = _levels->solveBalance(nAtm, ne, np, T, specificIntensityv,
-		                                        sourcev, sinkv);
+		s.levelSolution = _boundBound->solveBalance(nAtm, ne, np, T, specificIntensityv,
+		                                            sourcev, sinkv);
 	}
 	else
 	{
 		s.f = 0;
-		Array zero(_levels->N());
-		s.levelSolution = _levels->solveBalance(0, 0, 0, T, specificIntensityv, zero, zero);
+		Array zero(_boundBound->N());
+		s.levelSolution = _boundBound->solveBalance(0, 0, 0, T, specificIntensityv, zero,
+		                                            zero);
 	}
 	return s;
 }
 
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
-	const Array& lineEmv = _levels->emissivityv(s.levelSolution);
+	const Array& lineEmv = _boundBound->emissivityv(s.levelSolution);
 	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
 	_freeFree->addEmissionCoefficientv(s.T, contEmCoeffv);
@@ -197,7 +215,7 @@ Array GasInterfaceImpl::emissivityv(const Solution& s) const
 
 Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
-	const Array& lineOp = _levels->opacityv(s.levelSolution);
+	const Array& lineOp = _boundBound->opacityv(s.levelSolution);
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
@@ -215,13 +233,13 @@ Array GasInterfaceImpl::opacityv(const Solution& s) const
 
 Array GasInterfaceImpl::scatteringOpacityv(const Solution& s) const
 {
-	return _levels->scatteringOpacityv(s.levelSolution);
+	return _boundBound->scatteringOpacityv(s.levelSolution);
 }
 
 Array GasInterfaceImpl::scatteredv(const Solution& s) const
 {
 	// only the lines can scatter
-	const Array& scaOp = _levels->scatteringOpacityv(s.levelSolution);
+	const Array& scaOp = _boundBound->scatteringOpacityv(s.levelSolution);
 	return s.specificIntensityv * scaOp;
 }
 
@@ -247,13 +265,14 @@ double GasInterfaceImpl::absorption(const Solution& s) const
 
 double GasInterfaceImpl::lineEmission(const Solution& s) const
 {
-	return Constant::FPI * TemplatedUtils::integrate<double>(
-	                                       _frequencyv, _levels->emissivityv(s.levelSolution));
+	return Constant::FPI *
+	       TemplatedUtils::integrate<double>(_frequencyv,
+	                                         _boundBound->emissivityv(s.levelSolution));
 }
 
 double GasInterfaceImpl::lineAbsorption(const Solution& s) const
 {
-	Array intensityOpacityv = s.specificIntensityv * _levels->opacityv(s.levelSolution);
+	Array intensityOpacityv = s.specificIntensityv * _boundBound->opacityv(s.levelSolution);
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 

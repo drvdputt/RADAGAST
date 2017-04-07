@@ -2,9 +2,10 @@
 #include "Constants.h"
 #include "NumUtils.h"
 #include "Table.h"
+#include "TemplatedUtils.h"
+#include "global.h"
 #include <cmath>
 #include <fstream>
-#include "global.h"
 
 using namespace std;
 
@@ -14,9 +15,12 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	// Adapted from NEBULAR source code by M. Schirmer (2016)
 	vector<double> fileFrequencyv;
 	vector<vector<double>> fileGammaDaggervv;
+	vector<double> fileThresholdv;
 
 	string file(repoRoot + "/dat/t3_elec_reformat.ascii");
-	readData(file, fileFrequencyv, _thresholdv, _logTemperaturev, fileGammaDaggervv);
+	readData(file, fileFrequencyv, fileThresholdv, _logTemperaturev, fileGammaDaggervv);
+
+	_thresholdv = Array(fileThresholdv.data(), fileThresholdv.size());
 
 	size_t numcol = _logTemperaturev.size();
 	size_t numrow = fileFrequencyv.size();
@@ -198,6 +202,7 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 		                     wRight * (_gammaDaggervv(iFreq, iRight) -
 		                               _gammaDaggervv(iFreq, iLeft));
 
+		double lastThresh = _thresholdv[_thresholdv.size() - 1];
 		// Skip over zero data, or when we are below the first threshold
 		if (!gammaDagger || freq < _thresholdv[0])
 		{
@@ -206,7 +211,7 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 		{
 			// If the last threshold hasn't been passed yet, check if we have passed the
 			// next (i + 1)
-			if (freq < _thresholdv.back())
+			if (freq < lastThresh)
 			{
 				// This block must only be executed when a new threshold is passed
 				if (freq > _thresholdv[iThreshold + 1])
@@ -214,7 +219,7 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 					// find the next threshold of lower frequency
 					// (don't just pick the next one, as this wouldn't work with
 					// very coarse grids)
-					iThreshold = NumUtils::index<double>(freq, _thresholdv) - 1;
+					iThreshold = TemplatedUtils::index(freq, _thresholdv) - 1;
 					tE = Constant::PLANCK * _thresholdv[iThreshold];
 				}
 			}
@@ -223,7 +228,7 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 			else if (iThreshold < _thresholdv.size() - 1)
 			{
 				iThreshold = _thresholdv.size() - 1;
-				tE = Constant::PLANCK * _thresholdv.back();
+				tE = Constant::PLANCK * _thresholdv[iThreshold];
 			}
 			double E = Constant::PLANCK * freq;
 

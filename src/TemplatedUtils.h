@@ -10,6 +10,28 @@
 namespace TemplatedUtils
 {
 
+template <typename T>
+T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax,
+                       T xMin);
+
+template <typename T, typename T1> void inline sortedInsert(T elem, T1& container);
+
+template <typename T, typename T1, typename T2>
+T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer);
+
+template <typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRight);
+
+template <typename T>
+T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight,
+                         T fUpperLeft, T fUpperRight);
+
+template <typename T, typename T1, typename T2>
+T integrate(const T1& xContainer, const T2& yContainer);
+
+template <typename T, typename T1> inline size_t index(T val, const T1& container);
+
+template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv);
+
 /* Performs a search by bisection on a continuous interval between xMax and xMin. The function given
 as argument should be a decreasing function which indicates in which direction the search should
 proceed, and hence has a zero at the final value of T. The bisection will start from xInit, and
@@ -45,6 +67,21 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 template <typename T, typename T1> void inline sortedInsert(T elem, T1& container)
 {
 	container.insert(std::upper_bound(std::begin(container), std::end(container), elem), elem);
+}
+
+/* Evaluate the linear interpolation f(x) of a function f represented by fContainer = f(xContainer)
+ */
+template <typename T, typename T1, typename T2>
+T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer)
+{
+	size_t iRight = index(x, xContainer);
+	if (iRight == 0)
+		iRight = 1;
+	else if (iRight == xContainer.size())
+		iRight -= 1;
+	size_t iLeft = iRight - 1;
+	return interpolateLinear(x, xContainer[iLeft], xContainer[iRight], fContainer[iLeft],
+	                         fContainer[iRight]);
 }
 
 template <typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRight)

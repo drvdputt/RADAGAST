@@ -12,7 +12,7 @@ class GasInterface
 {
 public:
 	GasInterface(const std::valarray<double>& frequencyv);
-
+	GasInterface(const std::valarray<double>& frequencyv, bool improveGrid);
 	~GasInterface();
 
 	/* Exports the state of the gas as a compact, opaque object. Codes which make use of the gas
@@ -22,8 +22,8 @@ public:
 	 properties are calculated (derived from densities vs caching them for example) are entirely
 	 up to the implementations of the functions below and the definition in GasState.h. */
 	void updateGasState(GasState& gs, double n, double Tinit,
-	                    const std::valarray<double>& specificIntensityv);
-	void initializeGasState(GasState& gs, double n, double T);
+	                    const std::valarray<double>& specificIntensityv) const;
+	void initializeGasState(GasState& gs, double n, double T) const;
 
 	/* The functions below hould provide a fast implementation to obtain the optical properties.
 	 The implementation will depend on what is stored in a GasState object. A good balance
@@ -34,6 +34,8 @@ public:
 	double opacity_SI(const GasState& gs, size_t iFreq) const;
 	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
 	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
+
+	std::valarray<double> frequencyv() const {return _frequencyv;}
 
 private:
 	void zeroOpticalProperties(GasState& gs) const;

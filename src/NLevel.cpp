@@ -64,6 +64,9 @@ NLevel::NLevel() : _Ev(_nLv), _gv(_nLv), _Avv(_nLv, _nLv), _extraAvv(_nLv, _nLv)
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0;
 
+//	_namedTransitions["Halpha"] = {{{3, 1}}, {{3, 2}}};
+//	_namedTransitions["Hbeta"] =
+
 	// clang-format on
 	// approximation used:
 	// A_n,2p = 3 * A_n,2s = 3/4 * (A_n,2 from NIST)
@@ -101,10 +104,9 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 	Solution sol;
 	sol.n = atomDensity;
 	sol.T = temperature;
-	sol.BPvv.resize(_nLv, _nLv);
-	sol.Cvv.resize(_nLv, _nLv);
-	sol.nv.resize(_nLv);
-	sol.nv(0) = atomDensity;
+	sol.BPvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
+	sol.Cvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
+	sol.nv = Eigen::VectorXd::Zero(_nLv);
 
 	if (specificIntensityv.size() != _frequencyv.size())
 		throw range_error("Given ISRF and wavelength vectors do not have the same size");
@@ -279,7 +281,7 @@ Eigen::MatrixXd NLevel::prepareCollisionMatrix(double T, double electronDensity,
 
 	double currentT_eV = Constant::BOLTZMAN * T * Constant::ERG_EV;
 
-	// naively inter- and extrapolate this data linearly
+	// Naively inter- and extrapolate this data linearly
 	size_t iRight = TemplatedUtils::index(currentT_eV, electronTemperaturesv_eV);
 	if (iRight == 0)
 		iRight = 1;

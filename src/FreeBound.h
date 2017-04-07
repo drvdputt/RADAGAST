@@ -20,6 +20,8 @@ private:
 	              std::vector<std::vector<double>>& fileGammaDaggervv) const;
 
 public:
+	Array thresholdv() const { return _thresholdv; }
+
 	/* Calculate the emission coefficient for the optical recombination continuum for all
 	 frequencies. The data is intepolated ad-hoc in the temperature direction; in the frequency
 	 direction this data was already interpolated in the constructor. Returned in units
@@ -38,7 +40,7 @@ private:
 	Table<2> _gammaDaggervv;
 	/* Vector containing the threshold frequencies, i.e. those of the lines starting with 1. Is
 	 needed for applying equation 1 of Ercolano and Storey 2006 (MNRAS 372, 1875) */
-	std::vector<double> _thresholdv;
+	Array _thresholdv;
 
 	/* The accompanying log-temperature grid */
 	std::vector<double> _logTemperaturev;
