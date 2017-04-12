@@ -1,6 +1,7 @@
+#include "IonizationBalance.h"
 #include "TemplatedUtils.h"
 
-#include "IonizationBalance.h"
+#include <algorithm>
 
 using namespace std;
 
@@ -21,7 +22,7 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
 	// np = (-C + sqrt(C^2 + 4 * C*nH)) / 2
 	double np = (-C + sqrt(C * C + 4 * C * nH)) / 2.;
 
-	return np / nH;
+	return min(np / nH, 1.);
 }
 
 double Ionization::crossSection(double frequency)
@@ -54,4 +55,27 @@ double Ionization::recombinationRate(double T)
 	double T1 = 7.036e5;
 
 	return a / (sqrt(T / T0) * pow(1 + sqrt(T / T0), 1 - b) * pow(1 + sqrt(T / T1), 1 + b));
+}
+
+double Ionization::heating(double nH, double f, double T, const Array& frequencyv,
+                           const Array& specificIntensityv)
+{
+	// Use formula 3.2 from Osterbrock
+	double numberOfIonizations = f * f * nH * nH * recombinationRate(T);
+
+	size_t nFreq = frequencyv.size();
+	Array integrand(nFreq);
+	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
+
+	for (size_t n = iThres; n < nFreq; n++)
+		integrand[n] = specificIntensityv[n] / frequencyv[n] * (frequencyv[n] - THRESHOLD) *
+		               crossSection(frequencyv[n]);
+	double topIntegral =
+	                Constant::PLANCK * TemplatedUtils::integrate<double>(frequencyv, integrand);
+
+	for (size_t n = iThres; n < nFreq; n++)
+		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
+	double bottomIntegral = TemplatedUtils::integrate<double>(frequencyv, integrand);
+
+	return numberOfIonizations * topIntegral / bottomIntegral;
 }

@@ -122,7 +122,6 @@ private:
 	 * transitions contributing. For every transition there is one pair of level indices. */
 	// std::map<std::string, std::vector<std::array<size_t, 2>>> _namedTransitions;
 
-	/* The public interface */
 public:
 	Array frequencyv() const { return _frequencyv; }
 	void setFrequencyv(const Array& frequencyv) { _frequencyv = frequencyv; }

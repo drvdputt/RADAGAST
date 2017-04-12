@@ -13,6 +13,9 @@ double crossSection(double frequency);
 
 double recombinationRate(double T);
 
+/* Heating due to thermalization of freed electrons */
+double heating(double nH, double f, double T, const Array& frequency, const Array& specificIntensityv);
+
 const double THRESHOLD = 3.28984196e15; // Hertz;
 }
 

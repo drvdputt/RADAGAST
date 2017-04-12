@@ -140,7 +140,12 @@ double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& inf
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
 	                        nu_ij * _avv(upper, lower);
 	double densityFactor = info.nv(lower) * _gv(upper) / _gv(lower) - info.nv(upper);
-	return constantFactor * densityFactor;
+	double result = constantFactor * densityFactor;
+#ifdef SANITY
+	if (result < 0)
+		result = 0;
+#endif
+	return result;
 }
 
 inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& info) const
@@ -236,6 +241,9 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 	// Call the linear solver
 	Eigen::VectorXd nv = Mvv.colPivHouseholderQr().solve(b);
 	DEBUG("nv" << endl << nv << endl);
+
+	// Hack: put populations = 0 if they were negative due to precision issues
+	nv = nv.array().max(0);
 
 	// Element wise relative errors
 	Eigen::ArrayXd diffv = Mvv * nv - b;

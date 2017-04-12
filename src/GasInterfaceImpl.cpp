@@ -3,8 +3,8 @@
 #include "Constants.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
-#include "IonizationBalance.h"
 #include "HydrogenLevels.h"
+#include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
@@ -77,11 +77,11 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
-#endif
+
 	DEBUG("Solving balance under isrf of "
 	      << isrf << " erg / s / cm2 / sr = "
 	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
-
+#endif
 	Solution s;
 
 	if (n > 0)
@@ -101,7 +101,7 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		function<int(double)> evaluateBalance = [&](double logT) -> int {
 			counter++;
 			s = calculateDensities(n, pow(10., logT), specificIntensityv);
-			double netPowerIn = absorption(s) - emission(s);
+			double netPowerIn = heating(s) - emission(s);
 #ifdef VERBOSE
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
@@ -121,9 +121,23 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		s = calculateDensities(0, 0, specificIntensityv);
 	}
 
+	const Array& emv = emissivityv(s);
+	const Array& opv = opacityv(s);
+	const Array& scv = scatteringOpacityv(s);
+
+#ifdef SANITY
+	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	{
+		if (specificIntensityv[iFreq] < 0 || emv[iFreq] < 0 || opv[iFreq] < 0 ||
+		    scv[iFreq] < 0)
+		{
+			cout << "negative value in one of the optical properties";
+		}
+	}
+#endif
+
 	// Put the relevant data into the gas state
-	gs = GasState(_frequencyv, specificIntensityv, emissivityv(s), opacityv(s),
-	              scatteringOpacityv(s), s.T, s.f);
+	gs = GasState(_frequencyv, specificIntensityv, emv, opv, scv, s.T, s.f);
 }
 
 void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
@@ -228,6 +242,12 @@ Array GasInterfaceImpl::opacityv(const Solution& s) const
 	{
 		double ionizOp_iFreq = n_H0 * Ionization::crossSection(_frequencyv[iFreq]);
 		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
+#ifdef SANITY
+		if (totalOp[iFreq] < 0)
+		{
+			cout << "Negative opacity!";
+		}
+#endif
 	}
 	return totalOp;
 }
@@ -254,7 +274,7 @@ double GasInterfaceImpl::emission(const Solution& s) const
 	return lineEm + contEm;
 }
 
-double GasInterfaceImpl::absorption(const Solution& s) const
+double GasInterfaceImpl::heating(const Solution& s) const
 {
 	double lineAbs = lineAbsorption(s);
 	double contAbs = continuumAbsorption(s);
@@ -324,7 +344,7 @@ void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensity
 	for (int N = 0; N < samples; N++, T *= factor)
 	{
 		Solution s = calculateDensities(n, T, specificIntensityv);
-		double abs = absorption(s);
+		double abs = heating(s);
 		double em = emission(s);
 		double lineAbs = lineAbsorption(s);
 		double lineEm = lineEmission(s);
@@ -340,4 +360,10 @@ void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensity
 		    << tab << s.f << endl;
 	}
 	out.close();
+
+	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
+
+	DEBUG("Calculated heating curve under isrf of"
+	      << isrf << " erg / s / cm2 / sr = "
+	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
 }

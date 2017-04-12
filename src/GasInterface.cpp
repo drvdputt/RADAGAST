@@ -40,10 +40,13 @@ void GasInterface::initializeGasState(GasState& gs, double density, double tempe
 
 double GasInterface::effectiveEmissivity_SI(const GasState& gs, size_t iFreq) const
 {
-
-	double r = 0.1 * (gs._emissivityv[iFreq] /*-
-	                  gs._scatteringOpacityv[iFreq] * gs._previousISRFv[iFreq]*/);
+#ifdef NO_SCATTER
+	return 0.1 * gs._emissivityv[iFreq];
+#else
+	double r = 0.1 * (gs._emissivityv[iFreq] -
+	                  gs._scatteringOpacityv[iFreq] * gs._previousISRFv[iFreq]);
 	return r > 0 ? r : 0;
+#endif
 }
 
 // 1 / cm = 100 / m
@@ -51,13 +54,22 @@ double GasInterface::opacity_SI(const GasState& gs, size_t iFreq) const
 {
 	return 100 * gs._opacityv[iFreq];
 }
+
 double GasInterface::scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
 {
+#ifdef NO_SCATTER
+	return 0;
+#else
 	return 100 * gs._scatteringOpacityv[iFreq];
+#endif
 }
 double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
 {
+#ifdef NO_SCATTER
+	return 100 * gs._opacityv[iFreq];
+#else
 	return 100 * (gs._opacityv[iFreq] - gs._scatteringOpacityv[iFreq]);
+#endif
 }
 
 void GasInterface::zeroOpticalProperties(GasState& gs) const
@@ -69,3 +81,9 @@ void GasInterface::zeroOpticalProperties(GasState& gs) const
 	gs._temperature = 0;
 	gs._ionizedFraction = 0;
 }
+
+void GasInterface::testHeatingCurve(double n, const std::valarray<double>& specificIntensityv) const
+{
+	_pimpl->testHeatingCurve(n, specificIntensityv);
+}
+

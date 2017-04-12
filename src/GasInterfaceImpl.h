@@ -66,7 +66,7 @@ public:
 	double emission(const Solution&) const;
 	/* The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity
 	 times the radiation field. */
-	double absorption(const Solution&) const;
+	double heating(const Solution&) const;
 
 	/* The bolometric emission by the lines only. The emissivity of the photon re-emissions is
 	 also included in this value. */
