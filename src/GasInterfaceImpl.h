@@ -63,25 +63,25 @@ public:
 
 	/* The total bolometric emission, in erg / s / cm^3, obtained by integrating the emissivity.
 	 */
-	double emission(const Solution&) const;
+	double cooling(const Solution&) const;
 	/* The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity
 	 times the radiation field. */
 	double heating(const Solution&) const;
 
 	/* The bolometric emission by the lines only. The emissivity of the photon re-emissions is
 	 also included in this value. */
-	double lineEmission(const Solution&) const;
+	double lineCooling(const Solution&) const;
 	/* The bolometric absorption by the lines only. The absorption of re-emitted line photons is
 	 also included here. */
-	double lineAbsorption(const Solution&) const;
+	double lineHeating(const Solution&) const;
 	/*  Taking the difference of the above two terms will cancel out the contributions of the
 	 "scattered" photons and yield the heating/cooling contribution by the lines. */
 
 	/* The bolometric emission by the continuum only (= cooling by recombination + free-free
 	 * continuum) */
-	double continuumEmission(const Solution&) const;
-	/* The bolometric absorption by the continuum only (= ionization + free-free heating) */
-	double continuumAbsorption(const Solution&) const;
+	double continuumCooling(const Solution&) const;
+	/* The bolometric absorption by the continuum only (free-free heating) in erg / s / cm3 */
+	double freeFreeHeating(const Solution&) const;
 
 	inline double np_ne(const Solution& s) const
 	{

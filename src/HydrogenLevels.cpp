@@ -147,6 +147,7 @@ Eigen::MatrixXd HydrogenLevels::prepareCollisionMatrix(double T, double electron
 	double bigGamma2s1 = TemplatedUtils::interpolateLinear(
 	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigGamma2s1v[iLeft],
 	                bigGamma2s1v[iRight]);
+	bigGamma2s1 = max(bigGamma2s1, 0.);
 	setElectronCollisionRate(2, 0, bigGamma2s1);
 
 	vector<double> bigGamma2p1v = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
@@ -154,9 +155,8 @@ Eigen::MatrixXd HydrogenLevels::prepareCollisionMatrix(double T, double electron
 	double bigGamma2p1 = TemplatedUtils::interpolateLinear(
 	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigGamma2p1v[iLeft],
 	                bigGamma2p1v[iRight]);
+	bigGamma2p1 = max(bigGamma2s1, 0.);
 	setElectronCollisionRate(1, 0, bigGamma2p1);
-
-
 
 	// Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
 	// 2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0

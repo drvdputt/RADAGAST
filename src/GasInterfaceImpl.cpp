@@ -101,7 +101,7 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		function<int(double)> evaluateBalance = [&](double logT) -> int {
 			counter++;
 			s = calculateDensities(n, pow(10., logT), specificIntensityv);
-			double netPowerIn = heating(s) - emission(s);
+			double netPowerIn = heating(s) - cooling(s);
 #ifdef VERBOSE
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
@@ -264,66 +264,60 @@ Array GasInterfaceImpl::scatteredv(const Solution& s) const
 	return s.specificIntensityv * scaOp;
 }
 
-double GasInterfaceImpl::emission(const Solution& s) const
+double GasInterfaceImpl::cooling(const Solution& s) const
 {
-	double lineEm = lineEmission(s);
-	double contEm = continuumEmission(s);
+	double lineCool = lineCooling(s);
+	double contCool = continuumCooling(s);
 #ifdef VERBOSE
-	DEBUG("emission: line / cont = " << lineEm << " / " << contEm << endl);
+	DEBUG("cooling: line / cont = " << lineCool << " / " << contCool << endl);
 #endif
-	return lineEm + contEm;
+	return lineCool + contCool;
 }
 
 double GasInterfaceImpl::heating(const Solution& s) const
 {
-	double lineAbs = lineAbsorption(s);
-	double contAbs = continuumAbsorption(s);
+	double lineHeat = lineHeating(s);
+	double contHeat = Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv) +
+	                  freeFreeHeating(s);
 #ifdef VERBOSE
-	DEBUG("absorption: line / cont = " << lineAbs << " / " << contAbs << endl);
+	DEBUG("heating: line / cont = " << lineHeat << " / " << contHeat << endl);
 #endif
-	return lineAbs + contAbs;
+	return lineHeat + contHeat;
 }
 
-double GasInterfaceImpl::lineEmission(const Solution& s) const
+double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
-	return Constant::FPI *
-	       TemplatedUtils::integrate<double>(_frequencyv,
-	                                         _boundBound->emissivityv(s.levelSolution));
+	//	return Constant::FPI *
+	//	       TemplatedUtils::integrate<double>(_frequencyv,
+	//	                                         _boundBound->emissivityv(s.levelSolution));
+	return _boundBound->cooling(s.levelSolution);
 }
 
-double GasInterfaceImpl::lineAbsorption(const Solution& s) const
+double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
-	Array intensityOpacityv = s.specificIntensityv * _boundBound->opacityv(s.levelSolution);
-	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	//	Array intensityOpacityv = s.specificIntensityv *
+	//_boundBound->opacityv(s.levelSolution); 	return Constant::FPI *
+	//TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	return _boundBound->heating(s.levelSolution);
 }
 
-double GasInterfaceImpl::continuumEmission(const Solution& s) const
+double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
 	Array gamma_nuv(_frequencyv.size());
-	_freeBound->addEmissionCoefficientv(s.T, gamma_nuv);
+	//_freeBound->addEmissionCoefficientv(s.T, gamma_nuv);
 	_freeFree->addEmissionCoefficientv(s.T, gamma_nuv);
 
 	// emissivity = ne np / 4pi * gamma
 	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
-	return np_ne(s) * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
+	return np_ne(s) * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv) +
+	       Ionization::cooling(s.n, s.f, s.T);
 }
 
-double GasInterfaceImpl::continuumAbsorption(const Solution& s) const
+double GasInterfaceImpl::freeFreeHeating(const Solution& s) const
 {
-	const Array& I_nu = s.specificIntensityv;
-
-	double npne = np_ne(s);
-	double nH0 = nAtomic(s);
 	Array freefreeOpCoefv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, freefreeOpCoefv);
-
-	Array intensityOpacityv(_frequencyv.size());
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
-	{
-		double totalOpacity = nH0 * Ionization::crossSection(_frequencyv[iFreq]) +
-		                      npne * freefreeOpCoefv[iFreq];
-		intensityOpacityv[iFreq] = I_nu[iFreq] * totalOpacity;
-	}
+	Array intensityOpacityv(s.specificIntensityv * np_ne(s) * freefreeOpCoefv);
 	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 
@@ -335,31 +329,31 @@ void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensity
 	double T = 10;
 	double factor = pow(500000. / 10., 1. / samples);
 
-	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/heating.dat");
-	out << "# 0frequency 1netHeating 2absorption 3emission"
-	    << " 4lineHeating 5lineAbsorption 6lineEmission"
-	    << " 7continuumHeating 8continuumAbsorption 9continuumEmission"
-	    << " 10ionizationFraction" << endl;
+	ofstream output;
+	output.open("/Users/drvdputt/GasModule/run/heating.dat");
+	output << "# 0frequency 1netHeating 2absorption 3emission"
+	       << " 4lineHeating 5lineAbsorption 6lineEmission"
+	       << " 7continuumHeating 8continuumAbsorption 9continuumEmission"
+	       << " 10ionizationFraction" << endl;
 	for (int N = 0; N < samples; N++, T *= factor)
 	{
 		Solution s = calculateDensities(n, T, specificIntensityv);
-		double abs = heating(s);
-		double em = emission(s);
-		double lineAbs = lineAbsorption(s);
-		double lineEm = lineEmission(s);
-		double contAbs = continuumAbsorption(s);
-		double contEm = continuumEmission(s);
+		double in = heating(s);
+		double out = cooling(s);
+		double lineAbs = lineHeating(s);
+		double lineEm = lineCooling(s);
+		double contAbs = freeFreeHeating(s);
+		double contEm = continuumCooling(s);
 
-		double netHeating = abs - em;
+		double netHeating = in - out;
 		double netLine = lineAbs - lineEm;
 		double netCont = contAbs - contEm;
 
-		out << T << tab << netHeating << tab << abs << tab << em << tab << netLine << tab
-		    << lineAbs << tab << lineEm << tab << netCont << tab << contAbs << tab << contEm
-		    << tab << s.f << endl;
+		output << T << tab << netHeating << tab << in << tab << out << tab << netLine << tab
+		       << lineAbs << tab << lineEm << tab << netCont << tab << contAbs << tab
+		       << contEm << tab << s.f << endl;
 	}
-	out.close();
+	output.close();
 
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
 

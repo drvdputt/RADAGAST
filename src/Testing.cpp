@@ -155,9 +155,9 @@ void Testing::testIonizationCrossSection()
 
 void Testing::testGasInterfaceImpl()
 {
-	double Tc = 1000;
+	double Tc = 40000;
 	double G0 = 1e0;
-	double n = 1e2;
+	double n = 1e1;
 	double expectedTemperature = 1000;
 
 	vector<double> tempFrequencyv =
@@ -185,6 +185,8 @@ void Testing::testGasInterfaceImpl()
 	GasInterface gi(frequencyv, true);
 	frequencyv = gi.frequencyv();
 
+//#define PROBLEMATIC_ISRF
+#ifdef PROBLEMATIC_ISRF
 	Array rwavelengthv =
 	                Array({1.000000000e+07, 8.111308308e+06, 6.579332247e+06, 5.336699231e+06,
 	                       4.328761281e+06, 3.511191734e+06, 2.848035868e+06, 2.310129700e+06,
@@ -350,10 +352,11 @@ void Testing::testGasInterfaceImpl()
 	                       1.000000000e-02});
 
 	frequencyv = Constant::LIGHT / rwavelengthv / Constant::UM_CM;
-
-	//	Array specificIntensityv = generateSpecificIntensityv(
-	//	                vector<double>(begin(frequencyv), end(frequencyv)),
-	// Tc, G0);
+#endif
+#ifndef PROBLEMATIC_ISRF
+	Array specificIntensityv = generateSpecificIntensityv(
+	                vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
+#else
 	Array specificIntensityv(
 	                {2.209037881355437e-18, 3.357541088148053e-18, 5.103163779085309e-18,
 	                 7.756354940713623e-18, 1.178896937471095e-17, 1.791818434401347e-17,
@@ -570,6 +573,8 @@ void Testing::testGasInterfaceImpl()
 	                 6.046937840330138e-15, 4.429711182252813e-18, 5.220352809884455e-22,
 	                 6.467573128248577e-27, 4.985513558812729e-33, 1.252493150769883e-40,
 	                 4.620800053595793e-50, 9.369112946030021e-62, 3.108099322643046e-76});
+#endif
+
 	GasState gs;
 	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv);
 
@@ -645,9 +650,9 @@ void Testing::testGasInterfaceImpl()
 
 	cout << "TestHydrogenCalculator done" << endl;
 
-		cout << "----------------------------------" << endl;
-		cout << "plotting heating curve..." << endl;
-		gi.testHeatingCurve(n, specificIntensityv);
+//	cout << "----------------------------------" << endl;
+//	cout << "plotting heating curve..." << endl;
+//	gi.testHeatingCurve(n, specificIntensityv);
 }
 
 void Testing::testPhotoelectricHeating()

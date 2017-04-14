@@ -2,6 +2,7 @@
 #include "TemplatedUtils.h"
 
 #include <algorithm>
+#include <iostream>
 
 using namespace std;
 
@@ -77,5 +78,37 @@ double Ionization::heating(double nH, double f, double T, const Array& frequency
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
 	double bottomIntegral = TemplatedUtils::integrate<double>(frequencyv, integrand);
 
-	return numberOfIonizations * topIntegral / bottomIntegral;
+	double result = numberOfIonizations * topIntegral / bottomIntegral;
+
+	cout << "Ionization heating " << result << endl;
+
+	return result;
+}
+
+double Ionization::cooling(double nH, double f, double T)
+{
+	double kT = Constant::BOLTZMAN * T;
+	double T_eV = kT * Constant::ERG_EV;
+	double ne = nH * f;
+
+	// use fit from 2017-Mao
+	// ft = beta / alpha
+	// cooling is rate coefficient is kT * beta = kT * alpha * ft
+
+	double a0 = 8.655e0;
+	double b0 = 5.432e-1;
+//	double c0 = 0;
+	double a1 = 1.018e1;
+	double b1 = 5.342e-1;
+//	double a2 = 0;
+//	double b2 = 0;
+	//	double ft = a0 * pow(T_eV, -b0 - c0 * log10(T_eV)) * (1 + a2 * pow(T_eV, -b2)) /
+	//	            (1 + a1 * pow(T_eV, -b1));
+	double ft = a0 * pow(T_eV, -b0) / (1 + a1 * pow(T_eV, -b1));
+
+	double result = ne * ne * kT * recombinationRate(T) * ft;
+
+	cout << "Ionization cooling " << result << endl;
+
+	return result;
 }

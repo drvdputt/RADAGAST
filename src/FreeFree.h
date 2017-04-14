@@ -23,7 +23,7 @@ public:
 
 	/* Calculate the opacity coefficient for the free-free continuum for all frequencies. The
 	 units are [density^-2][length^-1]. Multiplying with ne*np will give the opacity in
-	 [length-1]. The contirbutiona are added to the current contents of */
+	 [length-1]. The contributions are added to the current contents of */
 	void addOpacityCoefficientv(double T, Array& opCoeffv) const;
 
 	double gauntFactor(double logu, double logg2) const;

@@ -252,3 +252,25 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 
 	return nv;
 }
+
+double NLevel::heating(const Solution& s) const
+{
+	double powerDensityIn = 0;
+	forAllLinesDo([&](size_t upper, size_t lower) {
+		double cul = s.cvv(upper, lower);
+		if (cul > 0)
+			powerDensityIn += (_ev(upper) - _ev(lower)) * cul * s.nv(upper);
+	});
+	return powerDensityIn;
+}
+
+double NLevel::cooling(const Solution& s) const
+{
+	double powerDensityOut = 0;
+	forAllLinesDo([&](size_t upper, size_t lower) {
+		double clu = s.cvv(lower, upper);
+		if (clu > 0)
+			powerDensityOut += (_ev(upper) - _ev(lower)) * clu * s.nv(lower);
+	});
+	return powerDensityOut;
+}
