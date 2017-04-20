@@ -45,7 +45,7 @@ private:
 	void zeroOpticalProperties(GasState& gs) const;
 
 	std::valarray<double> _frequencyv;
-	std::unique_ptr<GasInterfaceImpl> _pimpl{nullptr};
+	std::unique_ptr<GasInterfaceImpl> _pimpl;
 };
 
 #endif /* _SRC_GASINTERFACE_H_ */
