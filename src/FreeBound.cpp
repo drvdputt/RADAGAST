@@ -166,10 +166,8 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 
 	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
 	{
-#ifdef VERBOSE
 		DEBUG("Warning: temperature "
 		      << T << "K is outside of data range for free-bound continuum" << endl);
-#endif
 		return;
 	}
 

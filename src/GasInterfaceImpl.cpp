@@ -102,16 +102,14 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 			counter++;
 			s = calculateDensities(n, pow(10., logT), specificIntensityv);
 			double netPowerIn = heating(s) - cooling(s);
-#ifdef VERBOSE
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
 			               << endl);
-#endif
 			return (netPowerIn > 0) - (netPowerIn < 0);
 		};
 
 		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(
-		                evaluateBalance, logTinit, 4.e-3, logTmax, logTmin);
+		                evaluateBalance, logTinit, 4.e-6, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
 		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv);
@@ -131,11 +129,10 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		if (specificIntensityv[iFreq] < 0 || emv[iFreq] < 0 || opv[iFreq] < 0 ||
 		    scv[iFreq] < 0)
 		{
-			cout << "negative value in one of the optical properties";
+			cout << "GasModule: negative value in one of the optical properties";
 		}
 	}
 #endif
-
 	// Put the relevant data into the gas state
 	gs = GasState(_frequencyv, specificIntensityv, emv, opv, scv, s.T, s.f);
 }
@@ -164,17 +161,13 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 
 	if (n > 0)
 	{
-#ifdef VERBOSE
 		DEBUG("Calculating state for T = " << T << "K" << endl);
-#endif
 		s.f = Ionization::ionizedFraction(n, T, _frequencyv, specificIntensityv);
-#ifdef VERBOSE
 		DEBUG("Ionized fraction = " << s.f << endl);
-#endif
 
 		double np = n * s.f;
 		double ne = np;
-		double alphaTotal = Ionization::recombinationRate(T);
+		double alphaTotal = Ionization::recombinationRateCoeff(T);
 
 		// approximations from Draine's book, p 138, valid for 3000 to 30000 K
 		// yes, this is natural log
@@ -268,9 +261,7 @@ double GasInterfaceImpl::cooling(const Solution& s) const
 {
 	double lineCool = lineCooling(s);
 	double contCool = continuumCooling(s);
-#ifdef VERBOSE
 	DEBUG("cooling: line / cont = " << lineCool << " / " << contCool << endl);
-#endif
 	return lineCool + contCool;
 }
 
@@ -279,9 +270,7 @@ double GasInterfaceImpl::heating(const Solution& s) const
 	double lineHeat = lineHeating(s);
 	double contHeat = Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv) +
 	                  freeFreeHeating(s);
-#ifdef VERBOSE
 	DEBUG("heating: line / cont = " << lineHeat << " / " << contHeat << endl);
-#endif
 	return lineHeat + contHeat;
 }
 
@@ -297,7 +286,7 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
 	//	Array intensityOpacityv = s.specificIntensityv *
 	//_boundBound->opacityv(s.levelSolution); 	return Constant::FPI *
-	//TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	// TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 	return _boundBound->heating(s.levelSolution);
 }
 
@@ -327,7 +316,7 @@ void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensity
 	const int samples = 200;
 
 	double T = 10;
-	double factor = pow(500000. / 10., 1. / samples);
+	double factor = pow(1000000. / 10., 1. / samples);
 
 	ofstream output;
 	output.open("/Users/drvdputt/GasModule/run/heating.dat");

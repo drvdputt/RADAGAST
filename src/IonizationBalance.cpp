@@ -1,6 +1,7 @@
 #include "IonizationBalance.h"
 #include "TemplatedUtils.h"
 
+#include "global.h"
 #include <algorithm>
 #include <iostream>
 
@@ -10,20 +11,31 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
                                    const Array& specificIntensityv)
 {
 	size_t nFreq = frequencyv.size();
-	Array integrand(nFreq);
 	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
+	Array integrand(nFreq);
 	for (size_t n = iThres; n < nFreq; n++)
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
+	double integral = Constant::FPI / Constant::PLANCK *
+	                  TemplatedUtils::integrate<double>(frequencyv, integrand);
 
-	double C = Constant::FPI / Constant::PLANCK *
-	           TemplatedUtils::integrate<double>(frequencyv, integrand) / recombinationRate(T);
-
-	// np^2 = (nH - np) * integral / alpha = (nH - np) * C
-	// np^2 + C*np - C*nH = 0
-	// np = (-C + sqrt(C^2 + 4 * C*nH)) / 2
-	double np = (-C + sqrt(C * C + 4 * C * nH)) / 2.;
-
-	return min(np / nH, 1.);
+	double gamma = collisionalRateCoeff(T);
+	double alpha = recombinationRateCoeff(T);
+	// Solve quadratic equation
+	double c2 = 1;
+	double c1 = (-nH * gamma + integral) / (alpha + gamma);
+	double c0 = -nH * integral / (alpha + gamma);
+	double ne = (-c1 + sqrt(c1 * c1 - 4 * c2 * c0)) / 2.;
+	// old:
+	//		double C = Constant::FPI / Constant::PLANCK *
+	//		           TemplatedUtils::integrate<double>(frequencyv, integrand) /
+	//		           recombinationRateCoeff(T);
+	//
+	//		// np^2 = (nH - np) * integral / alpha = (nH - np) * C
+	//		// np^2 + C*np - C*nH = 0
+	//		// np = (-C + sqrt(C^2 + 4 * C*nH)) / 2
+	//		double np = (-C + sqrt(C * C + 4 * C * nH)) / 2.;
+	//		ne = np;
+	return min(ne / nH, 1.);
 }
 
 double Ionization::crossSection(double frequency)
@@ -48,7 +60,16 @@ double Ionization::crossSection(double frequency)
 	}
 }
 
-double Ionization::recombinationRate(double T)
+double Ionization::collisionalRateCoeff(double T)
+{
+	// 1991-Scholz equations 9 and 10 and table 2
+	const vector<double> av{-9.61443e1,  3.79523e1,  -7.96885,   8.83922e-1,
+	                        -5.34513e-2, 1.66344e-3, -2.08888e-5};
+	double bigGamma = exp(TemplatedUtils::evaluatePolynomial(log(T), av));
+	return bigGamma * exp(-Constant::PLANCK * THRESHOLD / Constant::BOLTZMAN / T);
+}
+
+double Ionization::recombinationRateCoeff(double T)
 {
 	double a = 7.982e-11;
 	double b = 0.7480;
@@ -62,7 +83,8 @@ double Ionization::heating(double nH, double f, double T, const Array& frequency
                            const Array& specificIntensityv)
 {
 	// Use formula 3.2 from Osterbrock
-	double numberOfIonizations = f * f * nH * nH * recombinationRate(T);
+	double ne = f * nH;
+	double numberOfIonizations = ne * ne * recombinationRateCoeff(T);
 
 	size_t nFreq = frequencyv.size();
 	Array integrand(nFreq);
@@ -76,11 +98,16 @@ double Ionization::heating(double nH, double f, double T, const Array& frequency
 
 	for (size_t n = iThres; n < nFreq; n++)
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
-	double bottomIntegral = TemplatedUtils::integrate<double>(frequencyv, integrand);
 
-	double result = numberOfIonizations * topIntegral / bottomIntegral;
+	// The denominator comes from isolating n_0 from the balance equation, and now also include
+	// the collisional term (top and bottom have been multiplied with h / 4pi, hence the extra
+	// factors)
+	double bottom = TemplatedUtils::integrate<double>(frequencyv, integrand) +
+	                Constant::PLANCK / Constant::FPI * ne * collisionalRateCoeff(T);
 
-	cout << "Ionization heating " << result << endl;
+	double result = numberOfIonizations * topIntegral / bottom;
+
+	DEBUG("Ionization heating " << result << endl);
 
 	return result;
 }
@@ -97,18 +124,18 @@ double Ionization::cooling(double nH, double f, double T)
 
 	double a0 = 8.655e0;
 	double b0 = 5.432e-1;
-//	double c0 = 0;
+	//	double c0 = 0;
 	double a1 = 1.018e1;
 	double b1 = 5.342e-1;
-//	double a2 = 0;
-//	double b2 = 0;
+	//	double a2 = 0;
+	//	double b2 = 0;
 	//	double ft = a0 * pow(T_eV, -b0 - c0 * log10(T_eV)) * (1 + a2 * pow(T_eV, -b2)) /
 	//	            (1 + a1 * pow(T_eV, -b1));
 	double ft = a0 * pow(T_eV, -b0) / (1 + a1 * pow(T_eV, -b1));
 
-	double result = ne * ne * kT * recombinationRate(T) * ft;
+	double result = ne * ne * kT * recombinationRateCoeff(T) * ft;
 
-	cout << "Ionization cooling " << result << endl;
+	DEBUG("Ionization cooling " << result << endl);
 
 	return result;
 }

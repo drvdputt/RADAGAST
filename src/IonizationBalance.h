@@ -9,9 +9,14 @@ namespace Ionization
 double ionizedFraction(double nH, double T, const Array& frequencyv,
                        const Array& specificIntensityv);
 
+// Photoionization cross section in cm2
 double crossSection(double frequency);
 
-double recombinationRate(double T);
+// Collisional ionization rate coefficient from the ground state in cm3 / s
+double collisionalRateCoeff(double T);
+
+// Total radiative recombination rate coefficient in cm3 / s
+double recombinationRateCoeff(double T);
 
 /* Heating due to thermalization of freed electrons */
 double heating(double nH, double f, double T, const Array& frequencyv,

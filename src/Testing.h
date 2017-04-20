@@ -7,7 +7,7 @@
 
 namespace Testing
 {
-std::vector<double> generateGeometricGridv(size_t nFreq, double minFreq, double maxFreq);
+std::vector<double> generateGeometricGridv(size_t nPoints, double min, double max);
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower,
                          Array lineFreqv, Array lineWidthv);
@@ -16,7 +16,7 @@ Array freqToWavSpecificIntensity(const std::vector<double>& frequencyv,
                                  const Array& specificIntensity_nu);
 
 void testGasInterfaceImpl();
-void testIonizationCrossSection();
+void testIonizationStuff();
 
 void testPhotoelectricHeating();
 }

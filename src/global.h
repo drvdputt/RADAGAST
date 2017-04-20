@@ -8,18 +8,15 @@
 #endif
 const std::string repoRoot = REPOROOT;
 
-#define NONEGATIVEOPACITY
+#define SANITY
 
-//#define SILENT
+#define SILENT
 #ifdef SILENT
 	#define DEBUG(x) do {} while (0)
 #else
-	#define VERBOSE
-
 	//#define PRINT_MATRICES
 
 	//#define REPORT_LINE_QUALITY
-
 
 	//#define PRINT_CONTINUUM_DATA
 

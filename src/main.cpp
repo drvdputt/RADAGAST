@@ -30,7 +30,7 @@ int main()
 	//  printf("%f\n", Ionization::testIonization());
 
 	Testing::testGasInterfaceImpl();
-	// Testing::testIonizationCrossSection();
+	// Testing::testIonizationStuff();
 	// Testing::testPhotoelectricHeating();
 	return 0;
 }
