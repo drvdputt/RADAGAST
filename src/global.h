@@ -10,7 +10,7 @@ const std::string repoRoot = REPOROOT;
 
 #define SANITY
 
-//#define SILENT
+#define SILENT
 #ifdef SILENT
 #define DEBUG(x)                                                                                   \
 	do                                                                                         \
