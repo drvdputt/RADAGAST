@@ -180,3 +180,27 @@ Eigen::MatrixXd HydrogenLevels::prepareCollisionMatrix(double T, double electron
 
 	return Cvv;
 }
+
+Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
+{
+	Array result(frequencyv().size());
+	// 1984-Nussbaumer
+	double constFactor = Constant::PLANCK / Constant::FPI * s.nv(index2s);
+	double nu0 = (ev(index2s) - ev(0)) / Constant::PLANCK;
+	double C = 202.0; // s-1
+	double alpha = .88;
+	double beta = 1.53;
+	double gam = .8;
+	for (size_t iFreq = 0; frequencyv()[iFreq] < nu0; iFreq++)
+	{
+		double y = frequencyv()[iFreq] / nu0;
+		double y1miny = y * (1 - y);
+		double pow4y1miny_gam = pow(4 * y1miny, gam);
+		double Py = C * (y1miny * (1 - pow4y1miny_gam) +
+		                 alpha * pow(y1miny, beta) * pow4y1miny_gam);
+		result[iFreq] = constFactor * y * Py;
+	}
+	cout << "two-photon continuum " << TemplatedUtils::integrate<double>(frequencyv(), result)
+	     << endl;
+	return result;
+}

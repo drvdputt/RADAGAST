@@ -16,7 +16,9 @@ protected:
 	Eigen::MatrixXd makeAvv() const override;
 	Eigen::MatrixXd makeExtraAvv() const override;
 
-	Eigen::MatrixXd prepareCollisionMatrix(double T, double electronDensity, double protonDensity) const override;
+	Eigen::MatrixXd prepareCollisionMatrix(double T, double electronDensity,
+	                                       double protonDensity) const override;
+	Array boundBoundContinuum(const Solution& s) const override;
 };
 
 #endif /* _SRC_HYDROGENLEVELS_H_ */

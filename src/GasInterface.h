@@ -2,6 +2,7 @@
 #define _SRC_GASINTERFACE_H_
 
 #define NO_SCATTER
+#define NO_SCATTER_COMPENSATION
 
 #include "GasState.h"
 

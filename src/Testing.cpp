@@ -176,18 +176,18 @@ void Testing::testIonizationStuff()
 	}
 	out.close();
 
-	//out.open("collisionalIonization")
+	// out.open("collisionalIonization")
 }
 
 void Testing::testGasInterfaceImpl()
 {
-	double Tc = 40000;
+	double Tc = 20000;
 	double G0 = 1e0;
-	double n = 1e0;
+	double n = 1e1;
 	double expectedTemperature = 1000;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(100, Constant::LIGHT / (1e7 * Constant::UM_CM),
+	                generateGeometricGridv(300, Constant::LIGHT / (1e7 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
 
 	//	const double lineWindowFactor = 5;
@@ -289,9 +289,9 @@ void Testing::testGasInterfaceImpl()
 
 	cout << "TestHydrogenCalculator done" << endl;
 
-//	cout << "----------------------------------" << endl;
-//	cout << "plotting heating curve..." << endl;
-//	gi.testHeatingCurve(n, specificIntensityv);
+	//	cout << "----------------------------------" << endl;
+	//	cout << "plotting heating curve..." << endl;
+	//	gi.testHeatingCurve(n, specificIntensityv);
 }
 
 void Testing::testPhotoelectricHeating()

@@ -94,7 +94,8 @@ private:
 	construction and the temperature and collision rates contained in the Solution struct. */
 	Array lineProfile(size_t upper, size_t lower, const Solution& s) const;
 
-	/* Or when the full solution is not yet known, and hence a Solution object is not yet available
+	/* Or when the full solution is not yet known, and hence a Solution object is not yet
+	 * available
 	 */
 	Array lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const;
 
@@ -133,6 +134,9 @@ public:
 	                      const Array& sinkv) const;
 
 	Array emissivityv(const Solution& s) const;
+	/* The contribution to the emissivity non-line bound-bound processes, for example the
+	 two-photon continuum 2s->1s transition of HI */
+	virtual Array boundBoundContinuum(const Solution& s) const;
 	Array opacityv(const Solution& s) const;
 	Array scatteringOpacityv(const Solution& s) const;
 

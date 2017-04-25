@@ -40,7 +40,7 @@ void GasInterface::initializeGasState(GasState& gs, double density, double tempe
 
 double GasInterface::effectiveEmissivity_SI(const GasState& gs, size_t iFreq) const
 {
-#ifdef NO_SCATTER
+#ifdef NO_SCATTER_COMPENSATION
 	return 0.1 * gs._emissivityv[iFreq];
 #else
 	double r = 0.1 * (gs._emissivityv[iFreq] -

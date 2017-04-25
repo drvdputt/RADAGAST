@@ -39,13 +39,13 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
 		Array lineFreqv, lineWidthv;
 		_boundBound->lineInfo(numLines, lineFreqv, lineWidthv);
 
-		double lineWindowFactor = 10.;
+		double lineWindowFactor = 1.;
 		double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
 		                       Constant::LIGHT;
 		lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
 
 		vector<double> gridVector(begin(frequencyv), end(frequencyv));
-		Testing::refineFrequencyGrid(gridVector, 31, 2.5, lineFreqv, lineWidthv);
+		Testing::refineFrequencyGrid(gridVector, 13, 2.5, lineFreqv, lineWidthv);
 
 		// And for the jumps in the bound-bound spectrum
 		const Array& thresholdv = _freeBound->thresholdv();

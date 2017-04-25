@@ -7,13 +7,6 @@
 
 using namespace std;
 
-namespace
-{
-// commonly used indices
-const int index2p = 1;
-const int index2s = 2;
-}
-
 NLevel::NLevel(const Array& frequencyv, int nLv, const Eigen::VectorXd& ev,
                const Eigen::VectorXd& gv, const Eigen::MatrixXd& avv,
                const Eigen::MatrixXd& extraAvv)
@@ -93,30 +86,36 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 	return s;
 }
 
-Array NLevel::emissivityv(const Solution& info) const
+Array NLevel::emissivityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forAllLinesDo([&](size_t upper, size_t lower) {
-		total += lineIntensityFactor(upper, lower, info) * lineProfile(upper, lower, info);
+		total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
+	});
+	total += boundBoundContinuum(s);
+	return total;
+}
+
+Array NLevel::boundBoundContinuum(const Solution& s) const
+{
+	return Array(_frequencyv.size());
+}
+
+Array NLevel::opacityv(const Solution& s) const
+{
+	Array total(_frequencyv.size());
+	forAllLinesDo([&](size_t upper, size_t lower) {
+		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
 }
 
-Array NLevel::opacityv(const Solution& info) const
+Array NLevel::scatteringOpacityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forAllLinesDo([&](size_t upper, size_t lower) {
-		total += lineOpacityFactor(upper, lower, info) * lineProfile(upper, lower, info);
-	});
-	return total;
-}
-
-Array NLevel::scatteringOpacityv(const Solution& info) const
-{
-	Array total(_frequencyv.size());
-	forAllLinesDo([&](size_t upper, size_t lower) {
-		total += lineOpacityFactor(upper, lower, info) * lineProfile(upper, lower, info) *
-		         lineDecayFraction(upper, lower, info);
+		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s) *
+		         lineDecayFraction(upper, lower, s);
 	});
 	return total;
 }
@@ -129,17 +128,17 @@ void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithL
 				thingWithLine(upper, lower);
 }
 
-double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& info) const
+double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const
 {
-	return (_ev(upper) - _ev(lower)) / Constant::FPI * info.nv(upper) * _avv(upper, lower);
+	return (_ev(upper) - _ev(lower)) / Constant::FPI * s.nv(upper) * _avv(upper, lower);
 }
 
-double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& info) const
+double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const
 {
 	double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
 	                        nu_ij * _avv(upper, lower);
-	double densityFactor = info.nv(lower) * _gv(upper) / _gv(lower) - info.nv(upper);
+	double densityFactor = s.nv(lower) * _gv(upper) / _gv(lower) - s.nv(upper);
 	double result = constantFactor * densityFactor;
 #ifdef SANITY
 	if (result < 0)
@@ -148,9 +147,9 @@ double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& inf
 	return result;
 }
 
-inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& info) const
+inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
 {
-	return lineProfile(upper, lower, info.T, info.cvv);
+	return lineProfile(upper, lower, s.T, s.cvv);
 }
 
 Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const
@@ -185,10 +184,10 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::Mat
 	return profile;
 }
 
-double NLevel::lineDecayFraction(size_t upper, size_t lower, const Solution& info) const
+double NLevel::lineDecayFraction(size_t upper, size_t lower, const Solution& s) const
 {
 	return _avv(upper, lower) / (_avv.row(upper).sum() + _extraAvv.row(upper).sum() +
-	                             info.bpvv.row(upper).sum() + info.cvv.row(upper).sum());
+	                             s.bpvv.row(upper).sum() + s.cvv.row(upper).sum());
 }
 
 Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,

@@ -1,6 +1,8 @@
 #include "FreeBound.h"
 #include "Constants.h"
+#include "IonizationBalance.h"
 #include "NumUtils.h"
+#include "SpecialFunctions.h"
 #include "Table.h"
 #include "TemplatedUtils.h"
 #include "global.h"
@@ -236,6 +238,26 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 			out << freq << "\t" << gammaNu / 1.e-40 << endl;
 #endif
 			gamma_nuv[iFreq] += gammaNu;
+		}
+		// Also add the ionizing freebound continuum, which apparently is not included in
+		// the data used here This is easily calculated using equation 4.21 from Osterbrock
+		// and the Milne relation, since we have an expression for the photoionization
+		// cross-section anyways
+		if (freq > Ionization::THRESHOLD)
+		{
+			double h2 = Constant::PLANCK * Constant::PLANCK;
+			double nu3 = freq * freq * freq;
+			double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS *
+			            Constant::ELECTRONMASS;
+			double c2 = Constant::LIGHT * Constant::LIGHT;
+			double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK *
+			                   (freq - Ionization::THRESHOLD));
+			double u2 = u_nu * u_nu;
+			double a_nu = Ionization::crossSection(freq);
+			double f_u_nu = SpecialFunctions::maxwellBoltzman(u_nu, T,
+			                                                  Constant::ELECTRONMASS);
+			double ionizingContinuum = h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
+			gamma_nuv[iFreq] += ionizingContinuum;
 		}
 	}
 #ifdef PRINT_CONTINUUM_DATA
