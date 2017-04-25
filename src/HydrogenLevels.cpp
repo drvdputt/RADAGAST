@@ -200,7 +200,5 @@ Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
 		                 alpha * pow(y1miny, beta) * pow4y1miny_gam);
 		result[iFreq] = constFactor * y * Py;
 	}
-	cout << "two-photon continuum " << TemplatedUtils::integrate<double>(frequencyv(), result)
-	     << endl;
 	return result;
 }
