@@ -20,6 +20,7 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
 
 	double gamma = collisionalRateCoeff(T);
 	double alpha = recombinationRateCoeff(T);
+
 	// Solve quadratic equation
 	double c2 = 1;
 	double c1 = (-nH * gamma + integral) / (alpha + gamma);
@@ -99,8 +100,8 @@ double Ionization::heating(double nH, double f, double T, const Array& frequency
 	for (size_t n = iThres; n < nFreq; n++)
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
 
-	// The denominator comes from isolating n_0 from the balance equation, and now also include
-	// the collisional term (top and bottom have been multiplied with h / 4pi, hence the extra
+	// The denominator comes from isolating n_0 from the balance equation, and now also includes
+	// the collisional term (top and bottom have been multiplied with h / 4pi, see 3.1, hence the extra
 	// factors)
 	double bottom = TemplatedUtils::integrate<double>(frequencyv, integrand) +
 	                Constant::PLANCK / Constant::FPI * ne * collisionalRateCoeff(T);

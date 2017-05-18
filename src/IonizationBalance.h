@@ -22,7 +22,7 @@ double recombinationRateCoeff(double T);
 double heating(double nH, double f, double T, const Array& frequencyv,
                const Array& specificIntensityv);
 
-/* Kinetic energy lost during recombination (basically the photon energy of the, minus the binding
+/* Kinetic energy lost during recombination (basically the photon energy, minus the binding
  * energy contribution. */
 double cooling(double nH, double f, double T);
 

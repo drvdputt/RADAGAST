@@ -268,8 +268,7 @@ double GasInterfaceImpl::cooling(const Solution& s) const
 double GasInterfaceImpl::heating(const Solution& s) const
 {
 	double lineHeat = lineHeating(s);
-	double contHeat = Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv) +
-	                  freeFreeHeating(s);
+	double contHeat = continuumHeating(s);
 	DEBUG("heating: line / cont = " << lineHeat << " / " << contHeat << endl);
 	return lineHeat + contHeat;
 }
@@ -302,12 +301,13 @@ double GasInterfaceImpl::continuumCooling(const Solution& s) const
 	       Ionization::cooling(s.n, s.f, s.T);
 }
 
-double GasInterfaceImpl::freeFreeHeating(const Solution& s) const
+double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
 	Array freefreeOpCoefv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, freefreeOpCoefv);
 	Array intensityOpacityv(s.specificIntensityv * np_ne(s) * freefreeOpCoefv);
-	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv) +
+	       Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
 }
 
 void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensityv) const
@@ -320,27 +320,27 @@ void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensity
 
 	ofstream output;
 	output.open("/Users/drvdputt/GasModule/run/heating.dat");
-	output << "# 0frequency 1netHeating 2absorption 3emission"
+	output << "# 0temperature 1netHeating 2absorption 3emission"
 	       << " 4lineHeating 5lineAbsorption 6lineEmission"
 	       << " 7continuumHeating 8continuumAbsorption 9continuumEmission"
 	       << " 10ionizationFraction" << endl;
 	for (int N = 0; N < samples; N++, T *= factor)
 	{
 		Solution s = calculateDensities(n, T, specificIntensityv);
-		double in = heating(s);
-		double out = cooling(s);
-		double lineAbs = lineHeating(s);
-		double lineEm = lineCooling(s);
-		double contAbs = freeFreeHeating(s);
-		double contEm = continuumCooling(s);
+		double heat = heating(s);
+		double cool = cooling(s);
+		double lHeat = lineHeating(s);
+		double lCool = lineCooling(s);
+		double cHeat = continuumHeating(s);
+		double cCool = continuumCooling(s);
 
-		double netHeating = in - out;
-		double netLine = lineAbs - lineEm;
-		double netCont = contAbs - contEm;
+		double netHeating = heat - cool;
+		double netLine = lHeat - lCool;
+		double netCont = cHeat - cCool;
 
-		output << T << tab << netHeating << tab << in << tab << out << tab << netLine << tab
-		       << lineAbs << tab << lineEm << tab << netCont << tab << contAbs << tab
-		       << contEm << tab << s.f << endl;
+		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
+		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
+		       << cCool << tab << s.f << endl;
 	}
 	output.close();
 

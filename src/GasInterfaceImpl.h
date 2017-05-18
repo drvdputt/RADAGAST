@@ -81,7 +81,7 @@ public:
 	 * continuum) */
 	double continuumCooling(const Solution&) const;
 	/* The bolometric absorption by the continuum only (free-free heating) in erg / s / cm3 */
-	double freeFreeHeating(const Solution&) const;
+	double continuumHeating(const Solution&) const;
 
 	inline double np_ne(const Solution& s) const
 	{
