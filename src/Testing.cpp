@@ -232,7 +232,7 @@ void Testing::testGasInterfaceImpl()
 	                                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                                "opacity alpha_nu (cm-1)",
 	                                "scattered (erg s-1 cm-3 Hz-1 sr-1)",
-	                                "int - sca"};
+	                                };
 	out << "#";
 	int i = 0;
 	for (const auto& s : colnames)
@@ -251,7 +251,7 @@ void Testing::testGasInterfaceImpl()
 		double effective = emv[iFreq] - scav[iFreq];
 		effective = effective > 0 ? effective : 0;
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab << opv[iFreq]
-		    << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq] << tab << effective
+		    << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq] << tab
 		    << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;

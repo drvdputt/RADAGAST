@@ -99,10 +99,6 @@ private:
 	 */
 	Array lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const;
 
-	/* Calculates the contribution of A_ul to the total decay rate of u. This will determine the
-	 probability that a photon is re-emitted. */
-	double lineDecayFraction(size_t upper, size_t lower, const Solution& s) const;
-
 	/* Variables which are the same for all invocations of solveBalance are stored as members */
 
 	/* Wavelength grid */
@@ -138,7 +134,6 @@ public:
 	 two-photon continuum 2s->1s transition of HI */
 	virtual Array boundBoundContinuum(const Solution& s) const;
 	Array opacityv(const Solution& s) const;
-	Array scatteringOpacityv(const Solution& s) const;
 
 	/* Heating rate due to collisional de-excitation (ergs / s / cm3) */
 	double heating(const Solution& s) const;

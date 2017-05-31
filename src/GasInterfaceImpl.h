@@ -28,7 +28,7 @@ public:
 	 * grid (by reference) if suggestedGrid = true.*/
 	GasInterfaceImpl(const Array& frequencyv, bool improveGrid);
 
-	Array frequencyv() const {return _frequencyv;}
+	Array frequencyv() const { return _frequencyv; }
 
 	~GasInterfaceImpl();
 
@@ -53,13 +53,8 @@ public:
 	Array emissivityv(const Solution&) const;
 	/* The total opacity at each frequency in 1 / cm */
 	Array opacityv(const Solution&) const;
-	/* The scattering opacity used to simulate re-emission of line photons,
-	 such as resonant scattering. The absorption opacity equals the total opacity minus this
-	 value. */
+	/* A possible scattering opacity */
 	Array scatteringOpacityv(const Solution&) const;
-	/* The amount of radiation scattered away by the scattering approach (in the same units as
-	 the emissivity) */
-	Array scatteredv(const Solution&) const;
 
 	/* The total bolometric emission, in erg / s / cm^3, obtained by integrating the emissivity.
 	 */
@@ -74,8 +69,6 @@ public:
 	/* The bolometric absorption by the lines only. The absorption of re-emitted line photons is
 	 also included here. */
 	double lineHeating(const Solution&) const;
-	/*  Taking the difference of the above two terms will cancel out the contributions of the
-	 "scattered" photons and yield the heating/cooling contribution by the lines. */
 
 	/* The bolometric emission by the continuum only (= cooling by recombination + free-free
 	 * continuum) */

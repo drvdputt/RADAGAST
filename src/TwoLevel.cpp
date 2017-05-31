@@ -3,10 +3,10 @@
 #include "Sanity.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
+#include "global.h"
 #include <algorithm>
 #include <exception>
 #include <vector>
-#include "global.h"
 
 using namespace std;
 
@@ -83,8 +83,6 @@ Array TwoLevel::emissivityv() const { return lineIntensityFactor(1, 0) * linePro
 
 Array TwoLevel::opacityv() const { return lineOpacityFactor(1, 0) * lineProfile(1, 0); }
 
-Array TwoLevel::scatteringOpacityv() const { return opacityv() * lineDecayFraction(1, 0); }
-
 double TwoLevel::lineIntensityFactor(size_t upper, size_t lower) const
 {
 	return (_Ev(upper) - _Ev(lower)) / Constant::FPI * _nv(upper) * _Avv(1, 0);
@@ -125,12 +123,6 @@ Array TwoLevel::lineProfile(size_t upper, size_t lower) const
 		             Constant::SQRT2PI / sigma_nu;
 	}
 	return profile;
-}
-
-double TwoLevel::lineDecayFraction(size_t upper, size_t lower) const
-{
-	return _Avv(upper, lower) /
-	       (_Avv.row(upper).sum() + _BPvv.row(upper).sum() + _Cvv.row(upper).sum());
 }
 
 void TwoLevel::prepareAbsorptionMatrix(const Array& specificIntensityv)

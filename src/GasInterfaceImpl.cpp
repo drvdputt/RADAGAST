@@ -247,14 +247,7 @@ Array GasInterfaceImpl::opacityv(const Solution& s) const
 
 Array GasInterfaceImpl::scatteringOpacityv(const Solution& s) const
 {
-	return _boundBound->scatteringOpacityv(s.levelSolution);
-}
-
-Array GasInterfaceImpl::scatteredv(const Solution& s) const
-{
-	// only the lines can scatter
-	const Array& scaOp = _boundBound->scatteringOpacityv(s.levelSolution);
-	return s.specificIntensityv * scaOp;
+	return Array(s.specificIntensityv.size());
 }
 
 double GasInterfaceImpl::cooling(const Solution& s) const

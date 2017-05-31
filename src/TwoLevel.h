@@ -29,10 +29,6 @@ public:
 	/* The opacity alpha_nu, equivalent to kappaRho for dust (cm-1) */
 	Array opacityv() const;
 
-	/* The part of the opacity which acts as a source of scattering. This scattering is
-	 equivalent to the immediate emission of a photon by the line that just absorbed it. */
-	Array scatteringOpacityv() const;
-
 private:
 	double lineIntensityFactor(size_t upper, size_t lower) const;
 	double lineOpacityFactor(size_t upper, size_t lower) const;

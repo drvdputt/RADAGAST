@@ -110,16 +110,6 @@ Array NLevel::opacityv(const Solution& s) const
 	return total;
 }
 
-Array NLevel::scatteringOpacityv(const Solution& s) const
-{
-	Array total(_frequencyv.size());
-	forAllLinesDo([&](size_t upper, size_t lower) {
-		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s) *
-		         lineDecayFraction(upper, lower, s);
-	});
-	return total;
-}
-
 void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithLine) const
 {
 	for (int lower = 0; lower < _nLv; lower++)
@@ -182,12 +172,6 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::Mat
 		             Constant::SQRT2PI / sigma_nu;
 	}
 	return profile;
-}
-
-double NLevel::lineDecayFraction(size_t upper, size_t lower, const Solution& s) const
-{
-	return _avv(upper, lower) / (_avv.row(upper).sum() + _extraAvv.row(upper).sum() +
-	                             s.bpvv.row(upper).sum() + s.cvv.row(upper).sum());
 }
 
 Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,

@@ -1,9 +1,6 @@
 #ifndef _SRC_GASINTERFACE_H_
 #define _SRC_GASINTERFACE_H_
 
-#define NO_SCATTER
-#define NO_SCATTER_COMPENSATION
-
 #include "GasState.h"
 
 #include <memory>
@@ -33,7 +30,7 @@ public:
 	 between the size of the GasState objects and the computation time needed for the optical
 	 properties needs to be found. */
 	// 1 erg / cm3 / s / Hz / sr = 0.1 J / m3 / s / Hz / sr
-	double effectiveEmissivity_SI(const GasState& gs, size_t iFreq) const;
+	double emissivity_SI(const GasState& gs, size_t iFreq) const;
 	double opacity_SI(const GasState& gs, size_t iFreq) const;
 	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
 	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
