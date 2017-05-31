@@ -21,6 +21,11 @@ NLevel::NLevel(int nLv, const Eigen::VectorXd& ev, const Eigen::VectorXd& gv,
 {
 }
 
+Eigen::MatrixXd NLevel::makeExtraAvv() const {
+	int nlv = makeNLv();
+	return Eigen::MatrixXd::Zero(nlv, nlv);
+}
+
 void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const
 {
 	numLines = 0;

@@ -27,7 +27,8 @@ protected:
 	virtual Eigen::VectorXd makeEv() const = 0;
 	virtual Eigen::VectorXd makeGv() const = 0;
 	virtual Eigen::MatrixXd makeAvv() const = 0;
-	virtual Eigen::MatrixXd makeExtraAvv() const = 0;
+	virtual Eigen::MatrixXd makeExtraAvv() const; // this one defaults to a zero matrix of the
+	                                              // size specified by the subclass
 
 public:
 	int nLv() const { return _nLv; }
@@ -87,7 +88,11 @@ private:
 	 * > lower that have _Avv(upper, lower) > 0. */
 	void forAllLinesDo(std::function<void(size_t upper, size_t lower)> thingWithLine) const;
 
+	/* Calculates the intensity of a specific line [erg / s / cm2]. Multiplying with the line
+	 * profile will yield the specific intensity. */
 	double lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const;
+
+	/* Computes the opacity of a line, not yet multiplied with the line profile */
 	double lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const;
 
 	/* Calculates the Voigt profile for a certain line, using the wavelengthgrid supplied at
@@ -125,14 +130,23 @@ public:
 
 	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
 
+	/* Calculates the level populations for a certain electron temperature and isrf. The number
+	 of electrons and protons is needed to determine the collisional transition rates. When
+	 ionization comes into play, the recombination and ionization rates will act as source and
+	 sink terms for the levels. Therefore, external sources or sink rates can be passed using
+	 vectors containing one number for each level. */
 	Solution solveBalance(double atomDensity, double electronDensity, double protonDensity,
 	                      double T, const Array& specificIntensityv, const Array& sourcev,
 	                      const Array& sinkv) const;
 
+	/* The values needed for a radiative transfer cycle */
+
+	/* The emission coefficient j_nu (erg/cm3/s/Hz) */
 	Array emissivityv(const Solution& s) const;
 	/* The contribution to the emissivity non-line bound-bound processes, for example the
 	 two-photon continuum 2s->1s transition of HI */
 	virtual Array boundBoundContinuum(const Solution& s) const;
+	/* The opacity alpha_nu, equivalent to kappaRho for dust (cm-1) */
 	Array opacityv(const Solution& s) const;
 
 	/* Heating rate due to collisional de-excitation (ergs / s / cm3) */
