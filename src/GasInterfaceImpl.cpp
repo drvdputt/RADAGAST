@@ -284,22 +284,12 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
-	Array gamma_nuv(_frequencyv.size());
-	//_freeBound->addEmissionCoefficientv(s.T, gamma_nuv);
-	_freeFree->addEmissionCoefficientv(s.T, gamma_nuv);
-
-	// emissivity = ne np / 4pi * gamma
-	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
-	return np_ne(s) * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv) +
-	       Ionization::cooling(s.n, s.f, s.T);
+	+	       Ionization::cooling(s.n, s.f, s.T);
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
-	Array freefreeOpCoefv(_frequencyv.size());
-	_freeFree->addOpacityCoefficientv(s.T, freefreeOpCoefv);
-	Array intensityOpacityv(s.specificIntensityv * np_ne(s) * freefreeOpCoefv);
-	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv) +
+	return _freeFree->heating(np_ne(s), s.T, s.specificIntensityv) +
 	       Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
 }
 

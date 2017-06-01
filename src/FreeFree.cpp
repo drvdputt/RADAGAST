@@ -1,5 +1,6 @@
-/* Some of the code in this file is adapted from the file interpolate3.c, which was downloaded from
- http://data.nublado.org/gauntff/ and included the Copyright statement below. */
+/* Some of the code in this file is adapted from the files interpolate3.c and interpolate4.c, which
+ were downloaded from http://data.nublado.org/gauntff/ and included the Copyright statement below.
+ */
 
 /*
  Copyright (c) 2014, Peter A.M. van Hoof.
@@ -43,11 +44,12 @@
 #include "FreeFree.h"
 #include "Constants.h"
 #include "TemplatedUtils.h"
+#include "Testing.h"
+#include "global.h"
 #include <cassert>
 #include <fstream>
 #include <iostream>
 #include <sstream>
-#include "global.h"
 
 using namespace std;
 
@@ -69,11 +71,12 @@ const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / C
 
 FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 {
-	readData(REPOROOT"/dat/gauntff_merged_Z01.dat");
+	readFullData(REPOROOT "/dat/gauntff_merged_Z01.dat");
+	readIntegratedData(REPOROOT "dat/gauntff_freqint_Z01.dat");
 	DEBUG("Constructed FreeFree" << endl);
 }
 
-void FreeFree::readData(const string& file)
+void FreeFree::readFullData(const string& file)
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
@@ -167,6 +170,40 @@ void FreeFree::readData(const string& file)
 	DEBUG("Successfully read gauntff.dat" << endl);
 }
 
+void FreeFree::readIntegratedData(const string& filename) { return; }
+
+double FreeFree::gauntFactor(double logu, double logg2) const
+{
+	// Throw an error if out of range for now. Maybe allow extrapolation later.
+	if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
+		throw runtime_error("Log(gamma^2) or log(u) out of range");
+
+	// Find the gamma^2-index to the right of logg2 , maximum the max column index)
+	int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
+	// should be at least 1 (to extrapolate left)
+	iRight = max(iRight, 1);
+	// cannot be larger than the max column index
+	iRight = min(iRight, static_cast<int>(_fileGauntFactorvv.size(1) - 1));
+	int iLeft = iRight - 1;
+	double xRight = _loggamma2Min + _logStep * iRight;
+	double xLeft = xRight - _logStep;
+
+	// Find the u-index above u
+	int iUpper = ceil((logu - _loguMin) / _logStep);
+	iUpper = max(iUpper, 1);
+	iUpper = min(iUpper, static_cast<int>(_fileGauntFactorvv.size(0) - 1));
+	int iLower = iUpper - 1;
+	double yUp = _loguMin + _logStep * iUpper;
+	double yLow = yUp - _logStep;
+
+	double gff = TemplatedUtils::interpolateRectangular<double>(
+	                logg2, logu, xLeft, xRight, yLow, yUp, _fileGauntFactorvv(iLower, iLeft),
+	                _fileGauntFactorvv(iLower, iRight), _fileGauntFactorvv(iUpper, iLeft),
+	                _fileGauntFactorvv(iUpper, iRight));
+
+	return exp(gff);
+}
+
 void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 {
 	// gamma is fixed for a given temperature
@@ -221,34 +258,24 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 #endif
 }
 
-double FreeFree::gauntFactor(double logu, double logg2) const
+double FreeFree::heating(double np_ne, double T, const Array& specificIntensityv) const
 {
-	// Throw an error if out of range for now. Maybe allow extrapolation later.
-	if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
-		throw runtime_error("Log(gamma^2) or log(u) out of range");
+	Array freefreeOpCoefv(_frequencyv.size());
+	addOpacityCoefficientv(T, freefreeOpCoefv);
+	Array intensityOpacityv(specificIntensityv * np_ne * freefreeOpCoefv);
+	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+}
 
-	// Find the gamma^2-index to the right of logg2 , maximum the max column index)
-	int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
-	// should be at least 1 (to extrapolate left)
-	iRight = max(iRight, 1);
-	// cannot be larger than the max column index
-	iRight = min(iRight, static_cast<int>(_fileGauntFactorvv.size(1) - 1));
-	int iLeft = iRight - 1;
-	double xRight = _loggamma2Min + _logStep * iRight;
-	double xLeft = xRight - _logStep;
+double FreeFree::cooling(double np_ne, double T) const
+{
+	// Intergrate over a fixed set of frequency points
+	std::vector<double> freqv = Testing::generateGeometricGridv(10000, 1e6, 1e17);
 
-	// Find the u-index above u
-	int iUpper = ceil((logu - _loguMin) / _logStep);
-	iUpper = max(iUpper, 1);
-	iUpper = min(iUpper, static_cast<int>(_fileGauntFactorvv.size(0) - 1));
-	int iLower = iUpper - 1;
-	double yUp = _loguMin + _logStep * iUpper;
-	double yLow = yUp - _logStep;
+	Array gamma_nuv(_frequencyv.size());
+	//_freeBound->addEmissionCoefficientv(s.T, gamma_nuv);
+	addEmissionCoefficientv(T, gamma_nuv);
 
-	double gff = TemplatedUtils::interpolateRectangular<double>(
-	                logg2, logu, xLeft, xRight, yLow, yUp, _fileGauntFactorvv(iLower, iLeft),
-	                _fileGauntFactorvv(iLower, iRight), _fileGauntFactorvv(iUpper, iLeft),
-	                _fileGauntFactorvv(iUpper, iRight));
-
-	return exp(gff);
+	// emissivity = ne np / 4pi * gamma
+	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
+	return np_ne * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
 }
