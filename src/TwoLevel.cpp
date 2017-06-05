@@ -33,6 +33,7 @@ Eigen::VectorXd TwoLevel::makeEv() const
 {
 	Eigen::VectorXd the_ev(2);
 	the_ev << 0, .00786 / Constant::ERG_EV;
+	return the_ev;
 }
 
 Eigen::VectorXd TwoLevel::makeGv() const

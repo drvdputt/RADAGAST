@@ -187,8 +187,8 @@ void Testing::testGasInterfaceImpl()
 	double expectedTemperature = 1000;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(300, Constant::LIGHT / (1e7 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.01 * Constant::UM_CM));
+	                generateGeometricGridv(10000, Constant::LIGHT / (1e10 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
 	//	const double lineWindowFactor = 5;
 	//	vector<double> lineFreqv = {Constant::LIGHT * 82258.9191133};

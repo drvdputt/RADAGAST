@@ -56,6 +56,8 @@ using namespace std;
 #define NP_GAM2 81
 #define NP_U 146
 
+#define NP_GAM2_INTEGRATED 161
+
 // See equations for free-free in gasphysics document, or in Rybicki and Lightman equations 5.14a
 // and 5.18a
 const double e6 = Constant::ESQUARE * Constant::ESQUARE * Constant::ESQUARE;
@@ -69,10 +71,13 @@ const double gamma_nu_constantFactor =
 const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / Constant::PLANCK /
                                         Constant::LIGHT * sqrt_2piOver3m;
 
+// Constant factor from 1998-Sutherland equation 18
+const double fk = 1.42554e-27;
+
 FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 {
 	readFullData(REPOROOT "/dat/gauntff_merged_Z01.dat");
-	readIntegratedData(REPOROOT "dat/gauntff_freqint_Z01.dat");
+	readIntegratedData(REPOROOT "/dat/gauntff_freqint_Z01.dat");
 	DEBUG("Constructed FreeFree" << endl);
 }
 
@@ -154,9 +159,9 @@ void FreeFree::readFullData(const string& file)
 		getline(input, line);
 	}
 
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/gauntff.dat");
+	out.open("gauntff.dat");
 	for (size_t ipu = 0; ipu < np_u; ipu++)
 	{
 		for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
@@ -170,7 +175,83 @@ void FreeFree::readFullData(const string& file)
 	DEBUG("Successfully read gauntff.dat" << endl);
 }
 
-void FreeFree::readIntegratedData(const string& filename) { return; }
+void FreeFree::readIntegratedData(const string& file)
+{
+	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
+	// 420)
+	ifstream input(file);
+	if (!input)
+	{
+		cerr << "File " + file + "not found." << endl;
+		throw std::runtime_error("File " + file + "not found.");
+	}
+
+	// buffer
+	string line;
+
+	/* skip copyright statement */
+	while (getline(input, line))
+	{
+		if (line.at(0) != '#')
+			break;
+	}
+
+	/* read magic number */
+	const long gaunt_magic = 20141008L;
+	long magic;
+	istringstream(line) >> magic;
+	if (magic != gaunt_magic)
+	{
+		cerr << "read_table() found wrong magic number in file %s.\n" << endl;
+		throw std::runtime_error("read_table() found wrong magic number in file %s.\n");
+	}
+
+	/* read dimensions of the table */
+	size_t np_gam2;
+	getline(input, line);
+	istringstream(line) >> np_gam2;
+	assert(np_gam2 == NP_GAM2_INTEGRATED);
+
+	/* read start value for log(gamma^2) */
+	getline(input, line);
+	istringstream(line) >> _loggamma2Min_integrated;
+
+	/* read step size in dex */
+	getline(input, line);
+	istringstream(line) >> _logStep_integrated;
+	_loggamma2Max_integrated = _loggamma2Min_integrated +
+	                           static_cast<double>(np_gam2 - 1) * _logStep_integrated;
+
+	/* read atomic number */
+	getline(input, line);
+
+	/* next lines are comments */
+	while (getline(input, line))
+	{
+		if (line.at(0) != '#')
+			break;
+	}
+
+	_fileGauntFactorv_integrated.resize(np_gam2);
+	_loggamma2_integrated.resize(np_gam2);
+	for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
+	{
+		istringstream(line) >> _loggamma2_integrated[ipg2] >>
+		                _fileGauntFactorv_integrated[ipg2];
+		_fileGauntFactorv_integrated[ipg2] = log(_fileGauntFactorv_integrated[ipg2]);
+		getline(input, line);
+	}
+
+#ifdef DEBUG_CONTINUUM_DATA
+	ofstream out;
+	out.open("integratedgauntff.dat");
+	for (double logg2 = -5.9; logg2 < 9.9; logg2 += .1)
+	{
+		out << logg2 << '\t' << integratedGauntFactor(logg2) << '\n';
+	}
+	out.close();
+#endif
+}
 
 double FreeFree::gauntFactor(double logu, double logg2) const
 {
@@ -200,8 +281,34 @@ double FreeFree::gauntFactor(double logu, double logg2) const
 	                logg2, logu, xLeft, xRight, yLow, yUp, _fileGauntFactorvv(iLower, iLeft),
 	                _fileGauntFactorvv(iLower, iRight), _fileGauntFactorvv(iUpper, iLeft),
 	                _fileGauntFactorvv(iUpper, iRight));
-
 	return exp(gff);
+}
+
+double FreeFree::integratedGauntFactor(double logg2) const
+{
+	// Throw an error if out of range for now. Maybe allow extrapolation later.
+	if (logg2 < _loggamma2Min_integrated or logg2 > _loggamma2Max_integrated)
+		throw runtime_error("Log(gamma^2) out of range");
+
+	/* Determine the indices of the data points we will interpolate between. Using the stored
+	  gamma^2 grid to interpolate using TemplatedUtils::evaluateLinInterpf would invoke a search
+	  algorithm for the nearest value. The fixed number of operations below should be faster. */
+
+	// Find the gamma^2-index to the right of logg2 , maximum the max index)
+	int iRight = ceil((logg2 - _loggamma2Min_integrated) / _logStep_integrated);
+	// should be at least 1 (to extrapolate left)
+	iRight = max(iRight, 1);
+	// cannot be larger than the max column index
+	iRight = min(iRight, static_cast<int>(_fileGauntFactorv_integrated.size() - 1));
+	int iLeft = iRight - 1;
+
+	double xRight = _loggamma2Min_integrated + _logStep_integrated * iRight;
+	double xLeft = xRight - _logStep_integrated;
+	double fLeft = _fileGauntFactorv_integrated[iLeft];
+	double fRight = _fileGauntFactorv_integrated[iRight];
+	double loggff_integrated_ip =
+	                TemplatedUtils::interpolateLinear(logg2, xLeft, xRight, fLeft, fRight);
+	return exp(loggff_integrated_ip);
 }
 
 void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
@@ -209,9 +316,9 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	// gamma is fixed for a given temperature
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
-	double loggamma2 = log10(Constant::RYDBERG / kT);
+	double logg2 = log10(Constant::RYDBERG / kT);
 
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	ofstream out;
 	out.open("/Users/drvdputt/GasModule/run/gammanuff.dat");
 #endif
@@ -220,13 +327,13 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 		double u = Constant::PLANCK * _frequencyv[iFreq] / kT;
 		double logu = log10(u);
 		double gammaNu = gamma_nu_constantFactor / sqrtkT * exp(-u) *
-		                 gauntFactor(logu, loggamma2);
-#ifdef PRINT_CONTINUUM_DATA
+		                 gauntFactor(logu, logg2);
+#ifdef DEBUG_CONTINUUM_DATA
 		out << _frequencyv[iFreq] << "\t" << gammaNu / 1.e-40 << endl;
 #endif
 		gamma_nuv[iFreq] += gammaNu;
 	}
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	out.close();
 #endif
 }
@@ -236,7 +343,7 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
 	double loggamma2 = log10(Constant::RYDBERG / kT);
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	ofstream out;
 	out.open("/Users/drvdputt/GasModule/run/ffopacitycoef.dat");
 #endif
@@ -248,12 +355,12 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 		// C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
 		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u) *
 		                   gauntFactor(logu, loggamma2);
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 		out << _frequencyv[iFreq] << "\t" << opCoeffNu << endl;
 #endif
 		opCoeffv[iFreq] += opCoeffNu;
 	}
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	out.close();
 #endif
 }
@@ -268,14 +375,21 @@ double FreeFree::heating(double np_ne, double T, const Array& specificIntensityv
 
 double FreeFree::cooling(double np_ne, double T) const
 {
-	// Intergrate over a fixed set of frequency points
-	std::vector<double> freqv = Testing::generateGeometricGridv(10000, 1e6, 1e17);
-
+#ifdef DEBUG_CONTINUUM_DATA
 	Array gamma_nuv(_frequencyv.size());
-	//_freeBound->addEmissionCoefficientv(s.T, gamma_nuv);
 	addEmissionCoefficientv(T, gamma_nuv);
 
 	// emissivity = ne np / 4pi * gamma
 	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
-	return np_ne * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
+	double manually_integrated =
+	                np_ne * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
+#endif
+	// Interpolate and use the frequency integrated gaunt factor
+	double logg2 = log10(Constant::RYDBERG / Constant::BOLTZMAN / T);
+	double from_data = np_ne * fk * sqrt(T) * integratedGauntFactor(logg2);
+#ifdef DEBUG_CONTINUUM_DATA
+	printf("Manually integrated: %e; from data: %e; ratio: %e\n", manually_integrated,
+	       from_data, from_data / manually_integrated);
+#endif
+	return from_data;
 }

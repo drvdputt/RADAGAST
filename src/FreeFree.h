@@ -12,9 +12,10 @@ public:
 	FreeFree(const Array& frequencyv);
 
 private:
-	void readFullData(const std::string& filename);
-	void readIntegratedData(const std::string& filename);
+	void readFullData(const std::string& file);
+	void readIntegratedData(const std::string& file);
 	double gauntFactor(double logu, double logg2) const;
+	double integratedGauntFactor(double logg2) const;
 
 public:
 	/* Calculate the emission coefficient for the free-free continuum for all frequencies. The
@@ -44,6 +45,15 @@ private:
 	/* The ((base 10!) log of the) minima and maxima defining the u - gamma^2 grid, as well as
 	 the step size in log space. */
 	double _loggamma2Min{0}, _loguMin{0}, _logStep{0}, _loggamma2Max{0}, _loguMax{0};
+
+	/* The natural log of the data read from the file containing the integrated Gaunt factor,
+	 * indexed on (gamma^2). Note that there is a different number of data points here in the
+	 * gamma^2 direction. I'm not really sure why we store the gamma^2 values here. Right now
+	 * I'm just going to adapt the implementation from interpolate4.c */
+	Array _loggamma2_integrated, _fileGauntFactorv_integrated;
+
+	/* The values specifying the log10(gamma^2) grid */
+	double _loggamma2Min_integrated{0}, _logStep_integrated{0}, _loggamma2Max_integrated{0};
 };
 
 #endif /* _FREEFREE_H_ */

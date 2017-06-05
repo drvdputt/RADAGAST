@@ -284,7 +284,7 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
-	+	       Ionization::cooling(s.n, s.f, s.T);
+	return _freeFree->cooling(np_ne(s), s.T) + Ionization::cooling(s.n, s.f, s.T);
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
