@@ -119,10 +119,10 @@ Eigen::MatrixXd HydrogenLevels::prepareCollisionMatrix(double T, double electron
 {
 	Eigen::MatrixXd Cvv = Eigen::MatrixXd::Zero(NLV, NLV);
 
-	auto setElectronCollisionRate = [&](size_t upper, size_t lower, double bigGamma) {
+	auto setElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
 		// Equation 6.17 of Hazy II (6.6 Collision strengths)
-		Cvv(upper, lower) = bigGamma * 8.6291e-6 / gv(upper) / sqrt(T) * electronDensity;
+		Cvv(upper, lower) = bigUpsilon * 8.6291e-6 / gv(upper) / sqrt(T) * electronDensity;
 		Cvv(lower, upper) = Cvv(upper, lower) * gv(upper) / gv(lower) *
 		                    exp((ev(lower) - ev(upper)) / kT);
 	};
@@ -142,21 +142,21 @@ Eigen::MatrixXd HydrogenLevels::prepareCollisionMatrix(double T, double electron
 	size_t iLeft = iRight - 1;
 
 	// Effective collision strength
-	vector<double> bigGamma2s1v = {2.6e-1,  2.96e-1, 3.26e-1, 3.39e-1,
+	vector<double> bigUpsilon2s1v = {2.6e-1,  2.96e-1, 3.26e-1, 3.39e-1,
 	                               3.73e-1, 4.06e-1, 4.36e-1, 4.61e-1};
-	double bigGamma2s1 = TemplatedUtils::interpolateLinear(
-	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigGamma2s1v[iLeft],
-	                bigGamma2s1v[iRight]);
-	bigGamma2s1 = max(bigGamma2s1, 0.);
-	setElectronCollisionRate(2, 0, bigGamma2s1);
+	double bigUpsilon2s1 = TemplatedUtils::interpolateLinear(
+	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigUpsilon2s1v[iLeft],
+	                bigUpsilon2s1v[iRight]);
+	bigUpsilon2s1 = max(bigUpsilon2s1, 0.);
+	setElectronCollisionRate(2, 0, bigUpsilon2s1);
 
-	vector<double> bigGamma2p1v = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
+	vector<double> bigUpsilon2p1v = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
 	                               1.81e00, 2.35e00,  2.81e00,  3.20e00};
-	double bigGamma2p1 = TemplatedUtils::interpolateLinear(
-	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigGamma2p1v[iLeft],
-	                bigGamma2p1v[iRight]);
-	bigGamma2p1 = max(bigGamma2s1, 0.);
-	setElectronCollisionRate(1, 0, bigGamma2p1);
+	double bigUpsilon2p1 = TemplatedUtils::interpolateLinear(
+	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigUpsilon2p1v[iLeft],
+	                bigUpsilon2p1v[iRight]);
+	bigUpsilon2p1 = max(bigUpsilon2s1, 0.);
+	setElectronCollisionRate(1, 0, bigUpsilon2p1);
 
 	// Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
 	// 2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0

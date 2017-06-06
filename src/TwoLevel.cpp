@@ -65,9 +65,9 @@ Eigen::MatrixXd TwoLevel::prepareCollisionMatrix(double T, double electronDensit
 
 	// also take some values from the bottom of page 4
 	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
-	double bigGamma10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
+	double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
 
-	Cvv(1, 0) = beta / sqrt(T) * bigGamma10 / gv(1);
+	Cvv(1, 0) = beta / sqrt(T) * bigUpsilon10 / gv(1);
 	Cvv(0, 1) = Cvv(1, 0) * gv(1) / gv(0) * exp(-(ev(1) - ev(0)) / Constant::BOLTZMAN / T);
 	return Cvv;
 }
