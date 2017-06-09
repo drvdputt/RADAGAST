@@ -24,17 +24,11 @@ HydrogenLevels::HydrogenLevels() : NLevel(makeNLv(), makeEv(), makeGv(), makeAvv
 HydrogenLevels::HydrogenLevels(const Array& frequencyv)
                 : NLevel(frequencyv, makeNLv(), makeEv(), makeGv(), makeAvv(), makeExtraAvv())
 {
-	//	_namedTransitions["Halpha"] = {{{3, 1}}, {{3, 2}}};
-	//	_namedTransitions["Hbeta"] =
-
-	// approximation used:
-	// A_n,2p = 3 * A_n,2s = 3/4 * (A_n,2 from NIST)
-
-	// The correct way would be to group the levels together in the way described in Hazy II,
-	// 6.11. Collision strengths need to be summed, and transition probabilities need to be
-	// averaged over. An example grouping would be ( [3d 5/2, 3/2, 1/2] [3p 3/2, 1/2] [3s 1/2] )
-	// -> ([2p 3/2, 1/2] [2s 1/2]) Not 100% sure what to to with the multiplicity of the bottom
-	// levels though
+	/* The correct way of grouping the l-levels is described in Hazy II, 6.11. When grouping the
+	 initial levels of a collection of transitions, the collision strengths (bigUpsilon) need to
+	 be summed, and transition probabilities (einstein Aij) need to be averaged over. Combining
+	 the coefficients for different final levels comes down to
+	 just summing them. */
 
 	DEBUG("Constructed HydrogenLevels" << endl);
 }
@@ -58,12 +52,11 @@ Eigen::VectorXd HydrogenLevels::makeGv() const
 
 Eigen::MatrixXd HydrogenLevels::makeAvv() const
 {
-	// Using NIST data
-	// (http://physics.nist.gov/cgi-bin/ASD/lines1.pl?unit=1&line_out=0&bibrefs=1&show_obs_wl=1&show_calc_wl=1&A_out=0&intens_out=1&allowed_out=1&forbid_out=1&conf_out=1&term_out=1&enrg_out=1&J_out=1&g_out=0&spectra=H%20I)
-	// 1s, 2p, 2s
-	// 3, 4, 5
-	// The l-resolved data are also j-resolved however, so we'll have to average over initial
-	// and sum over lower states
+	/* Using NIST data
+	 * (http://physics.nist.gov/cgi-bin/ASD/lines1.pl?unit=1&line_out=0&bibrefs=1&show_obs_wl=1&show_calc_wl=1&A_out=0&intens_out=1&allowed_out=1&forbid_out=1&conf_out=1&term_out=1&enrg_out=1&J_out=1&g_out=0&spectra=H%20I)
+	 */
+
+	/* Explicit implementation, for instructive purposes */
 
 	// Decays to 1
 	double A2p1 = 6.2649e8;
@@ -81,7 +74,7 @@ Eigen::MatrixXd HydrogenLevels::makeAvv() const
 	// Two different final states --> sum
 	double A3s2p = 4.2097e+06 + 2.1046e+06;
 	// Different final states and initial states --> both sum and average
-	double A3d2p = (4 * 1.0775e+07 + 6 * 6.4651e+07 + 4 * 5.3877e+07 ) / 10.;
+	double A3d2p = (4 * 1.0775e+07 + 6 * 6.4651e+07 + 4 * 5.3877e+07) / 10.;
 	double A32p = (1 * A3s2p + 3 * 0. + 5 * A3d2p) / 9.;
 
 	// Keep this as a reference. The sum of A32s and A32p should equal this.
@@ -118,11 +111,11 @@ Eigen::MatrixXd HydrogenLevels::makeAvv() const
 	Eigen::MatrixXd the_avv(NLV, NLV);
 	// clang-format off
 	the_avv << 0, 0, 0, 0, 0, 0,
-		   A2p1, 0, 0, 0, 0, 0,
-		   A2s1, 0, 0, 0, 0, 0,
-		   A31, A32p, A32s, 0, 0, 0,
-		   A41, A42p, A42s, A43, 0, 0,
-		   A51, A52p, A52s, A53, A54, 0;
+	           A2p1, 0, 0, 0, 0, 0,
+	           A2s1, 0, 0, 0, 0, 0,
+	           A31, A32p, A32s, 0, 0, 0,
+	           A41, A42p, A42s, A43, 0, 0,
+	           A51, A52p, A52s, A53, A54, 0;
 	// clang-format on
 	return the_avv;
 }

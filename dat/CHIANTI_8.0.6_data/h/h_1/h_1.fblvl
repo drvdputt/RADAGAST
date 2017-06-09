@@ -1,0 +1,30 @@
+    1                  1s    1    0  s    2               0.000               0.000
+    2                  2s    2    0  s    2           82258.956           82303.000
+    3                  2p    2    1  p    6           82259.165           82303.000
+    4                  3s    3    0  s    2           97492.224           97544.000
+    5                  3p    3    1  p    6           97492.285           97544.000
+    6                  3d    3    2  d   10           97492.343           97544.000
+    7                  4s    4    0  s    2          102823.855          102879.000
+    8                  4p    4    1  p    6          102823.881          102879.000
+    9                  4d    4    2  d   10          102823.905          102879.000
+   10                  4f    4    3  f   14          102823.916          102879.000
+   11                  5s    5    0  s    2          105291.633          105348.000
+   12                  5p    5    1  p    6          105291.646          105348.000
+   13                  5d    5    2  d   10          105291.659          105348.000
+   14                  5f    5    3  f   14          105291.664          105348.000
+   15                  5g    5    4  g   18          105291.667          105348.000
+   16                  6s    6    0  s    2          106632.152               0.000
+   17                  6p    6    1  p    6          106632.160               0.000
+   18                  6d    6    2  d   10          106632.167               0.000
+   19                  6f    6    3  f   14          106632.170               0.000
+   20                  6g    6    4  g   18          106632.172               0.000
+   21                  6h    6    5  h   22          106632.173               0.000
+ -1
+%filename: h_1.fblvl
+%observed energy levels: Fuhr et al, 1999, NIST Atomic Spectra Database Version 2.0
+%additional energy levels: NIST Atomic Spectra Database Version 2.0
+%comment: free-bound data file developed from .elvlc file
+%produced as part of the Arcetri/Cambridge/NRL 'CHIANTI' atomic data base collaboration
+%
+% Ken Dere - Jul 17 2002
+ -1
