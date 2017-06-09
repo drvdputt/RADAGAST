@@ -1,5 +1,6 @@
 #include "HydrogenLevels.h"
 #include "Constants.h"
+#include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "global.h"
 #include <iostream>
@@ -223,4 +224,17 @@ Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
 		result[iFreq] = constFactor * y * Py;
 	}
 	return result;
+}
+
+void HydrogenLevels::readCHIANTI()
+{
+	const std::string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
+	ifstream levelFile = IOTools::ifstreamFile(basename + ".elvlc");
+
+	int lvindex, twoSplus1;
+	string config, l;
+	double j, observedEnergy, theoreticalEnergy;
+	istringstream iss = IOTools::istringstreamNextLine(levelFile);
+	iss >> lvindex >> config >> twoSplus1 >> l >> j >>
+	                observedEnergy >> theoreticalEnergy;
 }
