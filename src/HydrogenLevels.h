@@ -32,11 +32,13 @@ private:
 	double energy_CHIANTI(int n, int l, int j);
 
 	/* Return the A coefficient between two levels read in from the CHIANTI database. */
-	double einsteinAijCHIANTI(int ni, int li, int ji, int nf, int lf, int jf);
+	double einsteinAijCHIANTI(int ni, int li, int twoJi, int nf, int lf, int twoJf);
 
 	/* Reads collisional data from Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys., 2002, 35,
 	 * 1613) */
 	void readCollisionData();
+
+	const std::map<char, int> _lNumber = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
 };
 
 #endif /* _SRC_HYDROGENLEVELS_H_ */

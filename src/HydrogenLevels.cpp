@@ -20,6 +20,7 @@ const int index2s = 2;
 HydrogenLevels::HydrogenLevels() : NLevel(makeNLv(), makeEv(), makeGv(), makeAvv(), makeExtraAvv())
 {
 	DEBUG("Constructed HydrogenLevels (without frequency grid)" << endl);
+	readCHIANTI();
 }
 
 HydrogenLevels::HydrogenLevels(const Array& frequencyv)
@@ -30,7 +31,6 @@ HydrogenLevels::HydrogenLevels(const Array& frequencyv)
 	 be summed, and transition probabilities (einstein Aij) need to be averaged over. Combining
 	 the coefficients for different final levels comes down to
 	 just summing them. */
-
 	DEBUG("Constructed HydrogenLevels" << endl);
 }
 
@@ -232,9 +232,23 @@ void HydrogenLevels::readCHIANTI()
 	ifstream levelFile = IOTools::ifstreamFile(basename + ".elvlc");
 
 	int lvindex, twoSplus1;
-	string config, l;
+	string config;
+	char lSymbol;
 	double j, observedEnergy, theoreticalEnergy;
-	istringstream iss = IOTools::istringstreamNextLine(levelFile);
-	iss >> lvindex >> config >> twoSplus1 >> l >> j >>
-	                observedEnergy >> theoreticalEnergy;
+	// Not really flexible, but screw it for now
+	for (int lineNr = 0; lineNr < 25; lineNr++)
+	{
+		istringstream iss = IOTools::istringstreamNextLine(levelFile);
+		iss >> lvindex >> config >> twoSplus1 >> lSymbol >> j >> observedEnergy >>
+		                theoreticalEnergy;
+		cout << lvindex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
+		     << " " << observedEnergy << " " << theoreticalEnergy << " " << endl;
+
+		// Converting the first character of the configuration to an int should work as long
+		// as n_max <= 9
+//		int n = config.at(0);
+//		int l = _lNumber.at(lSymbol);
+//		int twoJ = static_cast<int>(2 * j);
+	}
+	exit(1);
 }
