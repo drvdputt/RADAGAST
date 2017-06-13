@@ -1,4 +1,5 @@
 #include "IOTools.h"
+#include "global.h"
 
 using namespace std;
 
@@ -11,6 +12,7 @@ ifstream IOTools::ifstreamFile(const string& file)
 		cerr << message << endl;
 		throw runtime_error(message);
 	}
+	DEBUG("Opened file " << file << endl);
 	return input;
 }
 

@@ -20,7 +20,7 @@ const int index2s = 2;
 HydrogenLevels::HydrogenLevels() : NLevel(makeNLv(), makeEv(), makeGv(), makeAvv(), makeExtraAvv())
 {
 	DEBUG("Constructed HydrogenLevels (without frequency grid)" << endl);
-	readCHIANTI();
+	readData();
 }
 
 HydrogenLevels::HydrogenLevels(const Array& frequencyv)
@@ -226,29 +226,144 @@ Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
 	return result;
 }
 
-void HydrogenLevels::readCHIANTI()
+void HydrogenLevels::readData()
 {
+	if (_dataReady)
+		return;
+
 	const std::string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
+
 	ifstream levelFile = IOTools::ifstreamFile(basename + ".elvlc");
-
-	int lvindex, twoSplus1;
-	string config;
-	char lSymbol;
-	double j, observedEnergy, theoreticalEnergy;
-	// Not really flexible, but screw it for now
-	for (int lineNr = 0; lineNr < 25; lineNr++)
+	string line;
+	getline(levelFile, line);
+	while (line.compare(1, 2, "-1"))
 	{
-		istringstream iss = IOTools::istringstreamNextLine(levelFile);
-		iss >> lvindex >> config >> twoSplus1 >> lSymbol >> j >> observedEnergy >>
-		                theoreticalEnergy;
-		cout << lvindex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
-		     << " " << observedEnergy << " " << theoreticalEnergy << " " << endl;
+		// Read the different parts of the line
+		int lvIndex, twoSplus1;
+		string config;
+		char lSymbol;
+		double j, observedEnergy, theoreticalEnergy;
+		istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >>
+		                observedEnergy >> theoreticalEnergy;
+		DEBUG(lvIndex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
+		              << " " << observedEnergy << " " << theoreticalEnergy << " " << endl);
 
-		// Converting the first character of the configuration to an int should work as long
-		// as n_max <= 9
-//		int n = config.at(0);
-//		int l = _lNumber.at(lSymbol);
-//		int twoJ = static_cast<int>(2 * j);
+		levelInfo lvInfo;
+		istringstream(config) >> lvInfo.n; // Get the first number from the config string,
+		lvInfo.l = _lNumberm.at(lSymbol);  // Translate the angular momentum letter
+		lvInfo.twoJplus1 = static_cast<int>(2 * j + 1); // Store 2j+1
+		lvInfo.e = observedEnergy;
+		DEBUG("n " << lvInfo.n << " l " << lvInfo.l << " 2j+1 " << lvInfo.twoJplus1 << " e "
+		           << lvInfo.e << endl);
+
+		// The level indices in the data structures will go from 0 to number of levels minus
+		// one
+		// The quantum numbers are also used as keys in a map, so we can quickly retrieve
+		// the index for a given configuration.
+		// The level indices in the file and the map will go from 1 to the number of levels
+		_chiantiLevelv.push_back(lvInfo);
+		_nljToChiantiIndexm.insert({{lvInfo.n, lvInfo.l, lvInfo.twoJplus1}, lvIndex - 1});
+
+		getline(levelFile, line);
 	}
+	levelFile.close();
+
+	_chiantiNumLvl = _chiantiLevelv.size();
+	_chiantiAvv.resize(_chiantiNumLvl, _chiantiNumLvl);
+
+	ifstream einsteinFile = IOTools::ifstreamFile(basename + ".wgfa");
+	getline(einsteinFile, line);
+	while (line.compare(1, 2, "-1"))
+	{
+		int leftIndex, rightIndex;
+		double wavAngstrom, gf, A;
+		istringstream(line) >> leftIndex >> rightIndex >> wavAngstrom >> gf >> A;
+
+		// A comment in the cloudy code recommended to do this, as there are apparently some
+		// files in the CHIANTI database where the left index represents the upper level of
+		// the transition:
+		int upperIndex = max(leftIndex, rightIndex);
+		int lowerIndex = min(leftIndex, rightIndex);
+
+		DEBUG(lowerIndex << " " << upperIndex << " " << wavAngstrom << " " << gf << " " << A
+		                 << endl);
+
+		// Zero means two-photon transition, see CHIANTI user guide
+		_chiantiAvv(upperIndex - 1, lowerIndex) = wavAngstrom > 0 ? A : 0;
+
+		getline(einsteinFile, line);
+	}
+	einsteinFile.close();
+
+	int andersonIndex = 1;
+	for (int n = 0; n <= 5; n++)
+	{
+		for (int l = 0; l < n; l++)
+		{
+			_nlToAndersonIndexm.insert({{n, l}, andersonIndex});
+			andersonIndex++;
+		}
+	}
+
+	_andersonCollStrvvv.resize(15, 15, 8);
+	ifstream andersonFile = IOTools::ifstreamFile(REPOROOT "/dat/h_coll_str.dat");
+	getline(andersonFile, line);
+	getline(andersonFile, line);
+	while (line.compare(0, 2, "-1"))
+	{
+		istringstream iss = istringstream(line);
+		int upperIndex, lowerIndex;
+		iss >> upperIndex >> lowerIndex;
+		for (int t = 0; t < 8; t++)
+		{
+			DEBUG("temp" << _andersonTempv[t]);
+			iss >> _andersonCollStrvvv(upperIndex, lowerIndex, t);
+			DEBUG(" " << _andersonCollStrvvv(upperIndex, lowerIndex, t));
+		}
+		DEBUG(endl);
+		getline(andersonFile, line);
+	}
+	andersonFile.close();
+	_dataReady = true;
 	exit(1);
 }
+
+double HydrogenLevels::energyCHIANTI(int n, int l)
+{
+	// Take an average over the j states
+	double esum = 0;
+	for (int twoJplus1 : twoJplus1range(l))
+	{
+		esum += _chiantiLevelv[indexCHIANTI(n, l, twoJplus1)].e * twoJplus1;
+		jsum += twoJplus1;
+	}
+	return esum / (4 * l + 2);
+}
+
+double HydrogenLevels::einsteinACHIANTI(int ni, int li, int nf, int lf)
+{
+	if (ni < nf)
+	{
+		return 0.;
+	}
+	else
+	{
+		double Asum = 0;
+		// sum over the final j states
+		for (int twoJplus1f : twoJplus1range(lf))
+		{
+			int lIndex = indexCHIANTI(nf, lf, twoJplus1f);
+
+			// average over the initial j states
+			for (int twoJplus1i : twoJplus1range(li))
+			{
+				int uIndex = indexCHIANTI(ni, li, twoJplus1i);
+				Asum += _chiantiAvv(uIndex, lIndex) * twoJplus1i;
+			}
+		}
+		// divide by multiplicity of li state to get the average
+		return Asum / (4 * li + 2);
+	}
+}
+
+
