@@ -15,12 +15,19 @@ namespace
 // commonly used indices
 const int index2p = 1;
 const int index2s = 2;
+
+inline std::vector<int> twoJplus1range(int l)
+{
+	return l > 0 ? std::vector<int>({2 * l, 2 * l + 2}) : std::vector<int>({2});
+}
 }
 
 HydrogenLevels::HydrogenLevels() : NLevel(makeNLv(), makeEv(), makeGv(), makeAvv(), makeExtraAvv())
 {
 	DEBUG("Constructed HydrogenLevels (without frequency grid)" << endl);
+#ifndef HYDROGENLEVELS_HARDCODE
 	readData();
+#endif
 }
 
 HydrogenLevels::HydrogenLevels(const Array& frequencyv)
@@ -34,14 +41,25 @@ HydrogenLevels::HydrogenLevels(const Array& frequencyv)
 	DEBUG("Constructed HydrogenLevels" << endl);
 }
 
-int HydrogenLevels::makeNLv() const { return NLV; }
+int HydrogenLevels::makeNLv() const
+{
+#ifdef HYDROGENLEVELS_HARDCODE
+	return NLV;
+#else
+	return _chiantiNumLvl;
+#endif
+}
 
 Eigen::VectorXd HydrogenLevels::makeEv() const
 {
+#ifdef HYDROGENLEVELS_HARDCODE
 	Eigen::VectorXd the_ev(NLV);
 	the_ev << 0., 82258.9191133, 82258.9543992821, 97492.304, 102823.904, 105291.657;
 	// Energy in cm^-1, so multiply with hc
 	return the_ev * Constant::PLANCKLIGHT;
+#else
+
+#endif
 }
 
 Eigen::VectorXd HydrogenLevels::makeGv() const
@@ -230,9 +248,11 @@ void HydrogenLevels::readData()
 {
 	if (_dataReady)
 		return;
-
 	const std::string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
 
+	//-----------------//
+	// READ LEVEL DATA //
+	//-----------------//
 	ifstream levelFile = IOTools::ifstreamFile(basename + ".elvlc");
 	string line;
 	getline(levelFile, line);
@@ -267,10 +287,12 @@ void HydrogenLevels::readData()
 		getline(levelFile, line);
 	}
 	levelFile.close();
-
 	_chiantiNumLvl = _chiantiLevelv.size();
 	_chiantiAvv.resize(_chiantiNumLvl, _chiantiNumLvl);
 
+	//-----------------//
+	// READ EINSTEIN A //
+	//-----------------//
 	ifstream einsteinFile = IOTools::ifstreamFile(basename + ".wgfa");
 	getline(einsteinFile, line);
 	while (line.compare(1, 2, "-1"))
@@ -295,6 +317,9 @@ void HydrogenLevels::readData()
 	}
 	einsteinFile.close();
 
+	//---------------------//
+	// READ COLLISION DATA //
+	//---------------------//
 	int andersonIndex = 1;
 	for (int n = 0; n <= 5; n++)
 	{
@@ -305,7 +330,6 @@ void HydrogenLevels::readData()
 		}
 	}
 
-	_andersonCollStrvvv.resize(15, 15, 8);
 	ifstream andersonFile = IOTools::ifstreamFile(REPOROOT "/dat/h_coll_str.dat");
 	getline(andersonFile, line);
 	getline(andersonFile, line);
@@ -314,13 +338,15 @@ void HydrogenLevels::readData()
 		istringstream iss = istringstream(line);
 		int upperIndex, lowerIndex;
 		iss >> upperIndex >> lowerIndex;
+		Array Upsilonv(8);
 		for (int t = 0; t < 8; t++)
 		{
 			DEBUG("temp" << _andersonTempv[t]);
-			iss >> _andersonCollStrvvv(upperIndex, lowerIndex, t);
-			DEBUG(" " << _andersonCollStrvvv(upperIndex, lowerIndex, t));
+			iss >> Upsilonv[t];
+			DEBUG(" " << Upsilonv[t] << " ");
 		}
 		DEBUG(endl);
+		_andersonUpsilonvm[{upperIndex, lowerIndex}] = Upsilonv;
 		getline(andersonFile, line);
 	}
 	andersonFile.close();
@@ -328,24 +354,28 @@ void HydrogenLevels::readData()
 	exit(1);
 }
 
-double HydrogenLevels::energyCHIANTI(int n, int l)
+double HydrogenLevels::energy(int n, int l) const
 {
 	// Take an average over the j states
 	double esum = 0;
 	for (int twoJplus1 : twoJplus1range(l))
-	{
 		esum += _chiantiLevelv[indexCHIANTI(n, l, twoJplus1)].e * twoJplus1;
-		jsum += twoJplus1;
-	}
 	return esum / (4 * l + 2);
 }
 
-double HydrogenLevels::einsteinACHIANTI(int ni, int li, int nf, int lf)
+double HydrogenLevels::energy(int n) const
+{
+	// Average over the l states
+	double esum = 0;
+	for (int l = 0; l < n; l++)
+		esum += energy(n, l) * (2 * l + 1);
+	return esum / n*n;
+}
+
+double HydrogenLevels::einsteinA(int ni, int li, int nf, int lf) const
 {
 	if (ni < nf)
-	{
 		return 0.;
-	}
 	else
 	{
 		double Asum = 0;
@@ -366,4 +396,72 @@ double HydrogenLevels::einsteinACHIANTI(int ni, int li, int nf, int lf)
 	}
 }
 
+double HydrogenLevels::einsteinA(int ni, int li, int nf) const
+{
+	// sum over the final l states
+	double Asum = 0;
+	for (int lf = 0; lf < nf; lf++)
+		Asum += einsteinA(ni, li, nf, lf);
+	return Asum;
+}
 
+double HydrogenLevels::einsteinA(int ni, int nf) const
+{
+	// average over the initial l states
+	double Asum = 0;
+	for (int li = 0; li < ni; li++)
+	{
+		Asum += einsteinA(ni, li, nf) * (2 * li + 1);
+	}
+	// divide by multiplicity of ni state to get the average (factor two has been dropped in
+	// enumerator and denominator)
+	return Asum / (ni * ni);
+}
+
+double HydrogenLevels::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
+{
+	// Alternatively to all the mappy things below, we could use a nested vector filled up with
+	// zeros
+	auto indexMapEnd = _nlToAndersonIndexm.end();
+	// When the level is not included in the range of the data, the result is 0
+	auto uIndexIt = _nlToAndersonIndexm.find({ni, li});
+	auto lIndexIt = _nlToAndersonIndexm.find({nf, lf});
+	if (uIndexIt == indexMapEnd || lIndexIt == indexMapEnd)
+		return 0;
+
+	int uIndex = uIndexIt->second;
+	int lIndex = lIndexIt->second;
+	if (uIndex <= lIndex)
+		throw "This function should only be used for downward collisional transitions ";
+
+	// When the levels are included, but the specific transition isn't, the result is also zero
+	auto UpsilonvIt = _andersonUpsilonvm.find({uIndex, lIndex});
+	if (UpsilonvIt == _andersonUpsilonvm.end())
+		return 0;
+	else
+	{
+		// If data is available for this transition, interpolate at the given temperature
+		// (in eV)
+		double Upsilon_ip = TemplatedUtils::evaluateLinInterpf<double, Array, Array>(
+		                T_eV, _andersonTempv, UpsilonvIt->second);
+		return Upsilon_ip;
+	}
+}
+
+double HydrogenLevels::eCollisionStrength(int ni, int nf, int lf, double T_eV) const
+{
+	// Collision strengths must be summed over all initial states
+	double Upsilonsum = 0;
+	for (int li = 0; li < ni; li++)
+		Upsilonsum += eCollisionStrength(ni, li, nf, lf, T_eV);
+	return Upsilonsum;
+}
+
+double HydrogenLevels::eCollisionStrength(int ni, int nf, double T_eV) const
+{
+	// Also sum over all final states
+	double Upsilonsum = 0;
+	for (int lf = 0; lf < nf; lf++)
+		Upsilonsum += eCollisionStrength(ni, nf, lf, T_eV);
+	return Upsilonsum;
+}

@@ -32,24 +32,27 @@ private:
 
 	/* Returns energy of a level read in from CHIANTI, given the principal (n) and angular
 	 * momentum (l) numbers. Already averaged over different j. */
-	double energyCHIANTI(int n, int l);
+	double energy(int n, int l) const;
+
+	/* Collapsed version */
+	double energy(int n) const;
 
 	/* Return the merged A coefficient using the values read in from the CHIANTI database. These
 	 * are collapsed over the different j-values. */
-	double einsteinACHIANTI(int ni, int li, int nf, int lf);
+	double einsteinA(int ni, int li, int nf, int lf) const;
 	/* With the initial level collapsed */
-	double einsteinA(int ni, int li, int nf);
+	double einsteinA(int ni, int li, int nf) const;
 	/* With initial and final levels collapsed */
-	double einsteinA(int ni, int nf);
+	double einsteinA(int ni, int nf) const;
 
 	/* Return the the total electron collision strength (Upsilon). For the moment, there are
 	 * only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys., 2002, 35, 1613).
 	 * Need separate function for proton collision strength? */
-	double eCollisionStrength(int ni, int li, int nf, int lf, double T);
-	/* With the inital level collapsed */
-	double eCollisionStrength(int ni, int nf, int lf, double T);
+	double eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const;
+	/* With the initial level collapsed */
+	double eCollisionStrength(int ni, int nf, int lf, double T_eV) const ;
 	/* With initial and final levels collapsed */
-	double eCollisionStrength(int ni, int nf);
+	double eCollisionStrength(int ni, int nf, double T_eV) const;
 
 	typedef struct
 	{
@@ -75,23 +78,19 @@ private:
 
 	// Temperature points, 8 of them in total, in electron volt
 	Array _andersonTempv{{0.5, 1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 25.0}};
-	// Indexed on upper index, lower index, temperature index
-	Table<3> _andersonCollStrvvv;
+	/* Indexed on upper index, lower index, temperature index. Only downward collisions are
+	 listed, so only store those, using a map which uses a pair of ints representing the upper
+	 and lower levels.*/
+	std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
 
-	bool _dataReady;
+	bool _dataReady{false};
 
 	/* -------some shorthands--- */
-
-	/* Use this inline function for easy access */
-	inline int indexCHIANTI(int n, int l, int twoJplus1)
+	inline int indexCHIANTI(int n, int l, int twoJplus1) const
 	{
-		return _chiantiLevelv[_nljToChiantiIndexm.at({n, l, twoJplus1})];
+		return _nljToChiantiIndexm.at({n, l, twoJplus1});
 	}
 
-	inline std::vector<int> twoJplus1range(int l)
-	{
-		return l > 0 ? std::vector<int>({2 * l, 2 * l + 2}) : std::vector<int>({2});
-	}
 };
 
 #endif /* _SRC_HYDROGENLEVELS_H_ */
