@@ -25,9 +25,7 @@ inline std::vector<int> twoJplus1range(int l)
 HydrogenLevels::HydrogenLevels() : NLevel(makeNLv(), makeEv(), makeGv(), makeAvv(), makeExtraAvv())
 {
 	DEBUG("Constructed HydrogenLevels (without frequency grid)" << endl);
-#ifndef HYDROGENLEVELS_HARDCODE
 	readData();
-#endif
 }
 
 HydrogenLevels::HydrogenLevels(const Array& frequencyv)
@@ -43,23 +41,15 @@ HydrogenLevels::HydrogenLevels(const Array& frequencyv)
 
 int HydrogenLevels::makeNLv() const
 {
-#ifdef HYDROGENLEVELS_HARDCODE
 	return NLV;
-#else
-	return _chiantiNumLvl;
-#endif
 }
 
 Eigen::VectorXd HydrogenLevels::makeEv() const
 {
-#ifdef HYDROGENLEVELS_HARDCODE
 	Eigen::VectorXd the_ev(NLV);
 	the_ev << 0., 82258.9191133, 82258.9543992821, 97492.304, 102823.904, 105291.657;
 	// Energy in cm^-1, so multiply with hc
 	return the_ev * Constant::PLANCKLIGHT;
-#else
-
-#endif
 }
 
 Eigen::VectorXd HydrogenLevels::makeGv() const
