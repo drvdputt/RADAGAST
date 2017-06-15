@@ -14,17 +14,24 @@ NLevel::NLevel(LevelDataProvider* ldp) : _ldp(ldp)
 	_gv = _ldp->gv();
 	_avv = _ldp->avv();
 	_extraAvv = _ldp->extraAvv();
+
+	// Do a sanity check: All active transitions must be downward ones in energy
+	forActiveLinesDo([&](size_t upper, size_t lower) {
+		if (_ev(upper) - _ev(lower) < 0)
+			throw "There is an upward A-coefficient. This can't be correct";
+	});
 }
-NLevel::~NLevel() {}
+
+NLevel::~NLevel() = default;
 
 void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const
 {
 	numLines = 0;
-	forAllLinesDo([&](size_t, size_t) { numLines++; });
+	forActiveLinesDo([&](size_t, size_t) { numLines++; });
 	lineFreqv.resize(numLines);
 	naturalLineWidthv.resize(numLines);
 	int index = 0;
-	forAllLinesDo([&](size_t upper, size_t lower) {
+	forActiveLinesDo([&](size_t upper, size_t lower) {
 		lineFreqv[index] = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 		naturalLineWidthv[index] =
 		                (_avv(upper, lower) + _extraAvv(upper, lower)) / Constant::FPI;
@@ -58,7 +65,7 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 
 #ifdef REPORT_LINE_QUALITY
 		double maxNorm = 0, minNorm = 1e9;
-		forAllLinesDo([&](size_t upper, size_t lower) {
+		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
 			                _frequencyv, lineProfile(upper, lower, s));
 			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm << endl);
@@ -85,7 +92,7 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 Array NLevel::emissivityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
-	forAllLinesDo([&](size_t upper, size_t lower) {
+	forActiveLinesDo([&](size_t upper, size_t lower) {
 		total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	total += boundBoundContinuum(s);
@@ -100,7 +107,7 @@ Array NLevel::boundBoundContinuum(const Solution& /* unused s */) const
 Array NLevel::opacityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
-	forAllLinesDo([&](size_t upper, size_t lower) {
+	forActiveLinesDo([&](size_t upper, size_t lower) {
 		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
@@ -109,7 +116,7 @@ Array NLevel::opacityv(const Solution& s) const
 double NLevel::heating(const Solution& s) const
 {
 	double powerDensityIn = 0;
-	forAllLinesDo([&](size_t upper, size_t lower) {
+	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double cul = s.cvv(upper, lower);
 		if (cul > 0)
 			powerDensityIn += (_ev(upper) - _ev(lower)) * cul * s.nv(upper);
@@ -120,7 +127,7 @@ double NLevel::heating(const Solution& s) const
 double NLevel::cooling(const Solution& s) const
 {
 	double powerDensityOut = 0;
-	forAllLinesDo([&](size_t upper, size_t lower) {
+	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double clu = s.cvv(lower, upper);
 		if (clu > 0)
 			powerDensityOut += (_ev(upper) - _ev(lower)) * clu * s.nv(lower);
@@ -132,7 +139,7 @@ Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv,
                                                 const Eigen::MatrixXd& Cvv) const
 {
 	Eigen::MatrixXd BPvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
-	forAllLinesDo([&](size_t upper, size_t lower) {
+	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
 		                _frequencyv,
@@ -190,12 +197,13 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 	return nv;
 }
 
-void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithLine) const
+void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thingWithLine) const
 {
-	for (int lower = 0; lower < _nLv; lower++)
-		for (int upper = lower + 1; upper < _nLv; upper++)
-			if (_avv(upper, lower))
-				thingWithLine(upper, lower);
+	// Energy levels are not necessarily sorted, therefore go over all pairs.
+	for (int final = 0; final < _nLv; final++)
+		for (int initial = 0; initial < _nLv; initial++)
+			if (_avv(initial, final))
+				thingWithLine(initial, final);
 }
 
 double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const

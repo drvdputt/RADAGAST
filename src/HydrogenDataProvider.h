@@ -10,9 +10,7 @@
 class HydrogenDataProvider : public LevelDataProvider
 {
 public:
-	HydrogenDataProvider(/* Some setup parameters, e.g. collapsed/resolved levels */);
-
-
+	HydrogenDataProvider(int resolvedUpTo = 5);
 
 	//-----------------------------------//
 	// FUNCTIONS RETURNING CONSTANT DATA //
@@ -67,7 +65,7 @@ private:
 	 * are collapsed over the different j-values. */
 	double einsteinA(int ni, int li, int nf, int lf) const;
 	/* With the initial level collapsed */
-	double einsteinA(int ni, int li, int nf) const;
+	double einsteinA(int ni, int nf, int lf) const;
 	/* With initial and final levels collapsed */
 	double einsteinA(int ni, int nf) const;
 
@@ -76,7 +74,7 @@ private:
 	 * Need separate function for proton collision strength? */
 	double eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const;
 	/* With the initial level collapsed */
-	double eCollisionStrength(int ni, int nf, int lf, double T_eV) const ;
+	double eCollisionStrength(int ni, int nf, int lf, double T_eV) const;
 	/* With initial and final levels collapsed */
 	double eCollisionStrength(int ni, int nf, double T_eV) const;
 
@@ -116,7 +114,27 @@ private:
 		return _nljToChiantiIndexm.at({n, l, twoJplus1});
 	}
 
-	int _numLv;
+	//----------------------//
+	// BASED ON USER CHOICE //
+	//----------------------//
+
+	/* Below are some variables that help with providing the output. These variables and the
+	 final output both depend on the configuration chosen by the user, such as the n up to which
+	 the levels are resolved, declared below. */
+	int _resolvedUpTo{5};
+
+	/* Number of levels outputted by this LevelDataProvider */
+	int _numL{0};
+
+	/* Contains the quantum numbers of the levels actually used for the output. l = -1 means
+	 that the level is collapsed. The energy levels, A-coefficients, ... outputted will be
+	 indexed the same way as in this vector. Changing the way the vector below is filled will
+	 allow for some customization of the ordering of the levels. */
+	typedef struct
+	{
+		int n, l;
+	} NLPair;
+	std::vector<NLPair> _levelOrdering;
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_ */

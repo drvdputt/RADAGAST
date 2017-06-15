@@ -36,7 +36,6 @@ protected:
 	LevelDataProvider* ldp() const;
 
 public:
-
 	Array frequencyv() const { return _frequencyv; }
 	void setFrequencyv(const Array& frequencyv) { _frequencyv = frequencyv; }
 
@@ -92,7 +91,6 @@ private:
 	                                        const Eigen::MatrixXd& Cvv) const;
 
 protected:
-
 private:
 	/* Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
 	 + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term ne*np*alpha_i,
@@ -104,11 +102,13 @@ private:
 	                                   int chooseConsvEq) const;
 
 	/* Abstraction of the loop over all lines. Executes thingWithLine for all combinations upper
-	 * > lower that have _Avv(upper, lower) > 0. */
-	void forAllLinesDo(std::function<void(size_t upper, size_t lower)> thingWithLine) const;
+	 > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all downward
+	 transitions have line activity, then this function will loop over all elements of the
+	 lower triangle of the level matrix. */
+	void forActiveLinesDo(std::function<void(size_t upper, size_t lower)> thingWithLine) const;
 
 	/* Calculates the intensity of a specific line [erg / s / cm2]. Multiplying with the line
-	 * profile will yield the specific intensity. */
+	 profile will yield the specific intensity. */
 	double lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const;
 
 	/* Computes the opacity of a line, not yet multiplied with the line profile */
@@ -119,8 +119,7 @@ private:
 	Array lineProfile(size_t upper, size_t lower, const Solution& s) const;
 
 	/* Or when the full solution is not yet known, and hence a Solution object is not yet
-	 * available
-	 */
+	 available. */
 	Array lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const;
 
 	/* Variables which are the same for all invocations of solveBalance are stored as members */
@@ -139,8 +138,8 @@ private:
 	Eigen::MatrixXd _avv;
 
 	/* Spontaneous transitions that do not produce line photons, but do influence the levels. A
-	 * prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
-	 * but is about 8 s-1 for two photons*/
+	 prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
+	 but is about 8 s-1 for two photons*/
 	Eigen::MatrixXd _extraAvv;
 
 	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
