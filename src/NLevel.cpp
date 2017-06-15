@@ -21,7 +21,8 @@ NLevel::NLevel(int nLv, const Eigen::VectorXd& ev, const Eigen::VectorXd& gv,
 {
 }
 
-Eigen::MatrixXd NLevel::makeExtraAvv() const {
+Eigen::MatrixXd NLevel::makeExtraAvv() const
+{
 	int nlv = makeNLv();
 	return Eigen::MatrixXd::Zero(nlv, nlv);
 }
@@ -101,10 +102,7 @@ Array NLevel::emissivityv(const Solution& s) const
 	return total;
 }
 
-Array NLevel::boundBoundContinuum(const Solution& s) const
-{
-	return Array(_frequencyv.size());
-}
+Array NLevel::boundBoundContinuum(const Solution& s) const { return Array(_frequencyv.size()); }
 
 Array NLevel::opacityv(const Solution& s) const
 {
@@ -115,68 +113,26 @@ Array NLevel::opacityv(const Solution& s) const
 	return total;
 }
 
-void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithLine) const
+double NLevel::heating(const Solution& s) const
 {
-	for (int lower = 0; lower < _nLv; lower++)
-		for (int upper = lower + 1; upper < _nLv; upper++)
-			if (_avv(upper, lower))
-				thingWithLine(upper, lower);
+	double powerDensityIn = 0;
+	forAllLinesDo([&](size_t upper, size_t lower) {
+		double cul = s.cvv(upper, lower);
+		if (cul > 0)
+			powerDensityIn += (_ev(upper) - _ev(lower)) * cul * s.nv(upper);
+	});
+	return powerDensityIn;
 }
 
-double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const
+double NLevel::cooling(const Solution& s) const
 {
-	return (_ev(upper) - _ev(lower)) / Constant::FPI * s.nv(upper) * _avv(upper, lower);
-}
-
-double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const
-{
-	double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
-	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
-	                        nu_ij * _avv(upper, lower);
-	double densityFactor = s.nv(lower) * _gv(upper) / _gv(lower) - s.nv(upper);
-	double result = constantFactor * densityFactor;
-#ifdef SANITY
-	if (result < 0)
-		result = 0;
-#endif
-	return result;
-}
-
-inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
-{
-	return lineProfile(upper, lower, s.T, s.cvv);
-}
-
-Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const
-{
-	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
-
-	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
-	                   Cvv(upper, lower)    // decay rate of top level
-	                   + Cvv(lower, upper); // decay rate of bottom level
-	// (stimulated emission doesn't count, as it causes no broadening)
-
-	if (decayRate < 0)
-		cout << _avv << endl << _extraAvv << endl << Cvv << endl;
-
-	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
-
-	// Half the FWHM of the Lorentz
-	double halfWidth = decayRate / Constant::FPI;
-
-	// The standard deviation in frequency units. It is about half of the FWHM for a Gaussian
-	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
-	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
-
-	Array profile(_frequencyv.size());
-	for (size_t n = 0; n < _frequencyv.size(); n++)
-	{
-		double deltaNu = _frequencyv[n] - nu0;
-		profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
-		                                     one_sqrt2sigma * deltaNu) /
-		             Constant::SQRT2PI / sigma_nu;
-	}
-	return profile;
+	double powerDensityOut = 0;
+	forAllLinesDo([&](size_t upper, size_t lower) {
+		double clu = s.cvv(lower, upper);
+		if (clu > 0)
+			powerDensityOut += (_ev(upper) - _ev(lower)) * clu * s.nv(lower);
+	});
+	return powerDensityOut;
 }
 
 Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
@@ -241,24 +197,66 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 	return nv;
 }
 
-double NLevel::heating(const Solution& s) const
+void NLevel::forAllLinesDo(function<void(size_t upper, size_t lower)> thingWithLine) const
 {
-	double powerDensityIn = 0;
-	forAllLinesDo([&](size_t upper, size_t lower) {
-		double cul = s.cvv(upper, lower);
-		if (cul > 0)
-			powerDensityIn += (_ev(upper) - _ev(lower)) * cul * s.nv(upper);
-	});
-	return powerDensityIn;
+	for (int lower = 0; lower < _nLv; lower++)
+		for (int upper = lower + 1; upper < _nLv; upper++)
+			if (_avv(upper, lower))
+				thingWithLine(upper, lower);
 }
 
-double NLevel::cooling(const Solution& s) const
+double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const
 {
-	double powerDensityOut = 0;
-	forAllLinesDo([&](size_t upper, size_t lower) {
-		double clu = s.cvv(lower, upper);
-		if (clu > 0)
-			powerDensityOut += (_ev(upper) - _ev(lower)) * clu * s.nv(lower);
-	});
-	return powerDensityOut;
+	return (_ev(upper) - _ev(lower)) / Constant::FPI * s.nv(upper) * _avv(upper, lower);
+}
+
+double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const
+{
+	double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
+	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
+	                        nu_ij * _avv(upper, lower);
+	double densityFactor = s.nv(lower) * _gv(upper) / _gv(lower) - s.nv(upper);
+	double result = constantFactor * densityFactor;
+#ifdef SANITY
+	if (result < 0)
+		result = 0;
+#endif
+	return result;
+}
+
+inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
+{
+	return lineProfile(upper, lower, s.T, s.cvv);
+}
+
+Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const
+{
+	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
+
+	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
+	                   Cvv(upper, lower)    // decay rate of top level
+	                   + Cvv(lower, upper); // decay rate of bottom level
+	// (stimulated emission doesn't count, as it causes no broadening)
+
+	if (decayRate < 0)
+		cout << _avv << endl << _extraAvv << endl << Cvv << endl;
+
+	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
+
+	// Half the FWHM of the Lorentz
+	double halfWidth = decayRate / Constant::FPI;
+
+	// The standard deviation in frequency units. It is about half of the FWHM for a Gaussian
+	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
+	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
+
+	Array profile(_frequencyv.size());
+	for (size_t n = 0; n < _frequencyv.size(); n++)
+	{
+		double deltaNu = _frequencyv[n] - nu0;
+		profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
+		                                     one_sqrt2sigma * deltaNu) /
+		             Constant::SQRT2PI / sigma_nu;
+	}
+	return profile;
 }

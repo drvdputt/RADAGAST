@@ -300,7 +300,7 @@ void HydrogenLevels::readData()
 		DEBUG(lowerIndex << " " << upperIndex << " " << wavAngstrom << " " << gf << " " << A
 		                 << endl);
 
-		// Zero means two-photon transition, see CHIANTI user guide
+		// Zero means two-photon transition, see CHIANTI user guide.
 		_chiantiAvv(upperIndex - 1, lowerIndex) = wavAngstrom > 0 ? A : 0;
 
 		getline(einsteinFile, line);

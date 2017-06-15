@@ -24,8 +24,8 @@ public:
 	 hydrogen gas and the resulting opacity and emission on the provided frequency grid. */
 	GasInterfaceImpl(const Array& frequencyv);
 
-	/* Creates a HydrogenCalculator and creates a frequency grid / adjusts the given frequency
-	 * grid (by reference) if suggestedGrid = true.*/
+	/* Creates a HydrogenCalculator and creates a frequency grid / adjusts the given
+	   frequencygrid (by reference) if suggestedGrid = true. */
 	GasInterfaceImpl(const Array& frequencyv, bool improveGrid);
 
 	Array frequencyv() const { return _frequencyv; }
@@ -44,21 +44,24 @@ public:
 	void solveInitialGuess(GasState&, double n, double T) const;
 
 private:
-	/* Calculates all the densities for a fixed temperature. Is repeatedly called by this class.
-	 */
+	/* Calculates all the densities for a fixed temperature. Is repeatedly called by this
+	   class */
 	Solution calculateDensities(double n, double T, const Array& specificIntensityv) const;
 
 public:
 	/* The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
 	Array emissivityv(const Solution&) const;
+
 	/* The total opacity at each frequency in 1 / cm */
 	Array opacityv(const Solution&) const;
+
 	/* A possible scattering opacity */
 	Array scatteringOpacityv(const Solution&) const;
 
-	/* The total bolometric emission, in erg / s / cm^3, obtained by integrating the emissivity.
-	 */
+	/* The total bolometric emission, in erg / s / cm^3, obtained by integrating the
+	   emissivity. */
 	double cooling(const Solution&) const;
+
 	/* The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity
 	 times the radiation field. */
 	double heating(const Solution&) const;
@@ -66,13 +69,15 @@ public:
 	/* The bolometric emission by the lines only. The emissivity of the photon re-emissions is
 	 also included in this value. */
 	double lineCooling(const Solution&) const;
+
 	/* The bolometric absorption by the lines only. The absorption of re-emitted line photons is
 	 also included here. */
 	double lineHeating(const Solution&) const;
 
 	/* The bolometric emission by the continuum only (= cooling by recombination + free-free
-	 * continuum) */
+	 continuum) */
 	double continuumCooling(const Solution&) const;
+
 	/* The bolometric absorption by the continuum only (free-free heating) in erg / s / cm3 */
 	double continuumHeating(const Solution&) const;
 

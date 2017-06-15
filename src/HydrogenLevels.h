@@ -90,7 +90,6 @@ private:
 	{
 		return _nljToChiantiIndexm.at({n, l, twoJplus1});
 	}
-
 };
 
 #endif /* _SRC_HYDROGENLEVELS_H_ */

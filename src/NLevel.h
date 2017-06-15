@@ -47,31 +47,68 @@ protected:
 	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
 
 public:
+	Array frequencyv() const { return _frequencyv; }
+	void setFrequencyv(const Array& frequencyv) { _frequencyv = frequencyv; }
+
+	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
+
 	/* Variables which are changed at every invocation of solveBalance or
-	 * throughout the calculation, will be passed around using this struct
-	 * (instead of storing them as members, which is not threadsafe. */
+	 throughout the calculation, will be passed around using this struct
+	 (instead of storing them as members, which is not threadsafe. */
 	typedef struct
 	{
+		/* The density and temperature for which the solution was calculated */
 		double n, T;
-		Eigen::MatrixXd bpvv, cvv;
+
+		/* The density of each level population (cm-3) */
 		Eigen::VectorXd nv;
+
+		/* The induced radiative transition rates and collisional transition rates for this
+		 configuratiom */
+		Eigen::MatrixXd bpvv, cvv;
 	} Solution;
 
-	/* The matrices for this struct can be generated using the functions below */
+	/* Calculates the level populations for a certain electron temperature and isrf. The number
+	 of electrons and protons is needed to determine the collisional transition rates. When
+	 ionization comes into play, the recombination and ionization rates will act as source and
+	 sink terms for the levels. Therefore, external sources or sink rates can be passed using
+	 vectors containing one number for each level. A struct of the type Solution as defined
+	 above is returned */
+	Solution solveBalance(double atomDensity, double electronDensity, double protonDensity,
+	                      double T, const Array& specificIntensityv, const Array& sourcev,
+	                      const Array& sinkv) const;
+
+	/* The spectrum emitted by the line transitions, expressed as the emission coefficient j_nu
+	f * (erg/cm3/s/Hz) */
+	Array emissivityv(const Solution& s) const;
+
+	/* The contribution to the emissivity non-line bound-bound processes, for example the
+	 two-photon continuum 2s->1s transition of HI */
+	virtual Array boundBoundContinuum(const Solution& s) const;
+
+	/* The opacity alpha_nu, equivalent to kappaRho for dust (cm-1) */
+	Array opacityv(const Solution& s) const;
+
+	/* Heating rate due to collisional de-excitation (ergs / s / cm3) */
+	double heating(const Solution& s) const;
+
+	/* Cooling rate due to collisional excitation */
+	double cooling(const Solution& s) const;
+
 private:
-	/* Fill in the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
+	/* Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
 	 Aij) and Pij is the line power (isrf integrated over the line profile) */
 	Eigen::MatrixXd prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
 	                                        const Eigen::MatrixXd& Cvv) const;
 
 protected:
-	/* Fill in the collision rates Cij. Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np (np
+	/* Calculate the collision rates Cij. Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np
+	 (np
 	 is the number of collision partners). Since these values depend on the model used, this
 	 function has to be implemented in a derived class */
 	virtual Eigen::MatrixXd prepareCollisionMatrix(double T, double electronDensity,
 	                                               double protonDensity) const = 0;
-	/* And the density vector nv corresponding to the level populations of the solution can be
-	 * filled in using */
+
 private:
 	/* Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
 	 + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term ne*np*alpha_i,
@@ -81,8 +118,6 @@ private:
 	                                   const Eigen::VectorXd& sourceTerm,
 	                                   const Eigen::VectorXd& sinkTerm,
 	                                   int chooseConsvEq) const;
-
-	/* Other functions */
 
 	/* Abstraction of the loop over all lines. Executes thingWithLine for all combinations upper
 	 * > lower that have _Avv(upper, lower) > 0. */
@@ -108,51 +143,21 @@ private:
 
 	/* Wavelength grid */
 	Array _frequencyv;
+
 	/* Energy levels (constant) */
 	int _nLv;
 	Eigen::VectorXd _ev;
+
 	/* Level degeneracy (constant) */
 	Eigen::VectorXd _gv;
+
 	/* A matrix (constant, lower triangle, zero diagonal) */
 	Eigen::MatrixXd _avv;
+
 	/* Spontaneous transitions that do not produce line photons, but do influence the levels. A
 	 * prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
 	 * but is about 8 s-1 for two photons*/
 	Eigen::MatrixXd _extraAvv;
-
-	/* A map allowing the naming of certain transitions. For every name, there can be multiple
-	 * transitions contributing. For every transition there is one pair of level indices. */
-	// std::map<std::string, std::vector<std::array<size_t, 2>>> _namedTransitions;
-
-public:
-	Array frequencyv() const { return _frequencyv; }
-	void setFrequencyv(const Array& frequencyv) { _frequencyv = frequencyv; }
-
-	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
-
-	/* Calculates the level populations for a certain electron temperature and isrf. The number
-	 of electrons and protons is needed to determine the collisional transition rates. When
-	 ionization comes into play, the recombination and ionization rates will act as source and
-	 sink terms for the levels. Therefore, external sources or sink rates can be passed using
-	 vectors containing one number for each level. */
-	Solution solveBalance(double atomDensity, double electronDensity, double protonDensity,
-	                      double T, const Array& specificIntensityv, const Array& sourcev,
-	                      const Array& sinkv) const;
-
-	/* The values needed for a radiative transfer cycle */
-
-	/* The emission coefficient j_nu (erg/cm3/s/Hz) */
-	Array emissivityv(const Solution& s) const;
-	/* The contribution to the emissivity non-line bound-bound processes, for example the
-	 two-photon continuum 2s->1s transition of HI */
-	virtual Array boundBoundContinuum(const Solution& s) const;
-	/* The opacity alpha_nu, equivalent to kappaRho for dust (cm-1) */
-	Array opacityv(const Solution& s) const;
-
-	/* Heating rate due to collisional de-excitation (ergs / s / cm3) */
-	double heating(const Solution& s) const;
-	/* Cooling rate due to collisional excitation */
-	double cooling(const Solution& s) const;
 };
 
 #endif /* _NLEVEL_H_ */
