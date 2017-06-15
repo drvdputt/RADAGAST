@@ -1,7 +1,7 @@
 #ifndef _FREEBOUND_H_
 #define _FREEBOUND_H_
 
-#include <Table.h>
+#include "Table.h"
 
 #include <vector>
 

@@ -1,4 +1,4 @@
-CPP=g++
+CPP=g++7
 
 INCDIR=./include
 EIGENDIR=./eigen3
@@ -15,7 +15,7 @@ OBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
 
 PROGRAM=../bin/test
 
-CPPFLAGS=-I$(INCDIR) -I$(EIGENDIR) -O0 -g -std=c++14 -Wall -Wextra\
+CPPFLAGS=-I$(INCDIR) -isystem$(EIGENDIR) -O0 -g -std=c++14 -Wall -Wextra\
 -Werror=return-type -pedantic -DREPOROOT=\""$(shell pwd)"\"
 
 all: $(PROGRAM)

@@ -19,10 +19,11 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
-                : _frequencyv(frequencyv), _boundBound(make_unique<HydrogenLevels>(frequencyv)),
+                : _frequencyv(frequencyv), _boundBound(make_unique<HydrogenLevels>()),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
+	_boundBound->setFrequencyv(frequencyv);
 	DEBUG("Constructed HydrogenCalculator" << endl);
 }
 
@@ -70,7 +71,7 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
 	_freeFree = make_unique<FreeFree>(_frequencyv);
 }
 
-GasInterfaceImpl::~GasInterfaceImpl() {}
+GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
                                     const Array& specificIntensityv) const

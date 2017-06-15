@@ -2,35 +2,22 @@
 #define _NLEVEL_H_
 
 #include "Array.h"
+#include "LevelDataProvider.h"
 
 #include <Eigen/Dense>
 #include <array>
 #include <map>
+#include <memory>
 #include <string>
 
 class NLevel
 {
 protected:
-	/* All constants must be filled in by the derived class. The initializer list of this
-	 * constructor will enable this by calling the functions below. The base class should
-	 * implement these functions in such a way that the outputs are compatible. Note that these
-	 * are not equivalent to getters, which are listed below them, as they generate the desired
-	 * data from scratch. */
-	NLevel(const Array& frequencyv, int nLv, const Eigen::VectorXd& ev,
-	       const Eigen::VectorXd& gv, const Eigen::MatrixXd& avv,
-	       const Eigen::MatrixXd& extraAvv);
-	/* Another one, which does not directly set the frequency grid. setFrequencyv needs to be
-	 * called after using this constructor. */
-	NLevel(int nLv, const Eigen::VectorXd& ev, const Eigen::VectorXd& gv,
-	       const Eigen::MatrixXd& avv, const Eigen::MatrixXd& extraAvv);
-	virtual int makeNLv() const = 0;
-	virtual Eigen::VectorXd makeEv() const = 0;
-	virtual Eigen::VectorXd makeGv() const = 0;
-	virtual Eigen::MatrixXd makeAvv() const = 0;
-	virtual Eigen::MatrixXd makeExtraAvv() const; // this one defaults to a zero matrix of the
-	                                              // size specified by the subclass
+	NLevel(LevelDataProvider* ldp);
 
 public:
+	virtual ~NLevel();
+
 	int nLv() const { return _nLv; }
 
 protected:
@@ -46,7 +33,10 @@ protected:
 	Eigen::MatrixXd extraAvv() const { return _extraAvv; }
 	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
 
+	LevelDataProvider* ldp() const;
+
 public:
+
 	Array frequencyv() const { return _frequencyv; }
 	void setFrequencyv(const Array& frequencyv) { _frequencyv = frequencyv; }
 
@@ -102,12 +92,6 @@ private:
 	                                        const Eigen::MatrixXd& Cvv) const;
 
 protected:
-	/* Calculate the collision rates Cij. Rij = Cij * ni = q_ij * np * ni --> Cij = q_ij * np
-	 (np
-	 is the number of collision partners). Since these values depend on the model used, this
-	 function has to be implemented in a derived class */
-	virtual Eigen::MatrixXd prepareCollisionMatrix(double T, double electronDensity,
-	                                               double protonDensity) const = 0;
 
 private:
 	/* Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
@@ -145,7 +129,7 @@ private:
 	Array _frequencyv;
 
 	/* Energy levels (constant) */
-	int _nLv;
+	int _nLv{0};
 	Eigen::VectorXd _ev;
 
 	/* Level degeneracy (constant) */
@@ -158,6 +142,10 @@ private:
 	 * prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
 	 * but is about 8 s-1 for two photons*/
 	Eigen::MatrixXd _extraAvv;
+
+	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
+	 initialized with depends on the subclass */
+	std::unique_ptr<LevelDataProvider> _ldp;
 };
 
 #endif /* _NLEVEL_H_ */

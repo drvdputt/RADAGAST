@@ -13,8 +13,7 @@ void UTest::testHardcodedHydrogen()
 	                                             Constant::LIGHT / (0.01 * Constant::UM_CM));
 	double Tc = 20000;
 	double G0 = 1e0;
-	double n = 1e1;
-	HydrogenLevels hl(Array(freqv.data(), freqv.size()));
+//	double n = 1e1;
 	Array specificIntensityv = Testing::generateSpecificIntensityv(
 	                vector<double>(begin(freqv), end(freqv)), Tc, G0);
 

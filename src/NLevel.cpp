@@ -7,25 +7,15 @@
 
 using namespace std;
 
-NLevel::NLevel(const Array& frequencyv, int nLv, const Eigen::VectorXd& ev,
-               const Eigen::VectorXd& gv, const Eigen::MatrixXd& avv,
-               const Eigen::MatrixXd& extraAvv)
-                : _frequencyv(frequencyv), _nLv(nLv), _ev(ev), _gv(gv), _avv(avv),
-                  _extraAvv(extraAvv)
+NLevel::NLevel(LevelDataProvider* ldp) : _ldp(ldp)
 {
+	_nLv = _ldp->numLv();
+	_ev = _ldp->ev();
+	_gv = _ldp->gv();
+	_avv = _ldp->avv();
+	_extraAvv = _ldp->extraAvv();
 }
-
-NLevel::NLevel(int nLv, const Eigen::VectorXd& ev, const Eigen::VectorXd& gv,
-               const Eigen::MatrixXd& avv, const Eigen::MatrixXd& extraAvv)
-                : _nLv(nLv), _ev(ev), _gv(gv), _avv(avv), _extraAvv(extraAvv)
-{
-}
-
-Eigen::MatrixXd NLevel::makeExtraAvv() const
-{
-	int nlv = makeNLv();
-	return Eigen::MatrixXd::Zero(nlv, nlv);
-}
+NLevel::~NLevel() {}
 
 void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const
 {
@@ -61,7 +51,7 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 
 	if (atomDensity > 0)
 	{
-		s.cvv = prepareCollisionMatrix(temperature, electronDensity, protonDensity);
+		s.cvv = _ldp->cvv(temperature, electronDensity, protonDensity);
 		// Calculate BijPij (needs to be redone at each temperature because the line profile
 		// can change) Also needs the Cij to calculate collisional broadening
 		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
@@ -102,7 +92,10 @@ Array NLevel::emissivityv(const Solution& s) const
 	return total;
 }
 
-Array NLevel::boundBoundContinuum(const Solution& s) const { return Array(_frequencyv.size()); }
+Array NLevel::boundBoundContinuum(const Solution& /* unused s */) const
+{
+	return Array(_frequencyv.size());
+}
 
 Array NLevel::opacityv(const Solution& s) const
 {
