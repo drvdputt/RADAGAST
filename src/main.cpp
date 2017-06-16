@@ -6,6 +6,7 @@
 
 #include <csignal>
 #include <cstdlib>
+#include <iostream>
 #include <string>
 
 void handler(int sig)
@@ -24,13 +25,24 @@ void handler(int sig)
 
 int main()
 {
-	// signal(SIGSEGV, handler);
-	//  printf("%f", PhotoelectricHeatingRecipe::yieldFunctionTest());
-	//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
-	//  printf("%f\n", Ionization::testIonization());
+	signal(SIGSEGV, handler);
+	try
+	{
+		//  printf("%f", PhotoelectricHeatingRecipe::yieldFunctionTest());
+		//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
+		//  printf("%f\n", Ionization::testIonization());
 
-	Testing::testGasInterfaceImpl();
-	// Testing::testIonizationStuff();
-	// Testing::testPhotoelectricHeating();
+		Testing::testGasInterfaceImpl();
+		// Testing::testIonizationStuff();
+		// Testing::testPhotoelectricHeating();
+	}
+	catch (const std::exception& ex)
+	{
+		std::cerr << ex.what() << std::endl;
+	}
+	catch (char const* str)
+	{
+		std::cerr << str << std::endl;
+	}
 	return 0;
 }

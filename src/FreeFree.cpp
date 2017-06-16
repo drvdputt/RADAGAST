@@ -43,6 +43,7 @@
 
 #include "FreeFree.h"
 #include "Constants.h"
+#include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
 #include "global.h"
@@ -85,12 +86,7 @@ void FreeFree::readFullData(const string& file)
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input(file);
-	if (!input)
-	{
-		cerr << "File " + file + "not found." << endl;
-		throw std::runtime_error("File " + file + "not found.");
-	}
+	ifstream input(IOTools::ifstreamFile(file));
 
 	// buffer
 	string line;
@@ -179,12 +175,7 @@ void FreeFree::readIntegratedData(const string& file)
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input(file);
-	if (!input)
-	{
-		cerr << "File " + file + "not found." << endl;
-		throw std::runtime_error("File " + file + "not found.");
-	}
+	ifstream input(IOTools::ifstreamFile(file));
 
 	// buffer
 	string line;
@@ -257,7 +248,7 @@ double FreeFree::gauntFactor(double logu, double logg2) const
 {
 	// Throw an error if out of range for now. Maybe allow extrapolation later.
 	if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
-		throw runtime_error("Log(gamma^2) or log(u) out of range");
+		throw range_error("Log(gamma^2) or log(u) out of range");
 
 	// Find the gamma^2-index to the right of logg2 , maximum the max column index)
 	int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
@@ -288,7 +279,7 @@ double FreeFree::integratedGauntFactor(double logg2) const
 {
 	// Throw an error if out of range for now. Maybe allow extrapolation later.
 	if (logg2 < _loggamma2Min_integrated or logg2 > _loggamma2Max_integrated)
-		throw runtime_error("Log(gamma^2) out of range");
+		throw range_error("Log(gamma^2) out of range");
 
 	/* Determine the indices of the data points we will interpolate between. Using the stored
 	  gamma^2 grid to interpolate using TemplatedUtils::evaluateLinInterpf would invoke a search

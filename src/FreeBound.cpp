@@ -1,6 +1,7 @@
 #include "FreeBound.h"
 #include "Constants.h"
 #include "IonizationBalance.h"
+#include "IOTools.h"
 #include "NumUtils.h"
 #include "SpecialFunctions.h"
 #include "Table.h"
@@ -109,12 +110,7 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv,
                          vector<double>& fileThresholdv, vector<double>& fileTemperaturev,
                          vector<vector<double>>& fileGammaDaggervv) const
 {
-	ifstream input(file);
-	if (!input)
-	{
-		cerr << "File " + file + " not found." << endl;
-		throw std::runtime_error("File " + file + " not found.");
-	}
+	ifstream input(IOTools::ifstreamFile(file));
 
 	size_t numcol, numrow;
 
