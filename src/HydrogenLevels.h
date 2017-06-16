@@ -9,7 +9,10 @@
 class HydrogenLevels : public NLevel
 {
 public:
-	HydrogenLevels();
+	HydrogenLevels(bool hardcoded);
+
+private:
+	LevelDataProvider* chooseDataProvider(bool hardcoded) const;
 
 protected:
 	Array boundBoundContinuum(const Solution& s) const override;

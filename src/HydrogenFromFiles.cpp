@@ -1,13 +1,13 @@
-#include "HydrogenDataProvider.h"
+#include "HydrogenFromFiles.h"
+
+#include "Constants.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "global.h"
 
 #include <cassert>
 #include <fstream>
-#include <iostream>
 #include <sstream>
-#include <string>
 
 using namespace std;
 
@@ -21,93 +21,17 @@ inline std::vector<int> twoJplus1range(int l)
 }
 }
 
-HydrogenDataProvider::HydrogenDataProvider(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
+HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
 {
 	if (_resolvedUpTo > nMax)
 		throw "There are currently only five shells for the hydrogen model";
+	// Read-in, and steps that are safe during read-in
 	readData();
+	// Steps that need to happen after read-in
+	prepareForOutput();
 }
 
-int HydrogenDataProvider::numLv() const { return _numL; }
-
-Eigen::VectorXd HydrogenDataProvider::ev() const
-{
-	Eigen::VectorXd the_ev(_numL);
-	for (int i = 0; i < _numL; i++)
-	{
-		NLPair nl = _levelOrdering[i];
-		// l = -1 means collapsed, so:
-		the_ev[i] = nl.l < 0 ? energy(nl.n) : energy(nl.n, nl.l);
-	}
-	return the_ev;
-}
-
-Eigen::VectorXd HydrogenDataProvider::gv() const
-{
-	Eigen::VectorXd the_gv(_numL);
-	for (int i = 0; i < _numL; i++)
-	{
-		NLPair nl = _levelOrdering[i];
-		// collapsed ? n^2 : 2l+1
-		the_gv[i] = nl.l < 0 ? nl.n * nl.n : 2 * nl.l + 1;
-	}
-	return the_gv;
-}
-
-Eigen::MatrixXd HydrogenDataProvider::avv() const
-{
-	Eigen::MatrixXd the_avv(_numL, _numL);
-	for (int i = 0; i < _numL; i++)
-	{
-		NLPair nli = _levelOrdering[i];
-		int ni = nli.n;
-		int li = nli.l;
-		for (int f = 0; f < _numL; f++)
-		{
-			NLPair nlf = _levelOrdering[f];
-			int nf = nlf.n;
-			int lf = nlf.l;
-			// Both resolved
-			if (li > 0 && lf > 0)
-				the_avv(i, f) = einsteinA(ni, li, nf, lf);
-			// Collapsed to resolved
-			else if (li < 0 && lf > 0)
-				the_avv(i, f) = einsteinA(ni, nf, lf);
-			// Resolved to collapsed. The collapsed-collapsed equivalent should always
-			// be 0 in this case.
-			else if (li > 0 && lf < 0)
-			{
-				the_avv(i, f) = einsteinA(ni, nf);
-				assert(the_avv(i, f) == 0.);
-			}
-			// Collapsed to collapsed
-			else
-				the_avv(i, f) = einsteinA(ni, nf);
-		}
-	}
-	return the_avv;
-}
-
-Eigen::MatrixXd HydrogenDataProvider::extraAvv() const
-{
-	Eigen::MatrixXd the_extra = Eigen::MatrixXd::Zero(_numL, _numL);
-	int index1s = -1;
-	int index2p = -1;
-	int i = 0;
-	while (index1s < 0 || index2p < 0)
-	{
-		NLPair nl = _levelOrdering[i];
-		if (nl.n == 1) index1s = i;
-		if (nl.n == 2 && nl.l == 1) index2p = i;
-		if (i >= _numL) throw "Can't find 2p level for hydrogen";
-		i++;
-	}
-	// Hardcoded the two-photon decay of 2p to 1s
-	the_extra(index1s, index2p) = 8.229;
-	return the_extra;
-}
-
-void HydrogenDataProvider::readData()
+void HydrogenFromFiles::readData()
 {
 	const std::string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
 
@@ -129,21 +53,21 @@ void HydrogenDataProvider::readData()
 		DEBUG(lvIndex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
 		              << " " << observedEnergy << " " << theoreticalEnergy << " " << endl);
 
-		levelInfo lvInfo;
-		istringstream(config) >> lvInfo.n; // Get the first number from the config string,
-		lvInfo.l = _lNumberm.at(lSymbol);  // Translate the angular momentum letter
-		lvInfo.twoJplus1 = static_cast<int>(2 * j + 1); // Store 2j+1
-		lvInfo.e = observedEnergy;
-		DEBUG("n " << lvInfo.n << " l " << lvInfo.l << " 2j+1 " << lvInfo.twoJplus1 << " e "
-		           << lvInfo.e << endl);
+		int n;
+		istringstream(config) >> n;    // Get the first number from the config string,
+		int l = _lNumberm.at(lSymbol); // Translate the angular momentum letter
+		int twoJplus1 = static_cast<int>(2 * j + 1); // Store 2j+1 (static cast to make it
+		                                             // clear that j is not integer)
+		int e = observedEnergy;
+		DEBUG("n " << n << " l " << l << " 2j+1 " << twoJplus1 << " e " << e << endl);
 
 		// The level indices in the data structures will go from 0 to number of levels minus
 		// one
 		// The quantum numbers are also used as keys in a map, so we can quickly retrieve
 		// the index for a given configuration.
 		// The level indices in the file and the map will go from 1 to the number of levels
-		_chiantiLevelv.push_back(lvInfo);
-		_nljToChiantiIndexm.insert({{lvInfo.n, lvInfo.l, lvInfo.twoJplus1}, lvIndex - 1});
+		_chiantiLevelv.emplace_back(n, l, twoJplus1, e);
+		_nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
 
 		getline(levelFile, line);
 	}
@@ -211,10 +135,13 @@ void HydrogenDataProvider::readData()
 		getline(andersonFile, line);
 	}
 	andersonFile.close();
+}
 
-	//--------------------------------//
-	// SET THE TOTAL NUMBER OF LEVELS //
-	//--------------------------------//
+void HydrogenFromFiles::prepareForOutput()
+{
+	//-----------------------//
+	// SET OUTPUT PARAMETERS //
+	//-----------------------//
 	_numL = 0;
 	_levelOrdering.clear();
 	int n = 1;
@@ -223,28 +150,143 @@ void HydrogenDataProvider::readData()
 		for (int l = 0; l < n; l++)
 		{
 			_numL++;
-			_levelOrdering.push_back({.n = n, .l = l});
+			_levelOrdering.emplace_back(n, l, energy(n, l));
 		}
 		n++;
 	}
 	while (n <= nMax)
 	{
 		_numL++;
-		_levelOrdering.push_back({.n = n, .l = -1});
+		_levelOrdering.emplace_back(n, energy(n));
 		n++;
 	}
 }
 
-double HydrogenDataProvider::energy(int n, int l) const
+int HydrogenFromFiles::numLv() const { return _numL; }
+
+Eigen::VectorXd HydrogenFromFiles::ev() const
+{
+	Eigen::VectorXd the_ev(_numL);
+	for (int i = 0; i < _numL; i++)
+	{
+		const LevelInfo& lvInfo = _levelOrdering[i];
+		// l = -1 means collapsed, so:
+		the_ev[i] = lvInfo.e();
+	}
+	return the_ev;
+}
+
+Eigen::VectorXd HydrogenFromFiles::gv() const
+{
+	Eigen::VectorXd the_gv(_numL);
+	for (int i = 0; i < _numL; i++)
+	{
+		const LevelInfo& lvInfo = _levelOrdering[i];
+		// collapsed ? n^2 : 2l+1
+		the_gv[i] = lvInfo.l() < 0 ? lvInfo.n() * lvInfo.n() : 2 * lvInfo.l() + 1;
+	}
+	return the_gv;
+}
+
+Eigen::MatrixXd HydrogenFromFiles::avv() const
+{
+	Eigen::MatrixXd the_avv(_numL, _numL);
+	for (int i = 0; i < _numL; i++)
+	{
+		const LevelInfo& initial = _levelOrdering[i];
+		int ni = initial.n();
+		int li = initial.l();
+		for (int f = 0; f < _numL; f++)
+		{
+			const LevelInfo& final = _levelOrdering[f];
+			int nf = final.n();
+			int lf = final.l();
+			// Both resolved
+			if (li > 0 && lf > 0)
+				the_avv(i, f) = einsteinA(ni, li, nf, lf);
+			// Collapsed to resolved
+			else if (li < 0 && lf > 0)
+				the_avv(i, f) = einsteinA(ni, nf, lf);
+			// Resolved to collapsed. The collapsed-collapsed equivalent should always
+			// be 0 in this case.
+			else if (li > 0 && lf < 0)
+			{
+				the_avv(i, f) = einsteinA(ni, nf);
+				assert(the_avv(i, f) == 0.);
+			}
+			// Collapsed to collapsed
+			else
+				the_avv(i, f) = einsteinA(ni, nf);
+		}
+	}
+	return the_avv;
+}
+
+Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
+{
+	Eigen::MatrixXd the_extra = Eigen::MatrixXd::Zero(_numL, _numL);
+	int index1s = -1;
+	int index2p = -1;
+	int i = 0;
+	while (index1s < 0 || index2p < 0)
+	{
+		const LevelInfo& lvInfo = _levelOrdering[i];
+		if (lvInfo.n() == 1)
+			index1s = i;
+		if (lvInfo.n() == 2 && lvInfo.l() == 1)
+			index2p = i;
+		if (i >= _numL)
+			throw "Can't find 2p level for hydrogen";
+		i++;
+	}
+	// Hardcoded the two-photon decay of 2p to 1s
+	the_extra(index1s, index2p) = 8.229;
+	return the_extra;
+}
+
+Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
+{
+	// Calculate the temperature in erg and in electron volt
+	double kT = Constant::BOLTZMAN * T;
+	double T_eV = kT * Constant::ERG_EV;
+
+	Eigen::MatrixXd the_cvv = Eigen::MatrixXd::Zero(_numL, _numL);
+	// Electron contributions (n-changing)
+	for (int i = 0; i < _numL; i++)
+	{
+		const LevelInfo& ini = _levelOrdering[i];
+		for (int f = 0; f < _numL; f++)
+		{
+			const LevelInfo& fin = _levelOrdering[f];
+			// for downward transitions, calculate the collision rate, and derive the
+			// rate for the corresponding upward transition too
+			if (ini.e() > fin.e())
+			{
+				double UpsilonDown = eCollisionStrength(ini, fin, T_eV);
+				double Cif = UpsilonDown * 8.6291e-6 / ini.g() / sqrt(T) * ne;
+				double Cfi = Cif * ini.g() / fin.g() * exp(fin.e() - ini.e() / kT);
+				the_cvv(i, f) += Cif;
+				the_cvv(f, i) += Cfi;
+			}
+			// for upward transitions do nothing because we already covered them above
+		}
+	}
+
+	// TODO: Proton contributions (l-changing)
+
+	return the_cvv;
+}
+
+double HydrogenFromFiles::energy(int n, int l) const
 {
 	// Take an average over the j states
 	double esum = 0;
 	for (int twoJplus1 : twoJplus1range(l))
-		esum += _chiantiLevelv[indexCHIANTI(n, l, twoJplus1)].e * twoJplus1;
+		esum += _chiantiLevelv[indexCHIANTI(n, l, twoJplus1)].e() * twoJplus1;
 	return esum / (4 * l + 2);
 }
 
-double HydrogenDataProvider::energy(int n) const
+double HydrogenFromFiles::energy(int n) const
 {
 	// Average over the l states
 	double esum = 0;
@@ -253,7 +295,7 @@ double HydrogenDataProvider::energy(int n) const
 	return esum / n * n;
 }
 
-double HydrogenDataProvider::einsteinA(int ni, int li, int nf, int lf) const
+double HydrogenFromFiles::einsteinA(int ni, int li, int nf, int lf) const
 {
 	if (ni < nf)
 		return 0.;
@@ -277,7 +319,7 @@ double HydrogenDataProvider::einsteinA(int ni, int li, int nf, int lf) const
 	}
 }
 
-double HydrogenDataProvider::einsteinA(int ni, int nf, int lf) const
+double HydrogenFromFiles::einsteinA(int ni, int nf, int lf) const
 {
 	// average over the initial l states
 	double Asum = 0;
@@ -286,7 +328,7 @@ double HydrogenDataProvider::einsteinA(int ni, int nf, int lf) const
 	return Asum / (ni * ni);
 }
 
-double HydrogenDataProvider::einsteinA(int ni, int nf) const
+double HydrogenFromFiles::einsteinA(int ni, int nf) const
 {
 	// sum over the final l states
 	double Asum = 0;
@@ -295,7 +337,7 @@ double HydrogenDataProvider::einsteinA(int ni, int nf) const
 	return Asum;
 }
 
-double HydrogenDataProvider::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
+double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
 {
 	// Alternatively to all the mappy things below, we could use a nested vector filled up with
 	// zeros
@@ -325,7 +367,7 @@ double HydrogenDataProvider::eCollisionStrength(int ni, int li, int nf, int lf, 
 	}
 }
 
-double HydrogenDataProvider::eCollisionStrength(int ni, int nf, int lf, double T_eV) const
+double HydrogenFromFiles::eCollisionStrength(int ni, int nf, int lf, double T_eV) const
 {
 	// Collision strengths must be summed over all initial states
 	double Upsilonsum = 0;
@@ -334,11 +376,40 @@ double HydrogenDataProvider::eCollisionStrength(int ni, int nf, int lf, double T
 	return Upsilonsum;
 }
 
-double HydrogenDataProvider::eCollisionStrength(int ni, int nf, double T_eV) const
+double HydrogenFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
 {
 	// Also sum over all final states
 	double Upsilonsum = 0;
 	for (int lf = 0; lf < nf; lf++)
 		Upsilonsum += eCollisionStrength(ni, nf, lf, T_eV);
 	return Upsilonsum;
+}
+
+double HydrogenFromFiles::eCollisionStrength(const LevelInfo& initial, const LevelInfo& final,
+                                             double T_eV) const
+{
+	// No output for upward transitions
+	if (initial.e() < final.e())
+		return 0;
+	else
+	{
+		// Resolved-resolved
+		if (initial.l() > 0 && final.l() > 0)
+			return eCollisionStrength(initial.n(), initial.l(), final.n(), final.l(),
+			                          T_eV);
+		// Collapsed-resolved
+		else if (initial.l() < 0 && final.l() > 0)
+			return eCollisionStrength(initial.n(), final.n(), final.l(), T_eV);
+		// Resolved-collapsed (should not be called, and if it is, the collapsed-collapsed
+		// result should be zero)
+		else if (initial.l() > 0 && final.l() < 0)
+		{
+			double eCollStr = eCollisionStrength(initial.n(), final.n(), T_eV);
+			assert(eCollStr == 0);
+			return eCollStr;
+		}
+		// Collapsed-collapsed
+		else
+			return eCollisionStrength(initial.n(), final.n(), T_eV);
+	}
 }

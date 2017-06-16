@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_
-#define GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_
+#ifndef GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
+#define GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
 
 #include "LevelDataProvider.h"
 #include "Table.h"
@@ -7,14 +7,65 @@
 #include <map>
 #include <vector>
 
-class HydrogenDataProvider : public LevelDataProvider
+class HydrogenFromFiles : public LevelDataProvider
 {
+	//------------------------------//
+	// CONSTRUCTION, READ-IN, SETUP //
+	//------------------------------//
 public:
-	HydrogenDataProvider(int resolvedUpTo = 5);
+	HydrogenFromFiles(int resolvedUpTo = 5);
 
-	//-----------------------------------//
+private:
+	/* Reads levels and their quantum numbers from CHIANTI, as well as the A coefficients
+	 between them. The listed levels are only those involved in spontaneous transitions, up to
+	 n = 5: 1s 2s 2p 2p 3s 3p 3p 3d 3d 4s 4p 4p 4d 4d 4f 4f 5s 5p 5p 5d 5d 5f 5f 5g 5g, and
+	 are also j-resolved (Hence the duplicates shown in this sentence). */
+	void readData();
+
+	/* Processes some of the data that was read to help with determining the final output. The
+	 final number of levels, the parameters (n, l if resolved), and the order of the levels in
+	 the output vectors and matrices are determined. All of these properties depend on the
+	 number of resolved levels that was requested during construction. */
+	void prepareForOutput();
+
+	/* A struct-like class to store info about levels in a named way. When a quantum number has
+	 the value -1, this means the level is collapsed over these numbers. To safeguard this
+	 mechanism, I changed this to a class instead of a struct, to make sure the members stay
+	 constant. */
+	class LevelInfo
+	{
+	public:
+		// Three constructors, for different degrees of collapsedness
+		LevelInfo(int n, int l, int twoJplus1, double e)
+		                : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
+		{
+		}
+		LevelInfo(int n, int l, double e) : _n(n), _l(l), _twoJplus1(-1), _e(e) {}
+		LevelInfo(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
+
+		int n() const { return _n; }
+		int l() const { return _l; }
+		int twoJplus1() const { return _twoJplus1; }
+		double e() const { return _e; }
+		double g() const
+		{
+			return _l < 0 ? 2 * _n * _n : (_twoJplus1 < 0 ? 4 * _l + 2 : _twoJplus1);
+		}
+
+	private:
+		int _n, _l, _twoJplus1; // quantum numbers
+		double _e;              // energy
+	};
+
+	//-----------------------------------------------//
+	// PUBLIC FUNCTIONS AKA THE OUTPUT OF THIS CLASS //
+	//-----------------------------------------------//
+	/* The output of these functions depends on the choice of the number of resolved levels.
+	 They should be safe to call once prepareForOutput() has finished. The latter can only be
+	 called after readData() has finished. These two calls should be made consecutively in
+	 either the constructor or a setup routine. */
+public:
 	// FUNCTIONS RETURNING CONSTANT DATA //
-	//-----------------------------------//
 	/* These functions convert the internally loaded data to usable matrices an vectors for
 	 level calculations. These are usually called only once, during the setup of a typical run.
 	 */
@@ -37,9 +88,7 @@ public:
 	 two-photon processes, which generate a continuum instead). */
 	Eigen::MatrixXd extraAvv() const override;
 
-	//-----------------------------------//
 	// FUNCTIONS RETURNING VARIABLE DATA //
-	//-----------------------------------//
 	/* These functions provide coefficients that depend on external variables such as the
 	 temperature */
 
@@ -47,13 +96,13 @@ public:
 	 partner density), for a given temperature and proton and electron densities. */
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
 
+	//-----------------------------------------//
+	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
+	//-----------------------------------------//
+	/* All of the functions below are private, and derive their output from 'scratch', meaning
+	 directly from the data that was read-in during readData(). Once readData() has finished,
+	 these should be safe to call. */
 private:
-	/* Reads levels and their quantum numbers from CHIANTI, as well as the A coefficients
-	 * between them. The listed levels are only those involved in spontaneous transitions, up to
-	 * n = 5: 1s 2s 2p 2p 3s 3p 3p 3d 3d 4s 4p 4p 4d 4d 4f 4f 5s 5p 5p 5d 5d 5f 5f 5g 5g, and
-	 * are also j-resolved (Hence the duplicates shown in this sentence). */
-	void readData();
-
 	/* Returns energy of a level read in from CHIANTI, given the principal (n) and angular
 	 * momentum (l) numbers. Already averaged over different j. */
 	double energy(int n, int l) const;
@@ -70,28 +119,29 @@ private:
 	double einsteinA(int ni, int nf) const;
 
 	/* Return the the total electron collision strength (Upsilon). For the moment, there are
-	 * only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys., 2002, 35, 1613).
-	 * Need separate function for proton collision strength? */
+	 only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys., 2002, 35, 1613).
+	 Note that only queries for downward (in energy) transitions have the potential to return a
+	 nonzero result.
+	 Need separate function for proton collision strength? */
 	double eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const;
 	/* With the initial level collapsed */
 	double eCollisionStrength(int ni, int nf, int lf, double T_eV) const;
 	/* With initial and final levels collapsed */
 	double eCollisionStrength(int ni, int nf, double T_eV) const;
-
-	typedef struct
-	{
-		int n, l, twoJplus1;
-		double e;
-	} levelInfo;
+	/* Works with LevelInfo objects, determining automatically what version to pick. Again, this
+	 only works
+	 for downward transitions. */
+	double eCollisionStrength(const LevelInfo& initial, const LevelInfo& final,
+	                          double T_eV) const;
 
 	const std::map<char, int> _lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
 
 	/* Store the information about the levels in a vector. The index of a level in this vector
 	is the number in the first column of the CHIANTI .elvlc file minus 1. */
-	std::vector<levelInfo> _chiantiLevelv;
+	std::vector<LevelInfo> _chiantiLevelv;
 
 	/* To quickly find the level index for a set of quantum numbers, we use a map with fixed
-	 * size arrays as keys {n, l, 2j+1} */
+	 size arrays as keys {n, l, 2j+1} */
 	std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
 
 	int _chiantiNumLvl{0};
@@ -117,10 +167,10 @@ private:
 	//----------------------//
 	// BASED ON USER CHOICE //
 	//----------------------//
-
 	/* Below are some variables that help with providing the output. These variables and the
 	 final output both depend on the configuration chosen by the user, such as the n up to which
 	 the levels are resolved, declared below. */
+private:
 	int _resolvedUpTo{5};
 
 	/* Number of levels outputted by this LevelDataProvider */
@@ -130,11 +180,7 @@ private:
 	 that the level is collapsed. The energy levels, A-coefficients, ... outputted will be
 	 indexed the same way as in this vector. Changing the way the vector below is filled will
 	 allow for some customization of the ordering of the levels. */
-	typedef struct
-	{
-		int n, l;
-	} NLPair;
-	std::vector<NLPair> _levelOrdering;
+	std::vector<LevelInfo> _levelOrdering;
 };
 
-#endif /* GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_ */
+#endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */

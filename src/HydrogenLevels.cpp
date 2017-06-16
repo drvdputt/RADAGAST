@@ -1,6 +1,7 @@
 #include "HydrogenLevels.h"
 #include "Constants.h"
-#include "HydrogenDataProvider.h"
+#include "HydrogenFromFiles.h"
+#include "HydrogenHardcoded.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "global.h"
@@ -14,9 +15,15 @@ const int index2p = 1;
 const int index2s = 2;
 }
 
-HydrogenLevels::HydrogenLevels()
-                : NLevel(new HydrogenDataProvider())
+HydrogenLevels::HydrogenLevels(bool hardcoded)
+                : NLevel(chooseDataProvider(hardcoded))
 {
+}
+
+LevelDataProvider* HydrogenLevels::chooseDataProvider(bool hardcoded) const
+{
+	if (hardcoded) return new HydrogenHardcoded();
+	else return new HydrogenFromFiles();
 }
 
 Array HydrogenLevels::boundBoundContinuum(const Solution& s) const

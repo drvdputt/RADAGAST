@@ -19,7 +19,7 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
-                : _frequencyv(frequencyv), _boundBound(make_unique<HydrogenLevels>()),
+                : _frequencyv(frequencyv), _boundBound(make_unique<HydrogenLevels>(false)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
@@ -30,7 +30,7 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 /* there's a lot of double work happening here, but this constructor shouldn't be called too often
  */
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
-                : _boundBound(make_unique<HydrogenLevels>()),
+                : _boundBound(make_unique<HydrogenLevels>(false)),
                   _freeBound(make_unique<FreeBound>(frequencyv))
 {
 	if (improveGrid)
