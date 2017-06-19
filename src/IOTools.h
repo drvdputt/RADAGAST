@@ -7,12 +7,11 @@
 
 /* Just a few shorthands for often repeated statements */
 
-namespace IOTools {
-	std::ifstream ifstreamFile(const std::string& file);
+namespace IOTools
+{
+std::ifstream ifstreamFile(const std::string& file);
 
-	std::istringstream istringstreamNextLine(std::ifstream& ifs);
+std::istringstream istringstreamNextLine(std::ifstream& ifs);
 }
-
-
 
 #endif /* _IOTOOLS_H_ */

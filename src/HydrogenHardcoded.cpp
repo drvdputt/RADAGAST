@@ -120,7 +120,8 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
 		// Equation 6.17 of Hazy II (6.6 Collision strengths)
-		Cvv(upper, lower) = bigUpsilon * 8.6291e-6 / the_gv(upper) / sqrt(T) * electronDensity;
+		Cvv(upper, lower) =
+		                bigUpsilon * 8.6291e-6 / the_gv(upper) / sqrt(T) * electronDensity;
 		Cvv(lower, upper) = Cvv(upper, lower) * the_gv(upper) / the_gv(lower) *
 		                    exp((the_ev(lower) - the_ev(upper)) / kT);
 	};

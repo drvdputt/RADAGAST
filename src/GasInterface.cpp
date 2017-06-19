@@ -72,4 +72,3 @@ void GasInterface::testHeatingCurve(double n, const std::valarray<double>& speci
 {
 	_pimpl->testHeatingCurve(n, specificIntensityv);
 }
-

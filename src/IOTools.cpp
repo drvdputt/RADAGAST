@@ -22,4 +22,3 @@ istringstream IOTools::istringstreamNextLine(ifstream& ifs)
 	getline(ifs, line);
 	return istringstream(line);
 }
-

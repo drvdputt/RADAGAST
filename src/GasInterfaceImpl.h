@@ -21,7 +21,7 @@ public:
 	} Solution;
 
 	/* Creates an object which can calculate the NLTE state, of a pure (ionized and atomic)
-	 hydrogen gas and the resulting opacity and emission on the provided frequency grid. */
+	   hydrogen gas and the resulting opacity and emission on the provided frequency grid. */
 	GasInterfaceImpl(const Array& frequencyv);
 
 	/* Creates a HydrogenCalculator and creates a frequency grid / adjusts the given
@@ -33,14 +33,14 @@ public:
 	~GasInterfaceImpl();
 
 	/* Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
-	 guess, and a vector containing the radiation field in specific intensity per frequency
-	 units (on the same frequency grid as the one provided at construction). */
+	   guess, and a vector containing the radiation field in specific intensity per frequency
+	   units (on the same frequency grid as the one provided at construction). */
 	void solveBalance(GasState&, double n, double Tinit, const Array& specificIntensity) const;
 
 	/* Used by the balance solver to calculate the ionization fraction and level populations for
-	 a certain electron temperature, under influence of a blackbody isrf of that same
-	 temperature. Can be used by the client to manually set the temperature and calculate some
-	 properties which can be used as an initial guess. */
+	   a certain electron temperature, under influence of a blackbody isrf of that same
+	   temperature. Can be used by the client to manually set the temperature and calculate some
+	   properties which can be used as an initial guess. */
 	void solveInitialGuess(GasState&, double n, double T) const;
 
 private:
@@ -63,19 +63,19 @@ public:
 	double cooling(const Solution&) const;
 
 	/* The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity
-	 times the radiation field. */
+	   times the radiation field. */
 	double heating(const Solution&) const;
 
 	/* The bolometric emission by the lines only. The emissivity of the photon re-emissions is
-	 also included in this value. */
+	   also included in this value. */
 	double lineCooling(const Solution&) const;
 
 	/* The bolometric absorption by the lines only. The absorption of re-emitted line photons is
-	 also included here. */
+	   also included here. */
 	double lineHeating(const Solution&) const;
 
 	/* The bolometric emission by the continuum only (= cooling by recombination + free-free
-	 continuum) */
+	   continuum) */
 	double continuumCooling(const Solution&) const;
 
 	/* The bolometric absorption by the continuum only (free-free heating) in erg / s / cm3 */

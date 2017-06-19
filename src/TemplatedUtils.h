@@ -33,9 +33,9 @@ template <typename T, typename T1> inline size_t index(T val, const T1& containe
 template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv);
 
 /* Performs a search by bisection on a continuous interval between xMax and xMin. The function given
-as argument should be a decreasing function which indicates in which direction the search should
-proceed, and hence has a zero at the final value of T. The bisection will start from xInit, and
-continues until the final value of x is constrained to an interval of width xTolerance. */
+   as argument should be a decreasing function which indicates in which direction the search should
+   proceed, and hence has a zero at the final value of T. The bisection will start from xInit, and
+   continues until the final value of x is constrained to an interval of width xTolerance. */
 template <typename T>
 T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax, T xMin)
 {
@@ -69,8 +69,8 @@ template <typename T, typename T1> void inline sortedInsert(T elem, T1& containe
 	container.insert(std::upper_bound(std::begin(container), std::end(container), elem), elem);
 }
 
-/* Evaluate the linear interpolation f(x) of a function f represented by fContainer = f(xContainer)
- */
+/* Evaluate the linear interpolation f(x) of a function f represented by fContainer =
+   f(xContainer) */
 template <typename T, typename T1, typename T2>
 T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer)
 {
@@ -103,8 +103,8 @@ T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLef
 }
 
 /* Trapezoidal integration over two containers. xContainer and yContainer should be the same size,
-and support iteration using std::begin and std::end. Should work with vector and valarray for T1 and
-T2. */
+   and support iteration using std::begin and std::end. Should work with vector and valarray for T1
+   and T2. */
 template <typename T, typename T1, typename T2>
 T integrate(const T1& xContainer, const T2& yContainer)
 {
@@ -131,7 +131,7 @@ template <typename T, typename T1> inline size_t index(T val, const T1& containe
 	return std::distance(std::begin(container), idx);
 }
 
-/* Evaluates the polynomial \Sum_{i = 0}^{coeffv.size() - 1} x^i coeffv[i] */
+/* Evaluates the polynomial \Sum_{i = 0}^{coeffv.size() - 1} x^i coeffv[i]. */
 template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv)
 {
 	T sum = 0;

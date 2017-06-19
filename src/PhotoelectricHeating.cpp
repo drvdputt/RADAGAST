@@ -180,9 +180,8 @@ PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vector<dou
 	double ip_v = ionizationPotential(a, Z);
 
 	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2a /
-	                                              (1 + std::pow(27. * Constant::ANG_CM / a,
-	                                                            0.75)); // WD01 eq 7
+	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
+	                                                      0.75)); // WD01 eq 7
 
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -203,9 +202,10 @@ PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vector<dou
 
 			// Calculate y2 from eq 11
 			double Ediff = Ehigh - Elow;
-			double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff /
-			                                            Ediff
-			                   : 1;
+			double y2 = Z >= 0
+			                            ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff /
+			                                              Ediff / Ediff
+			                            : 1;
 
 			// The integral over the electron energy distribution
 			double IntE = energyIntegral(Elow, Ehigh, Emin, Emax);
@@ -241,10 +241,11 @@ PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vector<dou
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
-	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                NumUtils::integrate<double>(wavelengthv,
-	                                                                            pdIntegrandv)
-	                      : 0;
+	                Z < 0
+	                                ? 1.2e-17 * (-Z) * Constant::LIGHT *
+	                                                  NumUtils::integrate<double>(wavelengthv,
+	                                                                              pdIntegrandv)
+	                                : 0;
 
 	return peIntegral + pdIntegral;
 }
@@ -319,9 +320,8 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z,
 	double ip_v = ionizationPotential(a, Z);
 
 	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2a /
-	                                              (1 + std::pow(27. * Constant::ANG_CM / a,
-	                                                            0.75)); // WD01 eq 7
+	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
+	                                                      0.75)); // WD01 eq 7
 
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -368,10 +368,11 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z,
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
-	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                NumUtils::integrate<double>(wavelengthv,
-	                                                                            pdIntegrandv)
-	                      : 0;
+	                Z < 0
+	                                ? 1.2e-17 * (-Z) * Constant::LIGHT *
+	                                                  NumUtils::integrate<double>(wavelengthv,
+	                                                                              pdIntegrandv)
+	                                : 0;
 	return peIntegral + pdIntegral;
 }
 
@@ -385,10 +386,9 @@ double PhotoelectricHeatingRecipe::energyIntegral(double Elow, double Ehigh, dou
 	// integral f(E)dE is of the form a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2 -min2)
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
-	return 6 / Ediff3 *
-	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
+	                     (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double Elow,
@@ -722,10 +722,8 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 		double ip_v = ionizationPotential(a, Z);
 
 		double Emin = Z >= 0 ? 0
-		                     : -(Z + 1) * e2a /
-		                                              (1 +
-		                                               std::pow(27. * Constant::ANG_CM / a,
-		                                                        0.75)); // WD01 eq 7
+		                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
+		                                                      0.75)); // WD01 eq 7
 
 		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -772,7 +770,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	//	spectrumout.open("/Users/drvdputt/GasModule/run/u_lambda.dat");
 	//	for (size_t i = 0; i < wavelengthv.size(); i++)
 	//		spectrumout << wavelengthv[i] * Constant::CM_UM << '\t' <<
-	//energyDensity_lambda[i] << endl; 	spectrumout.close();
+	// energyDensity_lambda[i] << endl; 	spectrumout.close();
 
 	// Grain sizes for test
 	double aMin = 1.5 * Constant::ANG_CM;
@@ -808,7 +806,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 		                                totalAbsorbed
 		        << '\n';
 		//		double u = NumUtils::integrate<double>(wavelengthv,
-		//energyDensity_lambda); 		double avgQabs = uTimesAvgQabs / u;
+		// energyDensity_lambda); 		double avgQabs = uTimesAvgQabs / u;
 		//		outAvgQabs << a / Constant::ANG_CM << '\t' << avgQabs << endl;
 		a *= aStepFactor;
 	}

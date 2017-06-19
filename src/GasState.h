@@ -21,7 +21,7 @@ public:
 
 private:
 	/* Private constructor, only to be used by friended class which acts as a factory and can
-	 fill in all the members. */
+	   fill in all the members. */
 	GasState(const std::valarray<double>& frequencyv,
 	         const std::valarray<double>& previousISRFv,
 	         const std::valarray<double>& emissivityv, const std::valarray<double>& opacityv,
