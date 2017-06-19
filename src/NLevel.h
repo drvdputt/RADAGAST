@@ -18,7 +18,7 @@ protected:
 public:
 	virtual ~NLevel();
 
-	int nLv() const { return _nLv; }
+	int numLv() const { return _numLv; }
 
 protected:
 	Eigen::VectorXd ev() const { return _ev; }
@@ -128,7 +128,7 @@ private:
 	Array _frequencyv;
 
 	/* Energy levels (constant) */
-	int _nLv{0};
+	int _numLv{0};
 	Eigen::VectorXd _ev;
 
 	/* Level degeneracy (constant) */

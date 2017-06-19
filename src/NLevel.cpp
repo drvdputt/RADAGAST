@@ -10,7 +10,7 @@ using namespace std;
 
 NLevel::NLevel(LevelDataProvider* ldp) : _ldp(ldp)
 {
-	_nLv = _ldp->numLv();
+	_numLv = _ldp->numLv();
 	_ev = _ldp->ev();
 	_gv = _ldp->gv();
 	_avv = _ldp->avv();
@@ -53,9 +53,9 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 	Solution s;
 	s.n = atomDensity;
 	s.T = temperature;
-	s.bpvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
-	s.cvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
-	s.nv = Eigen::VectorXd::Zero(_nLv);
+	s.bpvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
+	s.cvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
+	s.nv = Eigen::VectorXd::Zero(_numLv);
 
 	if (specificIntensityv.size() != _frequencyv.size())
 		Error::runtime("Given ISRF and wavelength vectors do not have the same size");
@@ -144,7 +144,7 @@ double NLevel::cooling(const Solution& s) const
 Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
                                                 const Eigen::MatrixXd& Cvv) const
 {
-	Eigen::MatrixXd BPvv = Eigen::MatrixXd::Zero(_nLv, _nLv);
+	Eigen::MatrixXd BPvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
@@ -206,8 +206,8 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thingWithLine) const
 {
 	// Energy levels are not necessarily sorted, therefore go over all pairs.
-	for (int final = 0; final < _nLv; final++)
-		for (int initial = 0; initial < _nLv; initial++)
+	for (int final = 0; final < _numLv; final++)
+		for (int initial = 0; initial < _numLv; initial++)
 			if (_avv(initial, final))
 				thingWithLine(initial, final);
 }

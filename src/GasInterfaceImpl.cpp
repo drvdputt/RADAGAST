@@ -200,13 +200,19 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 		double sink = ne * np * alphaTotal / nAtm;
 		Array sinkv({sink, sink, sink, sink, sink, sink});
 
+		// TODO: Better recombination. Maybe include in the DataProvider class
+		// hack to test if the code runs:
+		int N = _boundBound->numLv();
+		sourcev = Array(alphaTotal / N, N);
+		sinkv = Array(0., N);
+		sinkv[0] = sink;
 		s.levelSolution = _boundBound->solveBalance(nAtm, ne, np, T, specificIntensityv,
 		                                            sourcev, sinkv);
 	}
 	else
 	{
 		s.f = 0;
-		Array zero(_boundBound->nLv());
+		Array zero(_boundBound->numLv());
 		s.levelSolution = _boundBound->solveBalance(0, 0, 0, T, specificIntensityv, zero,
 		                                            zero);
 	}
