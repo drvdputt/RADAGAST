@@ -101,7 +101,7 @@ void HydrogenFromFiles::readData()
 		                 << endl);
 
 		// Zero means two-photon transition, see CHIANTI user guide.
-		_chiantiAvv(upperIndex - 1, lowerIndex) = wavAngstrom > 0 ? A : 0;
+		_chiantiAvv(upperIndex - 1, lowerIndex - 1) = wavAngstrom > 0 ? A : 0;
 
 		getline(wgfa, line);
 	}
@@ -260,7 +260,7 @@ Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 	return the_extra;
 }
 
-Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
+Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double /* unused np */) const
 {
 	// Calculate the temperature in erg and in electron volt
 	double kT = Constant::BOLTZMAN * T;
@@ -290,6 +290,8 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 
 	// TODO: Proton contributions (l-changing)
 
+	DEBUG("Collision rates matrix:" << endl);
+	DEBUG(the_cvv << endl);
 	return the_cvv;
 }
 
