@@ -1,8 +1,9 @@
 #include "PhotoelectricHeating.h"
-
-#include "global.h"
+#include "Error.h"
 #include "NumUtils.h"
 #include "Testing.h"
+#include "global.h"
+
 #include <cmath>
 #include <exception>
 #include <fstream>
@@ -394,7 +395,7 @@ double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double
                                          double Ehigh) const
 {
 	if (hnuDiff < 0)
-		throw std::range_error("Frequency is smaller than photoelectric threshold.");
+		Error::runtime("Frequency is smaller than photoelectric threshold.");
 
 	// Compute yield (y2, y1, y0, and finally Y)
 
@@ -580,7 +581,7 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 	resultZmin = minimumCharge(a);
 
 	if (resultZmax < resultZmin)
-		throw std::range_error("Zmax is smaller than Zmin");
+		Error::runtime("Zmax is smaller than Zmin");
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
 	// We will cut off the distribution at some point past the maximum (in either the positive

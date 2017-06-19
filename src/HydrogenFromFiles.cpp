@@ -1,6 +1,7 @@
 #include "HydrogenFromFiles.h"
 
 #include "Constants.h"
+#include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "global.h"
@@ -17,6 +18,8 @@ const int nMax = 5;
 
 inline std::vector<int> twoJplus1range(int l)
 {
+	// If l > 0, then j can be either l + 0.5 or l - 0.5. For an s state, j is always 1/2 and
+	// 2j+1 can only be 2
 	return l > 0 ? std::vector<int>({2 * l, 2 * l + 2}) : std::vector<int>({2});
 }
 }
@@ -24,7 +27,7 @@ inline std::vector<int> twoJplus1range(int l)
 HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
 {
 	if (_resolvedUpTo > nMax)
-		throw "There are currently only five shells for the hydrogen model";
+		Error::runtime("There are currently only five shells for the hydrogen model");
 	// Read-in, and steps that are safe during read-in
 	readData();
 	// Steps that need to happen after read-in
@@ -38,9 +41,9 @@ void HydrogenFromFiles::readData()
 	//-----------------//
 	// READ LEVEL DATA //
 	//-----------------//
-	ifstream levelFile = IOTools::ifstreamFile(basename + ".elvlc");
+	ifstream elvlc = IOTools::ifstreamFile(basename + ".elvlc");
 	string line;
-	getline(levelFile, line);
+	getline(elvlc, line);
 	while (line.compare(1, 2, "-1"))
 	{
 		// Read the different parts of the line
@@ -58,8 +61,10 @@ void HydrogenFromFiles::readData()
 		int l = _lNumberm.at(lSymbol); // Translate the angular momentum letter
 		int twoJplus1 = static_cast<int>(2 * j + 1); // Store 2j+1 (static cast to make it
 		                                             // clear that j is not integer)
-		int e = observedEnergy;
-		DEBUG("n " << n << " l " << l << " 2j+1 " << twoJplus1 << " e " << e << endl);
+		double e = observedEnergy * Constant::LIGHT *
+		           Constant::PLANCK; // Convert from cm-1 to erg
+		DEBUG("n " << n << " l " << l << " 2j+1 " << twoJplus1 << " e "
+		           << e * Constant::ERG_EV << endl);
 
 		// The level indices in the data structures will go from 0 to number of levels minus
 		// one
@@ -69,17 +74,17 @@ void HydrogenFromFiles::readData()
 		_chiantiLevelv.emplace_back(n, l, twoJplus1, e);
 		_nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
 
-		getline(levelFile, line);
+		getline(elvlc, line);
 	}
-	levelFile.close();
+	elvlc.close();
 	_chiantiNumLvl = _chiantiLevelv.size();
 
 	//-----------------//
 	// READ EINSTEIN A //
 	//-----------------//
-	_chiantiAvv.resize(_chiantiNumLvl, _chiantiNumLvl);
-	ifstream einsteinFile = IOTools::ifstreamFile(basename + ".wgfa");
-	getline(einsteinFile, line);
+	_chiantiAvv = Eigen::MatrixXd::Zero(_chiantiNumLvl, _chiantiNumLvl);
+	ifstream wgfa = IOTools::ifstreamFile(basename + ".wgfa");
+	getline(wgfa, line);
 	while (line.compare(1, 2, "-1"))
 	{
 		int leftIndex, rightIndex;
@@ -98,9 +103,12 @@ void HydrogenFromFiles::readData()
 		// Zero means two-photon transition, see CHIANTI user guide.
 		_chiantiAvv(upperIndex - 1, lowerIndex) = wavAngstrom > 0 ? A : 0;
 
-		getline(einsteinFile, line);
+		getline(wgfa, line);
 	}
-	einsteinFile.close();
+	wgfa.close();
+
+	DEBUG("All chianti A coefficients:" << endl);
+	DEBUG(_chiantiAvv << endl);
 
 	//---------------------//
 	// READ COLLISION DATA //
@@ -115,9 +123,9 @@ void HydrogenFromFiles::readData()
 		}
 	}
 
-	ifstream andersonFile = IOTools::ifstreamFile(REPOROOT "/dat/h_coll_str.dat");
-	getline(andersonFile, line);
-	getline(andersonFile, line);
+	ifstream h_coll_str = IOTools::ifstreamFile(REPOROOT "/dat/h_coll_str.dat");
+	getline(h_coll_str, line);
+	getline(h_coll_str, line);
 	while (line.compare(0, 2, "-1"))
 	{
 		istringstream iss = istringstream(line);
@@ -132,9 +140,9 @@ void HydrogenFromFiles::readData()
 		}
 		DEBUG(endl);
 		_andersonUpsilonvm[{upperIndex, lowerIndex}] = Upsilonv;
-		getline(andersonFile, line);
+		getline(h_coll_str, line);
 	}
-	andersonFile.close();
+	h_coll_str.close();
 }
 
 void HydrogenFromFiles::prepareForOutput()
@@ -173,6 +181,8 @@ Eigen::VectorXd HydrogenFromFiles::ev() const
 		// l = -1 means collapsed, so:
 		the_ev[i] = lvInfo.e();
 	}
+	DEBUG("energy vector" << endl);
+	DEBUG(the_ev << endl);
 	return the_ev;
 }
 
@@ -185,6 +195,8 @@ Eigen::VectorXd HydrogenFromFiles::gv() const
 		// collapsed ? n^2 : 2l+1
 		the_gv[i] = lvInfo.l() < 0 ? lvInfo.n() * lvInfo.n() : 2 * lvInfo.l() + 1;
 	}
+	DEBUG("degeneracy vector" << endl);
+	DEBUG(the_gv << endl);
 	return the_gv;
 }
 
@@ -202,14 +214,14 @@ Eigen::MatrixXd HydrogenFromFiles::avv() const
 			int nf = final.n();
 			int lf = final.l();
 			// Both resolved
-			if (li > 0 && lf > 0)
+			if (li >= 0 && lf >= 0)
 				the_avv(i, f) = einsteinA(ni, li, nf, lf);
 			// Collapsed to resolved
-			else if (li < 0 && lf > 0)
+			else if (li < 0 && lf >= 0)
 				the_avv(i, f) = einsteinA(ni, nf, lf);
 			// Resolved to collapsed. The collapsed-collapsed equivalent should always
 			// be 0 in this case.
-			else if (li > 0 && lf < 0)
+			else if (li >= 0 && lf < 0)
 			{
 				the_avv(i, f) = einsteinA(ni, nf);
 				assert(the_avv(i, f) == 0.);
@@ -219,6 +231,8 @@ Eigen::MatrixXd HydrogenFromFiles::avv() const
 				the_avv(i, f) = einsteinA(ni, nf);
 		}
 	}
+	DEBUG("Einstein A matrix:" << endl);
+	DEBUG(the_avv << endl);
 	return the_avv;
 }
 
@@ -236,11 +250,13 @@ Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 		if (lvInfo.n() == 2 && lvInfo.l() == 1)
 			index2p = i;
 		if (i >= _numL)
-			throw "Can't find 2p level for hydrogen";
+			Error::runtime("Can't find 2p level for hydrogen");
 		i++;
 	}
 	// Hardcoded the two-photon decay of 2p to 1s
-	the_extra(index1s, index2p) = 8.229;
+	the_extra(index2p, index1s) = 8.229;
+	DEBUG("Extra A" << endl);
+	DEBUG(the_extra << endl);
 	return the_extra;
 }
 
@@ -351,7 +367,8 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, dou
 	int uIndex = uIndexIt->second;
 	int lIndex = lIndexIt->second;
 	if (uIndex <= lIndex)
-		throw "This function should only be used for downward collisional transitions ";
+		Error::runtime("This function should only be used for downward collisional "
+		               "transitions");
 
 	// When the levels are included, but the specific transition isn't, the result is also zero
 	auto UpsilonvIt = _andersonUpsilonvm.find({uIndex, lIndex});
@@ -394,15 +411,15 @@ double HydrogenFromFiles::eCollisionStrength(const LevelInfo& initial, const Lev
 	else
 	{
 		// Resolved-resolved
-		if (initial.l() > 0 && final.l() > 0)
+		if (initial.l() >= 0 && final.l() >= 0)
 			return eCollisionStrength(initial.n(), initial.l(), final.n(), final.l(),
 			                          T_eV);
 		// Collapsed-resolved
-		else if (initial.l() < 0 && final.l() > 0)
+		else if (initial.l() < 0 && final.l() >= 0)
 			return eCollisionStrength(initial.n(), final.n(), final.l(), T_eV);
 		// Resolved-collapsed (should not be called, and if it is, the collapsed-collapsed
 		// result should be zero)
-		else if (initial.l() > 0 && final.l() < 0)
+		else if (initial.l() >= 0 && final.l() < 0)
 		{
 			double eCollStr = eCollisionStrength(initial.n(), final.n(), T_eV);
 			assert(eCollStr == 0);

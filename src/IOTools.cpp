@@ -1,4 +1,5 @@
 #include "IOTools.h"
+#include "Error.h"
 #include "global.h"
 
 using namespace std;
@@ -9,8 +10,7 @@ ifstream IOTools::ifstreamFile(const string& file)
 	if (!input)
 	{
 		string message = "File " + file + "not found.";
-		cerr << message << endl;
-		throw runtime_error(message);
+		Error::runtime(message);
 	}
 	DEBUG("Opened file " << file << endl);
 	return input;

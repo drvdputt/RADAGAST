@@ -145,7 +145,7 @@ private:
 	std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
 
 	int _chiantiNumLvl{0};
-	Table<2> _chiantiAvv;
+	Eigen::MatrixXd _chiantiAvv;
 
 	/* Indices like in Anderson 2000 table 1 */
 	std::map<std::array<int, 2>, int> _nlToAndersonIndexm;

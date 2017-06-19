@@ -1,5 +1,6 @@
 #include "NLevel.h"
 #include "Constants.h"
+#include "Error.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 #include "global.h"
@@ -18,7 +19,12 @@ NLevel::NLevel(LevelDataProvider* ldp) : _ldp(ldp)
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		if (_ev(upper) - _ev(lower) < 0)
-			throw "There is an upward A-coefficient. This can't be correct";
+		{
+			cout << "Eu - El = " << _ev(upper) - _ev(lower) << endl;
+			cout << "u l = " << upper << " " << lower << " Aul = " << _avv(upper, lower)
+			     << endl;
+			Error::runtime("There is an upward A-coefficient. This can't be correct");
+		}
 	});
 }
 
@@ -52,9 +58,9 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 	s.nv = Eigen::VectorXd::Zero(_nLv);
 
 	if (specificIntensityv.size() != _frequencyv.size())
-		throw range_error("Given ISRF and wavelength vectors do not have the same size");
+		Error::runtime("Given ISRF and wavelength vectors do not have the same size");
 	if (sourcev.size() != _ev.size() || sinkv.size() != _ev.size())
-		throw range_error("Source and/or sink term vector(s) of wrong size");
+		Error::runtime("Source and/or sink term vector(s) of wrong size");
 
 	if (atomDensity > 0)
 	{

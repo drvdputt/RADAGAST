@@ -43,6 +43,7 @@
 
 #include "FreeFree.h"
 #include "Constants.h"
+#include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
@@ -106,7 +107,7 @@ void FreeFree::readFullData(const string& file)
 	if (magic != gaunt_magic && magic != gaunt_magic2)
 	{
 		cerr << "read_table() found wrong magic number in file %s.\n" << endl;
-		throw std::runtime_error("read_table() found wrong magic number in file %s.\n");
+		Error::runtime("read_table() found wrong magic number in file %s.\n");
 	}
 
 	/* read dimensions of the table */
@@ -194,7 +195,7 @@ void FreeFree::readIntegratedData(const string& file)
 	if (magic != gaunt_magic)
 	{
 		cerr << "read_table() found wrong magic number in file %s.\n" << endl;
-		throw std::runtime_error("read_table() found wrong magic number in file %s.\n");
+		Error::runtime("read_table() found wrong magic number in file %s.\n");
 	}
 
 	/* read dimensions of the table */
@@ -247,8 +248,8 @@ void FreeFree::readIntegratedData(const string& file)
 double FreeFree::gauntFactor(double logu, double logg2) const
 {
 	// Throw an error if out of range for now. Maybe allow extrapolation later.
-	if (logg2 < _loggamma2Min or logg2 > _loggamma2Max or logu < _loguMin or logu > _loguMax)
-		throw range_error("Log(gamma^2) or log(u) out of range");
+	Error::rangeCheck("log(gamma^2)", logg2, _loggamma2Min, _loggamma2Max);
+	Error::rangeCheck("log(u)", logu, _loguMin, _loguMax);
 
 	// Find the gamma^2-index to the right of logg2 , maximum the max column index)
 	int iRight = ceil((logg2 - _loggamma2Min) / _logStep);
@@ -278,8 +279,8 @@ double FreeFree::gauntFactor(double logu, double logg2) const
 double FreeFree::integratedGauntFactor(double logg2) const
 {
 	// Throw an error if out of range for now. Maybe allow extrapolation later.
-	if (logg2 < _loggamma2Min_integrated or logg2 > _loggamma2Max_integrated)
-		throw range_error("Log(gamma^2) out of range");
+	Error::rangeCheck("log(gamma^2)", logg2, _loggamma2Min_integrated,
+	                  _loggamma2Max_integrated);
 
 	/* Determine the indices of the data points we will interpolate between. Using the stored
 	  gamma^2 grid to interpolate using TemplatedUtils::evaluateLinInterpf would invoke a search
