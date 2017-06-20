@@ -28,11 +28,15 @@ public:
 	// FUNCTIONS RETURNING VARIABLE DATA //
 	//-----------------------------------//
 	/* These functions provide coefficients that depend on external variables such as the
-	   temperature */
+	   temperature. */
 
 	/* Returns a matrix containing the collisional transition rates (already multiplied with the
 	   partner density), for a given temperature and proton and electron densities. */
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
+
+	/* Returns a vector containing partial recombination rates based on fits I found somewhere
+	   (see source code for origin). */
+	Eigen::VectorXd alphav(double T, double ne, double np) const override;
 
 private:
 	Eigen::VectorXd the_ev;

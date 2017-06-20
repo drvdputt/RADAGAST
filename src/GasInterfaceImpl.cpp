@@ -27,8 +27,8 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 	DEBUG("Constructed HydrogenCalculator" << endl);
 }
 
-/* there's a lot of double work happening here, but this constructor shouldn't be called too often
- */
+/* there's a lot of double work happening here, but this constructor shouldn't be called too
+   often */
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
                 : _boundBound(make_unique<HydrogenLevels>(false)),
                   _freeBound(make_unique<FreeBound>(frequencyv))
@@ -95,9 +95,9 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		double logTinit = log10(Tinit);
 
 		/* Lambda function that will be used by the search algorithm. The state of the
-		 system will be updated every time the algorithm calls this function. The return
-		 value indicates whether the temperature should increase (net absorption) or
-		 decrease (net emission). */
+		   system will be updated every time the algorithm calls this function. The return
+		   value indicates whether the temperature should increase (net absorption) or
+		   decrease (net emission). */
 		int counter = 0;
 		function<int(double)> evaluateBalance = [&](double logT) -> int {
 			counter++;
@@ -163,58 +163,21 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 	if (n > 0)
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
+
+		// Ionization balance
 		s.f = Ionization::ionizedFraction(n, T, _frequencyv, specificIntensityv);
 		DEBUG("Ionized fraction = " << s.f << endl);
 
+		// Level balance
+		double nAtm = n * (1 - s.f);
 		double np = n * s.f;
 		double ne = np;
-		double alphaTotal = Ionization::recombinationRateCoeff(T);
-
-		// approximations from Draine's book, p 138, valid for 3000 to 30000 K
-		// yes, this is natural log
-		double T4 = T / 1.e4;
-		double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
-		double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-		double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
-
-		// 2015-Raga (A13)
-		double t = log10(T4);
-		vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
-		vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
-		vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
-
-		double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
-		double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
-		double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
-
-		Array sourcev({alphaGround, alpha2p, alpha2s, alpha3, alpha4, alpha5});
-		sourcev *= ne * np;
-
-		/* The ionization rate calculation makes no distinction between the levels. When the
-		 upper level population is small, and its decay rate is large, the second term
-		 doesn't really matter. Therefore, we choose the sink to be the same for each level.
-		 Moreover, total source = total sink so we want sink*n0 + sink*n1 = source => sink =
-		 totalsource / n because n0/n + n1/n = 1.
-		 */
-		double nAtm = n * (1. - s.f);
-		double sink = ne * np * alphaTotal / nAtm;
-		Array sinkv({sink, sink, sink, sink, sink, sink});
-
-		// TODO: Better recombination. Maybe include in the DataProvider class
-		// hack to test if the code runs:
-		int N = _boundBound->numLv();
-		sourcev = Array(alphaTotal / N, N);
-		sinkv = Array(0., N);
-		sinkv[0] = sink;
-		s.levelSolution = _boundBound->solveBalance(nAtm, ne, np, T, specificIntensityv,
-		                                            sourcev, sinkv);
+		s.levelSolution = _boundBound->solveBalance(nAtm, ne, np, T, specificIntensityv);
 	}
 	else
 	{
 		s.f = 0;
-		Array zero(_boundBound->numLv());
-		s.levelSolution = _boundBound->solveBalance(0, 0, 0, T, specificIntensityv, zero,
-		                                            zero);
+		s.levelSolution = _boundBound->solveBalance(0, 0, 0, T, specificIntensityv);
 	}
 	return s;
 }
@@ -275,17 +238,11 @@ double GasInterfaceImpl::heating(const Solution& s) const
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
-	//	return Constant::FPI *
-	//	       TemplatedUtils::integrate<double>(_frequencyv,
-	//	                                         _boundBound->emissivityv(s.levelSolution));
 	return _boundBound->cooling(s.levelSolution);
 }
 
 double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
-	//	Array intensityOpacityv = s.specificIntensityv *
-	//_boundBound->opacityv(s.levelSolution); 	return Constant::FPI *
-	// TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 	return _boundBound->heating(s.levelSolution);
 }
 

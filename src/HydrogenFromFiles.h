@@ -32,16 +32,16 @@ private:
 	   the value -1, this means the level is collapsed over these numbers. To safeguard this
 	   mechanism, I changed this to a class instead of a struct, to make sure the members stay
 	   constant. */
-	class LevelInfo
+	class HydrogenLevel
 	{
 	public:
 		// Three constructors, for different degrees of collapsedness
-		LevelInfo(int n, int l, int twoJplus1, double e)
+		HydrogenLevel(int n, int l, int twoJplus1, double e)
 		                : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
 		{
 		}
-		LevelInfo(int n, int l, double e) : _n(n), _l(l), _twoJplus1(-1), _e(e) {}
-		LevelInfo(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
+		HydrogenLevel(int n, int l, double e) : _n(n), _l(l), _twoJplus1(-1), _e(e) {}
+		HydrogenLevel(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
 
 		int n() const { return _n; }
 		int l() const { return _l; }
@@ -75,6 +75,7 @@ public:
 
 	/* Returns a vector containing the energy of each level */
 	Eigen::VectorXd ev() const override;
+
 	/* Returns a vector containing the degeneracy of each level */
 	Eigen::VectorXd gv() const override;
 
@@ -89,11 +90,14 @@ public:
 
 	// FUNCTIONS RETURNING VARIABLE DATA //
 	/* These functions provide coefficients that depend on external variables such as the
-	   temperature */
+	   temperature. */
 
 	/* Returns a matrix containing the collisional transition rates (already multiplied with the
 	   partner density), for a given temperature and proton and electron densities. */
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
+
+	/* Returns a vector containing the partial recombination rates into each level. */
+	Eigen::VectorXd alphav(double T, double ne, double np) const override;
 
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
@@ -105,7 +109,6 @@ private:
 	/* Returns energy of a level read in from CHIANTI, given the principal (n) and angular
 	   momentum (l) numbers. Already averaged over different j. */
 	double energy(int n, int l) const;
-
 	/* Collapsed version */
 	double energy(int n) const;
 
@@ -128,20 +131,30 @@ private:
 	double eCollisionStrength(int ni, int nf, double T_eV) const;
 	/* Works with LevelInfo objects, determining automatically what version to pick. Again, this
 	   only works for downward transitions. */
-	double eCollisionStrength(const LevelInfo& initial, const LevelInfo& final,
+	double eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
 	                          double T_eV) const;
 
+	/* A simple map for translating orbital letters into numbers */
 	const std::map<char, int> _lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
+
+	/* The total number of levels listed in the elvlc file from CHIANTI */
+	int _chiantiNumLvl{0};
 
 	/* Store the information about the levels in a vector. The index of a level in this vector
 	  is the number in the first column of the CHIANTI .elvlc file minus 1. */
-	std::vector<LevelInfo> _chiantiLevelv;
+	std::vector<HydrogenLevel> _chiantiLevelv;
 
-	/* To quickly find the level index for a set of quantum numbers, we use a map with fixed
-	   size arrays as keys {n, l, 2j+1} */
+	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
+	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1} */
 	std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
 
-	int _chiantiNumLvl{0};
+	/* With the following shorthand */
+	inline int indexCHIANTI(int n, int l, int twoJplus1) const
+	{
+		return _nljToChiantiIndexm.at({n, l, twoJplus1});
+	}
+
+	/* The Einstein A coefficientes read in from the wgfa file from CHIANTI */
 	Eigen::MatrixXd _chiantiAvv;
 
 	/* Indices like in Anderson 2000 table 1 */
@@ -152,14 +165,8 @@ private:
 
 	/* Indexed on upper index, lower index, temperature index. Only downward collisions are
 	   listed, so only store those, using a map which uses a pair of ints representing the upper
-	   and lower levels.*/
+	   and lower levels. */
 	std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
-
-	/* -------some shorthands--- */
-	inline int indexCHIANTI(int n, int l, int twoJplus1) const
-	{
-		return _nljToChiantiIndexm.at({n, l, twoJplus1});
-	}
 
 	//----------------------//
 	// BASED ON USER CHOICE //
@@ -177,7 +184,7 @@ private:
 	   that the level is collapsed. The energy levels, A-coefficients, ... outputted will be
 	   indexed the same way as in this vector. Changing the way the vector below is filled will
 	   allow for some customization of the ordering of the levels. */
-	std::vector<LevelInfo> _levelOrdering;
+	std::vector<HydrogenLevel> _levelOrdering;
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */

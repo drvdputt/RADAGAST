@@ -1,6 +1,7 @@
 #include "NLevel.h"
 #include "Constants.h"
 #include "Error.h"
+#include "IonizationBalance.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 #include "global.h"
@@ -8,14 +9,10 @@
 
 using namespace std;
 
-NLevel::NLevel(LevelDataProvider* ldp) : _ldp(ldp)
+NLevel::NLevel(LevelDataProvider* ldp)
+                : _ldp(ldp), _numLv(_ldp->numLv()), _ev(_ldp->ev()), _gv(_ldp->gv()),
+                  _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
 {
-	_numLv = _ldp->numLv();
-	_ev = _ldp->ev();
-	_gv = _ldp->gv();
-	_avv = _ldp->avv();
-	_extraAvv = _ldp->extraAvv();
-
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		if (_ev(upper) - _ev(lower) < 0)
@@ -47,8 +44,7 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 
 NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity,
                                       double protonDensity, double temperature,
-                                      const Array& specificIntensityv, const Array& sourcev,
-                                      const Array& sinkv) const
+                                      const Array& specificIntensityv) const
 {
 	Solution s;
 	s.n = atomDensity;
@@ -59,14 +55,12 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 
 	if (specificIntensityv.size() != _frequencyv.size())
 		Error::runtime("Given ISRF and wavelength vectors do not have the same size");
-	if (sourcev.size() != _ev.size() || sinkv.size() != _ev.size())
-		Error::runtime("Source and/or sink term vector(s) of wrong size");
 
 	if (atomDensity > 0)
 	{
 		s.cvv = _ldp->cvv(temperature, electronDensity, protonDensity);
-		// Calculate BijPij (needs to be redone at each temperature because the line profile
-		// can change) Also needs the Cij to calculate collisional broadening
+		/* Calculate BijPij (needs to be redone at each temperature because the line profile
+		   can change) Also needs the Cij to calculate collisional broadening */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
 
 #ifdef REPORT_LINE_QUALITY
@@ -86,11 +80,19 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
+		/* The ionization rate calculation makes no distinction between the levels. When the
+		   upper level population is small, and its decay rate is large, the second term
+		   doesn't really matter. Therefore, we choose the sink to be the same for each
+		   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
+		   => sink = totalsource / n because n0/n + n1/n = 1. */
+		double alphaTotal = Ionization::recombinationRateCoeff(temperature);
+		double sink = electronDensity * protonDensity * alphaTotal / atomDensity;
+		Eigen::VectorXd sinkv = Eigen::VectorXd::Constant(_numLv, sink);
+
 		// Calculate Fij and bi and solve F.n = b
-		s.nv = solveRateEquations(
-		                s.n, s.bpvv, s.cvv,
-		                Eigen::Map<const Eigen::VectorXd>(&sourcev[0], sourcev.size()),
-		                Eigen::Map<const Eigen::VectorXd>(&sinkv[0], sinkv.size()), 0);
+		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv,
+		                          _ldp->alphav(temperature, electronDensity, protonDensity),
+		                          sinkv, 0);
 	}
 	return s;
 }
@@ -174,7 +176,7 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 	                    Cvv.transpose());
 
 	// See equation for Fij (37) in document
-	// subtract departure rate from level i to all other levels
+	// Subtract departure rate from level i to all other levels
 	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
 	Mvv -= departureDiagonal;
 	Mvv -= sinkTerm.asDiagonal();

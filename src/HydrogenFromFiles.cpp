@@ -177,7 +177,7 @@ Eigen::VectorXd HydrogenFromFiles::ev() const
 	Eigen::VectorXd the_ev(_numL);
 	for (int i = 0; i < _numL; i++)
 	{
-		const LevelInfo& lvInfo = _levelOrdering[i];
+		const HydrogenLevel& lvInfo = _levelOrdering[i];
 		// l = -1 means collapsed, so:
 		the_ev[i] = lvInfo.e();
 	}
@@ -191,7 +191,7 @@ Eigen::VectorXd HydrogenFromFiles::gv() const
 	Eigen::VectorXd the_gv(_numL);
 	for (int i = 0; i < _numL; i++)
 	{
-		const LevelInfo& lvInfo = _levelOrdering[i];
+		const HydrogenLevel& lvInfo = _levelOrdering[i];
 		// collapsed ? n^2 : 2l+1
 		the_gv[i] = lvInfo.l() < 0 ? lvInfo.n() * lvInfo.n() : 2 * lvInfo.l() + 1;
 	}
@@ -205,12 +205,12 @@ Eigen::MatrixXd HydrogenFromFiles::avv() const
 	Eigen::MatrixXd the_avv(_numL, _numL);
 	for (int i = 0; i < _numL; i++)
 	{
-		const LevelInfo& initial = _levelOrdering[i];
+		const HydrogenLevel& initial = _levelOrdering[i];
 		int ni = initial.n();
 		int li = initial.l();
 		for (int f = 0; f < _numL; f++)
 		{
-			const LevelInfo& final = _levelOrdering[f];
+			const HydrogenLevel& final = _levelOrdering[f];
 			int nf = final.n();
 			int lf = final.l();
 			// Both resolved
@@ -244,7 +244,7 @@ Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 	int i = 0;
 	while (index1s < 0 || index2p < 0)
 	{
-		const LevelInfo& lvInfo = _levelOrdering[i];
+		const HydrogenLevel& lvInfo = _levelOrdering[i];
 		if (lvInfo.n() == 1)
 			index1s = i;
 		if (lvInfo.n() == 2 && lvInfo.l() == 1)
@@ -270,10 +270,10 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double /* unused np 
 	// Electron contributions (n-changing)
 	for (int i = 0; i < _numL; i++)
 	{
-		const LevelInfo& ini = _levelOrdering[i];
+		const HydrogenLevel& ini = _levelOrdering[i];
 		for (int f = 0; f < _numL; f++)
 		{
-			const LevelInfo& fin = _levelOrdering[f];
+			const HydrogenLevel& fin = _levelOrdering[f];
 			// for downward transitions, calculate the collision rate, and derive the
 			// rate for the corresponding upward transition too
 			if (ini.e() > fin.e())
@@ -404,7 +404,7 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
 	return Upsilonsum;
 }
 
-double HydrogenFromFiles::eCollisionStrength(const LevelInfo& initial, const LevelInfo& final,
+double HydrogenFromFiles::eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
                                              double T_eV) const
 {
 	// No output for upward transitions

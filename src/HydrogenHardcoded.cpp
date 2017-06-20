@@ -27,9 +27,7 @@ Eigen::VectorXd HydrogenHardcoded::gv() const { return the_gv; }
 
 Eigen::MatrixXd HydrogenHardcoded::avv() const
 {
-	/* Using NIST data
-	 * (http://physics.nist.gov/cgi-bin/ASD/lines1.pl?unit=1&line_out=0&bibrefs=1&show_obs_wl=1&show_calc_wl=1&A_out=0&intens_out=1&allowed_out=1&forbid_out=1&conf_out=1&term_out=1&enrg_out=1&J_out=1&g_out=0&spectra=H%20I)
-	 */
+	/* Using NIST data (Wiese & Fuhr) */
 
 	/* Explicit implementation, for instructive purposes */
 
@@ -98,7 +96,7 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 Eigen::MatrixXd HydrogenHardcoded::extraAvv() const
 {
 	/* Two photon continuum adds extra spontaneous decay rate to A2s1, but does not produce line
-	 * radiation */
+	   radiation */
 	Eigen::MatrixXd the_extraAvv(NLV, NLV);
 	// clang-format off
 	the_extraAvv << 0, 0, 0, 0, 0, 0,
@@ -157,8 +155,8 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	bigUpsilon2p1 = max(bigUpsilon2s1, 0.);
 	fillInElectronCollisionRate(1, 0, bigUpsilon2p1);
 
-	// Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
-	// 2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0
+	/* Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
+	   2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0. */
 	double mu_m = Constant::HMASS_CGS / 2 / Constant::ELECTRONMASS;
 	double constfactor = 9.93e-6 * sqrt(mu_m);
 
@@ -178,4 +176,29 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	Cvv(index2s, index2p) = protonDensity * q2s2p;
 
 	return Cvv;
+}
+
+Eigen::VectorXd HydrogenHardcoded::alphav(double T, double ne, double np) const
+{
+	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
+	// yes, this is natural log
+	double T4 = T / 1.e4;
+	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
+	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+	double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
+
+	// 2015-Raga (A13)
+	double t = log10(T4);
+	vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
+	vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
+	vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
+
+	double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
+	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
+	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
+
+	Eigen::VectorXd sourcev(NLV);
+	sourcev << alphaGround, alpha2p, alpha2s, alpha3, alpha4, alpha5;
+	sourcev *= ne * np;
+	return sourcev;
 }
