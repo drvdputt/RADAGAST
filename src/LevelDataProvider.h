@@ -63,7 +63,7 @@ public:
 	   this function is separated from the ionization balance calculation, as there only the
 	   total recombination rate matters. As with the other functions, the way this vector is
 	   obtained depends entirely on the subclass. */
-	virtual Eigen::VectorXd alphav(double T, double ne, double np) const = 0;
+	virtual Eigen::VectorXd alphav(double T) const = 0;
 };
 
 #endif /* _SRC_LEVELDATAPROVIDER_H_ */

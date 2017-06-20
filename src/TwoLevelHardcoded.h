@@ -15,7 +15,7 @@ public:
 	Eigen::MatrixXd extraAvv() const override;
 
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
-
+	Eigen::VectorXd alphav(double T) const override;
 private:
 	Eigen::Vector2d the_ev;
 	Eigen::Vector2d the_gv;

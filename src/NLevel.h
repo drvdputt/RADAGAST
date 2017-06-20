@@ -164,7 +164,12 @@ private:
 	   available. */
 	Array lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const;
 
-	/* Variables which are the same for all invocations of solveBalance are stored as members */
+
+	// Variables which are the same for all invocations of solveBalance are stored as members //
+
+	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
+	   initialized with depends on the subclass. */
+	std::unique_ptr<LevelDataProvider> _ldp;
 
 	/* Wavelength grid */
 	Array _frequencyv;
@@ -183,10 +188,6 @@ private:
 	   prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
 	   but is about 8 s-1 for two photons. */
 	Eigen::MatrixXd _extraAvv;
-
-	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
-	   initialized with depends on the subclass. */
-	std::unique_ptr<LevelDataProvider> _ldp;
 };
 
 #endif /* _NLEVEL_H_ */

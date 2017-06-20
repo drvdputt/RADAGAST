@@ -178,7 +178,7 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	return Cvv;
 }
 
-Eigen::VectorXd HydrogenHardcoded::alphav(double T, double ne, double np) const
+Eigen::VectorXd HydrogenHardcoded::alphav(double T) const
 {
 	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
 	// yes, this is natural log
@@ -199,6 +199,5 @@ Eigen::VectorXd HydrogenHardcoded::alphav(double T, double ne, double np) const
 
 	Eigen::VectorXd sourcev(NLV);
 	sourcev << alphaGround, alpha2p, alpha2s, alpha3, alpha4, alpha5;
-	sourcev *= ne * np;
 	return sourcev;
 }

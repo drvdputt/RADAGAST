@@ -54,7 +54,9 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 	s.nv = Eigen::VectorXd::Zero(_numLv);
 
 	if (specificIntensityv.size() != _frequencyv.size())
-		Error::runtime("Given ISRF and wavelength vectors do not have the same size");
+		Error::runtime("Given ISRF and frequency vectors do not have the same size " +
+		               std::to_string(specificIntensityv.size()) + " vs " +
+		               std::to_string(_frequencyv.size()));
 
 	if (atomDensity > 0)
 	{
@@ -80,19 +82,18 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
-		/* The ionization rate calculation makes no distinction between the levels. When the
-		   upper level population is small, and its decay rate is large, the second term
+		/* The ionization rate calculation makes no distinction between the levels.  When
+		   the upper level population is small, and its decay rate is large, the second term
 		   doesn't really matter. Therefore, we choose the sink to be the same for each
 		   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 		   => sink = totalsource / n because n0/n + n1/n = 1. */
 		double alphaTotal = Ionization::recombinationRateCoeff(temperature);
 		double sink = electronDensity * protonDensity * alphaTotal / atomDensity;
 		Eigen::VectorXd sinkv = Eigen::VectorXd::Constant(_numLv, sink);
-
+		Eigen::VectorXd sourcev =
+		                _ldp->alphav(temperature) * electronDensity * protonDensity;
 		// Calculate Fij and bi and solve F.n = b
-		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv,
-		                          _ldp->alphav(temperature, electronDensity, protonDensity),
-		                          sinkv, 0);
+		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
 	}
 	return s;
 }
@@ -200,7 +201,7 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 	// Element wise relative errors
 	Eigen::ArrayXd diffv = Mvv * nv - b;
 	Eigen::ArrayXd errv = diffv / Eigen::ArrayXd(b);
-	DEBUG("The relative errors are: " << errv << endl);
+	DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;
 }

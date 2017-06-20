@@ -49,7 +49,12 @@ private:
 		double e() const { return _e; }
 		double g() const
 		{
-			return _l < 0 ? 2 * _n * _n : (_twoJplus1 < 0 ? 4 * _l + 2 : _twoJplus1);
+			if (_l < 0)
+				return 2 * _n * _n;
+			else if (_twoJplus1 < 0)
+				return 4 * _l + 2;
+			else
+				return _twoJplus1;
 		}
 
 	private:
@@ -97,7 +102,7 @@ public:
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
 
 	/* Returns a vector containing the partial recombination rates into each level. */
-	Eigen::VectorXd alphav(double T, double ne, double np) const override;
+	Eigen::VectorXd alphav(double T) const override;
 
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //

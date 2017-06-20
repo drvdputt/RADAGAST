@@ -56,3 +56,9 @@ Eigen::MatrixXd TwoLevelHardcoded::cvv(double T, double /* unused ne */,
 	            exp(-(the_ev(1) - the_ev(0)) / Constant::BOLTZMAN / T);
 	return Cvv;
 }
+
+Eigen::VectorXd TwoLevelHardcoded::alphav(double T) const
+{
+	// There is no ion
+	return Eigen::Vector2d::Zero();
+}

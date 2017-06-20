@@ -231,8 +231,10 @@ Eigen::MatrixXd HydrogenFromFiles::avv() const
 				the_avv(i, f) = einsteinA(ni, nf);
 		}
 	}
+#ifdef PRINT_MATRICES
 	DEBUG("Einstein A matrix:" << endl);
 	DEBUG(the_avv << endl);
+#endif
 	return the_avv;
 }
 
@@ -255,8 +257,11 @@ Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 	}
 	// Hardcoded the two-photon decay of 2p to 1s
 	the_extra(index2p, index1s) = 8.229;
+
+#ifdef PRINT_MATRICES
 	DEBUG("Extra A" << endl);
 	DEBUG(the_extra << endl);
+#endif
 	return the_extra;
 }
 
@@ -289,10 +294,61 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double /* unused np 
 	}
 
 	// TODO: Proton contributions (l-changing)
-
-	DEBUG("Collision rates matrix:" << endl);
-	DEBUG(the_cvv << endl);
 	return the_cvv;
+}
+
+Eigen::VectorXd HydrogenFromFiles::alphav(double T) const
+{
+	// for now use the hardcoded implementation, but this needs to change (is copy paste from
+	// HydrogenHardcoded)
+	double T4 = T / 1.e4;
+	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
+	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+	double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
+
+	// 2015-Raga (A13)
+	double t = log10(T4);
+	vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
+	vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
+	vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
+
+	double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
+	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
+	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
+
+	// this hack should work for n up to 5
+	Array unresolvedAlphav({alphaGround, alpha2p + alpha2s, alpha3, alpha4, alpha5});
+
+	Eigen::VectorXd sourcev = Eigen::VectorXd::Zero(_numL);
+
+	for (int f = 0; f < _numL; f++)
+	{
+		const HydrogenLevel& final = _levelOrdering[f];
+		int n = final.n();
+
+		// Get one of the alphas calculated above
+		double unresolvedAlpha = unresolvedAlphav[n - 1];
+
+		// If it's the one for n = 2, use the resolved ones instead
+		if (n == 2)
+		{
+			int l = final.l();
+			if (l == 0)
+				sourcev[f] = alpha2s;
+			else if (l == 1)
+				sourcev[f] = alpha2p;
+			else if (l == -1)
+				sourcev[f] = unresolvedAlpha;
+			else
+				Error::runtime("invalid l value");
+		}
+		else
+		{
+			// weigh by multiplicity
+			sourcev[f] = unresolvedAlpha / (2*n*n) * final.g();
+		}
+	}
+	return sourcev;
 }
 
 double HydrogenFromFiles::energy(int n, int l) const
@@ -404,8 +460,8 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
 	return Upsilonsum;
 }
 
-double HydrogenFromFiles::eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
-                                             double T_eV) const
+double HydrogenFromFiles::eCollisionStrength(const HydrogenLevel& initial,
+                                             const HydrogenLevel& final, double T_eV) const
 {
 	// No output for upward transitions
 	if (initial.e() < final.e())
