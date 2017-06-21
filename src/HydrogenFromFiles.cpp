@@ -14,7 +14,7 @@ using namespace std;
 
 namespace
 {
-const int nMax = 5;
+const int cNMAX = 5;
 
 inline std::vector<int> twoJplus1range(int l)
 {
@@ -26,8 +26,8 @@ inline std::vector<int> twoJplus1range(int l)
 
 HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
 {
-	if (_resolvedUpTo > nMax)
-		Error::runtime("There are currently only five shells for the hydrogen model");
+	if (_resolvedUpTo > cNMAX)
+		Error::rangeCheck<int>("Number of resolved levels", _resolvedUpTo, 2, cNMAX);
 	// Read-in, and steps that are safe during read-in
 	readData();
 	// Steps that need to happen after read-in
@@ -114,7 +114,7 @@ void HydrogenFromFiles::readData()
 	// READ COLLISION DATA //
 	//---------------------//
 	int andersonIndex = 1;
-	for (int n = 0; n <= nMax; n++)
+	for (int n = 0; n <= cNMAX; n++)
 	{
 		for (int l = 0; l < n; l++)
 		{
@@ -147,27 +147,29 @@ void HydrogenFromFiles::readData()
 
 void HydrogenFromFiles::prepareForOutput()
 {
-	//-----------------------//
-	// SET OUTPUT PARAMETERS //
-	//-----------------------//
-	_numL = 0;
+	//-------------------------------------//
+	// SET PARAMETERS FOR HELP WITH OUTPUT //
+	//-------------------------------------//
 	_levelOrdering.clear();
 	int n = 1;
 	while (n <= _resolvedUpTo)
 	{
 		for (int l = 0; l < n; l++)
-		{
-			_numL++;
 			_levelOrdering.emplace_back(n, l, energy(n, l));
-		}
+
 		n++;
 	}
-	while (n <= nMax)
+	while (n <= cNMAX)
 	{
-		_numL++;
 		_levelOrdering.emplace_back(n, energy(n));
 		n++;
 	}
+	_numL = _levelOrdering.size();
+
+	_totalAv = Eigen::VectorXd::Zero(_numL);
+	for (int i = 0; i < _numL; i++)
+		for (int f = 0; f < _numL; f++)
+			_totalAv[i] += einsteinA(_levelOrdering[i], _levelOrdering[f]);
 }
 
 int HydrogenFromFiles::numLv() const { return _numL; }
@@ -265,7 +267,7 @@ Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 	return the_extra;
 }
 
-Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double /* unused np */) const
+Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 {
 	// Calculate the temperature in erg and in electron volt
 	double kT = Constant::BOLTZMAN * T;
@@ -293,8 +295,60 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double /* unused np 
 		}
 	}
 
-	// TODO: Proton contributions (l-changing)
+	// For the l-resolved levels, get l-changin collision rates
+	for (int n = 0; n <= _resolvedUpTo; n++)
+	{
+		Eigen::MatrixXd qvv = pCollisionRateCoeff(n, T, ne);
+		// Fill in the collision rates for all combinations of li lf
+		for (int li = 0; li < n; li++)
+		{
+			int i = indexOutput(n, li);
+			for (int lf = 0; lf < n; lf++)
+			{
+				int f = indexOutput(n, lf);
+				the_cvv(i, f) += qvv(li, lf) * np;
+			}
+		}
+	}
+
 	return the_cvv;
+}
+
+Eigen::MatrixXd HydrogenFromFiles::pCollisionRateCoeff(int n, double T, double ne) const
+{
+	Eigen::MatrixXd q_li_lf = Eigen::MatrixXd::Zero(n, n);
+
+	// we will apply PS64 eq 43. Keeping eq 38 in mind, we can find the partial rates one by
+	// one.
+	constexpr double muOverm = Constant::HMASS_CGS / Constant::ELECTRONMASS;
+
+	const double qnlFactor = 9.93e-6 * sqrt(muOverm / T);
+
+	double qDown = 0;
+	// The value for q(l = n - 1, l = n - 2) is filled in in the last iteration
+	for (int l = 0; l < n - 1; l++)
+	{
+		// eq 44: Z is charge of the colliding particle, z that of the nucleus
+		int n2 = n * n;
+		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
+		/* eq 45,46: take the smallest of the two,
+		since Rc represents a cutoff value that prevented divergence in the calculations of
+		                                PS64 */
+		int index = indexOutput(n, l);
+		double tau2 = 1. / _totalAv[index] / _totalAv[index];
+		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / ne));
+
+		// eq 43
+		double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
+
+		double qUp = q_nl - qDown;
+		q_li_lf(l, l + 1) = qUp;
+
+		// for l+1:
+		qDown = qUp * (2 * l + 1) / (2 * l + 3);
+		q_li_lf(l + 1, l) = qDown;
+	}
+	return q_li_lf;
 }
 
 Eigen::VectorXd HydrogenFromFiles::alphav(double T) const
@@ -345,7 +399,7 @@ Eigen::VectorXd HydrogenFromFiles::alphav(double T) const
 		else
 		{
 			// weigh by multiplicity
-			sourcev[f] = unresolvedAlpha / (2*n*n) * final.g();
+			sourcev[f] = unresolvedAlpha / (2 * n * n) * final.g();
 		}
 	}
 	return sourcev;
@@ -409,6 +463,33 @@ double HydrogenFromFiles::einsteinA(int ni, int nf) const
 	for (int lf = 0; lf < nf; lf++)
 		Asum += einsteinA(ni, nf, lf);
 	return Asum;
+}
+
+double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const
+{
+	// No output for upward transitions
+	if (initial.e() < final.e())
+		return 0;
+	else
+	{
+		// Resolved-resolved
+		if (initial.l() >= 0 && final.l() >= 0)
+			return einsteinA(initial.n(), initial.l(), final.n(), final.l());
+		// Collapsed-resolved
+		else if (initial.l() < 0 && final.l() >= 0)
+			return einsteinA(initial.n(), final.n(), final.l());
+		// Resolved-collapsed (should not be called, and if it is, the collapsed-collapsed
+		// result should be zero)
+		else if (initial.l() >= 0 && final.l() < 0)
+		{
+			double a = einsteinA(initial.n(), final.n());
+			assert(a == 0);
+			return a;
+		}
+		// Collapsed-collapsed
+		else
+			return einsteinA(initial.n(), final.n());
+	}
 }
 
 double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const

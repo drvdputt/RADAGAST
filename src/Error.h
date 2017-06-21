@@ -15,9 +15,10 @@ static inline void runtime(std::string message)
 	abort();
 }
 
-static inline void rangeCheck(std::string variable, double value, double min, double max)
+template<typename T>
+void rangeCheck(std::string variable, T value, T min, T max)
 {
-	if (value < min || value > max)
+	if (value <= min || value >= max)
 	{
 		std::cerr << "Range error: " << variable << " = " << value << ". Should be between "
 		          << min << " and " << max << std::endl;
@@ -25,7 +26,8 @@ static inline void rangeCheck(std::string variable, double value, double min, do
 	}
 }
 
-static inline void reportOverridden(std::string name, double original, double replacement,
+template<typename T>
+void reportOverridden(std::string name, T original, T replacement,
                                     std::string reason)
 {
 	std::cout << std::scientific << name << "has been overridden from " << original << " to "

@@ -550,7 +550,7 @@ double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const std:
 		double ksi = z; // ksi = Ze / q_i = z
 		Zsum += stickingCoefficient(a, z, 1) * fZ[z - Zmin] * lambdaTilde(tau, ksi);
 	}
-	particleSum += _electronDensity * sqrt(eightkT3DivPi / Constant::HMASS_CGS) * Zsum;
+	particleSum += _electronDensity * sqrt(eightkT3DivPi / Constant::PROTONMASS) * Zsum;
 
 	// EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
 	double secondTerm = fZ[0] * collisionalChargingRate(a, Zmin, -1, Constant::ELECTRONMASS) *
@@ -600,7 +600,7 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const std::vector<doubl
 	{
 		// Upward ratio in detailed balance equation
 		double Jpe = emissionRate(a, current, wavelengthv, Qabs, energyDensity_lambda);
-		double Jion = collisionalChargingRate(a, current, 1, Constant::HMASS_CGS);
+		double Jion = collisionalChargingRate(a, current, 1, Constant::PROTONMASS);
 		double Je = collisionalChargingRate(a, current + 1, -1, Constant::ELECTRONMASS);
 		double factor = (Jpe + Jion) / Je;
 

@@ -187,7 +187,7 @@ Eigen::VectorXd HydrogenHardcoded::alphav(double T) const
 	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
 	double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
 
-	// 2015-Raga (A13)
+	// 2015-Raga (equation A13) (rmxaa, 51, 231-239)
 	double t = log10(T4);
 	vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
 	vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};

@@ -36,6 +36,11 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
 	//		// np = (-C + sqrt(C^2 + 4 * C*nH)) / 2
 	//		double np = (-C + sqrt(C * C + 4 * C * nH)) / 2.;
 	//		ne = np;
+
+	//
+	DEBUG("Ionization rate is " << ne * recombinationRateCoeff(T) << " s-1" << endl);
+
+	// For very strong radiation fields, some numerical problems can appear... so we cap to 1.
 	return min(ne / nH, 1.);
 }
 
@@ -101,7 +106,8 @@ double Ionization::heating(double nH, double f, double T, const Array& frequency
 		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
 
 	// The denominator comes from isolating n_0 from the balance equation, and now also includes
-	// the collisional term (top and bottom have been multiplied with h / 4pi, see 3.1, hence the extra
+	// the collisional term (top and bottom have been multiplied with h / 4pi, see 3.1, hence
+	// the extra
 	// factors)
 	double bottom = TemplatedUtils::integrate<double>(frequencyv, integrand) +
 	                Constant::PLANCK / Constant::FPI * ne * collisionalRateCoeff(T);

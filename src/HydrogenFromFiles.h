@@ -101,6 +101,16 @@ public:
 	   partner density), for a given temperature and proton and electron densities. */
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
 
+private:
+	/* Calculates the l-changing collision rate coefficients as described by Pengelley \& Seaton
+	   (1964) Since l can only change by 1, the calculation starts at either end (li=0 or
+	   li=n-1) of the l-range, and calculates the q_nli->nlf based on the q_n(li-1),n(lf-1) or
+	   q_n(li+1),n(lf-1). The results are returned as a tridiagonal matrix indexed on (li,lf),
+	   of dimension n x n. Used only by cvv, and after prepareForOutput, and hence declared
+	   private here. */
+	Eigen::MatrixXd pCollisionRateCoeff(int n, double T, double ne) const;
+
+public:
 	/* Returns a vector containing the partial recombination rates into each level. */
 	Eigen::VectorXd alphav(double T) const override;
 
@@ -124,6 +134,8 @@ private:
 	double einsteinA(int ni, int nf, int lf) const;
 	/* With initial and final levels collapsed */
 	double einsteinA(int ni, int nf) const;
+	/* Version that automatically uses the correct overload */
+	double einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const;
 
 	/* Return the the total electron collision strength (Upsilon). For the moment, there are
 	   only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys., 2002, 35, 1613).
@@ -168,10 +180,14 @@ private:
 	/* Temperature points, 8 of them in total, in electron volt */
 	Array _andersonTempv{{0.5, 1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 25.0}};
 
-	/* Indexed on upper index, lower index, temperature index. Only downward collisions are
+	/* Indexed on {upper index, lower index}, temperature index. Only downward collisions are
 	   listed, so only store those, using a map which uses a pair of ints representing the upper
 	   and lower levels. */
 	std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
+
+	/* Total spontaneous decay rate of each level. Needed for the l-changing collision fomula of
+	   PS64. */
+	Eigen::VectorXd _totalAv;
 
 	//----------------------//
 	// BASED ON USER CHOICE //
@@ -190,6 +206,14 @@ private:
 	   indexed the same way as in this vector. Changing the way the vector below is filled will
 	   allow for some customization of the ordering of the levels. */
 	std::vector<HydrogenLevel> _levelOrdering;
+
+	/* Another map, this time one that inverts _levelOrdering above. This way, one can easily
+	   find the index of a level with a specific {n, l}. */
+	std::map<std::array<int, 2>, int> _nlToOutputIndexm;
+	inline int indexOutput(int n, int l) const
+	{
+		return _nlToOutputIndexm.at({n, l});
+	}
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */
