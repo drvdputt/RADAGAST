@@ -155,13 +155,16 @@ void HydrogenFromFiles::prepareForOutput()
 	while (n <= _resolvedUpTo)
 	{
 		for (int l = 0; l < n; l++)
+		{
 			_levelOrdering.emplace_back(n, l, energy(n, l));
-
+			_nlToOutputIndexm.insert({{n, l}, _levelOrdering.size() - 1});
+		}
 		n++;
 	}
 	while (n <= cNMAX)
 	{
 		_levelOrdering.emplace_back(n, energy(n));
+		_nlToOutputIndexm.insert({{n, -1}, _levelOrdering.size() - 1});
 		n++;
 	}
 	_numL = _levelOrdering.size();
@@ -298,7 +301,7 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 	// For the l-resolved levels, get l-changin collision rates
 	for (int n = 0; n <= _resolvedUpTo; n++)
 	{
-		Eigen::MatrixXd qvv = pCollisionRateCoeff(n, T, ne);
+		Eigen::MatrixXd qvv = PS64CollisionRateCoeff(n, T, ne);
 		// Fill in the collision rates for all combinations of li lf
 		for (int li = 0; li < n; li++)
 		{
@@ -314,7 +317,7 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 	return the_cvv;
 }
 
-Eigen::MatrixXd HydrogenFromFiles::pCollisionRateCoeff(int n, double T, double ne) const
+Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double ne) const
 {
 	Eigen::MatrixXd q_li_lf = Eigen::MatrixXd::Zero(n, n);
 

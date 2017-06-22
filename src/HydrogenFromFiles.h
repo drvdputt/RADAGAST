@@ -108,7 +108,7 @@ private:
 	   q_n(li+1),n(lf-1). The results are returned as a tridiagonal matrix indexed on (li,lf),
 	   of dimension n x n. Used only by cvv, and after prepareForOutput, and hence declared
 	   private here. */
-	Eigen::MatrixXd pCollisionRateCoeff(int n, double T, double ne) const;
+	Eigen::MatrixXd PS64CollisionRateCoeff(int n, double T, double ne) const;
 
 public:
 	/* Returns a vector containing the partial recombination rates into each level. */
@@ -151,19 +151,14 @@ private:
 	double eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
 	                          double T_eV) const;
 
-	/* A simple map for translating orbital letters into numbers */
-	const std::map<char, int> _lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
-
-	/* The total number of levels listed in the elvlc file from CHIANTI */
-	int _chiantiNumLvl{0};
+	// STORAGE OF THE READ-IN DATA //
 
 	/* Store the information about the levels in a vector. The index of a level in this vector
 	  is the number in the first column of the CHIANTI .elvlc file minus 1. */
 	std::vector<HydrogenLevel> _chiantiLevelv;
 
-	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
-	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1} */
-	std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
+	/* The total number of levels listed in the elvlc file from CHIANTI */
+	int _chiantiNumLvl{0};
 
 	/* With the following shorthand */
 	inline int indexCHIANTI(int n, int l, int twoJplus1) const
@@ -174,20 +169,29 @@ private:
 	/* The Einstein A coefficientes read in from the wgfa file from CHIANTI */
 	Eigen::MatrixXd _chiantiAvv;
 
-	/* Indices like in Anderson 2000 table 1 */
-	std::map<std::array<int, 2>, int> _nlToAndersonIndexm;
-
-	/* Temperature points, 8 of them in total, in electron volt */
+	/* The entries are the collision strength in function of the temperature points.  The
+	   anderson data only lists downward collisions. We store each collision strenght as
+	   function of the temperature using a map. This map is indexed on {upper Anderson index,
+	   lower Anderson index}, and the arrays contained in it are indexed the same way as the
+	   temperature points listed in _andersonTempv. The latter are in electron volt. */
+	std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
 	Array _andersonTempv{{0.5, 1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 25.0}};
 
-	/* Indexed on {upper index, lower index}, temperature index. Only downward collisions are
-	   listed, so only store those, using a map which uses a pair of ints representing the upper
-	   and lower levels. */
-	std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
-
-	/* Total spontaneous decay rate of each level. Needed for the l-changing collision fomula of
-	   PS64. */
+	/* Total spontaneous decay rate of each level. Needed for the l-changing collision formula
+	   of PS64. */
 	Eigen::VectorXd _totalAv;
+
+	// SOME MAPS TO HELP WITH DIFFERENT KINDS OF INDEXING //
+
+	/* A simple map for translating orbital letters into numbers */
+	const std::map<char, int> _lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
+
+	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
+	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1}. */
+	std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
+
+	/* The same, but for the indices like in Anderson+2000 table 1 */
+	std::map<std::array<int, 2>, int> _nlToAndersonIndexm;
 
 	//----------------------//
 	// BASED ON USER CHOICE //
@@ -210,10 +214,7 @@ private:
 	/* Another map, this time one that inverts _levelOrdering above. This way, one can easily
 	   find the index of a level with a specific {n, l}. */
 	std::map<std::array<int, 2>, int> _nlToOutputIndexm;
-	inline int indexOutput(int n, int l) const
-	{
-		return _nlToOutputIndexm.at({n, l});
-	}
+	inline int indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */

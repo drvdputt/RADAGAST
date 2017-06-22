@@ -1,4 +1,4 @@
-CPP=g++7
+CPP=g++
 
 INCDIR=./include
 EIGENDIR=./eigen3
