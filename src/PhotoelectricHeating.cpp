@@ -747,7 +747,7 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 	return 0.0;
 }
 
-double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
+double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 {
 	readQabs();
 
@@ -755,7 +755,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	const vector<double>& frequencyv = Testing::generateGeometricGridv(
 	                _nWav, Constant::LIGHT / _maxWav, Constant::LIGHT / _minWav);
 	// Input spectrum
-	const Array& specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, _G0);
+	const Array& specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
 
 	// Convert to wavelength units
 	const vector<double>& wavelengthv = Testing::freqToWavGrid(frequencyv);
@@ -766,11 +766,12 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	                                          end(tempEnergyDensity_lambda));
 	cout << "Made isrf \n";
 
-	//	ofstream spectrumout;
-	//	spectrumout.open("/Users/drvdputt/GasModule/run/u_lambda.dat");
-	//	for (size_t i = 0; i < wavelengthv.size(); i++)
-	//		spectrumout << wavelengthv[i] * Constant::CM_UM << '\t' <<
-	// energyDensity_lambda[i] << endl; 	spectrumout.close();
+	ofstream isrfOf;
+	isrfOf.open("photoelectric/isrf_ulambda.dat");
+	for (size_t i = 0; i < wavelengthv.size(); i++)
+		isrfOf << wavelengthv[i] * Constant::CM_UM << '\t' << energyDensity_lambda[i]
+		            << endl;
+	isrfOf.close();
 
 	// Grain sizes for test
 	double aMin = 1.5 * Constant::ANG_CM;
@@ -778,48 +779,54 @@ double PhotoelectricHeatingRecipe::heatingRateTest(std::string filename) const
 	const size_t Na = 60;
 
 	// Output file will contain one line for every grain size
-	std::ofstream outRate;
-	outRate.open(filename);
+	stringstream efficiencyFnSs;
+	efficiencyFnSs << "photoelectric/efficiencyG" << setprecision(4) << scientific << G0 << ".dat";
+	std::ofstream efficiencyOf;
+	efficiencyOf.open(efficiencyFnSs.str());
 
-	//	ofstream outAvgQabs;
-	//	outAvgQabs.open("/Users/drvdputt/GasModule/run/avgQabsInterp.txt");
+	/* File that writes out the absorption efficiency, averaged using the input radiation field
+	   as weights. */
+	ofstream avgQabsOf;
+	avgQabsOf.open("photoelectric/avgQabsInterp.txt");
 
 	double aStepFactor = std::pow(aMax / aMin, 1. / Na);
 	double a = aMin;
 
+	// For every grain size
 	for (size_t m = 0; m < Na; m++)
 	{
-		// Absorption spectrum
+		// Get the absorption efficiency for the grain
 		vector<double> Qabs = generateQabsv(a, wavelengthv);
 
-		vector<double> QabsTimesUlambda(Qabs.size());
+		// Integrate over the radiation field
+		vector<double> ulambdaTimesQabs(Qabs.size());
 		for (size_t n = 0; n < Qabs.size(); n++)
-			QabsTimesUlambda[n] = Qabs[n] * energyDensity_lambda[n];
-
-		double uTimesAvgQabs = NumUtils::integrate<double>(wavelengthv, QabsTimesUlambda);
-		double totalAbsorbed = Constant::PI * a * a * Constant::LIGHT * uTimesAvgQabs;
+			ulambdaTimesQabs[n] = Qabs[n] * energyDensity_lambda[n];
+		double uTimesQabsIntegral = NumUtils::integrate<double>(wavelengthv, ulambdaTimesQabs);
 
 		cout << "Size " << a / Constant::ANG_CM << endl;
-		outRate << a / Constant::ANG_CM << '\t'
-		        << PhotoelectricHeatingRecipe::heatingRateA(a, wavelengthv, Qabs,
-		                                                    energyDensity_lambda) /
-		                                totalAbsorbed
-		        << '\n';
-		//		double u = NumUtils::integrate<double>(wavelengthv,
-		// energyDensity_lambda); 		double avgQabs = uTimesAvgQabs / u;
-		//		outAvgQabs << a / Constant::ANG_CM << '\t' << avgQabs << endl;
+
+		// Calculate and write out the heating efficiency
+		double heating = PhotoelectricHeatingRecipe::heatingRateA(a, wavelengthv, Qabs,
+		                                                          energyDensity_lambda);
+		double totalAbsorbed = Constant::PI * a * a * Constant::LIGHT * uTimesQabsIntegral;
+		efficiencyOf << a / Constant::ANG_CM << '\t' << heating / totalAbsorbed << '\n';
+
+		// Calculate and write out the ISRF-averaged absorption efficiency
+		double uIntegral = NumUtils::integrate<double>(wavelengthv, energyDensity_lambda);
+		double avgQabs = uTimesQabsIntegral / uIntegral;
+		avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
 		a *= aStepFactor;
 	}
-	outRate.close();
-	cout << "Wrote " << filename << endl;
-	//	outAvgQabs.close();
+	efficiencyOf.close();
+	cout << "Wrote " << efficiencyFnSs.str() << endl;
+	avgQabsOf.close();
 	cout << "Wrote avgQabsInterp.txt" << endl;
-
-	cout << "Charging parameter = " << _G0 * sqrt(_gasTemperature) / _electronDensity << endl;
+	cout << "Charging parameter = " << G0 * sqrt(_gasTemperature) / _electronDensity << endl;
 	return 0.0;
 }
 
-double PhotoelectricHeatingRecipe::chargeBalanceTest() const
+double PhotoelectricHeatingRecipe::chargeBalanceTest(double G0) const
 {
 	readQabs();
 
@@ -831,7 +838,7 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest() const
 #endif
 
 	// Input spectrum
-	Array tempIsrf = Testing::generateSpecificIntensityv(wavelengthv, _Tc, _G0);
+	Array tempIsrf = Testing::generateSpecificIntensityv(wavelengthv, _Tc, G0);
 	vector<double> isrfv(begin(tempIsrf), end(tempIsrf));
 
 	// Grain size
@@ -853,7 +860,7 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest() const
 	out << "# carbon = " << _carbonaceous << endl;
 	out << "# a = " << a << endl;
 	out << "# Teff = " << _Tc << endl;
-	out << "# G0 = " << _G0 << endl;
+	out << "# G0 = " << G0 << endl;
 	out << "# ne = " << _electronDensity << endl;
 	out << "# Tgas = " << _gasTemperature << endl;
 

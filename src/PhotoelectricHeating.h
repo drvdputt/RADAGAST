@@ -11,21 +11,23 @@
 
 class PhotoelectricHeatingRecipe
 {
+	/* Currently, the only public functions are test functions which output some files I can
+	   plot. */
 public:
-	void setG0(double G0) { _G0 = G0; }
+	/* Override the gas temperature between tests */
 	void setGasTemperature(double T) { _gasTemperature = T; }
 
 	double yieldFunctionTest() const;
 
 	/* Makes a plot of the heating efficiency in function of the grain size. Saved as a
-	 two-column file using the given filename. */
-	double heatingRateTest(std::string filename) const;
+	 two-column file in $(pwd)/photoelectric using the filename. */
+	double heatingRateTest(double G0) const;
 
-	double chargeBalanceTest() const;
+	double chargeBalanceTest(double G0) const;
 
 private:
 	/* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
-	 * (2001) */
+	   (2001) */
 
 	double ionizationPotential(double a, int Z) const;
 
@@ -71,9 +73,10 @@ private:
 	const bool _carbonaceous{true};
 	const double _workFunction{_carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV};
 
-	// Radiation field to use for test (more details in generateISRF)
+	/* The radiation field to use for test will use this blackbody temperature to determine the
+	   shape. Its actual strength should be provided using the 'G0' argument of the test
+	   function. */
 	const double _Tc{3.e4};
-	double _G0{2.45e0};
 
 	// Wavelength grid to use for tests
 	const size_t _nWav{200};

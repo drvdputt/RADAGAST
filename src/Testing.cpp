@@ -1,16 +1,19 @@
 #include "Testing.h"
 #include "Constants.h"
+#include "GasInterface.h"
+#include "HydrogenFromFiles.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "PhotoelectricHeating.h"
 #include "TemplatedUtils.h"
 #include "TwoLevel.h"
 
-#include "GasInterface.h"
+
 #include <fstream>
 #include <iomanip>
 #include <ios>
 #include <iostream>
+#include <Eigen/Dense>
 
 using namespace std;
 
@@ -190,22 +193,6 @@ void Testing::testGasInterfaceImpl()
 	                generateGeometricGridv(10000, Constant::LIGHT / (1e10 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
-	//	const double lineWindowFactor = 5;
-	//	vector<double> lineFreqv = {Constant::LIGHT * 82258.9191133};
-	//	vector<double> decayRatev = {6.2649e+08};
-	//	double thermalFactor =
-	//	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
-	// Constant::LIGHT; 	vector<double> lineWidthv;
-	//	lineWidthv.reserve(lineFreqv.size());
-	//	for (size_t l = 0; l < lineFreqv.size(); l++)
-	//	{
-	//		double freq = lineFreqv[l];
-	//		cout << "thermal width " << freq * thermalFactor << " natural width "
-	//		     << decayRatev[l] << endl;
-	//		lineWidthv.push_back(lineWindowFactor * (freq * thermalFactor +
-	// decayRatev[l]));
-	//	}
-	//	refineFrequencyGrid(tempFrequencyv, 101, 3., lineFreqv, lineWidthv);
 
 	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
 	GasInterface gi(frequencyv, true);
@@ -311,10 +298,20 @@ void Testing::testPhotoelectricHeating()
 	phr.setGasTemperature(T);
 	for (double G0 : G0values)
 	{
-		phr.setG0(G0);
-		stringstream filename;
-		filename << "/Users/drvdputt/GasModule/run/photoelectricHeatingG" << setprecision(4)
-		         << scientific << G0 << ".dat";
-		phr.heatingRateTest(filename.str());
+		phr.heatingRateTest(G0);
 	}
+}
+
+void Testing::testPS64Collisions()
+{
+	double T = 10000;
+	double ne = 1e4;
+	double np = 1e4;
+
+	HydrogenFromFiles hff(5);
+
+	Eigen::MatrixXd avv = hff.avv();
+	Eigen::MatrixXd cvv = hff.cvv(T, ne, np);
+
+	// Calculate (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards rate from level nl
 }
