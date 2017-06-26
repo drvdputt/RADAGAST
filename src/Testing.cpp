@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "GasInterface.h"
 #include "HydrogenFromFiles.h"
+#include "HydrogenHardcoded.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
@@ -376,4 +377,50 @@ void Testing::testPS64Collisions()
 		}
 		out.close();
 	}
+}
+
+void Testing::compareFromFilesvsHardCoded()
+{
+	HydrogenHardcoded hhc;
+	HydrogenFromFiles hff(2);
+
+	auto hc_vs_ff = [&](auto hc_thing, auto ff_thing) {
+		cout << "Hardcoded" << endl;
+		cout << hc_thing << endl;
+		cout << "From files" << endl;
+		cout << ff_thing << endl;
+	};
+
+	assert(hhc.numLv() == hff.numLv());
+
+	cout << "Energy levels:" << endl;
+	Eigen::VectorXd evhc = hhc.ev();
+	Eigen::VectorXd evff = hff.ev();
+	hc_vs_ff(evhc, evff);
+
+	assert(hhc.gv() == hff.gv());
+
+	cout << "A coefficients:" << endl;
+	Eigen::MatrixXd avvhc = hhc.avv();
+	Eigen::MatrixXd avvff = hff.avv();
+	hc_vs_ff(avvhc, avvff);
+
+	cout << "Extra A:" << endl;
+	Eigen::MatrixXd eavvhc = hhc.extraAvv();
+	Eigen::MatrixXd eavvff = hff.extraAvv();
+	hc_vs_ff(eavvhc, eavvff);
+
+	double T = 1e4;
+	double ne = 1e4;
+	double np = 1e4;
+
+	cout << "Collisions:" << endl;
+	Eigen::MatrixXd cvvhc = hhc.cvv(T, ne, np);
+	Eigen::MatrixXd cvvff = hff.cvv(T, ne, np);
+	hc_vs_ff(cvvhc, cvvff);
+
+	cout << "Recombinations:" << endl;
+	Eigen::VectorXd alphavhc = hhc.alphav(T);
+	Eigen::VectorXd alphavff = hff.alphav(T);
+	hc_vs_ff(alphavhc, alphavff);
 }

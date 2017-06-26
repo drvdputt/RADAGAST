@@ -27,8 +27,15 @@ void testPhotoelectricHeating();
    NIST values between different n. */
 void testACollapse();
 
-/* Write out data files to recreate figure 2 of PS64. */
+/* Write out data files to recreate figure 2 of PS64. Current results: the curve for n=5 looks good,
+   but the last point (l=3) of the n=4 curve is a bit to high. This might be because the A
+   coefficients used by Pengelley were different. I can't track them down easily though, as he
+   refers to another paper, which in turn refers to his thesis. */
 void testPS64Collisions();
+
+/* Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
+   HydrogenFromFiles. */
+void compareFromFilesvsHardCoded();
 }
 
 #endif /* _TESTING_H_ */

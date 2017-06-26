@@ -11,12 +11,12 @@ using namespace std;
 HydrogenHardcoded::HydrogenHardcoded()
 {
 	the_ev = Eigen::VectorXd(NLV);
-	the_ev << 0., 82258.9191133, 82258.9543992821, 97492.304, 102823.904, 105291.657;
+	the_ev << 0., 82258.9543992821, 82258.9191133, 97492.304, 102823.904, 105291.657;
 	// Energy in cm^-1, so multiply with hc
 	the_ev *= Constant::PLANCKLIGHT;
 
 	the_gv = Eigen::VectorXd(NLV);
-	the_gv << 1, 1, 3, 9, 16, 25;
+	the_gv << 2, 2, 6, 18, 32, 50;
 }
 
 int HydrogenHardcoded::numLv() const { return NLV; }
@@ -84,11 +84,11 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 	Eigen::MatrixXd the_avv(NLV, NLV);
 	// clang-format off
 	the_avv << 0, 0, 0, 0, 0, 0,
-	           A2p1, 0, 0, 0, 0, 0,
 	           A2s1, 0, 0, 0, 0, 0,
-	           A31, A32p, A32s, 0, 0, 0,
-	           A41, A42p, A42s, A43, 0, 0,
-	           A51, A52p, A52s, A53, A54, 0;
+	           A2p1, 0, 0, 0, 0, 0,
+	           A31, A32s, A32p, 0, 0, 0,
+	           A41, A42s, A42p, A43, 0, 0,
+	           A51, A52s, A52p, A53, A54, 0;
 	// clang-format on
 	return the_avv;
 }
@@ -100,8 +100,8 @@ Eigen::MatrixXd HydrogenHardcoded::extraAvv() const
 	Eigen::MatrixXd the_extraAvv(NLV, NLV);
 	// clang-format off
 	the_extraAvv << 0, 0, 0, 0, 0, 0,
-			0, 0, 0, 0, 0, 0,
 			8.23, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0;
@@ -111,8 +111,8 @@ Eigen::MatrixXd HydrogenHardcoded::extraAvv() const
 
 Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double protonDensity) const
 {
-	const int index2p = 1;
-	const int index2s = 2;
+	const int index2p = 2;
+	const int index2s = 1;
 	Eigen::MatrixXd Cvv = Eigen::MatrixXd::Zero(NLV, NLV);
 
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
@@ -145,34 +145,36 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigUpsilon2s1v[iLeft],
 	                bigUpsilon2s1v[iRight]);
 	bigUpsilon2s1 = max(bigUpsilon2s1, 0.);
-	fillInElectronCollisionRate(2, 0, bigUpsilon2s1);
+	fillInElectronCollisionRate(index2s, 0, bigUpsilon2s1);
 
 	vector<double> bigUpsilon2p1v = {4.29e-1, 5.29e-01, 8.53e-01, 1.15e00,
 	                                 1.81e00, 2.35e00,  2.81e00,  3.20e00};
 	double bigUpsilon2p1 = TemplatedUtils::interpolateLinear(
 	                eT_eV, grid_eT_eVv[iLeft], grid_eT_eVv[iRight], bigUpsilon2p1v[iLeft],
 	                bigUpsilon2p1v[iRight]);
-	bigUpsilon2p1 = max(bigUpsilon2s1, 0.);
-	fillInElectronCollisionRate(1, 0, bigUpsilon2p1);
+	bigUpsilon2p1 = max(bigUpsilon2p1, 0.);
+	fillInElectronCollisionRate(index2p, 0, bigUpsilon2p1);
 
 	/* Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
 	   2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0. */
-	double mu_m = Constant::HMASS_CGS / 2 / Constant::ELECTRONMASS;
+	double mu_m = Constant::HMASS_CGS / 2. / Constant::ELECTRONMASS;
 	double constfactor = 9.93e-6 * sqrt(mu_m);
 
 	//(6n^2(n^2 - l^2 - l - 1)) (eq 44)
 	double D2p = 24;
 	// even though the second term is zero
 	double A2p = avv().row(index2p).sum() + extraAvv().row(index2p).sum();
-	// (45 should be the correct one for DeltaE <<<)
-	double twolog10Rc = 10.95 + log10(T / A2p / A2p / mu_m);
-	double q2p2s = constfactor * D2p / sqrt(T) * (11.54 + log10(T / D2p / mu_m) + twolog10Rc);
+	// double twolog10Rc = 10.95 + log10(T / A2p / A2p / mu_m);
+	double twoLog10Rc = min(10.95 + log10(T / A2p / A2p / mu_m),
+	                        1.68 + log10(T / electronDensity));
+	double q2p2s = constfactor * D2p / sqrt(T) * (11.54 + log10(T / D2p / mu_m) + twoLog10Rc);
 	Cvv(index2p, index2s) = protonDensity * q2p2s;
 
 	double D2s = 24 * 3;
 	double A2s = avv().row(index2s).sum() + extraAvv().row(index2s).sum();
-	twolog10Rc = 10.95 + log10(T / A2s / A2s / mu_m);
-	double q2s2p = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twolog10Rc);
+	twoLog10Rc = min(10.95 + log10(T / A2s / A2s / mu_m),
+	                        1.68 + log10(T / electronDensity));
+	double q2s2p = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
 	Cvv(index2s, index2p) = protonDensity * q2s2p;
 
 	return Cvv;
@@ -198,6 +200,6 @@ Eigen::VectorXd HydrogenHardcoded::alphav(double T) const
 	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
 
 	Eigen::VectorXd sourcev(NLV);
-	sourcev << alphaGround, alpha2p, alpha2s, alpha3, alpha4, alpha5;
+	sourcev << alphaGround, alpha2s, alpha2p, alpha3, alpha4, alpha5;
 	return sourcev;
 }

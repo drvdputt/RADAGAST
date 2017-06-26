@@ -32,7 +32,8 @@ int main()
 //		Testing::testGasInterfaceImpl();
 //		Testing::testIonizationStuff();
 //		Testing::testPS64Collisions();
-		Testing::testACollapse();
+//		Testing::testACollapse();
+		Testing::compareFromFilesvsHardCoded();
 	}
 	catch (const std::exception& ex)
 	{

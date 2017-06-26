@@ -37,7 +37,7 @@ const double ERG_EV = 6.24150974e11; // Ergs -> electron volts
 // New constants
 const double HABING = 5.33e-14; // 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
 constexpr double ELECTRONMASS = 9.1094e-28; // electron mass in grams
-const double PROTONMASS = 1.6726219e-24; // proton mass in grams
+constexpr double PROTONMASS = 1.6726219e-24; // proton mass in grams
 const double FINESTRUCTURE = .0072973525664;
 const double RYDBERG = 13.605693009 / ERG_EV;
 const double ESQUARE = Constant::FINESTRUCTURE * Constant::PLANCKLIGHT / 2. /

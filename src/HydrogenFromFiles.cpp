@@ -197,8 +197,7 @@ Eigen::VectorXd HydrogenFromFiles::gv() const
 	for (int i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& lvInfo = _levelOrdering[i];
-		// collapsed ? n^2 : 2l+1
-		the_gv[i] = lvInfo.l() < 0 ? lvInfo.n() * lvInfo.n() : 2 * lvInfo.l() + 1;
+		the_gv[i] = lvInfo.g();
 	}
 	DEBUG("degeneracy vector" << endl);
 	DEBUG(the_gv << endl);
@@ -295,7 +294,7 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 			{
 				double UpsilonDown = eCollisionStrength(ini, fin, T_eV);
 				double Cif = UpsilonDown * 8.6291e-6 / ini.g() / sqrt(T) * ne;
-				double Cfi = Cif * ini.g() / fin.g() * exp(fin.e() - ini.e() / kT);
+				double Cfi = Cif * ini.g() / fin.g() * exp((fin.e() - ini.e()) / kT);
 				the_cvv(i, f) += Cif;
 				the_cvv(f, i) += Cfi;
 			}
@@ -314,6 +313,8 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 			for (int lf = 0; lf < n; lf++)
 			{
 				int f = indexOutput(n, lf);
+				// None of the previous contributions should have been l-changing
+				assert(the_cvv(i, f) == 0);
 				the_cvv(i, f) += qvv(li, lf) * np;
 			}
 		}
@@ -328,7 +329,10 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 
 	// we will apply PS64 eq 43. Keeping eq 38 in mind, we can find the partial rates one by
 	// one.
-	constexpr double muOverm = Constant::HMASS_CGS / Constant::ELECTRONMASS;
+
+	// mu is the reduced mass of the system of the colliding particles
+	constexpr double muOverm = 1. / (1. / Constant::PROTONMASS + 1. / Constant::HMASS_CGS) /
+	                           Constant::ELECTRONMASS;
 
 	const double qnlFactor = 9.93e-6 * sqrt(muOverm / T);
 
@@ -339,6 +343,7 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 		// eq 44: Z is charge of the colliding particle, z that of the nucleus
 		int n2 = n * n;
 		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
+		cout << "Dnl " << D_nl << endl;
 		/* eq 45,46: take the smallest of the two,
 		since Rc represents a cutoff value that prevented divergence in the calculations of
 		                                PS64 */
@@ -353,7 +358,7 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 		q_li_lf(l, l + 1) = qUp;
 
 		// for l+1:
-		qDown = qUp * (2 * l + 1) / (2 * l + 3);
+		qDown = qUp * (2. * l + 1.) / (2. * l + 3.);
 		q_li_lf(l + 1, l) = qDown;
 	}
 	return q_li_lf;
@@ -428,7 +433,7 @@ double HydrogenFromFiles::energy(int n) const
 	double esum = 0;
 	for (int l = 0; l < n; l++)
 		esum += energy(n, l) * (2 * l + 1);
-	return esum / n * n;
+	return esum / (n * n);
 }
 
 double HydrogenFromFiles::einsteinA(int ni, int li, int nf, int lf) const
