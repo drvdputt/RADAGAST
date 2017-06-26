@@ -305,6 +305,31 @@ void Testing::testPhotoelectricHeating()
 void Testing::testACollapse()
 {
 	HydrogenFromFiles hff(0);
+	Eigen::MatrixXd avv = hff.avv().array();
+	cout << hff.avv() << endl;
+	cout << "Compare this with values directly from NIST below:" << endl;
+	Eigen::MatrixXd nistA(5, 5);
+	// clang-format off
+	nistA << 0, 0, 0, 0, 0,
+			4.6986e+08, 0, 0, 0, 0,
+			5.5751e+07, 4.4101e+07, 0, 0, 0,
+			1.2785e+07, 8.4193e+06, 8.9860e+06, 0, 0,
+			4.1250e+06, 2.5304e+06, 2.2008e+06, 2.6993e+06, 0;
+	// clang-format on
+	cout << nistA << endl;
+	cout << "The element-wise relative difference is " << endl;
+	Eigen::MatrixXd relDiff = (avv - nistA).array() / nistA.array();
+	// Take out all the nan's
+	for (int i = 0; i < relDiff.size(); i++)
+	{
+		double* pointer = relDiff.data() + i;
+		double value = *pointer;
+		*pointer = isnan(value) ? 0 : value;
+	}
+	cout << relDiff << endl;
+	// For automated testing, assert the following (maximum allowed error is just slightly above
+	// the value outputted above)
+	assert((relDiff.cwiseAbs().array() < 0.002).all());
 }
 
 void Testing::testPS64Collisions()

@@ -28,10 +28,11 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-		Testing::testPhotoelectricHeating();
-		Testing::testGasInterfaceImpl();
-		Testing::testIonizationStuff();
-		Testing::testPS64Collisions();
+//		Testing::testPhotoelectricHeating();
+//		Testing::testGasInterfaceImpl();
+//		Testing::testIonizationStuff();
+//		Testing::testPS64Collisions();
+		Testing::testACollapse();
 	}
 	catch (const std::exception& ex)
 	{
