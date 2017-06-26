@@ -1,11 +1,10 @@
 #include "GasInterfaceImpl.h"
-
 #include "Constants.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "HydrogenLevels.h"
-#include "IonizationBalance.h"
 #include "IOTools.h"
+#include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
@@ -266,7 +265,7 @@ void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensity
 	double T = 10;
 	double factor = pow(1000000. / 10., 1. / samples);
 
-	ofstream output = IOTools::ofstreamFile("/Users/drvdputt/GasModule/run/heating.dat");
+	ofstream output = IOTools::ofstreamFile("heatingcurve.dat");
 	output << "# 0temperature 1netHeating 2absorption 3emission"
 	       << " 4lineHeating 5lineAbsorption 6lineEmission"
 	       << " 7continuumHeating 8continuumAbsorption 9continuumEmission"

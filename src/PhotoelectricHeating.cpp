@@ -33,9 +33,9 @@ void PhotoelectricHeatingRecipe::readQabs() const
 	// open the file
 	ifstream file;
 	if (_carbonaceous)
-		file.open(repoRoot + "/dat/Gra_81.dat");
+		file = IOTools::ifstreamFile(repoRoot + "/dat/Gra_81.dat");
 	else
-		file.open(repoRoot + "/dat/suvSil_81.dat");
+		file = IOTools::ifstreamFile(repoRoot + "/dat/suvSil_81.dat");
 	if (!file)
 		cout << "Grain data not found!" << endl;
 
@@ -133,11 +133,10 @@ PhotoelectricHeatingRecipe::generateQabsv(double a, const std::vector<double>& w
 
 	Qabs = NumUtils::interpol<double>(QabsFromFileForA, _filelambdav, wavelengthv, -1, -1);
 #ifdef PLOT_QABS
-	ofstream qabsfile;
 	std::stringstream filename;
-	filename << "/Users/drvdputt/GasModule/run/multi-qabs/qabs_a" << setfill('0') << setw(8)
+	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
 	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
-	qabsfile.open(filename.str());
+	ofstream qabsfile = IOTools::ofstreamFile(filename.str());
 	for (size_t i = 0; i < wavelengthv.size(); i++)
 		qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
 	qabsfile.close();
@@ -276,11 +275,10 @@ PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<double>& wa
 	                recombinationCoolingRate(a, fZ, Zmin); // eq 41 without denominator
 
 #ifdef PLOT_FZ
-	std::ofstream outvar;
 	std::stringstream filename;
-	filename << "/Users/drvdputt/GasModule/run/multi-fz/fz_a" << setfill('0') << setw(8)
+	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8)
 	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
-	outvar.open(filename.str());
+	ofstream outvar = IOTools::ofstreamFile(filename.str());
 	outvar << "# carbon = " << _carbonaceous << endl;
 	outvar << "# a = " << a << endl;
 	outvar << "# Teff = " << _Tc << endl;
@@ -713,7 +711,7 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 	const double hnuMax = 15 / Constant::ERG_EV;
 	const size_t N = 500;
 
-	ofstream out = IOTools::ofstreamFile("/Users/drvdputt/GasModule/run/yieldTest.dat");
+	ofstream out = IOTools::ofstreamFile("photoelectric/yieldTest.dat");
 	for (double a : av)
 	{
 		out << "# a = " << a << '\n';
@@ -853,7 +851,7 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest(double G0) const
 	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size()
 	          << std::endl;
 
-	std::ofstream out = IOTools::ofstreamFile("/Users/drvdputt/GasModule/run/fZ.txt");
+	std::ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
 	out << "# carbon = " << _carbonaceous << endl;
 	out << "# a = " << a << endl;
 	out << "# Teff = " << _Tc << endl;

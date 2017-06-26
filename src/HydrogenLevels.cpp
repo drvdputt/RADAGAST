@@ -23,7 +23,7 @@ HydrogenLevels::HydrogenLevels(bool hardcoded)
 LevelDataProvider* HydrogenLevels::chooseDataProvider(bool hardcoded) const
 {
 	if (hardcoded) return new HydrogenHardcoded();
-	else return new HydrogenFromFiles();
+	else return new HydrogenFromFiles(5);
 }
 
 Array HydrogenLevels::boundBoundContinuum(const Solution& s) const

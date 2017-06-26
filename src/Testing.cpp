@@ -124,7 +124,7 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	for (size_t b = 0; b < I_nu.size(); b++)
 		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
-	out.open("isrfUV.txt");
+	out = IOTools::ofstreamFile("testing/isrfUV.txt");
 	for (size_t b = 0; b < isrfUV.size(); b++)
 		out << frequencyUV[b] << '\t' << isrfUVbis[b] << '\n';
 	out.close();
@@ -149,7 +149,7 @@ void Testing::testIonizationStuff()
 	ofstream out;
 
 	double A0 = 6.30e-18;
-	out = IOTools::ofstreamFile("ionizationCrosSection.dat");
+	out = IOTools::ofstreamFile("ionization/crosSection.dat");
 	for (double freq = 0; freq < 6.e16; freq += 1e14)
 	{
 		double sigma = Ionization::crossSection(freq);
@@ -165,7 +165,7 @@ void Testing::testIonizationStuff()
 	}
 	out.close();
 
-	out = IOTools::ofstreamFile("recombinationCooling.dat");
+	out = IOTools::ofstreamFile("ionization/recombinationCooling.dat");
 	out << "#kT / eV \t alpha" << endl;
 	// by choosing these parameters, panel 2 of figure 9 from 2017-Mao should be reproduced
 	double nH = 1;
@@ -178,8 +178,6 @@ void Testing::testIonizationStuff()
 		out << kT_eV << "\t" << cool << endl;
 	}
 	out.close();
-
-	// out.open("collisionalIonization")
 }
 
 void Testing::testGasInterfaceImpl()
@@ -282,7 +280,6 @@ void Testing::testGasInterfaceImpl()
 
 void Testing::testPhotoelectricHeating()
 {
-	PhotoelectricHeatingRecipe phr;
 	double T = 1000;
 	vector<double> G0values;
 	if (T == 1000)
@@ -294,11 +291,20 @@ void Testing::testPhotoelectricHeating()
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
+	PhotoelectricHeatingRecipe phr;
 	phr.setGasTemperature(T);
+
+	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{
+		phr.chargeBalanceTest(G0);
 		phr.heatingRateTest(G0);
 	}
+}
+
+void Testing::testACollapse()
+{
+	HydrogenFromFiles hff(0);
 }
 
 void Testing::testPS64Collisions()
@@ -312,7 +318,7 @@ void Testing::testPS64Collisions()
 	Eigen::MatrixXd cvv = hff.cvv(T, ne, np);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards
-	   rate from level nl */
+	   rate from level nl. */
 	Eigen::VectorXd anlv = avv.rowwise().sum();
 	for (int n : std::array<int, 2>{4, 5})
 	{

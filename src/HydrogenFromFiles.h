@@ -3,15 +3,12 @@
 
 #include "LevelDataProvider.h"
 #include "Table.h"
-#include "Testing.h"
 
 #include <map>
 #include <vector>
 
 class HydrogenFromFiles : public LevelDataProvider
 {
-	friend void Testing::testPS64Collisions();
-
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
 	//------------------------------//

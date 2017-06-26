@@ -10,18 +10,18 @@ const std::string repoRoot = REPOROOT;
 
 #define SANITY
 
-#define SILENT
 #ifdef SILENT
 #define DEBUG(x)                                                                                   \
 	do                                                                                         \
 	{                                                                                          \
 	} while (0)
 #else
+
 //#define PRINT_MATRICES
-
-#define REPORT_LINE_QUALITY
-
-//#define PRINT_CONTINUUM_DATA
+//
+//#define REPORT_LINE_QUALITY
+//
+//#define DEBUG_CONTINUUM_DATA
 
 #define DEBUG(x)                                                                                   \
 	do                                                                                         \

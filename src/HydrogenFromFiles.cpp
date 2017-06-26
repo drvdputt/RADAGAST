@@ -246,23 +246,28 @@ Eigen::MatrixXd HydrogenFromFiles::avv() const
 Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 {
 	Eigen::MatrixXd the_extra = Eigen::MatrixXd::Zero(_numL, _numL);
-	int index1s = -1;
-	int index2p = -1;
-	int i = 0;
-	while (index1s < 0 || index2p < 0)
-	{
-		const HydrogenLevel& lvInfo = _levelOrdering[i];
-		if (lvInfo.n() == 1)
-			index1s = i;
-		if (lvInfo.n() == 2 && lvInfo.l() == 1)
-			index2p = i;
-		if (i >= _numL)
-			Error::runtime("Can't find 2p level for hydrogen");
-		i++;
-	}
-	// Hardcoded the two-photon decay of 2p to 1s
-	the_extra(index2p, index1s) = 8.229;
 
+	int index1s = indexOutput(1, 0);
+
+	// Check if the n2 level is resolved, and retrieve the Key, Value pair
+	auto index2sIt = _nlToOutputIndexm.find({2, 0});
+	bool n2Resolved = index2sIt != _nlToOutputIndexm.end();
+
+	// Hardcode the two-photon decay of 2s to 1s
+	double rate = 8.229;
+	// If 2nd level is resolved, just put the value in the right place
+	if (n2Resolved)
+	{
+		int index2s = index2sIt->second;
+		the_extra(index2s, index1s) = rate;
+	}
+	// If it is collapsed, assume it is well mixed. So we take the average of the two-photon
+	// rates from 2s (8.229) and 2p (0)
+	else
+	{
+		int index2 = indexOutput(2, -1);
+		the_extra(index2, index1s) = rate / 4.; // + 0 * 3 / 4.
+	}
 #ifdef PRINT_MATRICES
 	DEBUG("Extra A" << endl);
 	DEBUG(the_extra << endl);

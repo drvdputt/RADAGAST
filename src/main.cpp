@@ -28,13 +28,9 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-		//  printf("%f", PhotoelectricHeatingRecipe::yieldFunctionTest());
-		//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
-		//  printf("%f\n", Ionization::testIonization());
-
-		// Testing::testGasInterfaceImpl();
-		// Testing::testIonizationStuff();
-		// Testing::testPhotoelectricHeating();
+		Testing::testPhotoelectricHeating();
+		Testing::testGasInterfaceImpl();
+		Testing::testIonizationStuff();
 		Testing::testPS64Collisions();
 	}
 	catch (const std::exception& ex)

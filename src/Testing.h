@@ -23,9 +23,12 @@ void testIonizationStuff();
 /* Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/*/
 void testPhotoelectricHeating();
 
+/* Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
+   NIST values between different n. */
+void testACollapse();
+
 /* Write out data files to recreate figure 2 of PS64. */
 void testPS64Collisions();
-
 }
 
 #endif /* _TESTING_H_ */

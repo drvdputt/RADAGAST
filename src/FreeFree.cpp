@@ -157,8 +157,7 @@ void FreeFree::readFullData(const string& file)
 	}
 
 #ifdef DEBUG_CONTINUUM_DATA
-	ofstream out;
-	out.open("gauntff.dat");
+	ofstream out = IOTools::ofstreamFile("freefree/gauntff.dat");
 	for (size_t ipu = 0; ipu < np_u; ipu++)
 	{
 		for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
@@ -236,7 +235,7 @@ void FreeFree::readIntegratedData(const string& file)
 
 #ifdef DEBUG_CONTINUUM_DATA
 	ofstream out;
-	out.open("integratedgauntff.dat");
+	out.open("freefree/integratedgauntff.dat");
 	for (double logg2 = -5.9; logg2 < 9.9; logg2 += .1)
 	{
 		out << logg2 << '\t' << integratedGauntFactor(logg2) << '\n';
@@ -311,8 +310,7 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	double logg2 = log10(Constant::RYDBERG / kT);
 
 #ifdef DEBUG_CONTINUUM_DATA
-	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/gammanuff.dat");
+	ofstream out = IOTools::ofstreamFile("freefree/gammanuff.dat");
 #endif
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
@@ -336,8 +334,7 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 	double sqrtkT = sqrt(kT);
 	double loggamma2 = log10(Constant::RYDBERG / kT);
 #ifdef DEBUG_CONTINUUM_DATA
-	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/ffopacitycoef.dat");
+	ofstream out = IOTools::ofstreamFile("freefree/ffopacitycoef.dat");
 #endif
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{

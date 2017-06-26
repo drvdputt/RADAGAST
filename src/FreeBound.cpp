@@ -1,7 +1,7 @@
 #include "FreeBound.h"
 #include "Constants.h"
-#include "IonizationBalance.h"
 #include "IOTools.h"
+#include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "SpecialFunctions.h"
 #include "Table.h"
@@ -58,10 +58,9 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 			_gammaDaggervv(row, col) = column_resampled[row];
 	}
 
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	// DEBUG: print out the table as read from the file
-	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/loadedContinuum.dat");
+	ofstream out = IOTools::ofstreamFile("freebound/loadedContinuum.dat");
 	for (size_t iNu = 0; iNu < fileGammaDaggervv.size(); iNu++)
 	{
 		for (double d : fileGammaDaggervv[iNu])
@@ -71,7 +70,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	out.close();
 
 	// DEBUG: print out the interpolated table
-	out.open("/Users/drvdputt/GasModule/run/interpolatedContinuum.dat");
+	out = IOTools::ofstreamFile("freebound/interpolatedContinuum.dat");
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
 		for (size_t iT = 0; iT < _gammaDaggervv.size(1); iT++)
@@ -81,7 +80,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	out.close();
 
 	// DEBUG: Test the temperature interpolation function (at least a copy pasta of a part)
-	out.open("/Users/drvdputt/GasModule/run/bi-interpolatedContinuum.dat");
+	out = IOTools::ofstreamFile("freebound/bi-interpolatedContinuum.dat");
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
 		for (double logT = 2; logT < 5; logT += 0.01)
@@ -101,7 +100,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 		out << endl;
 	}
 	out.close();
-#endif /*PRINT_CONTINUUM_DATA*/
+#endif /*DEBUG_CONTINUUM_DATA*/
 
 	DEBUG("Constructed FreeBound" << endl);
 }
@@ -184,9 +183,10 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	// i.e. the frequency in _thresholdv lower than the current one
 	size_t iThreshold = 0;
 	double tE = 0;
-#ifdef PRINT_CONTINUUM_DATA
-	ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/gammanufb.dat");
+#ifdef DEBUG_CONTINUUM_DATA
+	// TODO: Notice that this writes out the result every time this function is called. This
+	// functionality needs to be moved someplace else.
+	ofstream out = IOTools::ofstreamFile("freebound/gammanufb.dat");
 #endif
 
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -230,7 +230,7 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 
 			double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
 			double gammaNu = gammaDagger / normalizationFactor;
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 			out << freq << "\t" << gammaNu / 1.e-40 << endl;
 #endif
 			gamma_nuv[iFreq] += gammaNu;
@@ -256,7 +256,7 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 			gamma_nuv[iFreq] += ionizingContinuum;
 		}
 	}
-#ifdef PRINT_CONTINUUM_DATA
+#ifdef DEBUG_CONTINUUM_DATA
 	out.close();
 #endif
 }
