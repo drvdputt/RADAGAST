@@ -8,12 +8,18 @@ ifstream IOTools::ifstreamFile(const string& file)
 {
 	ifstream input(file);
 	if (!input)
-	{
-		string message = "File " + file + "not found.";
-		Error::runtime(message);
-	}
-	DEBUG("Opened file " << file << endl);
+		Error::runtime("Input file " + file + "not found.");
+	DEBUG("Opened file (read)" << file << endl);
 	return input;
+}
+
+ofstream IOTools::ofstreamFile(const string& file)
+{
+	ofstream output(file);
+	if (!output.is_open())
+		Error::runtime("Output file " + file + " could not be opened.");
+	DEBUG("Opened file (write)" << file << endl);
+	return output;
 }
 
 istringstream IOTools::istringstreamNextLine(ifstream& ifs)

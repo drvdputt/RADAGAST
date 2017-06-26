@@ -1,5 +1,6 @@
 #include "PhotoelectricHeating.h"
 #include "Error.h"
+#include "IOTools.h"
 #include "NumUtils.h"
 #include "Testing.h"
 #include "global.h"
@@ -712,7 +713,7 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 	const double hnuMax = 15 / Constant::ERG_EV;
 	const size_t N = 500;
 
-	std::ofstream out("/Users/drvdputt/GasModule/run/yieldTest.dat");
+	ofstream out = IOTools::ofstreamFile("/Users/drvdputt/GasModule/run/yieldTest.dat");
 	for (double a : av)
 	{
 		out << "# a = " << a << '\n';
@@ -766,8 +767,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 	                                          end(tempEnergyDensity_lambda));
 	cout << "Made isrf \n";
 
-	ofstream isrfOf;
-	isrfOf.open("photoelectric/isrf_ulambda.dat");
+	ofstream isrfOf = IOTools::ofstreamFile("photoelectric/isrf_ulambda.dat");
 	for (size_t i = 0; i < wavelengthv.size(); i++)
 		isrfOf << wavelengthv[i] * Constant::CM_UM << '\t' << energyDensity_lambda[i]
 		            << endl;
@@ -781,13 +781,11 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 	// Output file will contain one line for every grain size
 	stringstream efficiencyFnSs;
 	efficiencyFnSs << "photoelectric/efficiencyG" << setprecision(4) << scientific << G0 << ".dat";
-	std::ofstream efficiencyOf;
-	efficiencyOf.open(efficiencyFnSs.str());
+	std::ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
 	   as weights. */
-	ofstream avgQabsOf;
-	avgQabsOf.open("photoelectric/avgQabsInterp.txt");
+	ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
 
 	double aStepFactor = std::pow(aMax / aMin, 1. / Na);
 	double a = aMin;
@@ -855,8 +853,7 @@ double PhotoelectricHeatingRecipe::chargeBalanceTest(double G0) const
 	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size()
 	          << std::endl;
 
-	std::ofstream out;
-	out.open("/Users/drvdputt/GasModule/run/fZ.txt");
+	std::ofstream out = IOTools::ofstreamFile("/Users/drvdputt/GasModule/run/fZ.txt");
 	out << "# carbon = " << _carbonaceous << endl;
 	out << "# a = " << a << endl;
 	out << "# Teff = " << _Tc << endl;

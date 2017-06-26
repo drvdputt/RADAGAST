@@ -1,19 +1,20 @@
 #include "Testing.h"
 #include "Constants.h"
+#include "Error.h"
 #include "GasInterface.h"
 #include "HydrogenFromFiles.h"
+#include "IOTools.h"
 #include "IonizationBalance.h"
 #include "NumUtils.h"
 #include "PhotoelectricHeating.h"
 #include "TemplatedUtils.h"
 #include "TwoLevel.h"
 
-
+#include <Eigen/Dense>
 #include <fstream>
 #include <iomanip>
 #include <ios>
 #include <iostream>
-#include <Eigen/Dense>
 
 using namespace std;
 
@@ -119,8 +120,7 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
-	std::ofstream out;
-	out.open("isrf.txt");
+	std::ofstream out = IOTools::ofstreamFile("isrf.txt");
 	for (size_t b = 0; b < I_nu.size(); b++)
 		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
@@ -149,7 +149,7 @@ void Testing::testIonizationStuff()
 	ofstream out;
 
 	double A0 = 6.30e-18;
-	out.open("ionizationCrosSection.dat");
+	out = IOTools::ofstreamFile("ionizationCrosSection.dat");
 	for (double freq = 0; freq < 6.e16; freq += 1e14)
 	{
 		double sigma = Ionization::crossSection(freq);
@@ -165,7 +165,7 @@ void Testing::testIonizationStuff()
 	}
 	out.close();
 
-	out.open("recombinationCooling.dat");
+	out = IOTools::ofstreamFile("recombinationCooling.dat");
 	out << "#kT / eV \t alpha" << endl;
 	// by choosing these parameters, panel 2 of figure 9 from 2017-Mao should be reproduced
 	double nH = 1;
@@ -193,7 +193,6 @@ void Testing::testGasInterfaceImpl()
 	                generateGeometricGridv(10000, Constant::LIGHT / (1e10 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
-
 	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
 	GasInterface gi(frequencyv, true);
 	frequencyv = gi.frequencyv();
@@ -213,7 +212,7 @@ void Testing::testGasInterfaceImpl()
 
 	ofstream out, wavfile;
 	char tab = '\t';
-	out.open("opticalProperties.dat");
+	out = IOTools::ofstreamFile("opticalProperties.dat");
 	vector<std::string> colnames = {
 	                "frequency",
 	                "wavelength",
@@ -229,7 +228,7 @@ void Testing::testGasInterfaceImpl()
 		i++;
 	}
 	out << endl;
-	wavfile.open("wavelengths.dat");
+	wavfile = IOTools::ofstreamFile("wavelengths.dat");
 	wavfile << "#wav (micron)" << tab << "freq (Hz)" << endl;
 	for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
 	{
@@ -304,14 +303,46 @@ void Testing::testPhotoelectricHeating()
 
 void Testing::testPS64Collisions()
 {
-	double T = 10000;
-	double ne = 1e4;
-	double np = 1e4;
+	const double T = 10000;
+	const double ne = 1e4;
+	const double np = 1e4;
 
 	HydrogenFromFiles hff(5);
-
 	Eigen::MatrixXd avv = hff.avv();
 	Eigen::MatrixXd cvv = hff.cvv(T, ne, np);
 
-	// Calculate (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards rate from level nl
+	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards
+	   rate from level nl */
+	Eigen::VectorXd anlv = avv.rowwise().sum();
+	for (int n : std::array<int, 2>{4, 5})
+	{
+		ofstream out = IOTools::ofstreamFile("ps64/t" + to_string(n) + "l_q" +
+		                                     to_string(n) + "l.dat");
+		for (int li = 0; li < n; li++)
+		{
+			int nliIndex = hff.indexOutput(n, li);
+			// Decay rate to all other levels
+			double anl = anlv(nliIndex);
+			double qnl = 0;
+
+			// Get the total decay rate due to l-changing collisions
+			for (int lf = 0; lf < n; lf++)
+			{
+				int nlfIndex = hff.indexOutput(n, lf);
+				qnl += cvv(nliIndex, nlfIndex);
+
+				// l-changing collision rates should be zero except for changes by 1
+				int deltal = li - lf;
+				if (cvv(nliIndex, nlfIndex) > 0 && abs(deltal) != 1)
+				{
+					stringstream ss;
+					ss << "The l-changing coefficient from " << n << "," << li
+					   << " to " << n << "," << lf << " should be zero.";
+					Error::runtime(ss.str());
+				}
+			}
+			out << li << "\t" << qnl / anl << "\t" << qnl << "\t" << anl << endl;
+		}
+		out.close();
+	}
 }

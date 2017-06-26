@@ -32,9 +32,10 @@ int main()
 		//  printf("%f", PhotoelectricHeatingRecipe::chargeBalanceTest());
 		//  printf("%f\n", Ionization::testIonization());
 
-		Testing::testGasInterfaceImpl();
+		// Testing::testGasInterfaceImpl();
 		// Testing::testIonizationStuff();
 		// Testing::testPhotoelectricHeating();
+		Testing::testPS64Collisions();
 	}
 	catch (const std::exception& ex)
 	{

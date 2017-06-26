@@ -11,6 +11,8 @@ namespace IOTools
 {
 std::ifstream ifstreamFile(const std::string& file);
 
+std::ofstream ofstreamFile(const std::string& file);
+
 std::istringstream istringstreamNextLine(std::ifstream& ifs);
 }
 

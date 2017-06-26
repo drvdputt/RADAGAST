@@ -81,6 +81,10 @@ public:
 	/* Returns the number of levels */
 	int numLv() const override;
 
+	/* Returns the index for a given n l pair. When l = -1 in the key, this means the level is
+	   collapsed */
+	inline int indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
+
 	/* Returns a vector containing the energy of each level */
 	Eigen::VectorXd ev() const override;
 
@@ -217,7 +221,6 @@ private:
 	/* Another map, this time one that inverts _levelOrdering above. This way, one can easily
 	   find the index of a level with a specific {n, l}. */
 	std::map<std::array<int, 2>, int> _nlToOutputIndexm;
-	inline int indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */
