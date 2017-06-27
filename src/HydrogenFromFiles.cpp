@@ -345,7 +345,7 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	   coefficients in both ways and then take the average. */
 
 	// mu is the reduced mass of the system of the colliding particles
-	constexpr double muOverm = Constand::PROTONMASS * Constant::HMASS_CGS /
+	constexpr double muOverm = Constant::PROTONMASS * Constant::HMASS_CGS /
 	                           (Constant::PROTONMASS + Constant::HMASS_CGS) /
 	                           Constant::ELECTRONMASS;
 
