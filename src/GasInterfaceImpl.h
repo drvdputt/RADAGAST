@@ -5,8 +5,6 @@
 #include "GasState.h"
 #include "NLevel.h"
 
-#include <memory>
-
 class FreeBound;
 class FreeFree;
 

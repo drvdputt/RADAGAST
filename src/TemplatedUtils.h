@@ -3,8 +3,6 @@
 
 #include <algorithm>
 #include <functional>
-#include <iterator>
-#include <valarray>
 #include <vector>
 
 namespace TemplatedUtils

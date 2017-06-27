@@ -2,7 +2,7 @@
 #define GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
 
 #include "LevelDataProvider.h"
-#include "Table.h"
+#include "Array.h"
 
 #include <map>
 #include <vector>

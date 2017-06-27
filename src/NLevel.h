@@ -2,13 +2,12 @@
 #define _NLEVEL_H_
 
 #include "Array.h"
-#include "LevelDataProvider.h"
 
 #include <Eigen/Dense>
 #include <array>
-#include <map>
 #include <memory>
-#include <string>
+
+class LevelDataProvider;
 
 /* This class contains a generic implementation for calculating the statistical equilibrium of a
    system with a certain amount of levels (private part), and some properties that result from it

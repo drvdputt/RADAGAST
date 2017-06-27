@@ -2,7 +2,6 @@
 #define _IONIZATIONBALANCE_H_
 
 #include "Array.h"
-#include "Constants.h"
 
 namespace Ionization
 {

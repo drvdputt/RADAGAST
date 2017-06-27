@@ -3,8 +3,6 @@
 
 #include "NLevel.h"
 
-#include <Eigen/Dense>
-
 class TwoLevel : public NLevel
 {
 public:

@@ -1,4 +1,5 @@
 #include "IonizationBalance.h"
+#include "Constants.h"
 #include "TemplatedUtils.h"
 
 #include "global.h"

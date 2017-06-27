@@ -2,7 +2,6 @@
 #define _IOTOOLS_H_
 
 #include <fstream>
-#include <iostream>
 #include <sstream>
 
 /* Just a few shorthands for often repeated statements */

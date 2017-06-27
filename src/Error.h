@@ -1,10 +1,7 @@
 #ifndef _SRC_ERROR_H_
 #define _SRC_ERROR_H_
 
-#include "global.h"
-#include <ios>
 #include <iostream>
-#include <string>
 
 namespace Error
 {

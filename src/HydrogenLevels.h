@@ -2,9 +2,6 @@
 #define _SRC_HYDROGENLEVELS_H_
 
 #include "NLevel.h"
-#include "Table.h"
-
-#include <vector>
 
 class HydrogenLevels : public NLevel
 {
