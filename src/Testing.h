@@ -28,9 +28,10 @@ void testPhotoelectricHeating();
 void testACollapse();
 
 /* Write out data files to recreate figure 2 of PS64. Current results: the curve for n=5 looks good,
-   but the last point (l=3) of the n=4 curve is a bit to high. This might be because the A
-   coefficients used by Pengelley were different. I can't track them down easily though, as he
-   refers to another paper, which in turn refers to his thesis. */
+   but the last point (l=3) of the n=4 curve was a bit to high. When retrieving the PS64
+   coefficients, a recursive relation is used, and one can choose to start from either l = 0 or l =
+   n - 1. By applying both methods, and taking the average of the two results, the figure is
+   approached quite well. */
 void testPS64Collisions();
 
 /* Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and

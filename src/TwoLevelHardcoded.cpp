@@ -3,9 +3,8 @@
 
 TwoLevelHardcoded::TwoLevelHardcoded()
 {
-	/* toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of
-	         page 4. This makes collisional deexcitation important for densities > 20-50 / cm3.
-	   */
+	/* toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page
+	   4. This makes collisional deexcitation important for densities > 20-50 / cm3. */
 	// Level and transition information
 	//	_Ev << 0, .00786 / Constant::ERG_EV;
 	//	_gv << 1, 1;
@@ -41,14 +40,13 @@ Eigen::MatrixXd TwoLevelHardcoded::cvv(double T, double /* unused ne */,
 {
 	Eigen::MatrixXd Cvv = Eigen::MatrixXd::Zero(2, 2);
 
-	// Need separate contributions for number of protons and electrons
-	// Toy implementation below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf
-	// is actually for electron collisions only, but let's treat all collision partners
-	// this way for now
+	/* Need separate contributions for number of protons and electrons. Toy implementation below,
+	   inspired by https://www.astro.umd.edu/~jph/N-level.pdf is actually for electron
+	   collisions only, but let's treat all collision partners this way for now. */
 	double beta = 8.629e-6;
 
-	// also take some values from the bottom of page 4
-	// Gamma = 2.15 at 10000 K and 1.58 at 1000 K
+	/* Also take some values from the bottom of page 4. Gamma = 2.15 at 10000 K and 1.58 at 1000
+	   K. Do a linear interpolation. */
 	double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
 
 	Cvv(1, 0) = beta / sqrt(T) * bigUpsilon10 / the_gv(1);
@@ -57,7 +55,7 @@ Eigen::MatrixXd TwoLevelHardcoded::cvv(double T, double /* unused ne */,
 	return Cvv;
 }
 
-Eigen::VectorXd TwoLevelHardcoded::alphav(double T) const
+Eigen::VectorXd TwoLevelHardcoded::alphav(double /* unused T */) const
 {
 	// There is no ion
 	return Eigen::Vector2d::Zero();

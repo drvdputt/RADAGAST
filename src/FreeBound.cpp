@@ -14,8 +14,8 @@ using namespace std;
 
 FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 {
-	// Read the free-bound continuum data from Ercolano and Storey (2006)
-	// Adapted from NEBULAR source code by M. Schirmer (2016)
+	/* Read the free-bound continuum data from Ercolano and Storey (2006). Adapted from NEBULAR
+	   source code by M. Schirmer (2016). */
 	vector<double> fileFrequencyv;
 	vector<vector<double>> fileGammaDaggervv;
 	vector<double> fileThresholdv;
@@ -38,8 +38,8 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	DEBUG("frequency range: " << _frequencyv[0] << " to " << _frequencyv[_frequencyv.size() - 1]
 	                          << endl);
 
-	// Then, apply a linear interpolation across the frequencies (rows) for every temperature
-	// (column)
+	/* Then, apply a linear interpolation across the frequencies (rows) for every temperature
+	   (column) */
 	for (size_t col = 0; col < numcol; col++)
 	{
 		// Extract the column
@@ -87,8 +87,8 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 		{
 			// Find the grid point to the right of the requested log-temperature
 			size_t iRight = NumUtils::index(logT, _logTemperaturev);
-			// The weight of the point to the right (= 1 if T is Tright, = 0 if T is
-			// Tleft)
+			/* The weight of the point to the right (= 1 if T is Tright, = 0 if T is
+			   Tleft). */
 			double wRight = (logT - _logTemperaturev[iRight - 1]) /
 			                (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
 
@@ -100,7 +100,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 		out << endl;
 	}
 	out.close();
-#endif /*DEBUG_CONTINUUM_DATA*/
+#endif /* DEBUG_CONTINUUM_DATA */
 
 	DEBUG("Constructed FreeBound" << endl);
 }

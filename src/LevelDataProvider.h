@@ -12,7 +12,7 @@
    equilibrium calculation.  Subclasses may provide additional configuration steps which determine
    the actual number of levels. For example, one could configure a certain number of l-resolved
    levels, and have the rest collapsed. Hence, the data that is returned by these functions can be
-   of a varying dimension (numbe of levels) or content (the levels/terms treated can be different)
+   of a varying dimension (number of levels) or content (the levels/terms treated can be different)
    for the same subclass. */
 class LevelDataProvider
 {
