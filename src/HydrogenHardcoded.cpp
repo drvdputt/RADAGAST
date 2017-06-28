@@ -109,6 +109,11 @@ Eigen::MatrixXd HydrogenHardcoded::extraAvv() const
 	return the_extraAvv;
 }
 
+array<int, 2> HydrogenHardcoded::twoPhotonIndices() const
+{
+	return {1, 0};
+}
+
 Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double protonDensity) const
 {
 	const int index2p = 2;

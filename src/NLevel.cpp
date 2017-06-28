@@ -10,7 +10,7 @@
 
 using namespace std;
 
-NLevel::NLevel(LevelDataProvider* ldp)
+NLevel::NLevel(const LevelDataProvider* ldp)
                 : _ldp(ldp), _numLv(_ldp->numLv()), _ev(_ldp->ev()), _gv(_ldp->gv()),
                   _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
 {

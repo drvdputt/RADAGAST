@@ -8,34 +8,44 @@
 #include <iostream>
 #include <vector>
 
-HydrogenLevels::HydrogenLevels(bool hardcoded)
-                : NLevel(chooseDataProvider(hardcoded))
+HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp)
+                : NLevel(hdp.get()), _hdp(hdp)
 {
-}
-
-LevelDataProvider* HydrogenLevels::chooseDataProvider(bool hardcoded) const
-{
-	if (hardcoded) return new HydrogenHardcoded();
-	else return new HydrogenFromFiles(5);
 }
 
 Array HydrogenLevels::emissivityv(const Solution& s) const
 {
-	return lineEmissivityv(s) + boundBoundContinuum(s);
+	return lineEmissivityv(s) + twoPhotonEmissivityv(s);
 }
 
-Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
+Array HydrogenLevels::twoPhotonEmissivityv(const Solution& s) const
 {
-	// TODO: make sure that the right indices are obtained
-	int index2s = 1;
-	Array result(frequencyv().size());
+	std::array<int, 2> upper_lower = _hdp->twoPhotonIndices();
+
+	// This index can mean either the resolved level 2s, or the collapsed level 2
+	int index2sOr2 = upper_lower[0];
+	int index1s = upper_lower[1];
+
+	/* The population of the 2s level needs to be guessed when n=2. We can check this by looking
+	   at the multiplicity of the level. Since 2s and 1s should both have the the same
+	   multiplicity, we can do: */
+	bool collapsed = gv(index2sOr2) != gv(index1s);
+	/* If collapsed, assume the population of the 2s level to be 1/4 of the total n=2
+	   population. */
+	double n2s = collapsed ? s.nv(index2sOr2) / 4. : s.nv(index2sOr2);
+
 	// 1984-Nussbaumer
-	double constFactor = Constant::PLANCK / Constant::FPI * s.nv(index2s);
-	double nu0 = (ev(index2s) - ev(0)) / Constant::PLANCK;
-	double C = 202.0; // s-1
-	double alpha = .88;
-	double beta = 1.53;
-	double gam = .8;
+	// constant factor in eq 3
+	double constFactor = Constant::PLANCK / Constant::FPI * n2s;
+	double nu0 = (ev(index2sOr2) - ev(index1s)) / Constant::PLANCK;
+
+	// Parameters for eq 2
+	const double C = 202.0; // s-1
+	const double alpha = .88;
+	const double beta = 1.53;
+	const double gam = .8;
+
+	Array result(frequencyv().size());
 	for (size_t iFreq = 0; frequencyv()[iFreq] < nu0; iFreq++)
 	{
 		double y = frequencyv()[iFreq] / nu0;

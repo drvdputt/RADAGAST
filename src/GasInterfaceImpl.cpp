@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
+#include "HydrogenFromFiles.h"
 #include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
@@ -19,7 +20,8 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
-                : _frequencyv(frequencyv), _boundBound(make_unique<HydrogenLevels>(false)),
+                : _frequencyv(frequencyv),
+                  _boundBound(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5))),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
@@ -27,10 +29,9 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 	DEBUG("Constructed HydrogenCalculator" << endl);
 }
 
-/* there's a lot of double work happening here, but this constructor shouldn't be called too
-   often */
+/* TODO: do the whole frequency grid refining thing in another way. */
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
-                : _boundBound(make_unique<HydrogenLevels>(false)),
+                : _boundBound(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5))),
                   _freeBound(make_unique<FreeBound>(frequencyv))
 {
 	if (improveGrid)

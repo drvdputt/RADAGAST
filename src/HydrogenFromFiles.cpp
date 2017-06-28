@@ -186,6 +186,8 @@ void HydrogenFromFiles::prepareForOutput()
 
 int HydrogenFromFiles::numLv() const { return _numL; }
 
+int HydrogenFromFiles::indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
+
 Eigen::VectorXd HydrogenFromFiles::ev() const
 {
 	Eigen::VectorXd the_ev(_numL);
@@ -282,6 +284,14 @@ Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
 	DEBUG(the_extra << endl);
 #endif
 	return the_extra;
+}
+
+std::array<int, 2> HydrogenFromFiles::twoPhotonIndices() const
+{
+	// If any of the levels is not resolved on l, just return the index of the collapsed level.
+	int upper = _resolvedUpTo >= 2 ? indexOutput(2, 0) : indexOutput(2, -1);
+	int lower = _resolvedUpTo >= 1 ? indexOutput(1, 0) : indexOutput(1, -1);
+	return {upper, lower};
 }
 
 Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
@@ -399,10 +409,6 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 		assert(qUp > 0);
 		assert(qDown > 0);
 	}
-
-	cout << "Going up" << endl << q_li_lf_goingUp << endl;
-	cout << "Going down" << endl << q_li_lf_goingDown << endl;
-
 	return (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
 }
 

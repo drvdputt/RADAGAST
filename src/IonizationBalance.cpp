@@ -142,8 +142,5 @@ double Ionization::cooling(double nH, double f, double T)
 	double ft = a0 * pow(T_eV, -b0) / (1 + a1 * pow(T_eV, -b1));
 
 	double result = ne * ne * kT * recombinationRateCoeff(T) * ft;
-
-	DEBUG("Ionization cooling " << result << endl);
-
 	return result;
 }

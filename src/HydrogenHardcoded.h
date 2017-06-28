@@ -1,15 +1,16 @@
 #ifndef GASMODULE_GIT_SRC_HYDROGENHARDCODED_H_
 #define GASMODULE_GIT_SRC_HYDROGENHARDCODED_H_
 
-#include "LevelDataProvider.h"
+#include "HydrogenDataProvider.h"
 
-class HydrogenHardcoded : public LevelDataProvider
+class HydrogenHardcoded : public HydrogenDataProvider
 {
 public:
 	HydrogenHardcoded();
 
 	/* Returns the number of levels */
 	int numLv() const override;
+
 	/* Returns a vector containing the energy of each level */
 	Eigen::VectorXd ev() const override;
 	/* Returns a vector containing the degeneracy of each level */
@@ -23,6 +24,8 @@ public:
 	   be used to describe spontaneous decays that do NOT produce line radiation (for example
 	   two-photon processes, which generate a continuum instead). */
 	Eigen::MatrixXd extraAvv() const override;
+
+	std::array<int, 2> twoPhotonIndices() const override;
 
 	//-----------------------------------//
 	// FUNCTIONS RETURNING VARIABLE DATA //

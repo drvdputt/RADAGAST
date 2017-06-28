@@ -1,14 +1,13 @@
 #ifndef GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
 #define GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
 
-#include "LevelDataProvider.h"
 #include "Array.h"
+#include "HydrogenDataProvider.h"
 
-#include <array>
 #include <map>
 #include <vector>
 
-class HydrogenFromFiles : public LevelDataProvider
+class HydrogenFromFiles : public HydrogenDataProvider
 {
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
@@ -79,9 +78,7 @@ public:
 	/* Returns the number of levels */
 	int numLv() const override;
 
-	/* Returns the index for a given n l pair. When l = -1 in the key, this means the level is
-	   collapsed */
-	inline int indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
+	int indexOutput(int n, int l) const;
 
 	/* Returns a vector containing the energy of each level */
 	Eigen::VectorXd ev() const override;
@@ -97,6 +94,16 @@ public:
 	   be used to describe spontaneous decays that do NOT produce line radiation (for example
 	   two-photon processes, which generate a continuum instead). */
 	Eigen::MatrixXd extraAvv() const override;
+
+	/* Return a pair of indices indication the upper and lower level of the two-photon
+	   transition (2s ans 1s respectively). When the upper level is collapsed, the index
+	   corresponding to n=2 will be given. In this case, the extra transition rate at these
+	   indices, extraAvv(n=2, n=1), equals 1/4 of the two-photon transition rate, which is the
+	   same as assuming that 1/4 of the n=2 atoms is in a 2s state. Therefore, in case the n=2
+	   level is collapsed, the two photon continuum emission should be rescaled with the same
+	   factor. This will probably give very inaccurate results, but its the best you can do with
+	   a collapsed n=2 level. */
+	std::array<int, 2> twoPhotonIndices() const override;
 
 	// FUNCTIONS RETURNING VARIABLE DATA //
 	/* These functions provide coefficients that depend on external variables such as the

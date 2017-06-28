@@ -40,10 +40,11 @@ class LevelDataProvider;
 class NLevel
 {
 protected:
-	/* A subclass will create a new LevelDataProvider object, and provide a pointer to it to the
-	   NLevel constructor. The number of levels, energies, multiplicities, and transition
-	   coefficients are filled in. */
-	NLevel(LevelDataProvider* ldp);
+	/* A subclass needs to pass a pointer to a LevelDataProvider object. Of course, it needs to
+	   be made sure that this object exists for the lifetime of this class instance. The
+	   number of levels, energies, multiplicities, and transition coefficients are filled in
+	   immediately using the data provider referred to by this pointer. */
+	NLevel(const LevelDataProvider* ldp);
 
 public:
 	virtual ~NLevel();
@@ -168,7 +169,7 @@ private:
 
 	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
 	   initialized with depends on the subclass. */
-	std::unique_ptr<LevelDataProvider> _ldp;
+	const LevelDataProvider* _ldp;
 
 	/* Wavelength grid */
 	Array _frequencyv;
