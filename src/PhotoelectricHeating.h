@@ -78,7 +78,7 @@ private:
 	const double _Tc{3.e4};
 
 	// Wavelength grid to use for tests
-	const size_t _nWav{200};
+	const std::size_t _nWav{200};
 	const double _minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
 	const double _maxWav{1000 * Constant::UM_CM};
 
