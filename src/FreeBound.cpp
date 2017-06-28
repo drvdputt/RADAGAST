@@ -2,9 +2,7 @@
 #include "Constants.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
-#include "NumUtils.h"
 #include "SpecialFunctions.h"
-#include "Table.h"
 #include "TemplatedUtils.h"
 #include "global.h"
 #include <cmath>
@@ -49,9 +47,9 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 			column.push_back(fileGammaDaggervv[row][col]);
 
 		// Resample it
-		const vector<double>& column_resampled = NumUtils::interpol<double>(
-		                column, fileFrequencyv,
-		                vector<double>(begin(frequencyv), end(frequencyv)), -1, -1);
+		const vector<double>& column_resampled =
+		                TemplatedUtils::linearResample<vector<double>>(
+		                                column, fileFrequencyv, frequencyv, -1, -1);
 
 		// And copy it over
 		for (size_t row = 0; row < numFreq; row++)
@@ -86,7 +84,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 		for (double logT = 2; logT < 5; logT += 0.01)
 		{
 			// Find the grid point to the right of the requested log-temperature
-			size_t iRight = NumUtils::index(logT, _logTemperaturev);
+			size_t iRight = TemplatedUtils::index(logT, _logTemperaturev);
 			/* The weight of the point to the right (= 1 if T is Tright, = 0 if T is
 			   Tleft). */
 			double wRight = (logT - _logTemperaturev[iRight - 1]) /
@@ -169,18 +167,18 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	}
 
 	// Find the grid point to the right of the requested log-temperature
-	size_t iRight = NumUtils::index(logT, _logTemperaturev);
+	size_t iRight = TemplatedUtils::index(logT, _logTemperaturev);
 	size_t iLeft = iRight - 1;
 	// The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
 	double wRight = (logT - _logTemperaturev[iLeft]) /
 	                (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
 
-	// We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the
-	// data
+	/* We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the
+	 * data. */
 	double Ttothe3_2 = pow(T, 3. / 2.);
 	double kT = Constant::BOLTZMAN * T;
-	// "the nearest threshold of lower energy"
-	// i.e. the frequency in _thresholdv lower than the current one
+	/* "the nearest threshold of lower energy" i.e. the frequency in _thresholdv lower than the
+	   current one. */
 	size_t iThreshold = 0;
 	double tE = 0;
 #ifdef DEBUG_CONTINUUM_DATA

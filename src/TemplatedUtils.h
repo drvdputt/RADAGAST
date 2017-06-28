@@ -1,7 +1,10 @@
 #ifndef _TEMPLATEDUTILITIES_H_
 #define _TEMPLATEDUTILITIES_H_
 
+#include "Error.h"
+
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <vector>
 
@@ -142,6 +145,94 @@ template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv)
 	return sum;
 }
 
-} /* namespace TemplatedUtils */
+/* Resamples a function f(x), given on the know points x, to the new points u. This template
+   function will work with any combination of types of containers that supports the size() and
+   the square bracket dereference operator []. Note that this function has not been tested for other
+   types than containers of doubles. The first and second argument provide the known f(x) and x
+   values, and should be of equal size. The type of the result can be chosen.
+   The last two arguments determine different extrapolation behaviours. -1 means setting everything
+   out
+   of the original range to zero. 0 means staying constant once the last point has been passed. Any
+   other
+   number means a power law lastvalue * (newpoint / lastpoint), with the argument used as an
+   exponent. Stolen from DIRTY/NumUtils.h */
+template <typename T, typename T1, typename T2, typename T3>
+T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints, int LoEx, int HiEx)
+{
+	if (function.size() != knownPoints.size())
+		Error::runtime("Abscissa and ordinate lengths do not match in interpol");
 
+	T r(newPoints.size());
+	double slp, extrslp1 = 0;
+	double intcpt, extrint1 = 0;
+	uint j;
+	uint n = knownPoints.size() - 1;
+	if (HiEx == -99)
+	{
+		extrslp1 = (function[n] - function[n - 1]) / (knownPoints[n] - knownPoints[n - 1]);
+		extrint1 = function[n] - extrslp1 * knownPoints[n];
+	}
+
+	for (uint i = 0; i < newPoints.size(); ++i)
+	{
+		if (newPoints[i] < knownPoints[0])
+		{ // extrapolate to left.
+			switch (LoEx)
+			{
+			case -1:
+				r[i] = 0.;
+				break;
+			case 0:
+				r[i] = function[0];
+				break;
+			default:
+				r[i] = function[0] * pow(newPoints[i] / knownPoints[0], LoEx);
+			}
+		}
+		else
+		{
+			if (newPoints[i] > knownPoints[knownPoints.size() - 1])
+			{ // extrapolate right.
+				switch (HiEx)
+				{
+				case -1:
+					r[i] = 0.;
+					break;
+				case 0:
+					r[i] = function[function.size() - 1];
+					break;
+				case -99:
+					r[i] = extrint1 + extrslp1 * newPoints[i];
+					break;
+				default:
+					r[i] = function[function.size() - 1] *
+					       pow(newPoints[i] / knownPoints[knownPoints.size() -
+					                                      1],
+					           HiEx);
+					break;
+				}
+			}
+			else
+			{
+				j = 0;
+				while (newPoints[i] > knownPoints[j])
+				{
+					j++;
+				}
+				// take care of the case where i=j=0
+				// seemed to work w/o this line on 32bit, but not 64bit (even
+				// unoptimized)
+				if (j == 0)
+					j++;
+				slp = (function[j] - function[j - 1]) /
+				      (knownPoints[j] - knownPoints[j - 1]);
+				intcpt = function[j] - slp * knownPoints[j];
+				r[i] = slp * newPoints[i] + intcpt;
+			}
+		}
+	}
+	return r;
+}
+
+} /* namespace TemplatedUtils */
 #endif /* _TEMPLATEDUTILITIES_H_ */

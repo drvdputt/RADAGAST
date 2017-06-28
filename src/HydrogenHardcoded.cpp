@@ -2,8 +2,6 @@
 #include "Constants.h"
 #include "TemplatedUtils.h"
 
-#include <vector>
-
 #define NLV 6
 
 using namespace std;

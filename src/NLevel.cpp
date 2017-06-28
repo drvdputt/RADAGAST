@@ -1,12 +1,10 @@
 #include "NLevel.h"
 #include "Constants.h"
-#include "Error.h"
 #include "IonizationBalance.h"
 #include "LevelDataProvider.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 #include "global.h"
-#include <iostream>
 
 using namespace std;
 

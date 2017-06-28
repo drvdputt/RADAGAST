@@ -3,7 +3,7 @@
 
 namespace UTest
 {
-void testHardcodedHydrogen();
+void testSomething();
 }
 
 #endif /* _UTEST_ */

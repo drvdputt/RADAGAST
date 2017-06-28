@@ -46,12 +46,8 @@
 #include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
-#include "Testing.h"
 #include "global.h"
 #include <cassert>
-#include <fstream>
-#include <iostream>
-#include <sstream>
 
 using namespace std;
 

@@ -1,17 +1,13 @@
 #include "HydrogenLevels.h"
+#include "HydrogenDataProvider.h"
 #include "Constants.h"
-#include "HydrogenFromFiles.h"
-#include "HydrogenHardcoded.h"
-#include "IOTools.h"
-#include "TemplatedUtils.h"
-#include "global.h"
-#include <iostream>
-#include <vector>
 
 HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp)
                 : NLevel(hdp.get()), _hdp(hdp)
 {
 }
+
+HydrogenLevels::~HydrogenLevels() = default;
 
 Array HydrogenLevels::emissivityv(const Solution& s) const
 {

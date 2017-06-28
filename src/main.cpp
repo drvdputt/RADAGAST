@@ -1,13 +1,9 @@
-#include "PhotoelectricHeating.h"
 #include "Testing.h"
 
 #include <execinfo.h>
 #include <unistd.h>
-
 #include <csignal>
-#include <cstdlib>
 #include <iostream>
-#include <string>
 
 void handler(int sig)
 {
@@ -28,12 +24,12 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-//		Testing::testPhotoelectricHeating();
-//		Testing::testGasInterfaceImpl();
+		Testing::testPhotoelectricHeating();
+		Testing::testGasInterfaceImpl();
 //		Testing::testIonizationStuff();
 //		Testing::testPS64Collisions();
 //		Testing::testACollapse();
-		Testing::compareFromFilesvsHardCoded();
+//		Testing::compareFromFilesvsHardCoded();
 	}
 	catch (const std::exception& ex)
 	{

@@ -1,17 +1,12 @@
 #include "PhotoelectricHeating.h"
 #include "Error.h"
 #include "IOTools.h"
-#include "NumUtils.h"
+#include "TemplatedUtils.h"
 #include "Testing.h"
 #include "global.h"
 
 #include <cmath>
-#include <exception>
-#include <fstream>
 #include <iomanip>
-#include <ios>
-#include <iostream>
-#include <sstream>
 
 //#define EXACTGRID
 
@@ -118,7 +113,7 @@ PhotoelectricHeatingRecipe::generateQabsv(double a, const std::vector<double>& w
 	}
 	else // interpolated from data
 	{
-		size_t a_index = NumUtils::index<double>(a, _fileav);
+		size_t a_index = TemplatedUtils::index(a, _fileav);
 		double normalDistance = (a - _fileav[a_index - 1]) /
 		                        (_fileav[a_index] - _fileav[a_index - 1]);
 		// interpolate the values from the file for a specific grain size
@@ -131,11 +126,12 @@ PhotoelectricHeatingRecipe::generateQabsv(double a, const std::vector<double>& w
 	return QabsFromFileForA;
 #endif
 
-	Qabs = NumUtils::interpol<double>(QabsFromFileForA, _filelambdav, wavelengthv, -1, -1);
+	Qabs = TemplatedUtils::linearResample<vector<double>>(QabsFromFileForA, _filelambdav,
+	                                                      wavelengthv, -1, -1);
 #ifdef PLOT_QABS
 	std::stringstream filename;
-	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
-	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2)
+	         << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream qabsfile = IOTools::ofstreamFile(filename.str());
 	for (size_t i = 0; i < wavelengthv.size(); i++)
 		qabsfile << wavelengthv[i] * Constant::CM_UM << '\t' << Qabs[i] << endl;
@@ -237,14 +233,14 @@ PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const std::vector<dou
 	}
 
 	double peIntegral = Constant::PI * a * a * Constant::LIGHT *
-	                    NumUtils::integrate<double>(wavelengthv, peIntegrandv);
+	                    TemplatedUtils::integrate<double>(wavelengthv, peIntegrandv);
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
 	                Z < 0
 	                                ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                  NumUtils::integrate<double>(wavelengthv,
-	                                                                              pdIntegrandv)
+	                                                  TemplatedUtils::integrate<double>(
+	                                                                  wavelengthv, pdIntegrandv)
 	                                : 0;
 
 	return peIntegral + pdIntegral;
@@ -276,8 +272,8 @@ PhotoelectricHeatingRecipe::heatingRateA(double a, const std::vector<double>& wa
 
 #ifdef PLOT_FZ
 	std::stringstream filename;
-	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8)
-	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
+	         << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream outvar = IOTools::ofstreamFile(filename.str());
 	outvar << "# carbon = " << _carbonaceous << endl;
 	outvar << "# a = " << a << endl;
@@ -363,14 +359,14 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z,
 	}
 
 	double peIntegral = Constant::PI * a * a * Constant::LIGHT *
-	                    NumUtils::integrate<double>(wavelengthv, peIntegrandv);
+	                    TemplatedUtils::integrate<double>(wavelengthv, peIntegrandv);
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
 	                Z < 0
 	                                ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                  NumUtils::integrate<double>(wavelengthv,
-	                                                                              pdIntegrandv)
+	                                                  TemplatedUtils::integrate<double>(
+	                                                                  wavelengthv, pdIntegrandv)
 	                                : 0;
 	return peIntegral + pdIntegral;
 }
@@ -768,7 +764,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 	ofstream isrfOf = IOTools::ofstreamFile("photoelectric/isrf_ulambda.dat");
 	for (size_t i = 0; i < wavelengthv.size(); i++)
 		isrfOf << wavelengthv[i] * Constant::CM_UM << '\t' << energyDensity_lambda[i]
-		            << endl;
+		       << endl;
 	isrfOf.close();
 
 	// Grain sizes for test
@@ -778,7 +774,8 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 
 	// Output file will contain one line for every grain size
 	stringstream efficiencyFnSs;
-	efficiencyFnSs << "photoelectric/efficiencyG" << setprecision(4) << scientific << G0 << ".dat";
+	efficiencyFnSs << "photoelectric/efficiencyG" << setprecision(4) << scientific << G0
+	               << ".dat";
 	std::ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
@@ -798,7 +795,8 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 		vector<double> ulambdaTimesQabs(Qabs.size());
 		for (size_t n = 0; n < Qabs.size(); n++)
 			ulambdaTimesQabs[n] = Qabs[n] * energyDensity_lambda[n];
-		double uTimesQabsIntegral = NumUtils::integrate<double>(wavelengthv, ulambdaTimesQabs);
+		double uTimesQabsIntegral =
+		                TemplatedUtils::integrate<double>(wavelengthv, ulambdaTimesQabs);
 
 		cout << "Size " << a / Constant::ANG_CM << endl;
 
@@ -809,7 +807,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 		efficiencyOf << a / Constant::ANG_CM << '\t' << heating / totalAbsorbed << '\n';
 
 		// Calculate and write out the ISRF-averaged absorption efficiency
-		double uIntegral = NumUtils::integrate<double>(wavelengthv, energyDensity_lambda);
+		double uIntegral = TemplatedUtils::integrate<double>(wavelengthv, energyDensity_lambda);
 		double avgQabs = uTimesQabsIntegral / uIntegral;
 		avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
 		a *= aStepFactor;

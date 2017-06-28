@@ -9,13 +9,8 @@
 #include "NumUtils.h"
 #include "PhotoelectricHeating.h"
 #include "TemplatedUtils.h"
-#include "TwoLevel.h"
 
 #include <Eigen/Dense>
-#include <fstream>
-#include <iomanip>
-#include <ios>
-#include <iostream>
 
 using namespace std;
 

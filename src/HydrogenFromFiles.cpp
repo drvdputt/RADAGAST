@@ -1,14 +1,9 @@
 #include "HydrogenFromFiles.h"
-
 #include "Constants.h"
 #include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "global.h"
-
-#include <cassert>
-#include <fstream>
-#include <sstream>
 
 using namespace std;
 

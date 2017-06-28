@@ -6,16 +6,9 @@
 #include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
-#include "NumUtils.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
 #include "global.h"
-#include <algorithm>
-#include <exception>
-#include <fstream>
-#include <iostream>
-#include <sstream>
-#include <vector>
 
 using namespace std;
 

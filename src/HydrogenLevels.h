@@ -1,8 +1,9 @@
 #ifndef _SRC_HYDROGENLEVELS_H_
 #define _SRC_HYDROGENLEVELS_H_
 
-#include "HydrogenDataProvider.h"
 #include "NLevel.h"
+
+class HydrogenDataProvider;
 
 class HydrogenLevels : public NLevel
 {
@@ -11,6 +12,7 @@ public:
 	/* Work with a shared pointer here, to make construction using a temporary object
 	   possible. */
 	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp);
+	~HydrogenLevels();
 
 	Array emissivityv(const Solution& s) const override;
 
