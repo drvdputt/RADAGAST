@@ -8,13 +8,6 @@
 #include <iostream>
 #include <vector>
 
-namespace
-{
-// commonly used indices
-const int index2p = 1;
-const int index2s = 2;
-}
-
 HydrogenLevels::HydrogenLevels(bool hardcoded)
                 : NLevel(chooseDataProvider(hardcoded))
 {
@@ -28,6 +21,8 @@ LevelDataProvider* HydrogenLevels::chooseDataProvider(bool hardcoded) const
 
 Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
 {
+	// TODO: make sure that the right indices are obtained
+	int index2s = 1;
 	Array result(frequencyv().size());
 	// 1984-Nussbaumer
 	double constFactor = Constant::PLANCK / Constant::FPI * s.nv(index2s);

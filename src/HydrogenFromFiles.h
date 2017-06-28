@@ -4,6 +4,7 @@
 #include "LevelDataProvider.h"
 #include "Array.h"
 
+#include <array>
 #include <map>
 #include <vector>
 
