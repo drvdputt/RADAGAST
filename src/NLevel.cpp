@@ -101,17 +101,16 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 
 Array NLevel::emissivityv(const Solution& s) const
 {
+	return lineEmissivityv(s);
+}
+
+Array NLevel::lineEmissivityv(const Solution& s) const
+{
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
-	total += boundBoundContinuum(s);
 	return total;
-}
-
-Array NLevel::boundBoundContinuum(const Solution& /* unused s */) const
-{
-	return Array(_frequencyv.size());
 }
 
 Array NLevel::opacityv(const Solution& s) const

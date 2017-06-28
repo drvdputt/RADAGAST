@@ -109,13 +109,14 @@ public:
 	Solution solveBalance(double atomDensity, double electronDensity, double protonDensity,
 	                      double T, const Array& specificIntensityv) const;
 
+	/* The total emitted spectrum by the system of levels. The default implementation gives just
+	   the line emission, but subclasses can override it to add extra contributions, such as
+	   two-photon continua. */
+	virtual Array emissivityv(const Solution& s) const = 0;
+
 	/* The spectrum emitted by the line transitions, expressed as the emission coefficient j_nu
 	   f * (erg/cm3/s/Hz). */
-	Array emissivityv(const Solution& s) const;
-
-	/* The contribution to the emissivity non-line bound-bound processes, for example the
-	   two-photon continuum 2s->1s transition of HI. */
-	virtual Array boundBoundContinuum(const Solution& s) const;
+	Array lineEmissivityv(const Solution& s) const;
 
 	/* The opacity alpha_nu, equivalent to kappaRho for dust (cm-1). */
 	Array opacityv(const Solution& s) const;
@@ -162,7 +163,6 @@ private:
 	/* Or when the full solution is not yet known, and hence a Solution object is not yet
 	   available. */
 	Array lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const;
-
 
 	// Variables which are the same for all invocations of solveBalance are stored as members //
 

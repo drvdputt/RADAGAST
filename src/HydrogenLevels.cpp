@@ -19,6 +19,11 @@ LevelDataProvider* HydrogenLevels::chooseDataProvider(bool hardcoded) const
 	else return new HydrogenFromFiles(5);
 }
 
+Array HydrogenLevels::emissivityv(const Solution& s) const
+{
+	return lineEmissivityv(s) + boundBoundContinuum(s);
+}
+
 Array HydrogenLevels::boundBoundContinuum(const Solution& s) const
 {
 	// TODO: make sure that the right indices are obtained
