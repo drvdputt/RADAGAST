@@ -11,7 +11,14 @@ class LevelDataProvider;
 
 /* This class contains a generic implementation for calculating the statistical equilibrium of a
    system with a certain amount of levels (private part), and some properties that result from it
-   (public part).
+   (public part). NLevel can be used as-is, if this generic (lines only) implementation is
+   sufficient, or a subclass of NLevel can be used if extra effects are desired. (e.g. the subclass
+   HydrogenLevels provides some extensions to add the two-photon continuum.)
+
+   Example: To simulate the toy two-level system for CII, create an NLevel object taking a
+   TwoLevelHardcoded* as constructor argument. To simulate Hydrogen including its two-photon
+   continuum, create an object of the HydrogenCalculator subclass, using a HydrogenDataProvider
+   class of choice.
 
    It contains data members to store all the constants needed for these calculations: The number of
    levels, the energies of these levels and their degeneracies, and the spontaneous transition rates
@@ -39,12 +46,13 @@ class LevelDataProvider;
    these same data members. That's why a set of protected getters is provided. */
 class NLevel
 {
-protected:
-	/* A subclass needs to pass a pointer to a LevelDataProvider object. Of course, it needs to
+public:
+	/* A subclass needs to pass a pointer to a LevelDataProvider object, or the caller can
+	   provide one if the generic implementation is sufficient. Of course, it needs to
 	   be made sure that this object exists for the lifetime of this class instance. The
 	   number of levels, energies, multiplicities, and transition coefficients are filled in
 	   immediately using the data provider referred to by this pointer. */
-	NLevel(const LevelDataProvider* ldp);
+	NLevel(std::shared_ptr<const LevelDataProvider>  ldp, const Array& frequencyv);
 
 public:
 	virtual ~NLevel();
@@ -68,10 +76,9 @@ protected:
 	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
 
 public:
-	/* Getter and setter for the frequency grid to perform the calculations on. All of the input
+	/* Getter for the frequency grid to perform the calculations on. All of the input
 	   (ouput) spectra must have (will have) the same frequency points. */
-	Array frequencyv() const { return _frequencyv; }
-	void setFrequencyv(const Array& frequencyv) { _frequencyv = frequencyv; }
+	const Array& frequencyv() const { return _frequencyv; }
 
 	/* Ouputs some properties about the different line transitions taken into account by this
 	   instance of NLevel. The results for the number of lines, their frequencies and their
@@ -169,10 +176,10 @@ private:
 
 	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
 	   initialized with depends on the subclass. */
-	const LevelDataProvider* _ldp;
+	std::shared_ptr<const LevelDataProvider> _ldp;
 
 	/* Wavelength grid */
-	Array _frequencyv;
+	const Array& _frequencyv;
 
 	/* Energy levels (constant) */
 	int _numLv{0};

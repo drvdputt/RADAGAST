@@ -5,8 +5,8 @@
 #include "FreeFree.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenLevels.h"
-#include "IonizationBalance.h"
 #include "IOTools.h"
+#include "IonizationBalance.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
@@ -15,55 +15,11 @@ using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
                 : _frequencyv(frequencyv),
-                  _boundBound(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5))),
+                  _boundBound(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5),
+                                                          frequencyv)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
-	_boundBound->setFrequencyv(frequencyv);
-	DEBUG("Constructed HydrogenCalculator" << endl);
-}
-
-/* TODO: do the whole frequency grid refining thing in another way. */
-GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv, bool improveGrid)
-                : _boundBound(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5))),
-                  _freeBound(make_unique<FreeBound>(frequencyv))
-{
-	if (improveGrid)
-	{
-		// Add extra points for the lines
-		int numLines;
-		Array lineFreqv, lineWidthv;
-		_boundBound->lineInfo(numLines, lineFreqv, lineWidthv);
-
-		double lineWindowFactor = 1.;
-		double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
-		                       Constant::LIGHT;
-		lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
-
-		vector<double> gridVector(begin(frequencyv), end(frequencyv));
-		Testing::refineFrequencyGrid(gridVector, 13, 2.5, lineFreqv, lineWidthv);
-
-		// And for the jumps in the bound-bound spectrum
-		const Array& thresholdv = _freeBound->thresholdv();
-		// Don't bother with the last jump, because that's the end of the data
-		Array jumpFreqv(&thresholdv[0], thresholdv.size() - 2);
-		Testing::refineFrequencyGrid(gridVector, 3, 1., jumpFreqv, 1e-6 * jumpFreqv);
-
-		// And for the ionization threshold
-		Array ionThr({Ionization::THRESHOLD});
-		Testing::refineFrequencyGrid(gridVector, 3, 1., ionThr, 1e-6 * ionThr);
-
-		// Overwrite the frequencygrid with the improved one
-		_frequencyv = Array(gridVector.data(), gridVector.size());
-	}
-	else
-		_frequencyv = frequencyv;
-
-	_boundBound->setFrequencyv(_frequencyv);
-
-	// Overwrite these objects with new ones
-	_freeBound = make_unique<FreeBound>(_frequencyv);
-	_freeFree = make_unique<FreeFree>(_frequencyv);
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
@@ -130,7 +86,7 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 	}
 #endif
 	// Put the relevant data into the gas state
-	gs = GasState(_frequencyv, specificIntensityv, emv, opv, scv, s.T, s.f);
+	gs = GasState(specificIntensityv, emv, opv, scv, s.T, s.f);
 }
 
 void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const

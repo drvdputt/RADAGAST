@@ -24,12 +24,12 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-		Testing::testPhotoelectricHeating();
-		Testing::testGasInterfaceImpl();
-		Testing::testIonizationStuff();
-		Testing::testPS64Collisions();
-		Testing::testACollapse();
-		Testing::compareFromFilesvsHardCoded();
+//		Testing::testPhotoelectricHeating();
+//		Testing::testIonizationStuff();
+//		Testing::testPS64Collisions();
+//		Testing::testACollapse();
+//		Testing::compareFromFilesvsHardCoded();
+		Testing::runFromFilesvsHardCoded();
 	}
 	catch (const std::exception& ex)
 	{

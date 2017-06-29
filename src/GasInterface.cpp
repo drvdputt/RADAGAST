@@ -9,14 +9,13 @@ GasInterface::GasInterface(const valarray<double>& frequencyv)
 {
 }
 
-GasInterface::GasInterface(const valarray<double>& frequencyv, bool improveGrid)
-                : _frequencyv(frequencyv),
-                  _pimpl(make_unique<GasInterfaceImpl>(frequencyv, improveGrid))
-{
-	_frequencyv = _pimpl->frequencyv();
-}
-
 GasInterface::~GasInterface() = default;
+
+void GasInterface::setFrequencyv(const Array& frequencyv)
+{
+	_frequencyv = frequencyv;
+	_pimpl = make_unique<GasInterfaceImpl>(frequencyv);
+}
 
 void GasInterface::updateGasState(GasState& gs, double density, double Tinit,
                                   const valarray<double>& specificIntensityv) const

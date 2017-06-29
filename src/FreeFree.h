@@ -37,7 +37,7 @@ public:
 	double cooling(double np_ne, double T) const;
 
 private:
-	Array _frequencyv;
+	const Array& _frequencyv;
 
 	/* The ((natural!) log of the) data read from the file, indexed on (u, gamma^2) */
 	Table<2> _fileGauntFactorvv;

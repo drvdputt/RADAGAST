@@ -1,11 +1,14 @@
 #include "Testing.h"
 #include "Constants.h"
 #include "Error.h"
+#include "FreeBound.h"
 #include "GasInterface.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
+#include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
+#include "NLevel.h"
 #include "NumUtils.h"
 #include "PhotoelectricHeating.h"
 #include "TemplatedUtils.h"
@@ -14,10 +17,41 @@
 
 using namespace std;
 
+/*TODO: IMPROVEGRID CODE */
+
+Array Testing::improveFrequencyGrid(const NLevel& boundBound, const FreeBound& freeBound,
+                                    const Array& oldPoints)
+{
+	// Add extra points for the lines
+	int numLines;
+	Array lineFreqv, lineWidthv;
+	boundBound.lineInfo(numLines, lineFreqv, lineWidthv);
+
+	double lineWindowFactor = 1.;
+	double thermalFactor =
+	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) / Constant::LIGHT;
+	lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
+
+	vector<double> gridVector(begin(oldPoints), end(oldPoints));
+	Testing::refineFrequencyGrid(gridVector, 13, 2.5, lineFreqv, lineWidthv);
+
+	// And for the jumps in the bound-bound spectrum
+	const Array& thresholdv = freeBound.thresholdv();
+	// Don't bother with the last jump, because that's the end of the data
+	Array jumpFreqv(&thresholdv[0], thresholdv.size() - 2);
+	Testing::refineFrequencyGrid(gridVector, 3, 1., jumpFreqv, 1e-6 * jumpFreqv);
+
+	// And for the ionization threshold
+	Array ionThr({Ionization::THRESHOLD});
+	Testing::refineFrequencyGrid(gridVector, 3, 1., ionThr, 1e-6 * ionThr);
+
+	return Array(gridVector.data(), gridVector.size());
+}
+
 vector<double> Testing::generateGeometricGridv(size_t nPoints, double min, double max)
 {
 	vector<double> frequencyv(nPoints);
-	double freqStepFactor = std::pow(max / min, 1. / (nPoints - 1));
+	double freqStepFactor = pow(max / min, 1. / (nPoints - 1));
 	double freq = min;
 	for (size_t n = 0; n < nPoints; n++)
 	{
@@ -116,7 +150,7 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
-	std::ofstream out = IOTools::ofstreamFile("isrf.txt");
+	ofstream out = IOTools::ofstreamFile("isrf.txt");
 	for (size_t b = 0; b < I_nu.size(); b++)
 		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
@@ -176,20 +210,10 @@ void Testing::testIonizationStuff()
 	out.close();
 }
 
-void Testing::testGasInterfaceImpl()
+void Testing::runGasInterfaceImpl(const GasInterface& gi, const std::string& outputPath, double Tc,
+                                  double G0, double n, double expectedTemperature)
 {
-	double Tc = 20000;
-	double G0 = 1e0;
-	double n = 1e1;
-	double expectedTemperature = 1000;
-
-	vector<double> tempFrequencyv =
-	                generateGeometricGridv(10000, Constant::LIGHT / (1e10 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
-
-	Array frequencyv(tempFrequencyv.data(), tempFrequencyv.size());
-	GasInterface gi(frequencyv, true);
-	frequencyv = gi.frequencyv();
+	const Array& frequencyv = gi.frequencyv();
 
 	Array specificIntensityv = generateSpecificIntensityv(
 	                vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
@@ -204,9 +228,8 @@ void Testing::testGasInterfaceImpl()
 	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, emv)
 	     << endl;
 
-	ofstream out, wavfile;
 	char tab = '\t';
-	out = IOTools::ofstreamFile("opticalProperties.dat");
+	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
 	                "frequency",
 	                "wavelength",
@@ -222,7 +245,7 @@ void Testing::testGasInterfaceImpl()
 		i++;
 	}
 	out << endl;
-	wavfile = IOTools::ofstreamFile("wavelengths.dat");
+	ofstream wavfile = IOTools::ofstreamFile(outputPath + "wavelengths.dat");
 	wavfile << "#wav (micron)" << tab << "freq (Hz)" << endl;
 	for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
 	{
@@ -253,7 +276,7 @@ void Testing::testGasInterfaceImpl()
 	double fBralpha = Constant::LIGHT / 4052.27e-7;
 
 	function<double(double frequency)> evaluateSpectrum = [&](double f) {
-		return TemplatedUtils::evaluateLinInterpf(f, frequencyv, emv);
+		return TemplatedUtils::evaluateLinInterpf<double>(f, frequencyv, emv);
 	};
 
 	double Hbeta = evaluateSpectrum(fHbeta);
@@ -418,4 +441,21 @@ void Testing::compareFromFilesvsHardCoded()
 	Eigen::VectorXd alphavhc = hhc.alphav(T);
 	Eigen::VectorXd alphavff = hff.alphav(T);
 	hc_vs_ff(alphavhc, alphavff);
+}
+
+void Testing::runFromFilesvsHardCoded()
+{
+	vector<double> tempFrequencyv =
+	                generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
+	Array unrefined(tempFrequencyv.data(), tempFrequencyv.size());
+
+	// Hey, at least we'll get a decent frequency grid out of this hack
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefined);
+	FreeBound fb(unrefined);
+	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
+
+	GasInterface gi(frequencyv);
+
+	runGasInterfaceImpl(gi, "");
 }

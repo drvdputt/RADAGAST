@@ -33,7 +33,7 @@ public:
 
 private:
 	/* The frequency grid onto which the data will be interpolated */
-	Array _frequencyv;
+	const Array& _frequencyv;
 
 	/* Data to be loaded in constructor body. First index is for frequency, second for
 	   temperature */

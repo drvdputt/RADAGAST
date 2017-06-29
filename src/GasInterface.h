@@ -14,15 +14,24 @@ class GasInterfaceImpl;
 class GasInterface
 {
 public:
+	// SETUP //
+
 	/* Creates an instance of the gas module. Since the module currently works using a frequency
 	  grid, a sorted list (ascending) of frequencies to perform the calculations on should be
 	  supplied. */
 	GasInterface(const std::valarray<double>& frequencyv);
-	/* A hacky implementation to make 'suggesting' frequency points possible. This constructor
-	   uses the given frequency points, and adds some by itself before the frequency grid is
-	   passed through to all the members. This probably needs to change. */
-	GasInterface(const std::valarray<double>& frequencyv, bool improveGrid);
 	~GasInterface();
+
+	/* Sets a new frequency grid. This is a costly operation, which recreates everything from
+	   scratch. The foreseen use case of this function is to facilitate refinement of the
+	   frequency grid. */
+	void setFrequencyv(const std::valarray<double>& frequencyv);
+
+	/* Returns the frequency grid used. This may come in handy later, for example for situations
+	   where the code generates its own frequency points. */
+	std::valarray<double> frequencyv() const { return _frequencyv; }
+
+	// USAGE 1: Calculate GasState objects //
 
 	/* Exports the state of the gas as a compact, opaque object. Codes which make use of the gas
 	   module can use these objects to store a number of gas states. They can then repeatedly
@@ -38,6 +47,8 @@ public:
 	   the given temperature is used to calculate GasState. It is recommended to apply this
 	   function to all gas states before starting a simulation. */
 	void initializeGasState(GasState& gs, double n, double T) const;
+
+	// USAGE 2: Translate GasState into optical properties //
 
 	/* The functions below hould provide a fast implementation to obtain the optical properties.
 	   The implementation will depend on what is stored in a GasState object. A good balance
@@ -59,10 +70,6 @@ public:
 	/* Return the absorption opacity. Currently, all opacity is absorption opacity and the
 	   albedo is therefore zero. */
 	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
-
-	/* Returns the frequency grid used. This may come in handy later, for example for situations
-	   where the code generates its own frequency points. */
-	std::valarray<double> frequencyv() const { return _frequencyv; }
 
 	/* Test function. Better move this somewhere else. */
 	void testHeatingCurve(double n, const std::valarray<double>& specificIntensityv) const;

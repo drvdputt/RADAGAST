@@ -14,7 +14,7 @@
 //
 //#define REPORT_LINE_QUALITY
 //
-#define DEBUG_CONTINUUM_DATA
+//#define DEBUG_CONTINUUM_DATA
 
 #define DEBUG(x)                                                                                   \
 	do                                                                                         \

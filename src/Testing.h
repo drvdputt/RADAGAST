@@ -3,7 +3,12 @@
 
 #include "Array.h"
 
+#include <string>
 #include <vector>
+
+class GasInterface;
+class NLevel;
+class FreeBound;
 
 namespace Testing
 {
@@ -16,8 +21,18 @@ Array generateSpecificIntensityv(const std::vector<double>& frequencyv, double T
 Array freqToWavSpecificIntensity(const std::vector<double>& frequencyv,
                                  const Array& specificIntensity_nu);
 
+/* This clumsy thing should give us a grid with some extra points in the correct locations. */
+Array improveFrequencyGrid(const NLevel& boundBound, const FreeBound& freeBound,
+                           const Array& oldPoints);
+
 // TEST RUNS //
-void testGasInterfaceImpl();
+/* Calculates an equilibrium GasState using the given GasInterface and writes out some results in
+   the given directory (relative to the working directory). The environment can be specified through
+   the optional arguments. The ambient radiation field has a color temperature of Tc and a mean UV
+   intensity of G0 habing, and the gas density is n. The initial temperature can also be chosen. */
+void runGasInterfaceImpl(const GasInterface& gi, const std::string& outputPath, double Tc = 20000,
+                         double G0 = 2, double n = 10, double expectedTemperature = 8000);
+
 void testIonizationStuff();
 
 /* Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/*/
@@ -37,6 +52,10 @@ void testPS64Collisions();
 /* Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
    HydrogenFromFiles. */
 void compareFromFilesvsHardCoded();
+
+/* Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will be
+   written out to separate files. */
+void runFromFilesvsHardCoded();
 }
 
 #endif /* _TESTING_H_ */

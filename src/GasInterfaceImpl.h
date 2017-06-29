@@ -62,10 +62,6 @@ public:
 	   hydrogen gas and the resulting opacity and emission on the provided frequency grid. */
 	GasInterfaceImpl(const Array& frequencyv);
 
-	/* Creates a HydrogenCalculator and creates a frequency grid / adjusts the given
-	   frequencygrid (by reference) if suggestedGrid = true. */
-	GasInterfaceImpl(const Array& frequencyv, bool improveGrid);
-
 	Array frequencyv() const { return _frequencyv; }
 
 	~GasInterfaceImpl();
@@ -131,7 +127,7 @@ public:
 
 private:
 	/* To be set in constructor */
-	Array _frequencyv;
+	const Array& _frequencyv;
 
 	/* Pointers to other parts of the implementation, to make late initialization possible */
 	std::unique_ptr<NLevel> _boundBound;
