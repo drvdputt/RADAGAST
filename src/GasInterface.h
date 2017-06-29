@@ -4,6 +4,7 @@
 #include "GasState.h"
 
 #include <memory>
+#include <string>
 
 class GasInterfaceImpl;
 
@@ -20,12 +21,15 @@ public:
 	  grid, a sorted list (ascending) of frequencies to perform the calculations on should be
 	  supplied. */
 	GasInterface(const std::valarray<double>& frequencyv);
+
+	GasInterface(const std::valarray<double>& frequencyv, const std::string& setupChoice);
+
 	~GasInterface();
 
 	/* Sets a new frequency grid. This is a costly operation, which recreates everything from
 	   scratch. The foreseen use case of this function is to facilitate refinement of the
 	   frequency grid. */
-	void setFrequencyv(const std::valarray<double>& frequencyv);
+//	void setFrequencyv(const std::valarray<double>& frequencyv);
 
 	/* Returns the frequency grid used. This may come in handy later, for example for situations
 	   where the code generates its own frequency points. */

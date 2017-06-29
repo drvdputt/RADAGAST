@@ -455,7 +455,9 @@ void Testing::runFromFilesvsHardCoded()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gi(frequencyv);
+	GasInterface gihhc(frequencyv, "hhc");
+	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	runGasInterfaceImpl(gi, "");
+	GasInterface gihff(frequencyv, "hff2");
+	runGasInterfaceImpl(gihff, "fromfiles/");
 }

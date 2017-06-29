@@ -62,6 +62,11 @@ public:
 	   hydrogen gas and the resulting opacity and emission on the provided frequency grid. */
 	GasInterfaceImpl(const Array& frequencyv);
 
+	/* A constructor for manual setup (an argument for each subprocess of which more than 1
+	   usable subclass/configuration exists). The components can be set up outside of this
+	   constructor, and ownership is then transferred using a unique pointer. */
+	GasInterfaceImpl(std::unique_ptr<NLevel> boundBound, const Array& frequencyv);
+
 	Array frequencyv() const { return _frequencyv; }
 
 	~GasInterfaceImpl();

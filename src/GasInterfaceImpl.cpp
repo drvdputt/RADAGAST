@@ -22,6 +22,11 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 {
 }
 
+GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> boundBound, const Array& frequencyv)
+                : _frequencyv(frequencyv), _boundBound(move(boundBound))
+{
+}
+
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,

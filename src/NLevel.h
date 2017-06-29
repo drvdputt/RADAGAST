@@ -120,7 +120,7 @@ public:
 	/* The total emitted spectrum by the system of levels. The default implementation gives just
 	   the line emission, but subclasses can override it to add extra contributions, such as
 	   two-photon continua. */
-	virtual Array emissivityv(const Solution& s) const = 0;
+	virtual Array emissivityv(const Solution& s) const;
 
 	/* The spectrum emitted by the line transitions, expressed as the emission coefficient j_nu
 	   f * (erg/cm3/s/Hz). */

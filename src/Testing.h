@@ -35,7 +35,7 @@ void runGasInterfaceImpl(const GasInterface& gi, const std::string& outputPath, 
 
 void testIonizationStuff();
 
-/* Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/*/
+/* Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/ */
 void testPhotoelectricHeating();
 
 /* Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
