@@ -19,7 +19,7 @@ using namespace std;
 namespace
 {
 constexpr double e6 = Constant::ESQUARE * Constant::ESQUARE * Constant::ESQUARE;
-constexpr double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
+const double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
 }
 
 FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
@@ -29,10 +29,9 @@ FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 	DEBUG("Constructed FreeFree" << endl);
 }
 
-/* Some of the code in this file (mainly the code for reading in the date) is an adaptation of the files
-   interpolate3.c and interpolate4.c, which
-   were downloaded from http://data.nublado.org/gauntff/ and included the Copyright statement
-   below. */
+/* Some of the code in this file (mainly the code for reading in the date) is an adaptation of the
+   files interpolate3.c and interpolate4.c, which were downloaded from
+   http://data.nublado.org/gauntff/ and included the Copyright statement below. */
 
 /*
  Copyright (c) 2014, Peter A.M. van Hoof.
@@ -296,7 +295,7 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 {
 	// 32pi e^6 / 3mc^3 * sqrt(2pi / 3m)
 	constexpr double c3 = Constant::LIGHT * Constant::LIGHT * Constant::LIGHT;
-	constexpr double gamma_nu_constantFactor =
+	const double gamma_nu_constantFactor =
 	                32 * Constant::PI * e6 / 3. / Constant::ELECTRONMASS / c3 * sqrt_2piOver3m;
 
 	// gamma is fixed for a given temperature
@@ -326,9 +325,8 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 {
 	// C = 4 e^6 / 3mhc * sqrt(2pi / 3m)
-	constexpr double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS /
-	                                            Constant::PLANCK / Constant::LIGHT *
-	                                            sqrt_2piOver3m;
+	const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS /
+	                                        Constant::PLANCK / Constant::LIGHT * sqrt_2piOver3m;
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
 	double loggamma2 = log10(Constant::RYDBERG / kT);
