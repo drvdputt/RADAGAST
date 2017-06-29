@@ -1,6 +1,38 @@
-/* Some of the code in this file is adapted from the files interpolate3.c and interpolate4.c, which
- were downloaded from http://data.nublado.org/gauntff/ and included the Copyright statement below.
- */
+#include "FreeFree.h"
+#include "Constants.h"
+#include "DebugMacros.h"
+#include "Error.h"
+#include "IOTools.h"
+#include "TemplatedUtils.h"
+
+#include <cassert>
+
+using namespace std;
+
+#define NP_GAM2 81
+#define NP_U 146
+
+#define NP_GAM2_INTEGRATED 161
+
+// See equations for free-free in gasphysics document, or in Rybicki and Lightman equations 5.14a
+// and 5.18a
+namespace
+{
+constexpr double e6 = Constant::ESQUARE * Constant::ESQUARE * Constant::ESQUARE;
+constexpr double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
+}
+
+FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
+{
+	readFullData("dat/gauntff_merged_Z01.dat");
+	readIntegratedData("dat/gauntff_freqint_Z01.dat");
+	DEBUG("Constructed FreeFree" << endl);
+}
+
+/* Some of the code in this file (mainly the code for reading in the date) is an adaptation of the files
+   interpolate3.c and interpolate4.c, which
+   were downloaded from http://data.nublado.org/gauntff/ and included the Copyright statement
+   below. */
 
 /*
  Copyright (c) 2014, Peter A.M. van Hoof.
@@ -41,49 +73,11 @@
  2015, MNRAS, 449, 2112
  */
 
-#include "FreeFree.h"
-#include "Constants.h"
-#include "Error.h"
-#include "IOTools.h"
-#include "TemplatedUtils.h"
-#include "global.h"
-#include <cassert>
-
-using namespace std;
-
-#define NP_GAM2 81
-#define NP_U 146
-
-#define NP_GAM2_INTEGRATED 161
-
-// See equations for free-free in gasphysics document, or in Rybicki and Lightman equations 5.14a
-// and 5.18a
-const double e6 = Constant::ESQUARE * Constant::ESQUARE * Constant::ESQUARE;
-const double c3 = Constant::LIGHT * Constant::LIGHT * Constant::LIGHT;
-const double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
-
-// 32pi e^6 / 3mc^3 * sqrt(2pi / 3m)
-const double gamma_nu_constantFactor =
-                32 * Constant::PI * e6 / 3. / Constant::ELECTRONMASS / c3 * sqrt_2piOver3m;
-// 4 e^6 / 3mhc * sqrt(2pi / 3m)
-const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS / Constant::PLANCK /
-                                        Constant::LIGHT * sqrt_2piOver3m;
-
-// Constant factor from 1998-Sutherland equation 18
-const double fk = 1.42554e-27;
-
-FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
-{
-	readFullData(REPOROOT "/dat/gauntff_merged_Z01.dat");
-	readIntegratedData(REPOROOT "/dat/gauntff_freqint_Z01.dat");
-	DEBUG("Constructed FreeFree" << endl);
-}
-
 void FreeFree::readFullData(const string& file)
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input(IOTools::ifstreamFile(file));
+	ifstream input = IOTools::ifstreamRepoFile(file);
 
 	// buffer
 	string line;
@@ -171,7 +165,7 @@ void FreeFree::readIntegratedData(const string& file)
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input(IOTools::ifstreamFile(file));
+	ifstream input(IOTools::ifstreamRepoFile(file));
 
 	// buffer
 	string line;
@@ -300,6 +294,11 @@ double FreeFree::integratedGauntFactor(double logg2) const
 
 void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 {
+	// 32pi e^6 / 3mc^3 * sqrt(2pi / 3m)
+	constexpr double c3 = Constant::LIGHT * Constant::LIGHT * Constant::LIGHT;
+	constexpr double gamma_nu_constantFactor =
+	                32 * Constant::PI * e6 / 3. / Constant::ELECTRONMASS / c3 * sqrt_2piOver3m;
+
 	// gamma is fixed for a given temperature
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
@@ -326,6 +325,10 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 
 void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 {
+	// C = 4 e^6 / 3mhc * sqrt(2pi / 3m)
+	constexpr double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS /
+	                                            Constant::PLANCK / Constant::LIGHT *
+	                                            sqrt_2piOver3m;
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
 	double loggamma2 = log10(Constant::RYDBERG / kT);
@@ -360,6 +363,8 @@ double FreeFree::heating(double np_ne, double T, const Array& specificIntensityv
 
 double FreeFree::cooling(double np_ne, double T) const
 {
+	// Constant factor from 1998-Sutherland equation 18
+	constexpr double fk = 1.42554e-27;
 #ifdef DEBUG_CONTINUUM_DATA
 	Array gamma_nuv(_frequencyv.size());
 	addEmissionCoefficientv(T, gamma_nuv);

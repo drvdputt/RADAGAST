@@ -1,10 +1,11 @@
 #include "IonizationBalance.h"
 #include "Constants.h"
+#include "DebugMacros.h"
 #include "TemplatedUtils.h"
 
-#include "global.h"
 #include <algorithm>
 #include <iostream>
+
 
 using namespace std;
 

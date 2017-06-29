@@ -1,12 +1,5 @@
-#ifndef _FLAGS_H_
-#define _FLAGS_H_
-
-#include <string>
-
-#ifndef REPOROOT
-#error "Please specify the main GasModule git directory on the compiler command line using -D\"/full/path/to/GasModule/git\""
-#endif
-const std::string repoRoot = REPOROOT;
+#ifndef _GLOBAL_H_
+#define _GLOBAL_H_
 
 #define SANITY
 
@@ -21,7 +14,7 @@ const std::string repoRoot = REPOROOT;
 //
 //#define REPORT_LINE_QUALITY
 //
-//#define DEBUG_CONTINUUM_DATA
+#define DEBUG_CONTINUUM_DATA
 
 #define DEBUG(x)                                                                                   \
 	do                                                                                         \
@@ -30,4 +23,4 @@ const std::string repoRoot = REPOROOT;
 	} while (0)
 #endif
 
-#endif /* _FLAGS_H_ */
+#endif /* _GLOBAL_H_ */

@@ -1,25 +1,16 @@
-#ifndef _SPECIALFUNCTIONS_
-#define _SPECIALFUNCTIONS_
+#include "SpecialFunctions.h"
+#include "Constants.h"
+#include "Error.h"
 
 #include <cmath>
 #include <exception>
 
-namespace SpecialFunctions
-{
-/** This function returns the Voigt function \f[ H(a,x) = \frac{a}{\pi} \int_{-\infty}^\infty
-\frac{ {\text{e}}^{-u^2}\,{\text{d}}u }{ (x-u)^2+a^2 } \f] We use an implementation based
-on the ROOT library. This implementation follows an algorithm developed by Humlicek (1982,
-JQSRT, 21, 437) and Wells (1999, JQSRT, 62, 29), and should be accurate to at least 5
-significant digits. */
-double voigt(double a, double u);
-double maxwellBoltzman(double v, double T, double m);
-}
-
-// inline is temporary hack
-inline double SpecialFunctions::voigt(double a, double u)
+double SpecialFunctions::voigt(double a, double u)
 {
 	if (a <= 0.0)
-		throw std::range_error("Bad argument (a = " + std::to_string(a));
+		Error::runtime("Bad argument (a = " + std::to_string(a) +
+		               ") . a should be positive.");
+
 	double sigma = 1.0;
 	double lg = 2.0 * M_SQRT2 * a;
 	double xx = M_SQRT2 * u;
@@ -117,13 +108,14 @@ inline double SpecialFunctions::voigt(double a, double u)
 			                                   y * (369.1989 +
 			                                        y * (88.26741 +
 			                                             y * (13.39880 + y)))))))));
-			z2 = 211.678 + y * (902.3066 +
-			                    y * (1758.336 +
-			                         y * (2037.310 +
-			                              y * (1549.675 +
-			                                   y * (793.4273 +
-			                                        y * (266.2987 +
-			                                             y * (53.59518 + y * 5.0)))))));
+			z2 = 211.678 +
+			     y * (902.3066 +
+			          y * (1758.336 +
+			               y * (2037.310 +
+			                    y * (1549.675 +
+			                         y * (793.4273 +
+			                              y * (266.2987 +
+			                                   y * (53.59518 + y * 5.0)))))));
 			z4 = 78.86585 +
 			     y * (308.1852 +
 			          y * (497.3014 +
@@ -199,7 +191,7 @@ inline double SpecialFunctions::voigt(double a, double u)
 	return k;
 }
 
-inline double SpecialFunctions::maxwellBoltzman(double v, double T, double m)
+double SpecialFunctions::maxwellBoltzman(double v, double T, double m)
 {
 	double twokT = 2 * Constant::BOLTZMAN * T;
 	double v2 = v * v;
@@ -207,4 +199,10 @@ inline double SpecialFunctions::maxwellBoltzman(double v, double T, double m)
 	       std::exp(-m * v2 / twokT);
 }
 
-#endif /* _SPECIALFUNCTIONS_ */
+double SpecialFunctions::planck(double nu, double T)
+{
+	constexpr double twoPlanckOverCsquare =
+	                2 * Constant::PLANCK / Constant::LIGHT / Constant::LIGHT;
+	return twoPlanckOverCsquare * nu * nu * nu /
+	       expm1(Constant::PLANCK * nu / Constant::BOLTZMAN / T);
+}

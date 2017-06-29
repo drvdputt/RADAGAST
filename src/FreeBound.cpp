@@ -1,10 +1,10 @@
 #include "FreeBound.h"
 #include "Constants.h"
+#include "DebugMacros.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-#include "global.h"
 #include <cmath>
 #include <fstream>
 
@@ -18,8 +18,8 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	vector<vector<double>> fileGammaDaggervv;
 	vector<double> fileThresholdv;
 
-	string file(repoRoot + "/dat/t3_elec_reformat.ascii");
-	readData(file, fileFrequencyv, fileThresholdv, _logTemperaturev, fileGammaDaggervv);
+	readData("dat/t3_elec_reformat.ascii", fileFrequencyv, fileThresholdv, _logTemperaturev,
+	         fileGammaDaggervv);
 
 	_thresholdv = Array(fileThresholdv.data(), fileThresholdv.size());
 
@@ -107,7 +107,7 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv,
                          vector<double>& fileThresholdv, vector<double>& fileTemperaturev,
                          vector<vector<double>>& fileGammaDaggervv) const
 {
-	ifstream input(IOTools::ifstreamFile(file));
+	ifstream input(IOTools::ifstreamRepoFile(file));
 
 	size_t numcol, numrow;
 

@@ -1,8 +1,22 @@
 #include "IOTools.h"
+#include "DebugMacros.h"
 #include "Error.h"
-#include "global.h"
+
+#ifndef REPOROOT
+#error "Please specify the main GasModule git directory on the compiler command line using -D\"/full/path/to/GasModule/git\""
+#endif
 
 using namespace std;
+
+namespace
+{
+const string repoRoot = REPOROOT;
+}
+
+ifstream IOTools::ifstreamRepoFile(const string& pathRelativeToGitDir)
+{
+	return ifstreamFile(repoRoot + "/" + pathRelativeToGitDir);
+}
 
 ifstream IOTools::ifstreamFile(const string& file)
 {

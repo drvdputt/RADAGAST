@@ -1,9 +1,9 @@
 #include "HydrogenFromFiles.h"
 #include "Constants.h"
+#include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
-#include "global.h"
 
 using namespace std;
 
@@ -17,7 +17,7 @@ inline std::vector<int> twoJplus1range(int l)
 	   2j+1 can only be 2 */
 	return l > 0 ? std::vector<int>({2 * l, 2 * l + 2}) : std::vector<int>({2});
 }
-}
+} /* namespace */
 
 HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
 {

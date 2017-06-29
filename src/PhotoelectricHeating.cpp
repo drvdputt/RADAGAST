@@ -1,9 +1,9 @@
 #include "PhotoelectricHeating.h"
+#include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
-#include "global.h"
 
 #include <cmath>
 #include <iomanip>
@@ -17,6 +17,7 @@ namespace
 vector<double> _filelambdav, _fileav;
 vector<vector<double>> _Qabsvv, _Qscavv, _asymmparvv;
 }
+
 void PhotoelectricHeatingRecipe::readQabs() const
 {
 	///////////////////// Begin copy-paste from SKIRT
@@ -28,9 +29,9 @@ void PhotoelectricHeatingRecipe::readQabs() const
 	// open the file
 	ifstream file;
 	if (_carbonaceous)
-		file = IOTools::ifstreamFile(repoRoot + "/dat/Gra_81.dat");
+		file = IOTools::ifstreamRepoFile("dat/Gra_81.dat");
 	else
-		file = IOTools::ifstreamFile(repoRoot + "/dat/suvSil_81.dat");
+		file = IOTools::ifstreamRepoFile("dat/suvSil_81.dat");
 	if (!file)
 		cout << "Grain data not found!" << endl;
 

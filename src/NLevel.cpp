@@ -1,10 +1,10 @@
 #include "NLevel.h"
 #include "Constants.h"
+#include "DebugMacros.h"
 #include "IonizationBalance.h"
 #include "LevelDataProvider.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-#include "global.h"
 
 using namespace std;
 

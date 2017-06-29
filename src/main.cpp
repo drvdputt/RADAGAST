@@ -26,10 +26,10 @@ int main()
 	{
 		Testing::testPhotoelectricHeating();
 		Testing::testGasInterfaceImpl();
-//		Testing::testIonizationStuff();
-//		Testing::testPS64Collisions();
-//		Testing::testACollapse();
-//		Testing::compareFromFilesvsHardCoded();
+		Testing::testIonizationStuff();
+		Testing::testPS64Collisions();
+		Testing::testACollapse();
+		Testing::compareFromFilesvsHardCoded();
 	}
 	catch (const std::exception& ex)
 	{

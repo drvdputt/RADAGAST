@@ -1,6 +1,5 @@
 #include "GasInterface.h"
 #include "Array.h"
-
 #include "GasInterfaceImpl.h"
 
 using namespace std;

@@ -1,14 +1,15 @@
 #include "GasInterfaceImpl.h"
 #include "Constants.h"
+#include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenLevels.h"
-#include "IOTools.h"
 #include "IonizationBalance.h"
+#include "IOTools.h"
+#include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
-#include "global.h"
 
 using namespace std;
 
@@ -139,9 +140,7 @@ void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
 		double freq = _frequencyv[iFreq];
-		isrfGuess[iFreq] = 2 * Constant::PLANCK * freq * freq * freq / Constant::LIGHT /
-		                   Constant::LIGHT /
-		                   expm1(Constant::PLANCK * freq / Constant::BOLTZMAN / T);
+		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
 	}
 	solveBalance(gs, n, T, isrfGuess);
 }

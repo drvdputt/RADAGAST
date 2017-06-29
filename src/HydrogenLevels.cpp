@@ -1,6 +1,7 @@
 #include "HydrogenLevels.h"
-#include "HydrogenDataProvider.h"
 #include "Constants.h"
+#include "HydrogenDataProvider.h"
+
 
 HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp)
                 : NLevel(hdp.get()), _hdp(hdp)
