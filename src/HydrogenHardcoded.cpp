@@ -170,15 +170,19 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	// double twolog10Rc = 10.95 + log10(T / A2p / A2p / mu_m);
 	double twoLog10Rc = min(10.95 + log10(T / A2p / A2p / mu_m),
 	                        1.68 + log10(T / electronDensity));
-	double q2p2s = constfactor * D2p / sqrt(T) * (11.54 + log10(T / D2p / mu_m) + twoLog10Rc);
-	Cvv(index2p, index2s) = protonDensity * q2p2s;
+	double qDown = constfactor * D2p / sqrt(T) * (11.54 + log10(T / D2p / mu_m) + twoLog10Rc);
+	// detailed balance result for opposite direction
+	double qUp_db = 3. * qDown;
 
 	double D2s = 24 * 3;
 	double A2s = avv().row(index2s).sum() + extraAvv().row(index2s).sum();
 	twoLog10Rc = min(10.95 + log10(T / A2s / A2s / mu_m),
 	                        1.68 + log10(T / electronDensity));
-	double q2s2p = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
-	Cvv(index2s, index2p) = protonDensity * q2s2p;
+	double qUp = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
+	double qDown_db = qUp / 3.;
+
+	Cvv(index2p, index2s) = protonDensity * (qDown + qDown_db) / 2.;
+	Cvv(index2s, index2p) = protonDensity * (qUp + qUp_db) / 2.;
 
 	return Cvv;
 }

@@ -75,9 +75,6 @@ public:
 	   albedo is therefore zero. */
 	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
 
-	/* Test function. Better move this somewhere else. */
-	void testHeatingCurve(double n, const std::valarray<double>& specificIntensityv) const;
-
 private:
 	/* Modifies the contents of a GasState so that it is equivalent to no gas at all. */
 	void zeroOpticalProperties(GasState& gs) const;
@@ -92,6 +89,10 @@ private:
 	   header). This simplifies the include statements used for compiling a code which hosts the
 	   gas module. */
 	std::unique_ptr<GasInterfaceImpl> _pimpl;
+
+public:
+	/* This can be used to test individual components of the implementation. */
+	const GasInterfaceImpl* pimpl() const { return _pimpl.get(); }
 };
 
 #endif /* _SRC_GASINTERFACE_H_ */

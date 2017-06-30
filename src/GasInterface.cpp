@@ -84,8 +84,3 @@ void GasInterface::zeroOpticalProperties(GasState& gs) const
 	gs._temperature = 0;
 	gs._ionizedFraction = 0;
 }
-
-void GasInterface::testHeatingCurve(double n, const std::valarray<double>& specificIntensityv) const
-{
-	_pimpl->testHeatingCurve(n, specificIntensityv);
-}

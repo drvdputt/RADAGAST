@@ -357,52 +357,45 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	const double qnlFactor = 9.93e-6 * sqrt(muOverm / T);
 	const int n2 = n * n;
 
+	auto ps64eq43 = [&](int l) {
+		// eq 44: Z is charge of the colliding particle, z that of the nucleus
+		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
+
+		/* eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
+		   prevented divergence in the calculations of PS64 */
+		int index = indexOutput(n, l);
+		double tau2 = 1. / _totalAv(index) / _totalAv(index);
+		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / ne));
+
+		// eq 43
+		double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
+		return max(0., q_nl);
+	};
+
 	double qDown = 0;
 	// The value for q(l = n - 1, l = n - 2) is filled in in the last iteration
 	for (int l = 0; l < n - 1; l++)
 	{
-		// eq 44: Z is charge of the colliding particle, z that of the nucleus
-		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
-		/* eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
-		   prevented divergence in the calculations of PS64 */
-		int index = indexOutput(n, l);
-		double tau2 = 1. / _totalAv[index] / _totalAv[index];
-		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / ne));
-
-		// eq 43
-		double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
-
-		double qUp = q_nl - qDown;
+		double qUp = ps64eq43(l) - qDown;
+		assert(qUp >= 0.);
 		q_li_lf_goingUp(l, l + 1) = qUp;
 
 		// will also be used in loop for l+1:
 		qDown = qUp * (2. * l + 1.) / (2. * l + 3.);
+		assert(qDown >= 0.);
 		q_li_lf_goingUp(l + 1, l) = qDown;
-		assert(qUp > 0);
-		assert(qDown > 0);
 	}
 	double qUp = 0;
 	for (int l = n - 1; l > 0; l--)
 	{
-		// eq 44: Z is charge of the colliding particle, z that of the nucleus
-		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
-		/* eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
-		   prevented divergence in the calculations of PS64 */
-		int index = indexOutput(n, l);
-		double tau2 = 1. / _totalAv[index] / _totalAv[index];
-		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / ne));
-
-		// eq 43
-		double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
-
-		double qDown = q_nl - qUp;
+		double qDown = ps64eq43(l) - qUp;
+		assert(qDown >= 0.);
 		q_li_lf_goingDown(l, l - 1) = qDown;
 
 		// will also be used in loop for l+1:
 		qUp = qDown * (2. * l + 1.) / (2. * l - 1.);
+		assert(qUp >= 0.);
 		q_li_lf_goingDown(l - 1, l) = qUp;
-		assert(qUp > 0);
-		assert(qDown > 0);
 	}
 	return (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
 }

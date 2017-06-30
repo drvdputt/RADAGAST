@@ -82,9 +82,8 @@ public:
 	   properties which can be used as an initial guess. */
 	void solveInitialGuess(GasState&, double n, double T) const;
 
-private:
 	/* Calculates all the densities for a fixed temperature. Is repeatedly called by this
-	   class */
+	   class until equilibrium is found. */
 	Solution calculateDensities(double n, double T, const Array& specificIntensityv) const;
 
 public:

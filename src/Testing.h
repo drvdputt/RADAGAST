@@ -7,6 +7,7 @@
 #include <vector>
 
 class GasInterface;
+class GasInterfaceImpl;
 class NLevel;
 class FreeBound;
 
@@ -32,6 +33,9 @@ Array improveFrequencyGrid(const NLevel& boundBound, const FreeBound& freeBound,
    intensity of G0 habing, and the gas density is n. The initial temperature can also be chosen. */
 void runGasInterfaceImpl(const GasInterface& gi, const std::string& outputPath, double Tc = 20000,
                          double G0 = 2, double n = 10, double expectedTemperature = 8000);
+
+void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
+                      const Array& specificIntensityv, double n);
 
 void testIonizationStuff();
 

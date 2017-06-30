@@ -23,7 +23,9 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 }
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> boundBound, const Array& frequencyv)
-                : _frequencyv(frequencyv), _boundBound(move(boundBound))
+                : _frequencyv(frequencyv), _boundBound(move(boundBound)),
+                  _freeBound(make_unique<FreeBound>(frequencyv)),
+                  _freeFree(make_unique<FreeFree>(frequencyv))
 {
 }
 
@@ -209,44 +211,4 @@ double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
 	return _freeFree->heating(np_ne(s), s.T, s.specificIntensityv) +
 	       Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
-}
-
-void GasInterfaceImpl::testHeatingCurve(double n, const Array& specificIntensityv) const
-{
-	const string tab = "\t";
-	const int samples = 200;
-
-	double T = 10;
-	double factor = pow(1000000. / 10., 1. / samples);
-
-	ofstream output = IOTools::ofstreamFile("heatingcurve.dat");
-	output << "# 0temperature 1netHeating 2absorption 3emission"
-	       << " 4lineHeating 5lineAbsorption 6lineEmission"
-	       << " 7continuumHeating 8continuumAbsorption 9continuumEmission"
-	       << " 10ionizationFraction" << endl;
-	for (int N = 0; N < samples; N++, T *= factor)
-	{
-		Solution s = calculateDensities(n, T, specificIntensityv);
-		double heat = heating(s);
-		double cool = cooling(s);
-		double lHeat = lineHeating(s);
-		double lCool = lineCooling(s);
-		double cHeat = continuumHeating(s);
-		double cCool = continuumCooling(s);
-
-		double netHeating = heat - cool;
-		double netLine = lHeat - lCool;
-		double netCont = cHeat - cCool;
-
-		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
-		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
-		       << cCool << tab << s.f << endl;
-	}
-	output.close();
-
-	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
-
-	DEBUG("Calculated heating curve under isrf of"
-	      << isrf << " erg / s / cm2 / sr = "
-	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
 }

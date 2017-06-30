@@ -3,6 +3,7 @@
 #include "Error.h"
 #include "FreeBound.h"
 #include "GasInterface.h"
+#include "GasInterfaceImpl.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
 #include "HydrogenLevels.h"
@@ -292,9 +293,9 @@ void Testing::runGasInterfaceImpl(const GasInterface& gi, const std::string& out
 
 	cout << "TestHydrogenCalculator done" << endl;
 
-	//	cout << "----------------------------------" << endl;
-	//	cout << "plotting heating curve..." << endl;
-	//	gi.testHeatingCurve(n, specificIntensityv);
+	cout << "----------------------------------" << endl;
+	cout << "plotting heating curve..." << endl;
+	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
 }
 
 void Testing::testPhotoelectricHeating()
@@ -460,4 +461,45 @@ void Testing::runFromFilesvsHardCoded()
 
 	GasInterface gihff(frequencyv, "hff2");
 	runGasInterfaceImpl(gihff, "fromfiles/");
+}
+
+void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
+                               const Array& specificIntensityv, double n)
+{
+	const string tab = "\t";
+	const int samples = 200;
+
+	double T = 10;
+	double factor = pow(1000000. / 10., 1. / samples);
+
+	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
+	output << "# 0temperature 1net 2heat 3cool"
+	       << " 4lineNet 5lineHeat 6lineCool"
+	       << " 7continuumNet 8continuumHeat 9continuumCool"
+	       << " 10ionizedFrac" << endl;
+	for (int N = 0; N < samples; N++, T *= factor)
+	{
+		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv);
+		double heat = gi.heating(s);
+		double cool = gi.cooling(s);
+		double lHeat = gi.lineHeating(s);
+		double lCool = gi.lineCooling(s);
+		double cHeat = gi.continuumHeating(s);
+		double cCool = gi.continuumCooling(s);
+
+		double netHeating = heat - cool;
+		double netLine = lHeat - lCool;
+		double netCont = cHeat - cCool;
+
+		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
+		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
+		       << cCool << tab << s.f << endl;
+	}
+	output.close();
+
+	double isrf = TemplatedUtils::integrate<double>(gi.frequencyv(), specificIntensityv);
+
+	cout << "Calculated heating curve under isrf of "
+	      << isrf << " erg / s / cm2 / sr = "
+	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
 }
