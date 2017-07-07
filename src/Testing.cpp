@@ -18,8 +18,6 @@
 
 using namespace std;
 
-/*TODO: IMPROVEGRID CODE */
-
 Array Testing::improveFrequencyGrid(const NLevel& boundBound, const FreeBound& freeBound,
                                     const Array& oldPoints)
 {

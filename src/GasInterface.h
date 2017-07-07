@@ -20,9 +20,7 @@ public:
 	/* Creates an instance of the gas module. Since the module currently works using a frequency
 	  grid, a sorted list (ascending) of frequencies to perform the calculations on should be
 	  supplied. */
-	GasInterface(const std::valarray<double>& frequencyv);
-
-	GasInterface(const std::valarray<double>& frequencyv, const std::string& setupChoice);
+	GasInterface(const std::valarray<double>& frequencyv, const std::string& setupChoice = "");
 
 	~GasInterface();
 

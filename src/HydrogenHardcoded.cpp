@@ -49,8 +49,8 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 	double A32p = (1 * A3s2p + 3 * 0. + 5 * A3d2p) / 9.;
 
 	// Keep this as a reference. The sum of A32s and A32p should equal this.
-	double A32 = 4.4101e+07;
-	printf("A32 = %e, A32p + A32s = %e\n", A32, A32p + A32s);
+//	double A32 = 4.4101e+07;
+//	printf("A32 = %e, A32p + A32s = %e\n", A32, A32p + A32s);
 
 	double A4p2s = (2 * 9.6683e+06 + 4 * 9.6680e+06) / 6.;
 	double A42s = 3 * A4p2s / 16.;
@@ -59,8 +59,8 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 	double A4d2p = (4 * 3.4375e+06 + 6 * 2.0625e+07 + 4 * 1.7188e+07) / 10.;
 	double A42p = (1 * A4s2p + 3 * 0. + 5 * A4d2p + 7 * 0.) / 16.;
 
-	double A42 = 8.4193e+06;
-	printf("A42 = %e, A42p + A42s = %e\n", A42, A42p + A42s);
+//	double A42 = 8.4193e+06;
+//	printf("A42 = %e, A42p + A42s = %e\n", A42, A42p + A42s);
 
 	double A5p2s = (2 * 4.9484e+06 + 4 * 4.9483e+06) / 6.;
 	double A52s = 3 * A5p2s / 25.;
@@ -69,8 +69,8 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 	double A5d2p = (4 * 1.5709e+06 + 6 * 9.4254e+06 + 4 * 7.8548e+06) / 10.;
 	double A52p = (A5s2p + 5 * A5d2p) / 25.;
 
-	double A52 = 2.5304e+06;
-	printf("A52 = %e, A52p + A52s = %e\n", A52, A52p + A52s);
+//	double A52 = 2.5304e+06;
+//	printf("A52 = %e, A52p + A52s = %e\n", A52, A52p + A52s);
 
 	// Decays to 3
 	double A43 = 8.9860e+06;

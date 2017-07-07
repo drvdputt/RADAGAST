@@ -8,11 +8,6 @@
 
 using namespace std;
 
-GasInterface::GasInterface(const valarray<double>& frequencyv)
-                : _frequencyv(frequencyv), _pimpl(make_unique<GasInterfaceImpl>(frequencyv))
-{
-}
-
 GasInterface::GasInterface(const valarray<double>& frequencyv, const std::string& setupChoice)
                 : _frequencyv(frequencyv)
 {
