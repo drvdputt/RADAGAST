@@ -120,22 +120,38 @@ Array NLevel::opacityv(const Solution& s) const
 double NLevel::heating(const Solution& s) const
 {
 	double powerDensityIn = 0;
-	forActiveLinesDo([&](size_t upper, size_t lower) {
-		double cul = s.cvv(upper, lower);
-		if (cul > 0)
-			powerDensityIn += (_ev(upper) - _ev(lower)) * cul * s.nv(upper);
-	});
+	for(int initial = 0; initial < _numLv; initial++)
+	{
+		for (int final = 0; final < _numLv; final++)
+		{
+			// Downward transitions inject kinetic energy into the medium
+			if (_ev(initial) > _ev(final))
+			{
+				double cul = s.cvv(initial, final);
+				if (cul > 0)
+					powerDensityIn += (_ev(initial) - _ev(final)) * cul * s.nv(initial);
+			}
+		}
+	}
 	return powerDensityIn;
 }
 
 double NLevel::cooling(const Solution& s) const
 {
 	double powerDensityOut = 0;
-	forActiveLinesDo([&](size_t upper, size_t lower) {
-		double clu = s.cvv(lower, upper);
-		if (clu > 0)
-			powerDensityOut += (_ev(upper) - _ev(lower)) * clu * s.nv(lower);
-	});
+	for(int initial = 0; initial < _numLv; initial++)
+	{
+		for (int final = 0; final < _numLv; final++)
+		{
+			// Upward transitions absorb kinetic energy from the medium
+			if (_ev(initial) < _ev(final))
+			{
+				double clu = s.cvv(initial, final);
+				if (clu > 0)
+					powerDensityOut += (_ev(final) - _ev(initial)) * clu * s.nv(initial);
+			}
+		}
+	}
 	return powerDensityOut;
 }
 
@@ -201,13 +217,13 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 	return nv;
 }
 
-void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thingWithLine) const
+void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thing) const
 {
-	// Energy levels are not necessarily sorted, therefore go over all pairs.
+	// Execute the same function for all transitions that are optically active.
 	for (int final = 0; final < _numLv; final++)
 		for (int initial = 0; initial < _numLv; initial++)
 			if (_avv(initial, final))
-				thingWithLine(initial, final);
+				thing(initial, final);
 }
 
 double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const

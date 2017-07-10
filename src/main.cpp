@@ -1,6 +1,7 @@
 #include "Testing.h"
 
 #include <execinfo.h>
+
 #include <unistd.h>
 #include <csignal>
 #include <iostream>
@@ -30,6 +31,7 @@ int main()
 //		Testing::testACollapse();
 //		Testing::compareFromFilesvsHardCoded();
 		Testing::runFromFilesvsHardCoded();
+		Testing::runFullModel();
 	}
 	catch (const std::exception& ex)
 	{

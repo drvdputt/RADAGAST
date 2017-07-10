@@ -357,7 +357,7 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	const double qnlFactor = 9.93e-6 * sqrt(muOverm / T);
 	const int n2 = n * n;
 
-	auto ps64eq43 = [&](int l) {
+	auto ps64eq43 = [&](int l) double {
 		// eq 44: Z is charge of the colliding particle, z that of the nucleus
 		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
 
@@ -376,7 +376,8 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	// The value for q(l = n - 1, l = n - 2) is filled in in the last iteration
 	for (int l = 0; l < n - 1; l++)
 	{
-		double qUp = ps64eq43(l) - qDown;
+		double qBoth = ps64eq43(l);
+		double qUp = qBoth - qDown;
 		assert(qUp >= 0.);
 		q_li_lf_goingUp(l, l + 1) = qUp;
 
@@ -388,11 +389,12 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	double qUp = 0;
 	for (int l = n - 1; l > 0; l--)
 	{
-		double qDown = ps64eq43(l) - qUp;
+		double qBoth = ps64eq43(l);
+		double qDown = qBoth - qUp;
 		assert(qDown >= 0.);
 		q_li_lf_goingDown(l, l - 1) = qDown;
 
-		// will also be used in loop for l+1:
+		// will also be used in loop for l-1:
 		qUp = qDown * (2. * l + 1.) / (2. * l - 1.);
 		assert(qUp >= 0.);
 		q_li_lf_goingDown(l - 1, l) = qUp;

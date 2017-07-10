@@ -83,6 +83,12 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 		// Add a point at the center of the line, while keeping the vector sorted
 		TemplatedUtils::sortedInsert<double, vector<double>>(lineFreqv[i], grid);
 
+		// Skip the wing points of line if it lies near the core of the previous one, to prevent too much
+		// points from bunching up.
+		if (i > 0 && (lineFreqv[i] - lineFreqv[i - 1]) / freqWidthv[i - 1] < 0.01)
+			continue;
+
+
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
 		{
@@ -291,9 +297,9 @@ void Testing::runGasInterfaceImpl(const GasInterface& gi, const std::string& out
 
 	cout << "TestHydrogenCalculator done" << endl;
 
-	cout << "----------------------------------" << endl;
-	cout << "plotting heating curve..." << endl;
-	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
+	//	cout << "----------------------------------" << endl;
+	//	cout << "plotting heating curve..." << endl;
+	//	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
 }
 
 void Testing::testPhotoelectricHeating()
@@ -461,6 +467,21 @@ void Testing::runFromFilesvsHardCoded()
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
+void Testing::runFullModel()
+{
+	vector<double> tempFrequencyv =
+	                generateGeometricGridv(200, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array unrefined(tempFrequencyv.data(), tempFrequencyv.size());
+
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
+	FreeBound fb(unrefined);
+	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
+
+	GasInterface gihffFull(frequencyv, "hff");
+	runGasInterfaceImpl(gihffFull, "");
+}
+
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
                                const Array& specificIntensityv, double n)
 {
@@ -497,7 +518,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 	double isrf = TemplatedUtils::integrate<double>(gi.frequencyv(), specificIntensityv);
 
-	cout << "Calculated heating curve under isrf of "
-	      << isrf << " erg / s / cm2 / sr = "
-	      << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
+	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
+	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
 }

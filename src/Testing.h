@@ -60,6 +60,8 @@ void compareFromFilesvsHardCoded();
 /* Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will be
    written out to separate files. */
 void runFromFilesvsHardCoded();
+
+void runFullModel();
 }
 
 #endif /* _TESTING_H_ */

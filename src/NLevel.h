@@ -52,7 +52,7 @@ public:
 	   be made sure that this object exists for the lifetime of this class instance. The
 	   number of levels, energies, multiplicities, and transition coefficients are filled in
 	   immediately using the data provider referred to by this pointer. */
-	NLevel(std::shared_ptr<const LevelDataProvider>  ldp, const Array& frequencyv);
+	NLevel(std::shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv);
 
 public:
 	virtual ~NLevel();
@@ -155,7 +155,7 @@ private:
 	   > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all downward
 	   transitions have line activity, then this function will loop over all elements of the
 	   lower triangle of the level matrix. */
-	void forActiveLinesDo(std::function<void(size_t upper, size_t lower)> thingWithLine) const;
+	void forActiveLinesDo(std::function<void(size_t initial, size_t final)> thing) const;
 
 	/* Calculates the intensity of a specific line [erg / s / cm2]. Multiplying with the line
 	   profile will yield the specific intensity. */
