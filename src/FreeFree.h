@@ -17,23 +17,23 @@ private:
 	double integratedGauntFactor(double logg2) const;
 
 public:
-	/* Calculate the emission coefficient for the free-free continuum for all frequencies. The
-	   units are [density^-1][power]/[frequency interval] cm^3 erg / s / cm. The emissivity
-	   ([power][density]/[frequency interval]) can be obtained by multiplying this value with
-	   ne*np / 4pi. The contributions are added to the current contents of gamma_nu. */
+	/** Calculate the emission coefficient for the free-free continuum for all frequencies. The
+	    units are [density^-1][power]/[frequency interval] cm^3 erg / s / cm. The emissivity
+	    ([power][density]/[frequency interval]) can be obtained by multiplying this value with
+	    ne*np / 4pi. The contributions are added to the current contents of gamma_nu. */
 	void addEmissionCoefficientv(double T, Array& gamma_nuv) const;
 
-	/* Calculate the opacity coefficient for the free-free continuum for all frequencies. The
-	   units are [density^-2][length^-1]. Multiplying with ne*np will give the opacity in
-	   [length-1]. The contributions are added to the current contents of */
+	/** Calculate the opacity coefficient for the free-free continuum for all frequencies. The
+	    units are [density^-2][length^-1]. Multiplying with ne*np will give the opacity in
+	    [length-1]. The contributions are added to the current contents of */
 	void addOpacityCoefficientv(double T, Array& opCoeffv) const;
 
-	/* Calculate the heating due to direct absorption of photons the free electrons moving in
-	   the field of the free protons. */
+	/** Calculate the heating due to direct absorption of photons the free electrons moving in
+	    the field of the free protons. */
 	double heating(double np_ne, double T, const Array& specificIntensityv) const;
 
-	/* Calculate the cooling due to Bremsstrahlung, given the product of the electron and proton
-	   densities, and their kinetic temperature. */
+	/** Calculate the cooling due to Bremsstrahlung, given the product of the electron and
+	    proton densities, and their kinetic temperature. */
 	double cooling(double np_ne, double T) const;
 
 private:

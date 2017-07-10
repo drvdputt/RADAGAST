@@ -9,8 +9,8 @@ class HydrogenLevels : public NLevel
 {
 public:
 	// TODO: consider move semantics here?
-	/* Work with a shared pointer here, to make construction using a temporary object
-	   possible. */
+	/** Work with a shared pointer here, to make construction using a temporary object
+	    possible. */
 	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp, const Array& frequencyv);
 	~HydrogenLevels();
 

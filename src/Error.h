@@ -6,12 +6,14 @@
 namespace Error
 {
 
+/** Prints a message to stderr and aborts. */
 static inline void runtime(std::string message)
 {
 	std::cerr << "Runtime error: " << message << std::endl;
 	abort();
 }
 
+/** Prints a message to stderr and aborts if the given variable does not lie between min and max. */
 template<typename T>
 void rangeCheck(std::string variable, T value, T min, T max)
 {
@@ -23,6 +25,7 @@ void rangeCheck(std::string variable, T value, T min, T max)
 	}
 }
 
+/** Can probably be removed */
 template<typename T>
 void reportOverridden(std::string name, T original, T replacement,
                                     std::string reason)
