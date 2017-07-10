@@ -113,7 +113,7 @@ public:
 	double lineHeating(const Solution&) const;
 
 	/** The bolometric emission by the continuum only (= cooling by recombination + free-free
-	   continuum) */
+	    continuum) */
 	double continuumCooling(const Solution&) const;
 
 	/** The bolometric absorption by the continuum only (free-free heating) in erg / s / cm3 */

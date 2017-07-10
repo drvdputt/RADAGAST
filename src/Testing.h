@@ -28,9 +28,10 @@ Array improveFrequencyGrid(const NLevel& boundBound, const FreeBound& freeBound,
 
 // TEST RUNS //
 /** Calculates an equilibrium GasState using the given GasInterface and writes out some results in
-   the given directory (relative to the working directory). The environment can be specified through
-   the optional arguments. The ambient radiation field has a color temperature of Tc and a mean UV
-   intensity of G0 habing, and the gas density is n. The initial temperature can also be chosen. */
+    the given directory (relative to the working directory). The environment can be specified
+    through the optional arguments. The ambient radiation field has a color temperature of Tc and a
+    mean UV intensity of G0 habing, and the gas density is n. The initial temperature can also be
+    chosen. */
 void runGasInterfaceImpl(const GasInterface& gi, const std::string& outputPath, double Tc = 20000,
                          double G0 = 2, double n = 10, double expectedTemperature = 8000);
 
@@ -43,22 +44,22 @@ void testIonizationStuff();
 void testPhotoelectricHeating();
 
 /** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
-   NIST values between different n. */
+    NIST values between different n. */
 void testACollapse();
 
-/** Write out data files to recreate figure 2 of PS64. Current results: the curve for n=5 looks good,
-   but the last point (l=3) of the n=4 curve was a bit to high. When retrieving the PS64
-   coefficients, a recursive relation is used, and one can choose to start from either l = 0 or l =
-   n - 1. By applying both methods, and taking the average of the two results, the figure is
-   approached quite well. */
+/** Write out data files to recreate figure 2 of PS64. Current results: the curve for n=5 looks
+    good, but the last point (l=3) of the n=4 curve was a bit to high. When retrieving the PS64
+    coefficients, a recursive relation is used, and one can choose to start from either l = 0 or l =
+    n - 1. By applying both methods, and taking the average of the two results, the figure is
+    approached quite well. */
 void testPS64Collisions();
 
 /** Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
-   HydrogenFromFiles. */
+    HydrogenFromFiles. */
 void compareFromFilesvsHardCoded();
 
 /** Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will be
-   written out to separate files. */
+    written out to separate files. */
 void runFromFilesvsHardCoded();
 
 void runFullModel();
