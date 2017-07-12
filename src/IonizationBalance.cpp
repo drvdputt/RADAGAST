@@ -6,10 +6,9 @@
 #include <algorithm>
 #include <iostream>
 
-
 using namespace std;
 
-double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
+double Ionization::solveBalance(double nH, double T, const Array& frequencyv,
                                    const Array& specificIntensityv)
 {
 	size_t nFreq = frequencyv.size();
@@ -28,7 +27,7 @@ double Ionization::ionizedFraction(double nH, double T, const Array& frequencyv,
 	double c1 = (-nH * gamma + integral) / (alpha + gamma);
 	double c0 = -nH * integral / (alpha + gamma);
 	double ne = (-c1 + sqrt(c1 * c1 - 4 * c2 * c0)) / 2.;
-	// old:
+	// old (radiative only):
 	//		double C = Constant::FPI / Constant::PLANCK *
 	//		           TemplatedUtils::integrate<double>(frequencyv, integrand) /
 	//		           recombinationRateCoeff(T);

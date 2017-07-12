@@ -5,8 +5,9 @@
 
 namespace Ionization
 {
-double ionizedFraction(double nH, double T, const Array& frequencyv,
-                       const Array& specificIntensityv);
+/** Solves the ionization balance (in the nebular approximation, i.e. this function assumes that all
+    hydrogen is in the ground state). */
+double solveBalance(double nH, double T, const Array& frequencyv, const Array& specificIntensityv);
 
 /** Photoionization cross section in cm2 */
 double crossSection(double frequency);
@@ -18,8 +19,7 @@ double collisionalRateCoeff(double T);
 double recombinationRateCoeff(double T);
 
 /** Heating due to thermalization of freed electrons */
-double heating(double nH, double f, double T, const Array& frequencyv,
-               const Array& specificIntensityv);
+double heating(double nH, double f, double T, const Array& frequencyv, const Array& specificIntensityv);
 
 /** Kinetic energy lost during recombination (basically the photon energy, minus the binding energy
     contribution. */

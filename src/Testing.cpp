@@ -184,7 +184,7 @@ void Testing::testIonizationStuff()
 	ofstream out;
 
 	double A0 = 6.30e-18;
-	out = IOTools::ofstreamFile("ionization/crosSection.dat");
+	out = IOTools::ofstreamFile("ionization/crossSection.dat");
 	for (double freq = 0; freq < 6.e16; freq += 1e14)
 	{
 		double sigma = Ionization::crossSection(freq);

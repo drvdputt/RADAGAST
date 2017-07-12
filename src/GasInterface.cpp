@@ -18,6 +18,8 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const std::string
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenHardcoded>(), frequencyv);
 	else if (!setupChoice.compare("hff2"))
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(2), frequencyv);
+	else if (!setupChoice.compare("hff4"))
+		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(4), frequencyv);
 	else
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(), frequencyv);
 	_pimpl = make_unique<GasInterfaceImpl>(move(boundBound), frequencyv);
