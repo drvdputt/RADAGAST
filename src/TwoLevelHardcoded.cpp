@@ -55,8 +55,15 @@ Eigen::MatrixXd TwoLevelHardcoded::cvv(double T, double /* unused ne */,
 	return Cvv;
 }
 
-Eigen::VectorXd TwoLevelHardcoded::alphav(double /* unused T */) const
+Eigen::VectorXd TwoLevelHardcoded::sourcev(double /* unused T */, double /* unused np */,
+                                           double /* unused ne */) const
 {
 	// There is no ion
+	return Eigen::Vector2d::Zero();
+}
+
+Eigen::VectorXd TwoLevelHardcoded::sinkv(double /* unused T */, double /* unused np */,
+                                         double /* unused ne */) const
+{
 	return Eigen::Vector2d::Zero();
 }

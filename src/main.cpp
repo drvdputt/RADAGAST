@@ -29,9 +29,9 @@ int main()
 //		Testing::testIonizationStuff();
 //		Testing::testPS64Collisions();
 //		Testing::testACollapse();
-//		Testing::compareFromFilesvsHardCoded();
-		Testing::runFromFilesvsHardCoded();
-		Testing::runFullModel();
+		Testing::compareFromFilesvsHardCoded();
+//		Testing::runFromFilesvsHardCoded();
+//		Testing::runFullModel();
 	}
 	catch (const std::exception& ex)
 	{

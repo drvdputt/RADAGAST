@@ -5,12 +5,11 @@
 
 class HydrogenDataProvider;
 
-class HydrogenLevels : public NLevel
+class HydrogenLevels: public NLevel
 {
 public:
-	// TODO: consider move semantics here?
-	/** Work with a shared pointer here, to make construction using a temporary object
-	    possible. */
+	/** Work with a shared pointer here, so that a pointer can be given both to the derived
+	    class and the base class. */
 	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp, const Array& frequencyv);
 	~HydrogenLevels();
 

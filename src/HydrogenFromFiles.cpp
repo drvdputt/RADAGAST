@@ -3,6 +3,7 @@
 #include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
+#include "IonizationBalance.h"
 #include "TemplatedUtils.h"
 
 using namespace std;
@@ -402,7 +403,7 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	return (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
 }
 
-Eigen::VectorXd HydrogenFromFiles::alphav(double T) const
+Eigen::VectorXd HydrogenFromFiles::sourcev(double T, double ne, double np) const
 {
 	/* for now use the hardcoded implementation, but this needs to change (is copy paste from
 	   HydrogenHardcoded). */
@@ -424,7 +425,7 @@ Eigen::VectorXd HydrogenFromFiles::alphav(double T) const
 	// this hack should work for n up to 5
 	Array unresolvedAlphav({alphaGround, alpha2p + alpha2s, alpha3, alpha4, alpha5});
 
-	Eigen::VectorXd sourcev = Eigen::VectorXd::Zero(_numL);
+	Eigen::VectorXd alphav = Eigen::VectorXd::Zero(_numL);
 
 	for (int f = 0; f < _numL; f++)
 	{
@@ -439,21 +440,32 @@ Eigen::VectorXd HydrogenFromFiles::alphav(double T) const
 		{
 			int l = final.l();
 			if (l == 0)
-				sourcev[f] = alpha2s;
+				alphav[f] = alpha2s;
 			else if (l == 1)
-				sourcev[f] = alpha2p;
+				alphav[f] = alpha2p;
 			else if (l == -1)
-				sourcev[f] = unresolvedAlpha;
+				alphav[f] = unresolvedAlpha;
 			else
 				Error::runtime("invalid l value");
 		}
 		else
 		{
 			// weigh by multiplicity
-			sourcev[f] = unresolvedAlpha / (2 * n * n) * final.g();
+			alphav[f] = unresolvedAlpha / (2 * n * n) * final.g();
 		}
 	}
-	return sourcev;
+	return alphav * ne * np;
+}
+
+Eigen::VectorXd HydrogenFromFiles::sinkv(double T, double ne, double np) const
+{
+	/* The ionization rate calculation makes no distinction between the levels.  When
+	   the upper level population is small, and its decay rate is large, the second term
+	   doesn't really matter. Therefore, we choose the sink to be the same for each
+	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
+	   => sink = totalsource / n because n0/n + n1/n = 1. */
+	double sink = Ionization::recombinationRateCoeff(T) / _numL;
+	return Eigen::VectorXd::Constant(_numL, sink * ne * np);
 }
 
 double HydrogenFromFiles::energy(int n, int l) const

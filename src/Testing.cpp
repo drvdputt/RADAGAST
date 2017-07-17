@@ -443,8 +443,8 @@ void Testing::compareFromFilesvsHardCoded()
 	hc_vs_ff(cvvhc, cvvff);
 
 	cout << "Recombinations:" << endl;
-	Eigen::VectorXd alphavhc = hhc.alphav(T);
-	Eigen::VectorXd alphavff = hff.alphav(T);
+	Eigen::VectorXd alphavhc = hhc.sourcev(T, ne, np) / ne / np;
+	Eigen::VectorXd alphavff = hff.sourcev(T, ne, np) / ne / np;
 	hc_vs_ff(alphavhc, alphavff);
 }
 

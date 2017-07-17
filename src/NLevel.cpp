@@ -1,7 +1,6 @@
 #include "NLevel.h"
 #include "Constants.h"
 #include "DebugMacros.h"
-#include "IonizationBalance.h"
 #include "LevelDataProvider.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
@@ -41,12 +40,12 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity,
+NLevel::Solution NLevel::solveBalance(double density, double electronDensity,
                                       double protonDensity, double temperature,
                                       const Array& specificIntensityv) const
 {
 	Solution s;
-	s.n = atomDensity;
+	s.n = density;
 	s.T = temperature;
 	s.bpvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
 	s.cvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
@@ -57,7 +56,7 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 		               std::to_string(specificIntensityv.size()) + " vs " +
 		               std::to_string(_frequencyv.size()));
 
-	if (atomDensity > 0)
+	if (density > 0)
 	{
 		s.cvv = _ldp->cvv(temperature, electronDensity, protonDensity);
 		/* Calculate BijPij (needs to be redone at each temperature because the line profile
@@ -81,16 +80,8 @@ NLevel::Solution NLevel::solveBalance(double atomDensity, double electronDensity
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
-		/* The ionization rate calculation makes no distinction between the levels.  When
-		   the upper level population is small, and its decay rate is large, the second term
-		   doesn't really matter. Therefore, we choose the sink to be the same for each
-		   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
-		   => sink = totalsource / n because n0/n + n1/n = 1. */
-		double alphaTotal = Ionization::recombinationRateCoeff(temperature);
-		double sink = electronDensity * protonDensity * alphaTotal / atomDensity;
-		Eigen::VectorXd sinkv = Eigen::VectorXd::Constant(_numLv, sink);
-		Eigen::VectorXd sourcev =
-		                _ldp->alphav(temperature) * electronDensity * protonDensity;
+		Eigen::VectorXd sourcev = _ldp->sourcev(temperature, electronDensity, protonDensity);
+		Eigen::VectorXd sinkv = _ldp->sinkv(temperature, electronDensity, protonDensity);
 		// Calculate Fij and bi and solve F.n = b
 		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
 	}
@@ -201,7 +192,6 @@ Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv
 #ifdef PRINT_MATRICES
 	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
 #endif
-
 	// Call the linear solver
 	Eigen::VectorXd nv = Mvv.colPivHouseholderQr().solve(b);
 	DEBUG("nv" << endl << nv << endl);

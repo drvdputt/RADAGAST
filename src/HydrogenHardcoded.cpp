@@ -1,5 +1,6 @@
 #include "HydrogenHardcoded.h"
 #include "Constants.h"
+#include "IonizationBalance.h"
 #include "TemplatedUtils.h"
 
 #define NLV 6
@@ -187,7 +188,7 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	return Cvv;
 }
 
-Eigen::VectorXd HydrogenHardcoded::alphav(double T) const
+Eigen::VectorXd HydrogenHardcoded::sourcev(double T, double ne, double np) const
 {
 	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
 	// yes, this is natural log
@@ -206,7 +207,13 @@ Eigen::VectorXd HydrogenHardcoded::alphav(double T) const
 	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
 	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
 
-	Eigen::VectorXd sourcev(NLV);
-	sourcev << alphaGround, alpha2s, alpha2p, alpha3, alpha4, alpha5;
-	return sourcev;
+	Eigen::VectorXd alphav(NLV);
+	alphav << alphaGround, alpha2s, alpha2p, alpha3, alpha4, alpha5;
+	return alphav * ne * np;
+}
+
+Eigen::VectorXd HydrogenHardcoded::sinkv(double T, double ne, double np) const
+{
+	double sink = Ionization::recombinationRateCoeff(T) / NLV;
+	return Eigen::VectorXd::Constant(NLV, sink * ne * np);
 }

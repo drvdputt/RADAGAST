@@ -39,7 +39,8 @@ public:
 
 	/** Returns a vector containing partial recombination rates based on fits I found somewhere
 	    (see source code for origin). */
-	Eigen::VectorXd alphav(double T) const override;
+	Eigen::VectorXd sourcev(double T, double ne, double np) const override;
+	Eigen::VectorXd sinkv(double T, double ne, double np) const override;
 
 private:
 	Eigen::VectorXd the_ev;

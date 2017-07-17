@@ -123,9 +123,13 @@ private:
 	Eigen::MatrixXd PS64CollisionRateCoeff(int n, double T, double ne) const;
 
 public:
-	/** Returns a vector containing the partial recombination rates into each level. */
-	Eigen::VectorXd alphav(double T) const override;
-
+	/** Returns a vector containing the source terms for the equilibrium equations, such as the
+	    partial recombination rates into each level. Note that this function is separated from
+	    the ionization balance calculation, as there only the total recombination rate
+	    matters. As with the other functions, the way this vector is obtained depends entirely
+	    on the subclass. */
+	Eigen::VectorXd sourcev(double T, double ne, double np) const override;
+	Eigen::VectorXd sinkv(double T, double ne, double np) const override;
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
 	//-----------------------------------------//

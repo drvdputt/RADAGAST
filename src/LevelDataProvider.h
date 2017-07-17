@@ -59,11 +59,8 @@ public:
 	    q_ij * np with np the density of collision partners */
 	virtual Eigen::MatrixXd cvv(double T, double ne, double np) const = 0;
 
-	/** Returns a vector containing the partial recombination rates into each level. Note that
-	    this function is separated from the ionization balance calculation, as there only the
-	    total recombination rate matters. As with the other functions, the way this vector is
-	    obtained depends entirely on the subclass. */
-	virtual Eigen::VectorXd alphav(double T) const = 0;
+	virtual Eigen::VectorXd sourcev(double T, double ne, double np) const = 0;
+	virtual Eigen::VectorXd sinkv(double T, double ne, double np) const = 0;
 };
 
 #endif /* _SRC_LEVELDATAPROVIDER_H_ */

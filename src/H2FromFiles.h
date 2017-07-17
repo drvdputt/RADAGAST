@@ -1,13 +1,13 @@
-#ifndef GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_
-#define GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_
+#ifndef H2FROMFILES_H_
+#define H2FROMFILES_H_
 
 #include "LevelDataProvider.h"
 
-class TwoLevelHardcoded : public LevelDataProvider
+class H2FromFiles: public LevelDataProvider
 {
 public:
-	TwoLevelHardcoded();
-
+	H2FromFiles();
+	~H2FromFiles();
 	int numLv() const override;
 	Eigen::VectorXd ev() const override;
 	Eigen::VectorXd gv() const override;
@@ -16,9 +16,6 @@ public:
 	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
 	Eigen::VectorXd sourcev(double T, double ne, double np) const override;
 	Eigen::VectorXd sinkv(double T, double ne, double np) const override;
-private:
-	Eigen::Vector2d the_ev;
-	Eigen::Vector2d the_gv;
 };
 
-#endif /* GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_ */
+#endif /* H2FROMFILES_H_ */

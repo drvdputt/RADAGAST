@@ -114,8 +114,11 @@ public:
 	    recombination data to perform the calculation are obtained from the LevelDataProvider,
 	    while the induced transitions rates (B coefficients * line power) are derived from the
 	    given specific intensity. */
-	Solution solveBalance(double atomDensity, double electronDensity, double protonDensity,
-	                      double T, const Array& specificIntensityv) const;
+	Solution solveBalance(double density, double electronDensity, double protonDensity, double T,
+			const Array& specificIntensityv) const;
+	// TODO: add in source and sink terms here, so that formation rates derived from the the chemical network
+	// can be factored in. At the same time, there should be some mechanism for spontaneous decay of
+	// levels into 'nothing', for example dissociation.
 
 	/** The total emitted spectrum by the system of levels. The default implementation gives
 	    just the line emission, but subclasses can override it to add extra contributions, such
