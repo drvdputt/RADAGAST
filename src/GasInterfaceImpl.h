@@ -5,8 +5,11 @@
 #include "GasState.h"
 #include "NLevel.h"
 
+class Chemistry;
 class FreeBound;
 class FreeFree;
+class NLevel;
+class H2Levels;
 
 /** This class contains the actual implementation of the Gas Interface, and currently is the
     backbone of the hole code. That might change once more than one element is included, as this
@@ -53,9 +56,11 @@ class GasInterfaceImpl
 public:
 	typedef struct
 	{
-		double n, T, f;
 		Array specificIntensityv;
-		NLevel::Solution levelSolution;
+		double n, T, f;
+		Eigen::VectorXd chemistrySolution;
+		NLevel::Solution HSolution;
+		NLevel::Solution H2Solution;
 	} Solution;
 
 	/** Creates an object which can calculate the NLTE state, of a pure (ionized and atomic)
@@ -65,22 +70,22 @@ public:
 	/** A constructor for manual setup (an argument for each subprocess of which more than 1
 	    usable subclass/configuration exists). The components can be set up outside of this
 	    constructor, and ownership is then transferred using a unique pointer. */
-	GasInterfaceImpl(std::unique_ptr<NLevel> boundBound, const Array& frequencyv);
+	GasInterfaceImpl(std::unique_ptr<NLevel> hmodel, const Array& frequencyv);
 
 	Array frequencyv() const { return _frequencyv; }
 
 	~GasInterfaceImpl();
-
-	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
-	    guess, and a vector containing the radiation field in specific intensity per frequency
-	    units (on the same frequency grid as the one provided at construction). */
-	void solveBalance(GasState&, double n, double Tinit, const Array& specificIntensity) const;
 
 	/** Used by the balance solver to calculate the ionization fraction and level populations
 	    for a certain electron temperature, under influence of a blackbody isrf of that same
 	    temperature. Can be used by the client to manually set the temperature and calculate
 	    some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasState&, double n, double T) const;
+
+	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
+	    guess, and a vector containing the radiation field in specific intensity per frequency
+	    units (on the same frequency grid as the one provided at construction). */
+	void solveBalance(GasState&, double n, double Tinit, const Array& specificIntensity) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
 	    until equilibrium is found. */
@@ -129,12 +134,22 @@ public:
 
 	void testHeatingCurve(double n, const Array& specificIntensityv) const;
 
+	/** The reaction rates for the chemical network first of all depend on the temperature. If
+	    there are photoreactions, their rate will depend on the specific intensity. The
+	    spontaneous dissociation rate of H2 depends on the solution of the H2 level model. */
+	Eigen::VectorXd reactionRates(double T, const Array& specificIntensityv,
+	                              const NLevel::Solution& h2Solution) const;
+
 private:
 	/* To be set in constructor */
 	const Array& _frequencyv;
 
+	int ine = 0, inp = 1, inH = 2, inH2 = 3;
+	std::unique_ptr<Chemistry> _chemistry;
+
 	/* Pointers to other parts of the implementation, to make late initialization possible */
-	std::unique_ptr<NLevel> _boundBound;
+	std::unique_ptr<NLevel> _atomicLevels;
+	std::unique_ptr<H2Levels> _molecularLevels;
 	/* Continuum contributions */
 	std::unique_ptr<FreeBound> _freeBound;
 	std::unique_ptr<FreeFree> _freeFree;

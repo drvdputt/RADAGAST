@@ -1,8 +1,11 @@
 #include "GasInterfaceImpl.h"
+#include "Chemistry.h"
 #include "Constants.h"
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
+#include "H2FromFiles.h"
+#include "H2Levels.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenLevels.h"
 #include "IOTools.h"
@@ -13,25 +16,39 @@
 
 using namespace std;
 
-GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv) :
-		_frequencyv(frequencyv), _boundBound(
-				make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5), frequencyv)), _freeBound(
-				make_unique<FreeBound>(frequencyv)), _freeFree(
-				make_unique<FreeFree>(frequencyv))
+GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
+                : _frequencyv(frequencyv),
+                  _atomicLevels(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5),
+                                                            frequencyv)),
+                  _freeBound(make_unique<FreeBound>(frequencyv)),
+                  _freeFree(make_unique<FreeFree>(frequencyv))
 {
 }
 
-GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> boundBound, const Array& frequencyv) :
-		_frequencyv(frequencyv), _boundBound(move(boundBound)), _freeBound(
-				make_unique<FreeBound>(frequencyv)), _freeFree(
-				make_unique<FreeFree>(frequencyv))
+GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, const Array& frequencyv)
+                : _frequencyv(frequencyv), _atomicLevels(std::move(atomModel)),
+                  _molecularLevels(make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv)),
+                  _freeBound(make_unique<FreeBound>(frequencyv)),
+                  _freeFree(make_unique<FreeFree>(frequencyv))
 {
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
+void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
+{
+	Array isrfGuess(_frequencyv.size());
+	// i'll put this somewhere else later
+	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	{
+		double freq = _frequencyv[iFreq];
+		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
+	}
+	solveBalance(gs, n, T, isrfGuess);
+}
+
 void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
-		const Array& specificIntensityv) const
+                                    const Array& specificIntensityv) const
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
@@ -51,24 +68,23 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		double logTinit = log10(Tinit);
 
 		/* Lambda function that will be used by the search algorithm. The state of the
-		 system will be updated every time the algorithm calls this function. The return
-		 value indicates whether the temperature should increase (there is net heating so
-		 we need a higher temperature leading to more cooling) or decrease (there is net
-		 cooling so we need a lower temperature leading to less cooling). */
+		   system will be updated every time the algorithm calls this function. The return
+		   value indicates whether the temperature should increase (there is net heating so
+		   we need a higher temperature leading to more cooling) or decrease (there is net
+		   cooling so we need a lower temperature leading to less cooling). */
 		int counter = 0;
-		function<int(double)> evaluateThermalBalance = [&](double logT) -> int
-		{
+		function<int(double)> evaluateThermalBalance = [&](double logT) -> int {
 			counter++;
 			s = calculateDensities(n, pow(10., logT), specificIntensityv);
 			double netPowerIn = heating(s) - cooling(s);
 			DEBUG("Cycle " << counter << ": logT = " << logT
-					<< "; netHeating = " << netPowerIn << endl
-					<< endl);
+			               << "; netHeating = " << netPowerIn << endl
+			               << endl);
 			return (netPowerIn > 0) - (netPowerIn < 0);
 		};
 
-		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(evaluateThermalBalance,
-				logTinit, 4.e-6, logTmax, logTmin);
+		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(
+		                evaluateThermalBalance, logTinit, 4.e-6, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
 		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv);
@@ -85,7 +101,8 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 #ifdef SANITY
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
-		if (specificIntensityv[iFreq] < 0 || emv[iFreq] < 0 || opv[iFreq] < 0 || scv[iFreq] < 0)
+		if (specificIntensityv[iFreq] < 0 || emv[iFreq] < 0 || opv[iFreq] < 0 ||
+		    scv[iFreq] < 0)
 		{
 			cout << "GasModule: negative value in one of the optical properties";
 		}
@@ -95,51 +112,61 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 	gs = GasState(specificIntensityv, emv, opv, scv, s.T, s.f);
 }
 
-void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
-{
-	Array isrfGuess(_frequencyv.size());
-	// i'll put this somewhere else later
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
-	{
-		double freq = _frequencyv[iFreq];
-		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
-	}
-	solveBalance(gs, n, T, isrfGuess);
-}
-
-GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(double n, double T,
-		const Array& specificIntensityv) const
+GasInterfaceImpl::Solution
+GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIntensityv) const
 {
 	Solution s;
 	s.n = n;
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
+	// Initial guess for the chemistry
+	s.chemistrySolution = Eigen::VectorXd(4);
+	s.chemistrySolution << 0, 0, n, 0;
+
 	if (n > 0)
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 
-		// Ionization balance
-		s.f = Ionization::solveBalance(n, T, _frequencyv, specificIntensityv);
-		DEBUG("Ionized fraction = " << s.f << endl);
+		// TODO: Chemical network goes here. Should at least include ne np nH nH2, and will
+		// make use of a variety of functions from Ionization, NLevel and others to calculate the
+		// reaction rates.
+		bool stopCriterion = false;
+		while (!stopCriterion)
+		{
+			s.chemistrySolution = _chemistry->solveBalance(
+					reactionRates(T, specificIntensityv, s.H2Solution),
+					s.chemistrySolution);
 
-		// Level balance
-		double nAtm = n * (1 - s.f);
-		double np = n * s.f;
-		double ne = np;
-		s.levelSolution = _boundBound->solveBalance(nAtm, ne, np, T, specificIntensityv);
+			// TODO: keep this for a while. I will later compare the result of the chemical network to
+			// this
+			// Ionization balance
+			s.f = Ionization::solveBalance(n, T, _frequencyv, specificIntensityv);
+			DEBUG("Ionized fraction = " << s.f << endl);
+
+			// Level balance
+			double nAtm = n * (1 - s.f);
+			double np = n * s.f;
+			double ne = np;
+			s.HSolution = _atomicLevels->solveBalance(s.chemistrySolution[inH], ne, np, T,
+								  specificIntensityv);
+			s.H2Solution = _molecularLevels->solveBalance(s.chemistrySolution[inH2], ne, np, T,
+								      specificIntensityv);
+
+			// TODO: stopCriterion = some evaluation
+		}
 	}
 	else
 	{
 		s.f = 0;
-		s.levelSolution = _boundBound->solveBalance(0, 0, 0, T, specificIntensityv);
+		s.HSolution = _atomicLevels->solveBalance(0, 0, 0, T, specificIntensityv);
 	}
 	return s;
 }
 
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
-	const Array& lineEmv = _boundBound->emissivityv(s.levelSolution);
+	const Array& lineEmv = _atomicLevels->emissivityv(s.HSolution);
 	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
 	_freeFree->addEmissionCoefficientv(s.T, contEmCoeffv);
@@ -148,7 +175,7 @@ Array GasInterfaceImpl::emissivityv(const Solution& s) const
 
 Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
-	const Array& lineOp = _boundBound->opacityv(s.levelSolution);
+	const Array& lineOp = _atomicLevels->opacityv(s.HSolution);
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
@@ -193,12 +220,12 @@ double GasInterfaceImpl::heating(const Solution& s) const
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
-	return _boundBound->cooling(s.levelSolution);
+	return _atomicLevels->cooling(s.HSolution);
 }
 
 double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
-	return _boundBound->heating(s.levelSolution);
+	return _atomicLevels->heating(s.HSolution);
 }
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
@@ -208,6 +235,6 @@ double GasInterfaceImpl::continuumCooling(const Solution& s) const
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
-	return _freeFree->heating(np_ne(s), s.T, s.specificIntensityv)
-			+ Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
+	return _freeFree->heating(np_ne(s), s.T, s.specificIntensityv) +
+	       Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
 }
