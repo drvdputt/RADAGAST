@@ -12,18 +12,18 @@ public:
 	int numLv() const override;
 
 	/** Returns a vector containing the energy of each level */
-	Eigen::VectorXd ev() const override;
+	EVector ev() const override;
 	/** Returns a vector containing the degeneracy of each level */
-	Eigen::VectorXd gv() const override;
+	EVector gv() const override;
 
 	/** Returns a matrix containing the Einstein A coefficients for all levels. Indexed on
 	    (upper, lower), making it a lower triangle matrix. */
-	Eigen::MatrixXd avv() const override;
+	EMatrix avv() const override;
 
 	/** Returns a matrix containing any extra spontaneous decays between levels. This matrix can
 	    be used to describe spontaneous decays that do NOT produce line radiation (for example
 	    two-photon processes, which generate a continuum instead). */
-	Eigen::MatrixXd extraAvv() const override;
+	EMatrix extraAvv() const override;
 
 	std::array<int, 2> twoPhotonIndices() const override;
 
@@ -35,16 +35,16 @@ public:
 
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
 	    the partner density), for a given temperature and proton and electron densities. */
-	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
+	EMatrix cvv(double T, double ne, double np) const override;
 
 	/** Returns a vector containing partial recombination rates based on fits I found somewhere
 	    (see source code for origin). */
-	Eigen::VectorXd sourcev(double T, double ne, double np) const override;
-	Eigen::VectorXd sinkv(double T, double ne, double np) const override;
+	EVector sourcev(double T, double ne, double np) const override;
+	EVector sinkv(double T, double ne, double np) const override;
 
 private:
-	Eigen::VectorXd the_ev;
-	Eigen::VectorXd the_gv;
+	EVector the_ev;
+	EVector the_gv;
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENHARDCODED_H_ */

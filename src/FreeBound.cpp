@@ -55,7 +55,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 		for (size_t row = 0; row < numFreq; row++)
 			_gammaDaggervv(row, col) = column_resampled[row];
 	}
-
+	DEBUG("Constructed FreeBound" << endl);
 #ifdef DEBUG_CONTINUUM_DATA
 	// DEBUG: print out the table as read from the file
 	ofstream out = IOTools::ofstreamFile("freebound/loadedContinuum.dat");
@@ -98,9 +98,17 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 		out << endl;
 	}
 	out.close();
-#endif /* DEBUG_CONTINUUM_DATA */
 
-	DEBUG("Constructed FreeBound" << endl);
+	// DEBUG: test the gammanu function to obtain a figure like in the nebular paper
+	out = IOTools::ofstreamFile("freebound/gammanufb.dat");
+	Array gammaNuv(frequencyv.size());
+	addEmissionCoefficientv(10000., gammaNuv);
+	for (size_t iNu = 0; iNu < _frequencyv.size(); iNu++)
+	{
+		out << _frequencyv[iNu] << "\t" << gammaNuv[iNu] / 1.e-40 << endl;
+	}
+	out.close();
+#endif /* DEBUG_CONTINUUM_DATA */
 }
 
 void FreeBound::readData(string file, vector<double>& fileFrequencyv,
@@ -181,12 +189,6 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	   current one. */
 	size_t iThreshold = 0;
 	double tE = 0;
-#ifdef DEBUG_CONTINUUM_DATA
-	// TODO: Notice that this writes out the result every time this function is called. This
-	// functionality needs to be moved someplace else.
-	ofstream out = IOTools::ofstreamFile("freebound/gammanufb.dat");
-#endif
-
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
 		double freq = _frequencyv[iFreq];
@@ -228,9 +230,6 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 
 			double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
 			double gammaNu = gammaDagger / normalizationFactor;
-#ifdef DEBUG_CONTINUUM_DATA
-			out << freq << "\t" << gammaNu / 1.e-40 << endl;
-#endif
 			gamma_nuv[iFreq] += gammaNu;
 		}
 		// Also add the ionizing freebound continuum, which apparently is not included in
@@ -254,7 +253,4 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 			gamma_nuv[iFreq] += ionizingContinuum;
 		}
 	}
-#ifdef DEBUG_CONTINUUM_DATA
-	out.close();
-#endif
 }

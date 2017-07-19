@@ -9,6 +9,10 @@ namespace Ionization
     hydrogen is in the ground state). */
 double solveBalance(double nH, double T, const Array& frequencyv, const Array& specificIntensityv);
 
+/** Photoionization rate coefficient. Integrates over the spectrum. Multiply with neutral density
+    to get total rate. */
+double photoRateCoeff(const Array& frequencyv, const Array& specificIntensityv);
+
 /** Photoionization cross section in cm2 */
 double crossSection(double frequency);
 
@@ -19,7 +23,8 @@ double collisionalRateCoeff(double T);
 double recombinationRateCoeff(double T);
 
 /** Heating due to thermalization of freed electrons */
-double heating(double nH, double f, double T, const Array& frequencyv, const Array& specificIntensityv);
+double heating(double nH, double f, double T, const Array& frequencyv,
+               const Array& specificIntensityv);
 
 /** Kinetic energy lost during recombination (basically the photon energy, minus the binding energy
     contribution. */

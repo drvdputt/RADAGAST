@@ -87,7 +87,7 @@ void HydrogenFromFiles::readData()
 	//-----------------//
 	// READ EINSTEIN A //
 	//-----------------//
-	_chiantiAvv = Eigen::MatrixXd::Zero(_chiantiNumLvl, _chiantiNumLvl);
+	_chiantiAvv = EMatrix::Zero(_chiantiNumLvl, _chiantiNumLvl);
 	ifstream wgfa = IOTools::ifstreamFile(basename + ".wgfa");
 	getline(wgfa, line);
 	while (line.compare(1, 2, "-1"))
@@ -174,7 +174,7 @@ void HydrogenFromFiles::prepareForOutput()
 	}
 	_numL = _levelOrdering.size();
 
-	_totalAv = Eigen::VectorXd::Zero(_numL);
+	_totalAv = EVector::Zero(_numL);
 	for (int i = 0; i < _numL; i++)
 		for (int f = 0; f < _numL; f++)
 			_totalAv[i] += einsteinA(_levelOrdering[i], _levelOrdering[f]);
@@ -184,9 +184,9 @@ int HydrogenFromFiles::numLv() const { return _numL; }
 
 int HydrogenFromFiles::indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
 
-Eigen::VectorXd HydrogenFromFiles::ev() const
+EVector HydrogenFromFiles::ev() const
 {
-	Eigen::VectorXd the_ev(_numL);
+	EVector the_ev(_numL);
 	for (int i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& lvInfo = _levelOrdering[i];
@@ -198,9 +198,9 @@ Eigen::VectorXd HydrogenFromFiles::ev() const
 	return the_ev;
 }
 
-Eigen::VectorXd HydrogenFromFiles::gv() const
+EVector HydrogenFromFiles::gv() const
 {
-	Eigen::VectorXd the_gv(_numL);
+	EVector the_gv(_numL);
 	for (int i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& lvInfo = _levelOrdering[i];
@@ -211,9 +211,9 @@ Eigen::VectorXd HydrogenFromFiles::gv() const
 	return the_gv;
 }
 
-Eigen::MatrixXd HydrogenFromFiles::avv() const
+EMatrix HydrogenFromFiles::avv() const
 {
-	Eigen::MatrixXd the_avv(_numL, _numL);
+	EMatrix the_avv(_numL, _numL);
 	for (int i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& initial = _levelOrdering[i];
@@ -250,9 +250,9 @@ Eigen::MatrixXd HydrogenFromFiles::avv() const
 	return the_avv;
 }
 
-Eigen::MatrixXd HydrogenFromFiles::extraAvv() const
+EMatrix HydrogenFromFiles::extraAvv() const
 {
-	Eigen::MatrixXd the_extra = Eigen::MatrixXd::Zero(_numL, _numL);
+	EMatrix the_extra = EMatrix::Zero(_numL, _numL);
 
 	int index1s = indexOutput(1, 0);
 
@@ -290,13 +290,13 @@ std::array<int, 2> HydrogenFromFiles::twoPhotonIndices() const
 	return {upper, lower};
 }
 
-Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
+EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 {
 	// Calculate the temperature in erg and in electron volt
 	double kT = Constant::BOLTZMAN * T;
 	double T_eV = kT * Constant::ERG_EV;
 
-	Eigen::MatrixXd the_cvv = Eigen::MatrixXd::Zero(_numL, _numL);
+	EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
 	// Electron contributions (n-changing)
 	for (int i = 0; i < _numL; i++)
 	{
@@ -322,7 +322,7 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 	// For the l-resolved levels, get l-changing collision rates
 	for (int n = 0; n <= _resolvedUpTo; n++)
 	{
-		Eigen::MatrixXd qvv = PS64CollisionRateCoeff(n, T, ne);
+		EMatrix qvv = PS64CollisionRateCoeff(n, T, ne);
 		// Fill in the collision rates for all combinations of li lf
 		for (int li = 0; li < n; li++)
 		{
@@ -340,10 +340,10 @@ Eigen::MatrixXd HydrogenFromFiles::cvv(double T, double ne, double np) const
 	return the_cvv;
 }
 
-Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double ne) const
+EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double ne) const
 {
-	Eigen::MatrixXd q_li_lf_goingUp = Eigen::MatrixXd::Zero(n, n);
-	Eigen::MatrixXd q_li_lf_goingDown = Eigen::MatrixXd::Zero(n, n);
+	EMatrix q_li_lf_goingUp = EMatrix::Zero(n, n);
+	EMatrix q_li_lf_goingDown = EMatrix::Zero(n, n);
 
 	/* We will apply PS64 eq 43. Keeping eq 38 in mind, we can find the partial rates one by
 	   one, applying detailed balance at each step. Note however that the results are different
@@ -403,7 +403,7 @@ Eigen::MatrixXd HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, doubl
 	return (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
 }
 
-Eigen::VectorXd HydrogenFromFiles::sourcev(double T, double ne, double np) const
+EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
 {
 	/* for now use the hardcoded implementation, but this needs to change (is copy paste from
 	   HydrogenHardcoded). */
@@ -425,7 +425,7 @@ Eigen::VectorXd HydrogenFromFiles::sourcev(double T, double ne, double np) const
 	// this hack should work for n up to 5
 	Array unresolvedAlphav({alphaGround, alpha2p + alpha2s, alpha3, alpha4, alpha5});
 
-	Eigen::VectorXd alphav = Eigen::VectorXd::Zero(_numL);
+	EVector alphav = EVector::Zero(_numL);
 
 	for (int f = 0; f < _numL; f++)
 	{
@@ -457,7 +457,7 @@ Eigen::VectorXd HydrogenFromFiles::sourcev(double T, double ne, double np) const
 	return alphav * ne * np;
 }
 
-Eigen::VectorXd HydrogenFromFiles::sinkv(double T, double ne, double np) const
+EVector HydrogenFromFiles::sinkv(double T, double ne, double np) const
 {
 	/* The ionization rate calculation makes no distinction between the levels.  When
 	   the upper level population is small, and its decay rate is large, the second term
@@ -465,7 +465,7 @@ Eigen::VectorXd HydrogenFromFiles::sinkv(double T, double ne, double np) const
 	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 	   => sink = totalsource / n because n0/n + n1/n = 1. */
 	double sink = Ionization::recombinationRateCoeff(T) / _numL;
-	return Eigen::VectorXd::Constant(_numL, sink * ne * np);
+	return EVector::Constant(_numL, sink * ne * np);
 }
 
 double HydrogenFromFiles::energy(int n, int l) const

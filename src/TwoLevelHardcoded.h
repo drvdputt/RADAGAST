@@ -9,13 +9,13 @@ public:
 	TwoLevelHardcoded();
 
 	int numLv() const override;
-	Eigen::VectorXd ev() const override;
-	Eigen::VectorXd gv() const override;
-	Eigen::MatrixXd avv() const override;
-	Eigen::MatrixXd extraAvv() const override;
-	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
-	Eigen::VectorXd sourcev(double T, double ne, double np) const override;
-	Eigen::VectorXd sinkv(double T, double ne, double np) const override;
+	EVector ev() const override;
+	EVector gv() const override;
+	EMatrix avv() const override;
+	EMatrix extraAvv() const override;
+	EMatrix cvv(double T, double ne, double np) const override;
+	EVector sourcev(double T, double ne, double np) const override;
+	EVector sinkv(double T, double ne, double np) const override;
 private:
 	Eigen::Vector2d the_ev;
 	Eigen::Vector2d the_gv;

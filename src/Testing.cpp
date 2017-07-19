@@ -329,10 +329,10 @@ void Testing::testPhotoelectricHeating()
 void Testing::testACollapse()
 {
 	HydrogenFromFiles hff(0);
-	Eigen::MatrixXd avv = hff.avv().array();
+	EMatrix avv = hff.avv().array();
 	cout << hff.avv() << endl;
 	cout << "Compare this with values directly from NIST below:" << endl;
-	Eigen::MatrixXd nistA(5, 5);
+	EMatrix nistA(5, 5);
 	// clang-format off
 	nistA << 0, 0, 0, 0, 0,
 			4.6986e+08, 0, 0, 0, 0,
@@ -342,7 +342,7 @@ void Testing::testACollapse()
 	// clang-format on
 	cout << nistA << endl;
 	cout << "The element-wise relative difference is " << endl;
-	Eigen::MatrixXd relDiff = (avv - nistA).array() / nistA.array();
+	EMatrix relDiff = (avv - nistA).array() / nistA.array();
 	// Take out all the nan's
 	for (int i = 0; i < relDiff.size(); i++)
 	{
@@ -363,12 +363,12 @@ void Testing::testPS64Collisions()
 	const double np = 1e4;
 
 	HydrogenFromFiles hff(5);
-	Eigen::MatrixXd avv = hff.avv();
-	Eigen::MatrixXd cvv = hff.cvv(T, ne, np);
+	EMatrix avv = hff.avv();
+	EMatrix cvv = hff.cvv(T, ne, np);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards
 	   rate from level nl. */
-	Eigen::VectorXd anlv = avv.rowwise().sum();
+	EVector anlv = avv.rowwise().sum();
 	for (int n : std::array<int, 2>{4, 5})
 	{
 		ofstream out = IOTools::ofstreamFile("ps64/t" + to_string(n) + "l_q" +
@@ -417,20 +417,20 @@ void Testing::compareFromFilesvsHardCoded()
 	assert(hhc.numLv() == hff.numLv());
 
 	cout << "Energy levels:" << endl;
-	Eigen::VectorXd evhc = hhc.ev();
-	Eigen::VectorXd evff = hff.ev();
+	EVector evhc = hhc.ev();
+	EVector evff = hff.ev();
 	hc_vs_ff(evhc, evff);
 
 	assert(hhc.gv() == hff.gv());
 
 	cout << "A coefficients:" << endl;
-	Eigen::MatrixXd avvhc = hhc.avv();
-	Eigen::MatrixXd avvff = hff.avv();
+	EMatrix avvhc = hhc.avv();
+	EMatrix avvff = hff.avv();
 	hc_vs_ff(avvhc, avvff);
 
 	cout << "Extra A:" << endl;
-	Eigen::MatrixXd eavvhc = hhc.extraAvv();
-	Eigen::MatrixXd eavvff = hff.extraAvv();
+	EMatrix eavvhc = hhc.extraAvv();
+	EMatrix eavvff = hff.extraAvv();
 	hc_vs_ff(eavvhc, eavvff);
 
 	double T = 1e4;
@@ -438,13 +438,13 @@ void Testing::compareFromFilesvsHardCoded()
 	double np = 1e4;
 
 	cout << "Collisions:" << endl;
-	Eigen::MatrixXd cvvhc = hhc.cvv(T, ne, np);
-	Eigen::MatrixXd cvvff = hff.cvv(T, ne, np);
+	EMatrix cvvhc = hhc.cvv(T, ne, np);
+	EMatrix cvvff = hff.cvv(T, ne, np);
 	hc_vs_ff(cvvhc, cvvff);
 
 	cout << "Recombinations:" << endl;
-	Eigen::VectorXd alphavhc = hhc.sourcev(T, ne, np) / ne / np;
-	Eigen::VectorXd alphavff = hff.sourcev(T, ne, np) / ne / np;
+	EVector alphavhc = hhc.sourcev(T, ne, np) / ne / np;
+	EVector alphavff = hff.sourcev(T, ne, np) / ne / np;
 	hc_vs_ff(alphavhc, alphavff);
 }
 
@@ -478,7 +478,7 @@ void Testing::runFullModel()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gihffFull(frequencyv, "hff");
+	GasInterface gihffFull(frequencyv, "");
 	runGasInterfaceImpl(gihffFull, "");
 }
 

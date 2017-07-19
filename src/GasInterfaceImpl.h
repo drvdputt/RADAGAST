@@ -5,7 +5,7 @@
 #include "GasState.h"
 #include "NLevel.h"
 
-class Chemistry;
+class ChemistrySolver;
 class FreeBound;
 class FreeFree;
 class NLevel;
@@ -58,7 +58,7 @@ public:
 	{
 		Array specificIntensityv;
 		double n, T, f;
-		Eigen::VectorXd chemistrySolution;
+		EVector chemistrySolution;
 		NLevel::Solution HSolution;
 		NLevel::Solution H2Solution;
 	} Solution;
@@ -70,7 +70,7 @@ public:
 	/** A constructor for manual setup (an argument for each subprocess of which more than 1
 	    usable subclass/configuration exists). The components can be set up outside of this
 	    constructor, and ownership is then transferred using a unique pointer. */
-	GasInterfaceImpl(std::unique_ptr<NLevel> hmodel, const Array& frequencyv);
+	GasInterfaceImpl(std::unique_ptr<NLevel> hmodel, bool molecular, const Array& frequencyv);
 
 	Array frequencyv() const { return _frequencyv; }
 
@@ -132,20 +132,13 @@ public:
 
 	inline double nAtomic(const Solution& s) const { return (1 - s.f) * s.n; }
 
-	void testHeatingCurve(double n, const Array& specificIntensityv) const;
-
-	/** The reaction rates for the chemical network first of all depend on the temperature. If
-	    there are photoreactions, their rate will depend on the specific intensity. The
-	    spontaneous dissociation rate of H2 depends on the solution of the H2 level model. */
-	Eigen::VectorXd reactionRates(double T, const Array& specificIntensityv,
-	                              const NLevel::Solution& h2Solution) const;
-
 private:
 	/* To be set in constructor */
 	const Array& _frequencyv;
 
+	// TODO: make the indexing more robust
 	int ine = 0, inp = 1, inH = 2, inH2 = 3;
-	std::unique_ptr<Chemistry> _chemistry;
+	std::unique_ptr<ChemistrySolver> _chemSolver;
 
 	/* Pointers to other parts of the implementation, to make late initialization possible */
 	std::unique_ptr<NLevel> _atomicLevels;

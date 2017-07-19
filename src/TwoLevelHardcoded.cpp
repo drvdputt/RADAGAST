@@ -19,11 +19,11 @@ TwoLevelHardcoded::TwoLevelHardcoded()
 
 int TwoLevelHardcoded::numLv() const { return 2; }
 
-Eigen::VectorXd TwoLevelHardcoded::ev() const { return the_ev; }
+EVector TwoLevelHardcoded::ev() const { return the_ev; }
 
-Eigen::VectorXd TwoLevelHardcoded::gv() const { return the_gv; }
+EVector TwoLevelHardcoded::gv() const { return the_gv; }
 
-Eigen::MatrixXd TwoLevelHardcoded::avv() const
+EMatrix TwoLevelHardcoded::avv() const
 {
 	Eigen::Matrix2d the_avv;
 	// clang-format off
@@ -33,12 +33,12 @@ Eigen::MatrixXd TwoLevelHardcoded::avv() const
 	return the_avv;
 }
 
-Eigen::MatrixXd TwoLevelHardcoded::extraAvv() const { return Eigen::Matrix2d::Zero(); }
+EMatrix TwoLevelHardcoded::extraAvv() const { return Eigen::Matrix2d::Zero(); }
 
-Eigen::MatrixXd TwoLevelHardcoded::cvv(double T, double /* unused ne */,
+EMatrix TwoLevelHardcoded::cvv(double T, double /* unused ne */,
                                        double /* unused np */) const
 {
-	Eigen::MatrixXd Cvv = Eigen::MatrixXd::Zero(2, 2);
+	EMatrix Cvv = EMatrix::Zero(2, 2);
 
 	/* Need separate contributions for number of protons and electrons. Toy implementation below,
 	   inspired by https://www.astro.umd.edu/~jph/N-level.pdf is actually for electron
@@ -55,14 +55,14 @@ Eigen::MatrixXd TwoLevelHardcoded::cvv(double T, double /* unused ne */,
 	return Cvv;
 }
 
-Eigen::VectorXd TwoLevelHardcoded::sourcev(double /* unused T */, double /* unused np */,
+EVector TwoLevelHardcoded::sourcev(double /* unused T */, double /* unused np */,
                                            double /* unused ne */) const
 {
 	// There is no ion
 	return Eigen::Vector2d::Zero();
 }
 
-Eigen::VectorXd TwoLevelHardcoded::sinkv(double /* unused T */, double /* unused np */,
+EVector TwoLevelHardcoded::sinkv(double /* unused T */, double /* unused np */,
                                          double /* unused ne */) const
 {
 	return Eigen::Vector2d::Zero();

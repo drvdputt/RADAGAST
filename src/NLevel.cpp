@@ -47,9 +47,9 @@ NLevel::Solution NLevel::solveBalance(double density, double electronDensity,
 	Solution s;
 	s.n = density;
 	s.T = temperature;
-	s.bpvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
-	s.cvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
-	s.nv = Eigen::VectorXd::Zero(_numLv);
+	s.bpvv = EMatrix::Zero(_numLv, _numLv);
+	s.cvv = EMatrix::Zero(_numLv, _numLv);
+	s.nv = EVector::Zero(_numLv);
 
 	if (specificIntensityv.size() != _frequencyv.size())
 		Error::runtime("Given ISRF and frequency vectors do not have the same size " +
@@ -80,8 +80,8 @@ NLevel::Solution NLevel::solveBalance(double density, double electronDensity,
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
-		Eigen::VectorXd sourcev = _ldp->sourcev(temperature, electronDensity, protonDensity);
-		Eigen::VectorXd sinkv = _ldp->sinkv(temperature, electronDensity, protonDensity);
+		EVector sourcev = _ldp->sourcev(temperature, electronDensity, protonDensity);
+		EVector sinkv = _ldp->sinkv(temperature, electronDensity, protonDensity);
 		// Calculate Fij and bi and solve F.n = b
 		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
 	}
@@ -146,10 +146,10 @@ double NLevel::cooling(const Solution& s) const
 	return powerDensityOut;
 }
 
-Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-                                                const Eigen::MatrixXd& Cvv) const
+EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
+                                                const EMatrix& Cvv) const
 {
-	Eigen::MatrixXd BPvv = Eigen::MatrixXd::Zero(_numLv, _numLv);
+	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
@@ -168,40 +168,40 @@ Eigen::MatrixXd NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv,
 	return BPvv;
 }
 
-Eigen::VectorXd NLevel::solveRateEquations(double n, const Eigen::MatrixXd& BPvv,
-                                           const Eigen::MatrixXd& Cvv,
-                                           const Eigen::VectorXd& sourceTerm,
-                                           const Eigen::VectorXd& sinkTerm, int chooseConsvEq) const
+EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv,
+                                           const EMatrix& Cvv,
+                                           const EVector& sourceTerm,
+                                           const EVector& sinkTerm, int chooseConsvEq) const
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j
-	Eigen::MatrixXd Mvv(_avv.transpose() + _extraAvv.transpose() + BPvv.transpose() +
+	EMatrix Mvv(_avv.transpose() + _extraAvv.transpose() + BPvv.transpose() +
 	                    Cvv.transpose());
 
 	// See equation for Fij (37) in document
 	// Subtract departure rate from level i to all other levels
-	Eigen::MatrixXd departureDiagonal = Mvv.colwise().sum().asDiagonal();
+	EMatrix departureDiagonal = Mvv.colwise().sum().asDiagonal();
 	Mvv -= departureDiagonal;
 	Mvv -= sinkTerm.asDiagonal();
-	Eigen::VectorXd b(-sourceTerm);
+	EVector b(-sourceTerm);
 
 	// Replace row by a conservation equation
-	Mvv.row(chooseConsvEq) = Eigen::VectorXd::Ones(Mvv.cols());
+	Mvv.row(chooseConsvEq) = EVector::Ones(Mvv.cols());
 	b(chooseConsvEq) = n;
 
 #ifdef PRINT_MATRICES
 	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
 #endif
 	// Call the linear solver
-	Eigen::VectorXd nv = Mvv.colPivHouseholderQr().solve(b);
+	EVector nv = Mvv.colPivHouseholderQr().solve(b);
 	DEBUG("nv" << endl << nv << endl);
 
 	// Hack: put populations = 0 if they were negative due to precision issues
 	nv = nv.array().max(0);
 
 	// Element wise relative errors
-	Eigen::ArrayXd diffv = Mvv * nv - b;
-	Eigen::ArrayXd errv = diffv / Eigen::ArrayXd(b);
+	EArray diffv = Mvv * nv - b;
+	EArray errv = diffv / EArray(b);
 	DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;
@@ -240,7 +240,7 @@ inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) 
 	return lineProfile(upper, lower, s.T, s.cvv);
 }
 
-Array NLevel::lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const
+Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const
 {
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 

@@ -9,16 +9,9 @@
 using namespace std;
 
 double Ionization::solveBalance(double nH, double T, const Array& frequencyv,
-                                   const Array& specificIntensityv)
+                                const Array& specificIntensityv)
 {
-	size_t nFreq = frequencyv.size();
-	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
-	Array integrand(nFreq);
-	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
-	double integral = Constant::FPI / Constant::PLANCK *
-	                  TemplatedUtils::integrate<double>(frequencyv, integrand);
-
+	double integral = photoRateCoeff(frequencyv, specificIntensityv);
 	double gamma = collisionalRateCoeff(T);
 	double alpha = recombinationRateCoeff(T);
 
@@ -43,6 +36,18 @@ double Ionization::solveBalance(double nH, double T, const Array& frequencyv,
 
 	// For very strong radiation fields, some numerical problems can appear... so we cap to 1.
 	return min(ne / nH, 1.);
+}
+
+double Ionization::photoRateCoeff(const Array& frequencyv, const Array& specificIntensityv)
+{
+	size_t nFreq = frequencyv.size();
+	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
+	Array integrand(nFreq);
+	for (size_t n = iThres; n < nFreq; n++)
+		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
+	double integral = Constant::FPI / Constant::PLANCK *
+	                  TemplatedUtils::integrate<double>(frequencyv, integrand);
+	return integral;
 }
 
 double Ionization::crossSection(double frequency)

@@ -1,6 +1,8 @@
 #include "GasInterfaceImpl.h"
-#include "Chemistry.h"
 #include "Constants.h"
+
+#include "ChemicalNetwork.h"
+#include "ChemistrySolver.h"
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
@@ -25,12 +27,18 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
 {
 }
 
-GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, const Array& frequencyv)
+GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
+                                   const Array& frequencyv)
                 : _frequencyv(frequencyv), _atomicLevels(std::move(atomModel)),
-                  _molecularLevels(make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv)),
                   _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
+	if (molecular)
+		_molecularLevels = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
+	if (molecular)
+	{
+		// TODO: initialize chemistry
+	}
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
@@ -104,7 +112,8 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		if (specificIntensityv[iFreq] < 0 || emv[iFreq] < 0 || opv[iFreq] < 0 ||
 		    scv[iFreq] < 0)
 		{
-			cout << "GasModule: negative value in one of the optical properties";
+			Error::runtime("GasModule: negative value in one of the optical "
+			               "properties");
 		}
 	}
 #endif
@@ -120,13 +129,23 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
-	// Initial guess for the chemistry
-	s.chemistrySolution = Eigen::VectorXd(4);
-	s.chemistrySolution << 0, 0, n, 0;
-
 	if (n > 0)
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
+
+		// Initial guess for the chemistry
+		s.chemistrySolution = EVector(4);
+		s.chemistrySolution << 0, 0, n, 0;
+
+		double nH = s.chemistrySolution[inH];
+		double ne = s.chemistrySolution[ine];
+		double np = s.chemistrySolution[inp];
+		double nH2 = s.chemistrySolution[inH2];
+
+		s.HSolution = _atomicLevels->solveBalance(nH, ne, np, T, specificIntensityv);
+		if (_molecularLevels)
+			s.H2Solution = _molecularLevels->solveBalance(nH2, ne, np, T,
+			                                              specificIntensityv);
 
 		// TODO: Chemical network goes here. Should at least include ne np nH nH2, and will
 		// make use of a variety of functions from Ionization, NLevel and others to calculate the
@@ -134,32 +153,52 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 		bool stopCriterion = false;
 		while (!stopCriterion)
 		{
-			s.chemistrySolution = _chemistry->solveBalance(
-					reactionRates(T, specificIntensityv, s.H2Solution),
-					s.chemistrySolution);
+			if (_molecularLevels)
+			{
+				double kFromH2Levels =
+				                _molecularLevels->dissociationRate(s.H2Solution);
+				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
+				                T, _frequencyv, specificIntensityv, kFromH2Levels);
+				s.chemistrySolution = _chemSolver->solveBalance(
+				                reactionRates, s.chemistrySolution);
+				nH = s.chemistrySolution[inH];
+				ne = s.chemistrySolution[ine];
+				np = s.chemistrySolution[inp];
+				nH2 = s.chemistrySolution[inH2];
+			}
+			else
+			{
+				// TODO: keep the ionization calculation below for a while.
+				// I will later compare the result of the chemical network to this
+				// Ionization balance
+				s.f = Ionization::solveBalance(n, T, _frequencyv,
+				                               specificIntensityv);
+				DEBUG("Ionized fraction = " << s.f << endl);
 
-			// TODO: keep this for a while. I will later compare the result of the chemical network to
-			// this
-			// Ionization balance
-			s.f = Ionization::solveBalance(n, T, _frequencyv, specificIntensityv);
-			DEBUG("Ionized fraction = " << s.f << endl);
+				nH = n * (1 - s.f);
+				np = n * s.f;
+				ne = np;
+			}
 
 			// Level balance
-			double nAtm = n * (1 - s.f);
-			double np = n * s.f;
-			double ne = np;
-			s.HSolution = _atomicLevels->solveBalance(s.chemistrySolution[inH], ne, np, T,
-								  specificIntensityv);
-			s.H2Solution = _molecularLevels->solveBalance(s.chemistrySolution[inH2], ne, np, T,
-								      specificIntensityv);
+			s.HSolution = _atomicLevels->solveBalance(s.chemistrySolution[inH], ne, np,
+			                                          T, specificIntensityv);
+			if (_molecularLevels)
+				s.H2Solution = _molecularLevels->solveBalance(
+				                s.chemistrySolution[inH2], ne, np, T,
+				                specificIntensityv);
 
 			// TODO: stopCriterion = some evaluation
+			stopCriterion = !_molecularLevels /* or something else */;
 		}
 	}
 	else
 	{
 		s.f = 0;
 		s.HSolution = _atomicLevels->solveBalance(0, 0, 0, T, specificIntensityv);
+		if (_molecularLevels)
+			s.H2Solution = _molecularLevels->solveBalance(0, 0, 0, T,
+			                                              specificIntensityv);
 	}
 	return s;
 }

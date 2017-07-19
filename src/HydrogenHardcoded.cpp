@@ -9,22 +9,22 @@ using namespace std;
 
 HydrogenHardcoded::HydrogenHardcoded()
 {
-	the_ev = Eigen::VectorXd(NLV);
+	the_ev = EVector(NLV);
 	the_ev << 0., 82258.9543992821, 82258.9191133, 97492.304, 102823.904, 105291.657;
 	// Energy in cm^-1, so multiply with hc
 	the_ev *= Constant::PLANCKLIGHT;
 
-	the_gv = Eigen::VectorXd(NLV);
+	the_gv = EVector(NLV);
 	the_gv << 2, 2, 6, 18, 32, 50;
 }
 
 int HydrogenHardcoded::numLv() const { return NLV; }
 
-Eigen::VectorXd HydrogenHardcoded::ev() const { return the_ev; }
+EVector HydrogenHardcoded::ev() const { return the_ev; }
 
-Eigen::VectorXd HydrogenHardcoded::gv() const { return the_gv; }
+EVector HydrogenHardcoded::gv() const { return the_gv; }
 
-Eigen::MatrixXd HydrogenHardcoded::avv() const
+EMatrix HydrogenHardcoded::avv() const
 {
 	/* Using NIST data (Wiese & Fuhr) */
 
@@ -80,7 +80,7 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 	// Decays to 4
 	double A54 = 2.6993e+06;
 
-	Eigen::MatrixXd the_avv(NLV, NLV);
+	EMatrix the_avv(NLV, NLV);
 	// clang-format off
 	the_avv << 0, 0, 0, 0, 0, 0,
 	           A2s1, 0, 0, 0, 0, 0,
@@ -92,11 +92,11 @@ Eigen::MatrixXd HydrogenHardcoded::avv() const
 	return the_avv;
 }
 
-Eigen::MatrixXd HydrogenHardcoded::extraAvv() const
+EMatrix HydrogenHardcoded::extraAvv() const
 {
 	/* Two photon continuum adds extra spontaneous decay rate to A2s1, but does not produce line
 	   radiation */
-	Eigen::MatrixXd the_extraAvv(NLV, NLV);
+	EMatrix the_extraAvv(NLV, NLV);
 	// clang-format off
 	the_extraAvv << 0, 0, 0, 0, 0, 0,
 			8.23, 0, 0, 0, 0, 0,
@@ -113,11 +113,11 @@ array<int, 2> HydrogenHardcoded::twoPhotonIndices() const
 	return {1, 0};
 }
 
-Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double protonDensity) const
+EMatrix HydrogenHardcoded::cvv(double T, double electronDensity, double protonDensity) const
 {
 	const int index2p = 2;
 	const int index2s = 1;
-	Eigen::MatrixXd Cvv = Eigen::MatrixXd::Zero(NLV, NLV);
+	EMatrix Cvv = EMatrix::Zero(NLV, NLV);
 
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
@@ -188,7 +188,7 @@ Eigen::MatrixXd HydrogenHardcoded::cvv(double T, double electronDensity, double 
 	return Cvv;
 }
 
-Eigen::VectorXd HydrogenHardcoded::sourcev(double T, double ne, double np) const
+EVector HydrogenHardcoded::sourcev(double T, double ne, double np) const
 {
 	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
 	// yes, this is natural log
@@ -207,13 +207,13 @@ Eigen::VectorXd HydrogenHardcoded::sourcev(double T, double ne, double np) const
 	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
 	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
 
-	Eigen::VectorXd alphav(NLV);
+	EVector alphav(NLV);
 	alphav << alphaGround, alpha2s, alpha2p, alpha3, alpha4, alpha5;
 	return alphav * ne * np;
 }
 
-Eigen::VectorXd HydrogenHardcoded::sinkv(double T, double ne, double np) const
+EVector HydrogenHardcoded::sinkv(double T, double ne, double np) const
 {
 	double sink = Ionization::recombinationRateCoeff(T) / NLV;
-	return Eigen::VectorXd::Constant(NLV, sink * ne * np);
+	return EVector::Constant(NLV, sink * ne * np);
 }

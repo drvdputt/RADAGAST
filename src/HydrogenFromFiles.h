@@ -81,19 +81,19 @@ public:
 	int indexOutput(int n, int l) const;
 
 	/** Returns a vector containing the energy of each level */
-	Eigen::VectorXd ev() const override;
+	EVector ev() const override;
 
 	/** Returns a vector containing the degeneracy of each level */
-	Eigen::VectorXd gv() const override;
+	EVector gv() const override;
 
 	/** Returns a matrix containing the Einstein A coefficients for all levels. Indexed on
 	    (upper, lower), making it a lower triangle matrix. */
-	Eigen::MatrixXd avv() const override;
+	EMatrix avv() const override;
 
 	/** Returns a matrix containing any extra spontaneous decays between levels. This matrix can
 	    be used to describe spontaneous decays that do NOT produce line radiation (for example
 	    two-photon processes, which generate a continuum instead). */
-	Eigen::MatrixXd extraAvv() const override;
+	EMatrix extraAvv() const override;
 
 	/** Return a pair of indices indication the upper and lower level of the two-photon
 	    transition (2s ans 1s respectively). When the upper level is collapsed, the index
@@ -111,7 +111,7 @@ public:
 
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
 	    the partner density), for a given temperature and proton and electron densities. */
-	Eigen::MatrixXd cvv(double T, double ne, double np) const override;
+	EMatrix cvv(double T, double ne, double np) const override;
 
 private:
 	/** Calculates the l-changing collision rate coefficients as described by Pengelley \&
@@ -120,7 +120,7 @@ private:
 	    or q_n(li+1),n(lf-1). The results are returned as a tridiagonal matrix indexed on
 	    (li,lf), of dimension n x n. Used only by cvv, and after prepareForOutput, and hence
 	    declared private here. */
-	Eigen::MatrixXd PS64CollisionRateCoeff(int n, double T, double ne) const;
+	EMatrix PS64CollisionRateCoeff(int n, double T, double ne) const;
 
 public:
 	/** Returns a vector containing the source terms for the equilibrium equations, such as the
@@ -128,8 +128,8 @@ public:
 	    the ionization balance calculation, as there only the total recombination rate
 	    matters. As with the other functions, the way this vector is obtained depends entirely
 	    on the subclass. */
-	Eigen::VectorXd sourcev(double T, double ne, double np) const override;
-	Eigen::VectorXd sinkv(double T, double ne, double np) const override;
+	EVector sourcev(double T, double ne, double np) const override;
+	EVector sinkv(double T, double ne, double np) const override;
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
 	//-----------------------------------------//
@@ -183,7 +183,7 @@ private:
 	}
 
 	/* The Einstein A coefficientes read in from the wgfa file from CHIANTI */
-	Eigen::MatrixXd _chiantiAvv;
+	EMatrix _chiantiAvv;
 
 	/* The entries are the collision strength in function of the temperature points.  The
 	   anderson data only lists downward collisions. We store each collision strenght as
@@ -195,7 +195,7 @@ private:
 
 	/* Total spontaneous decay rate of each level. Needed for the l-changing collision formula
 	   of PS64. */
-	Eigen::VectorXd _totalAv;
+	EVector _totalAv;
 
 	// SOME MAPS TO HELP WITH DIFFERENT KINDS OF INDEXING //
 

@@ -1,9 +1,9 @@
-#ifndef _NLEVEL_H_
-#define _NLEVEL_H_
+#ifndef GASMODULE_GIT_SRC_NLEVEL_H_
+#define GASMODULE_GIT_SRC_NLEVEL_H_
 
 #include "Array.h"
+#include "EigenAliases.h"
 
-#include <Eigen/Dense>
 #include <array>
 #include <memory>
 
@@ -63,16 +63,16 @@ public:
 protected:
 	/** A number of protected getters are provided, so the subclasses can make use of these
 	    coefficients. */
-	Eigen::VectorXd ev() const { return _ev; }
+	EVector ev() const { return _ev; }
 	double ev(size_t i) const { return _ev(i); }
 
-	Eigen::VectorXd gv() const { return _gv; }
+	EVector gv() const { return _gv; }
 	double gv(size_t i) const { return _gv(i); }
 
-	Eigen::MatrixXd avv() const { return _avv; }
+	EMatrix avv() const { return _avv; }
 	double avv(size_t upper, size_t lower) { return _avv(upper, lower); }
 
-	Eigen::MatrixXd extraAvv() const { return _extraAvv; }
+	EMatrix extraAvv() const { return _extraAvv; }
 	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
 
 public:
@@ -99,11 +99,11 @@ public:
 		double n, T;
 
 		/* The density of each level population (cm-3) */
-		Eigen::VectorXd nv;
+		EVector nv;
 
 		/* The induced radiative transition rates and collisional transition rates for this
 		   configuration. These are needed to calculate for example the line broadening. */
-		Eigen::MatrixXd bpvv, cvv;
+		EMatrix bpvv, cvv;
 	} Solution;
 
 	/** Calculates the level populations for a certain electron temperature and isrf. The
@@ -141,17 +141,17 @@ public:
 private:
 	/** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
 	    Aij) and Pij is the line power (isrf integrated over the line profile). */
-	Eigen::MatrixXd prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-	                                        const Eigen::MatrixXd& Cvv) const;
+	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
+	                                        const EMatrix& Cvv) const;
 
 private:
 	/** Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
 	    + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term
 	    ne*np*alpha_i, due to recombination. Returns the solution as a vector. */
-	Eigen::VectorXd solveRateEquations(double n, const Eigen::MatrixXd& BPvv,
-	                                   const Eigen::MatrixXd& Cvv,
-	                                   const Eigen::VectorXd& sourceTerm,
-	                                   const Eigen::VectorXd& sinkTerm,
+	EVector solveRateEquations(double n, const EMatrix& BPvv,
+	                                   const EMatrix& Cvv,
+	                                   const EVector& sourceTerm,
+	                                   const EVector& sinkTerm,
 	                                   int chooseConsvEq) const;
 
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
@@ -174,7 +174,7 @@ private:
 
 	/** Or when the full solution is not yet known, and hence a Solution object is not yet
 	    available. */
-	Array lineProfile(size_t upper, size_t lower, double T, const Eigen::MatrixXd& Cvv) const;
+	Array lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
 	// Variables which are the same for all invocations of solveBalance are stored as members //
 
@@ -187,18 +187,18 @@ private:
 
 	/* Energy levels (constant) */
 	int _numLv{0};
-	Eigen::VectorXd _ev;
+	EVector _ev;
 
 	/* Level degeneracy (constant) */
-	Eigen::VectorXd _gv;
+	EVector _gv;
 
 	/* A matrix (constant, lower triangle, zero diagonal) */
-	Eigen::MatrixXd _avv;
+	EMatrix _avv;
 
 	/* Spontaneous transitions that do not produce line photons, but do influence the levels. A
 	   prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
 	   but is about 8 s-1 for two photons. */
-	Eigen::MatrixXd _extraAvv;
+	EMatrix _extraAvv;
 };
 
 #endif /* _NLEVEL_H_ */
