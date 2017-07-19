@@ -47,7 +47,7 @@ private:
 	// calculated individually though (i.e. not in a loop), while respecting the same order.
 	typedef struct Reaction
 	{
-		Reaction(const Array&  rv, const Array&  pv)
+		Reaction(const Array& rv, const Array& pv)
 		{
 			_rv = Eigen::Map<const EVector>(&rv[0], rv.size());
 			_pv = Eigen::Map<const EVector>(&pv[0], pv.size());

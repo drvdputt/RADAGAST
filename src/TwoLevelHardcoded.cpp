@@ -35,8 +35,7 @@ EMatrix TwoLevelHardcoded::avv() const
 
 EMatrix TwoLevelHardcoded::extraAvv() const { return Eigen::Matrix2d::Zero(); }
 
-EMatrix TwoLevelHardcoded::cvv(double T, double /* unused ne */,
-                                       double /* unused np */) const
+EMatrix TwoLevelHardcoded::cvv(double T, double /* unused ne */, double /* unused np */) const
 {
 	EMatrix Cvv = EMatrix::Zero(2, 2);
 
@@ -56,14 +55,14 @@ EMatrix TwoLevelHardcoded::cvv(double T, double /* unused ne */,
 }
 
 EVector TwoLevelHardcoded::sourcev(double /* unused T */, double /* unused np */,
-                                           double /* unused ne */) const
+                                   double /* unused ne */) const
 {
 	// There is no ion
 	return Eigen::Vector2d::Zero();
 }
 
 EVector TwoLevelHardcoded::sinkv(double /* unused T */, double /* unused np */,
-                                         double /* unused ne */) const
+                                 double /* unused ne */) const
 {
 	return Eigen::Vector2d::Zero();
 }

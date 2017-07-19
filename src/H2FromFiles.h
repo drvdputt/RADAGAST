@@ -3,7 +3,7 @@
 
 #include "LevelDataProvider.h"
 
-class H2FromFiles: public LevelDataProvider
+class H2FromFiles : public LevelDataProvider
 {
 public:
 	H2FromFiles();

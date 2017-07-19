@@ -59,7 +59,7 @@ private:
 
 	private:
 		int _n, _l, _twoJplus1; // quantum numbers
-		double _e;              // energy
+		double _e; // energy
 	};
 
 	//-----------------------------------------------//

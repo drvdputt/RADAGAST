@@ -114,8 +114,8 @@ public:
 	    recombination data to perform the calculation are obtained from the LevelDataProvider,
 	    while the induced transitions rates (B coefficients * line power) are derived from the
 	    given specific intensity. */
-	Solution solveBalance(double density, double electronDensity, double protonDensity, double T,
-			const Array& specificIntensityv) const;
+	Solution solveBalance(double density, double electronDensity, double protonDensity,
+	                      double T, const Array& specificIntensityv) const;
 	// TODO: add in source and sink terms here, so that formation rates derived from the the chemical network
 	// can be factored in. At the same time, there should be some mechanism for spontaneous decay of
 	// levels into 'nothing', for example dissociation.
@@ -142,17 +142,15 @@ private:
 	/** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
 	    Aij) and Pij is the line power (isrf integrated over the line profile). */
 	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-	                                        const EMatrix& Cvv) const;
+	                                const EMatrix& Cvv) const;
 
 private:
 	/** Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
 	    + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term
 	    ne*np*alpha_i, due to recombination. Returns the solution as a vector. */
-	EVector solveRateEquations(double n, const EMatrix& BPvv,
-	                                   const EMatrix& Cvv,
-	                                   const EVector& sourceTerm,
-	                                   const EVector& sinkTerm,
-	                                   int chooseConsvEq) const;
+	EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
+	                           const EVector& sourceTerm, const EVector& sinkTerm,
+	                           int chooseConsvEq) const;
 
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all

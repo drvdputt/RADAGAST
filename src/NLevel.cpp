@@ -7,7 +7,7 @@
 
 using namespace std;
 
-NLevel::NLevel(shared_ptr<const LevelDataProvider>  ldp, const Array& frequencyv)
+NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
                 : _ldp(ldp), _frequencyv(frequencyv), _numLv(_ldp->numLv()), _ev(_ldp->ev()),
                   _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
 {
@@ -40,9 +40,8 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double density, double electronDensity,
-                                      double protonDensity, double temperature,
-                                      const Array& specificIntensityv) const
+NLevel::Solution NLevel::solveBalance(double density, double electronDensity, double protonDensity,
+                                      double temperature, const Array& specificIntensityv) const
 {
 	Solution s;
 	s.n = density;
@@ -111,7 +110,7 @@ Array NLevel::opacityv(const Solution& s) const
 double NLevel::heating(const Solution& s) const
 {
 	double powerDensityIn = 0;
-	for(int initial = 0; initial < _numLv; initial++)
+	for (int initial = 0; initial < _numLv; initial++)
 	{
 		for (int final = 0; final < _numLv; final++)
 		{
@@ -120,7 +119,8 @@ double NLevel::heating(const Solution& s) const
 			{
 				double cul = s.cvv(initial, final);
 				if (cul > 0)
-					powerDensityIn += (_ev(initial) - _ev(final)) * cul * s.nv(initial);
+					powerDensityIn += (_ev(initial) - _ev(final)) * cul *
+					                  s.nv(initial);
 			}
 		}
 	}
@@ -130,7 +130,7 @@ double NLevel::heating(const Solution& s) const
 double NLevel::cooling(const Solution& s) const
 {
 	double powerDensityOut = 0;
-	for(int initial = 0; initial < _numLv; initial++)
+	for (int initial = 0; initial < _numLv; initial++)
 	{
 		for (int final = 0; final < _numLv; final++)
 		{
@@ -139,7 +139,8 @@ double NLevel::cooling(const Solution& s) const
 			{
 				double clu = s.cvv(initial, final);
 				if (clu > 0)
-					powerDensityOut += (_ev(final) - _ev(initial)) * clu * s.nv(initial);
+					powerDensityOut += (_ev(final) - _ev(initial)) * clu *
+					                   s.nv(initial);
 			}
 		}
 	}
@@ -147,7 +148,7 @@ double NLevel::cooling(const Solution& s) const
 }
 
 EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-                                                const EMatrix& Cvv) const
+                                        const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -168,15 +169,13 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double 
 	return BPvv;
 }
 
-EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv,
-                                           const EMatrix& Cvv,
-                                           const EVector& sourceTerm,
-                                           const EVector& sinkTerm, int chooseConsvEq) const
+EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
+                                   const EVector& sourceTerm, const EVector& sinkTerm,
+                                   int chooseConsvEq) const
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j
-	EMatrix Mvv(_avv.transpose() + _extraAvv.transpose() + BPvv.transpose() +
-	                    Cvv.transpose());
+	EMatrix Mvv(_avv.transpose() + _extraAvv.transpose() + BPvv.transpose() + Cvv.transpose());
 
 	// See equation for Fij (37) in document
 	// Subtract departure rate from level i to all other levels
@@ -245,7 +244,7 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 
 	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
-	                   Cvv(upper, lower)    // decay rate of top level
+	                   Cvv(upper, lower) // decay rate of top level
 	                   + Cvv(lower, upper); // decay rate of bottom level
 	// (stimulated emission doesn't count, as it causes no broadening)
 

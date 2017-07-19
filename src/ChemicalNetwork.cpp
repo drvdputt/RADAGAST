@@ -54,7 +54,7 @@ EMatrix ChemicalNetwork::conservationCoeffvv() const
 	// Conservation of H nuclei (single protons)
 	EVector protonEq(numSpecies);
 	protonEq << 0, 1, 1, 2;
-//	c.row(0) = protonEq;
+	c.row(0) = protonEq;
 
 	// Conservation of electrons
 	EVector electronEq(numSpecies);

@@ -88,7 +88,6 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 		if (i > 0 && (lineFreqv[i] - lineFreqv[i - 1]) / freqWidthv[i - 1] < 0.01)
 			continue;
 
-
 		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
 		{

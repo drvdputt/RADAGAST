@@ -61,7 +61,7 @@ void PhotoelectricHeatingRecipe::readQabs() const
 	for (size_t i = 0; i < _Na; i++)
 	{
 		file >> _fileav[i];
-		_fileav[i] *= 1e-6;  // convert from micron to m
+		_fileav[i] *= 1e-6; // convert from micron to m
 		getline(file, line); // ignore anything else on this line
 
 		for (int k = kbeg; k != kend; k += kinc)
@@ -808,7 +808,8 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0) const
 		efficiencyOf << a / Constant::ANG_CM << '\t' << heating / totalAbsorbed << '\n';
 
 		// Calculate and write out the ISRF-averaged absorption efficiency
-		double uIntegral = TemplatedUtils::integrate<double>(wavelengthv, energyDensity_lambda);
+		double uIntegral = TemplatedUtils::integrate<double>(wavelengthv,
+		                                                     energyDensity_lambda);
 		double avgQabs = uTimesQabsIntegral / uIntegral;
 		avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
 		a *= aStepFactor;
