@@ -358,7 +358,7 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double ne) co
 	const double qnlFactor = 9.93e-6 * sqrt(muOverm / T);
 	const int n2 = n * n;
 
-	auto ps64eq43 = [&](int l) double {
+	auto ps64eq43 = [&](int l) -> double {
 		// eq 44: Z is charge of the colliding particle, z that of the nucleus
 		double D_nl = 6 * n2 * (n2 - l * l - l - 1);
 
