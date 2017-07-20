@@ -1,0 +1,13 @@
+/*! \mainpage GasModule Index
+ *
+ * \section intro_sec Instructions for using GasModule in another code
+ *
+ * This is the introduction.
+ *
+ * \subsection cmake_subsec CMake
+ * Include as subproject
+ *
+ * * \subsection make_subsec Make
+ * Include flags  
+ * 
+ */
