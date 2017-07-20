@@ -58,7 +58,7 @@ public:
 	{
 		Array specificIntensityv;
 		double n, T, f;
-		EVector chemistrySolution;
+		EVector abundancev;
 		NLevel::Solution HSolution;
 		NLevel::Solution H2Solution;
 	} Solution;

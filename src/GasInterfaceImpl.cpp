@@ -34,10 +34,9 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
 	if (molecular)
-		_molecularLevels = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
-	if (molecular)
 	{
-		// TODO: initialize chemistry
+		_molecularLevels = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
+		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
 	}
 }
 
@@ -46,7 +45,6 @@ GasInterfaceImpl::~GasInterfaceImpl() = default;
 void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
 {
 	Array isrfGuess(_frequencyv.size());
-	// i'll put this somewhere else later
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
 		double freq = _frequencyv[iFreq];
@@ -122,74 +120,97 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 }
 
 GasInterfaceImpl::Solution
-GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIntensityv) const
+GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& specificIntensityv) const
 {
 	Solution s;
-	s.n = n;
+	s.n = ntotal;
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
-	if (n > 0)
-	{
-		DEBUG("Calculating state for T = " << T << "K" << endl);
-
-		// Initial guess for the chemistry
-		s.chemistrySolution = EVector(4);
-		s.chemistrySolution << 0, 0, n, 0;
-
-		double nH = s.chemistrySolution[inH];
-		double ne = s.chemistrySolution[ine];
-		double np = s.chemistrySolution[inp];
-		double nH2 = s.chemistrySolution[inH2];
-
+	/* Lambda function, because it is only needed in this scope. The [&] passes the current
+	   scope by reference, so the lambda function can modify s. */
+	auto solveLevelBalances = [&]() {
+		double nH = s.abundancev[inH];
+		double ne = s.abundancev[ine];
+		double np = s.abundancev[inp];
+		double nH2 = s.abundancev[inH2];
 		s.HSolution = _atomicLevels->solveBalance(nH, ne, np, T, specificIntensityv);
 		if (_molecularLevels)
 			s.H2Solution = _molecularLevels->solveBalance(nH2, ne, np, T,
 			                                              specificIntensityv);
+	};
 
-		// TODO: Chemical network goes here. Should at least include ne np nH nH2, and will
-		// make use of a variety of functions from Ionization, NLevel and others to calculate the
-		// reaction rates.
+	if (ntotal > 0)
+	{
+		DEBUG("Calculating state for T = " << T << "K" << endl);
+
+		// Initial guess for the chemistry
+		s.abundancev = EVector(4);
+		s.abundancev << 0, 0, ntotal / 2., ntotal / 4.;
+		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
+		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
+
+		// Solve the levels for the first time using the initial guess
+		solveLevelBalances();
+
 		bool stopCriterion = false;
 		while (!stopCriterion)
 		{
+			EVector previousAbundancev = s.abundancev;
+
+			// When including H2
 			if (_molecularLevels)
 			{
+				// Calculate fixed rate coefficients
 				double kFromH2Levels =
 				                _molecularLevels->dissociationRate(s.H2Solution);
 				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
 				                T, _frequencyv, specificIntensityv, kFromH2Levels);
-				s.chemistrySolution = _chemSolver->solveBalance(
-				                reactionRates, s.chemistrySolution);
-				nH = s.chemistrySolution[inH];
-				ne = s.chemistrySolution[ine];
-				np = s.chemistrySolution[inp];
-				nH2 = s.chemistrySolution[inH2];
+
+				// Solve chemistry network
+				s.abundancev = _chemSolver->solveBalance(reactionRates,
+				                                         s.abundancev);
+
+				/* TODO: Add effect of grain charging to chemical network. I think
+				   it might be possible to do this by imposing a conservation
+				   equation for the number of electrons: ne + nH + nH2 = (ne + nH +
+				   nH2)_0 + <Cg>*ng The average grain charge <Gg> should be updated
+				   together with the rates I guess?  Another option would be to
+				   include the grain charge rates into the network as extra
+				   reactions. The production vector would be (1 0 0 0) while the
+				   reactant vector would be zero (the grains don't disappear when
+				   they lose an electron) Grain recombination / charge exchange
+				   reaction could also be added. I need to think about wheter the
+				   'disappearing' particles will cause problems when couples with
+				   conservation equations. */
 			}
+			// When ignoring H2
 			else
 			{
-				// TODO: keep the ionization calculation below for a while.
-				// I will later compare the result of the chemical network to this
-				// Ionization balance
-				s.f = Ionization::solveBalance(n, T, _frequencyv,
+				// Just solve the ionization balance in the nebular approximation
+				s.f = Ionization::solveBalance(ntotal, T, _frequencyv,
 				                               specificIntensityv);
 				DEBUG("Ionized fraction = " << s.f << endl);
 
-				nH = n * (1 - s.f);
-				np = n * s.f;
-				ne = np;
+				// Neutral fraction
+				s.abundancev[inH] = ntotal * (1 - s.f);
+				// Ionized fraction
+				s.abundancev[inp] = ntotal * s.f;
+				// Electron density is simply equal to proton density
+				s.abundancev[ine] = s.abundancev[inp];
+				s.abundancev[inH2] = 0;
 			}
-
-			// Level balance
-			s.HSolution = _atomicLevels->solveBalance(s.chemistrySolution[inH], ne, np,
-			                                          T, specificIntensityv);
-			if (_molecularLevels)
-				s.H2Solution = _molecularLevels->solveBalance(
-				                s.chemistrySolution[inH2], ne, np, T,
-				                specificIntensityv);
+			solveLevelBalances();
 
 			// TODO: stopCriterion = some evaluation
-			stopCriterion = !_molecularLevels /* or something else */;
+			EVector changev = s.abundancev - previousAbundancev;
+			bool bigChange = false;
+			for (int i = 0; i < s.abundancev.size(); i++)
+			{
+				bigChange = abs(changev(i)) > 0.01 * previousAbundancev(i);
+				if (bigChange) break;
+			}
+			stopCriterion = !_molecularLevels || !bigChange;
 		}
 	}
 	else
@@ -205,26 +226,30 @@ GasInterfaceImpl::calculateDensities(double n, double T, const Array& specificIn
 
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
-	const Array& lineEmv = _atomicLevels->emissivityv(s.HSolution);
+	Array lineEmv = _atomicLevels->emissivityv(s.HSolution);
+	if (_molecularLevels) lineEmv += _molecularLevels->emissivityv(s.H2Solution);
+
 	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
 	_freeFree->addEmissionCoefficientv(s.T, contEmCoeffv);
+
 	return lineEmv + (np_ne(s) / Constant::FPI) * contEmCoeffv;
 }
 
 Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
-	const Array& lineOp = _atomicLevels->opacityv(s.HSolution);
+	Array lineOp = _atomicLevels->opacityv(s.HSolution);
+	if (_molecularLevels) lineOp += _molecularLevels->emissivityv(s.H2Solution);
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
-	double npne = np_ne(s);
-	double n_H0 = nAtomic(s);
 
+	double npne = np_ne(s);
+	double nH0 = nAtomic(s);
 	Array totalOp(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
-		double ionizOp_iFreq = n_H0 * Ionization::crossSection(_frequencyv[iFreq]);
+		double ionizOp_iFreq = nH0 * Ionization::crossSection(_frequencyv[iFreq]);
 		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
 #ifdef SANITY
 		if (totalOp[iFreq] < 0)
@@ -259,12 +284,16 @@ double GasInterfaceImpl::heating(const Solution& s) const
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
-	return _atomicLevels->cooling(s.HSolution);
+	double result = _atomicLevels->cooling(s.HSolution);
+	if (_molecularLevels) result += _molecularLevels->cooling(s.H2Solution);
+	return result;
 }
 
 double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
-	return _atomicLevels->heating(s.HSolution);
+	double result = _atomicLevels->heating(s.HSolution);
+	if (_molecularLevels) result += _molecularLevels->heating(s.H2Solution);
+	return result;
 }
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
@@ -274,6 +303,8 @@ double GasInterfaceImpl::continuumCooling(const Solution& s) const
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
-	return _freeFree->heating(np_ne(s), s.T, s.specificIntensityv) +
-	       Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
+	double result =_freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
+	result += Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
+	if (_molecularLevels) result += _molecularLevels->dissociationHeating(s.H2Solution);
+	return result;
 }

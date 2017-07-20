@@ -8,7 +8,7 @@
 
 using namespace std;
 
-GasInterface::GasInterface(const valarray<double>& frequencyv, const std::string& setupChoice)
+GasInterface::GasInterface(const valarray<double>& frequencyv, const string& setupChoice)
                 : _frequencyv(frequencyv)
 {
 	unique_ptr<NLevel> boundBound;

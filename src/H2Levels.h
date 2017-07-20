@@ -12,6 +12,7 @@ public:
 	~H2Levels();
 
 	double dissociationRate(const Solution& s) const;
+	double dissociationHeating(const Solution& s) const;
 
 private:
 	std::shared_ptr<const H2FromFiles> _hff;

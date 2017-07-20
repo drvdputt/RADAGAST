@@ -12,11 +12,11 @@ namespace
 {
 const int cNMAX = 5;
 
-inline std::vector<int> twoJplus1range(int l)
+inline vector<int> twoJplus1range(int l)
 {
 	/* If l > 0, then j can be either l + 0.5 or l - 0.5. For an s state, j is always 1/2 and
 	   2j+1 can only be 2 */
-	return l > 0 ? std::vector<int>({2 * l, 2 * l + 2}) : std::vector<int>({2});
+	return l > 0 ? vector<int>({2 * l, 2 * l + 2}) : vector<int>({2});
 }
 } /* namespace */
 
@@ -32,7 +32,7 @@ HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedU
 
 void HydrogenFromFiles::readData()
 {
-	const std::string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
+	const string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
 
 	//-----------------//
 	// READ LEVEL DATA //
@@ -282,7 +282,7 @@ EMatrix HydrogenFromFiles::extraAvv() const
 	return the_extra;
 }
 
-std::array<int, 2> HydrogenFromFiles::twoPhotonIndices() const
+array<int, 2> HydrogenFromFiles::twoPhotonIndices() const
 {
 	// If any of the levels is not resolved on l, just return the index of the collapsed level.
 	int upper = _resolvedUpTo >= 2 ? indexOutput(2, 0) : indexOutput(2, -1);
