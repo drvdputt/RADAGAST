@@ -10,8 +10,8 @@
 #include "IOTools.h"
 #include "IonizationBalance.h"
 #include "NLevel.h"
-#include "NumUtils.h"
 #include "PhotoelectricHeating.h"
+#include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 
 #include <Eigen/Dense>
@@ -111,45 +111,36 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 
 Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, double Tc, double G0)
 {
-	// A blackbody (in specific intensity per wavelength units)
-	vector<double> wavelengthv = freqToWavGrid(frequencyv);
-	vector<double> I_lambda = NumUtils::bbodyCGS<double>(wavelengthv, Tc);
-
-	// Convert to per frequency units using I_nu = I_lambda * lambda * lambda / c
 	Array I_nu(frequencyv.size());
-	for (size_t iWav = 0; iWav < wavelengthv.size(); iWav++)
-		I_nu[frequencyv.size() - iWav - 1] = I_lambda[iWav] * wavelengthv[iWav] *
-		                                     wavelengthv[iWav] / Constant::LIGHT;
+	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
+		I_nu[iFreq] = SpecialFunctions::planck(frequencyv[iFreq], Tc);
 
 	// Cut out the UV part
 	size_t i = 0;
-	size_t startLambdaUV, endLambdaUV;
-	while (wavelengthv[i] < 912 * Constant::ANG_CM && i < I_lambda.size())
+	size_t startUV, endUV;
+	while (frequencyv[i] < Constant::LIGHT / (2400 * Constant::ANG_CM) && i < frequencyv.size())
 		i++;
-	startLambdaUV = i > 0 ? i - 1 : 0;
-	while (wavelengthv[i] < 2400 * Constant::ANG_CM && i < I_lambda.size())
+	startUV = i > 0 ? i - 1 : 0;
+	while (frequencyv[i] < Constant::LIGHT / (912 * Constant::ANG_CM) && i < frequencyv.size())
 		i++;
-	endLambdaUV = i + 1;
-	cout << "UV goes from " << startLambdaUV << " to " << endLambdaUV << endl;
-	vector<double> wavelengthUV(wavelengthv.begin() + startLambdaUV,
-	                            wavelengthv.begin() + endLambdaUV);
-	vector<double> isrfUV(I_lambda.begin() + startLambdaUV, I_lambda.begin() + endLambdaUV);
+	endUV = i + 1;
+	cout << "UV goes from " << startUV << " to " << endUV << endl;
+	vector<double> frequenciesUV(frequencyv.begin() + startUV, frequencyv.begin() + endUV);
+	vector<double> isrfUV(begin(I_nu) + startUV, begin(I_nu) + endUV);
 
 	// Integrate over the UV only
 	double UVdensity = Constant::FPI / Constant::LIGHT *
-	                   NumUtils::integrate<double>(wavelengthUV, isrfUV);
+	                   TemplatedUtils::integrate<double>(frequenciesUV, isrfUV);
 	double currentG0 = UVdensity / Constant::HABING;
 
 	// Rescale to _G0
 	I_nu *= G0 / currentG0;
 
-	vector<double> frequencyUV(end(frequencyv) - endLambdaUV - 1,
-	                           end(frequencyv) - startLambdaUV - 1);
-	vector<double> isrfUVbis(end(I_nu) - endLambdaUV - 1, end(I_nu) - startLambdaUV - 1);
+	vector<double> isrfUVbis(begin(I_nu) + startUV, begin(I_nu) + endUV);
 
 	// Integrate over the UV only
 	double UVdensitybis = Constant::FPI / Constant::LIGHT *
-	                      NumUtils::integrate<double>(frequencyUV, isrfUVbis);
+	                      TemplatedUtils::integrate<double>(frequenciesUV, isrfUVbis);
 	cout << "Normalized spectrum uv = " << UVdensitybis << " ("
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
@@ -160,7 +151,7 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	out.close();
 	out = IOTools::ofstreamFile("testing/isrfUV.txt");
 	for (size_t b = 0; b < isrfUV.size(); b++)
-		out << frequencyUV[b] << '\t' << isrfUVbis[b] << '\n';
+		out << frequenciesUV[b] << '\t' << isrfUVbis[b] << '\n';
 	out.close();
 	return I_nu;
 }
