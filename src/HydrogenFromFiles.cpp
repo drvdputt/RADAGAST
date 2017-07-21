@@ -51,8 +51,10 @@ void HydrogenFromFiles::readData()
 		double j, observedEnergy, theoreticalEnergy;
 		istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >>
 		                observedEnergy >> theoreticalEnergy;
+#ifdef ECHO_READIN
 		DEBUG(lvIndex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
 		              << " " << observedEnergy << " " << theoreticalEnergy << " " << endl);
+#endif
 
 		// Get the first number from the config string
 		int n;
@@ -66,9 +68,10 @@ void HydrogenFromFiles::readData()
 
 		// Convert the energy from cm-1 to erg
 		double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
-
+#ifdef ECHO_READIN
 		DEBUG("n " << n << " l " << l << " 2j+1 " << twoJplus1 << " e "
 		           << e * Constant::ERG_EV << endl);
+#endif
 
 		/* The level indices in the data structures will go from 0 to number of levels minus
 		   one. The quantum numbers are also used as keys in a map, so we can quickly
@@ -101,20 +104,20 @@ void HydrogenFromFiles::readData()
 		   the transition: */
 		int upperIndex = max(leftIndex, rightIndex);
 		int lowerIndex = min(leftIndex, rightIndex);
-
+#ifdef ECHO_READIN
 		DEBUG(lowerIndex << " " << upperIndex << " " << wavAngstrom << " " << gf << " " << A
 		                 << endl);
-
+#endif
 		// Zero means two-photon transition, see CHIANTI user guide.
 		_chiantiAvv(upperIndex - 1, lowerIndex - 1) = wavAngstrom > 0 ? A : 0;
 
 		getline(wgfa, line);
 	}
 	wgfa.close();
-
+#ifdef ECHO_READIN
 	DEBUG("All chianti A coefficients:" << endl);
 	DEBUG(_chiantiAvv << endl);
-
+#endif
 	//---------------------//
 	// READ COLLISION DATA //
 	//---------------------//
@@ -139,11 +142,15 @@ void HydrogenFromFiles::readData()
 		Array Upsilonv(8);
 		for (int t = 0; t < 8; t++)
 		{
-			DEBUG("temp" << _andersonTempv[t]);
 			iss >> Upsilonv[t];
+#ifdef ECHO_READIN
+			DEBUG("temp" << _andersonTempv[t]);
 			DEBUG(" " << Upsilonv[t] << " ");
+#endif
 		}
+#ifdef ECHO_READIN
 		DEBUG(endl);
+#endif
 		_andersonUpsilonvm[{upperIndex, lowerIndex}] = Upsilonv;
 		getline(h_coll_str, line);
 	}
@@ -298,49 +305,55 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 
 	EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
 	// Electron contributions (n-changing)
-	for (int i = 0; i < _numL; i++)
+	if (ne > 0)
 	{
-		const HydrogenLevel& ini = _levelOrdering[i];
-		for (int f = 0; f < _numL; f++)
+		for (int i = 0; i < _numL; i++)
 		{
-			const HydrogenLevel& fin = _levelOrdering[f];
-			/* For downward transitions, calculate the collision rate, and derive the
+			const HydrogenLevel& ini = _levelOrdering[i];
+			for (int f = 0; f < _numL; f++)
+			{
+				const HydrogenLevel& fin = _levelOrdering[f];
+				/* For downward transitions, calculate the collision rate, and derive the
 			   rate for the corresponding upward transition too. */
-			if (ini.e() > fin.e())
-			{
-				double UpsilonDown = eCollisionStrength(ini, fin, T_eV);
-				double Cif = UpsilonDown * 8.6291e-6 / ini.g() / sqrt(T) * ne;
-				double Cfi = Cif * ini.g() / fin.g() *
-				             exp((fin.e() - ini.e()) / kT);
-				the_cvv(i, f) += Cif;
-				the_cvv(f, i) += Cfi;
+				if (ini.e() > fin.e())
+				{
+					double UpsilonDown = eCollisionStrength(ini, fin, T_eV);
+					double Cif = UpsilonDown * 8.6291e-6 / ini.g() / sqrt(T) *
+					             ne;
+					double Cfi = Cif * ini.g() / fin.g() *
+					             exp((fin.e() - ini.e()) / kT);
+					the_cvv(i, f) += Cif;
+					the_cvv(f, i) += Cfi;
+				}
+				// for upward transitions do nothing because we already covered them above
 			}
-			// for upward transitions do nothing because we already covered them above
 		}
 	}
 
-	// For the l-resolved levels, get l-changing collision rates
-	for (int n = 0; n <= _resolvedUpTo; n++)
+	// For the l-resolved levels, get l-changing collision rates (through proton collisions)
+	if (np > 0)
 	{
-		EMatrix qvv = PS64CollisionRateCoeff(n, T, ne);
-		// Fill in the collision rates for all combinations of li lf
-		for (int li = 0; li < n; li++)
+		for (int n = 0; n <= _resolvedUpTo; n++)
 		{
-			int i = indexOutput(n, li);
-			for (int lf = 0; lf < n; lf++)
+			EMatrix qvv = PS64CollisionRateCoeff(n, T, np);
+			// Fill in the collision rates for all combinations of li lf
+			for (int li = 0; li < n; li++)
 			{
-				int f = indexOutput(n, lf);
-				// None of the previous contributions should have been l-changing
-				assert(the_cvv(i, f) == 0);
-				the_cvv(i, f) += qvv(li, lf) * np;
+				int i = indexOutput(n, li);
+				for (int lf = 0; lf < n; lf++)
+				{
+					int f = indexOutput(n, lf);
+					// None of the previous contributions should have been l-changing
+					assert(the_cvv(i, f) == 0);
+					the_cvv(i, f) += qvv(li, lf) * np;
+				}
 			}
 		}
 	}
-
 	return the_cvv;
 }
 
-EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double ne) const
+EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) const
 {
 	EMatrix q_li_lf_goingUp = EMatrix::Zero(n, n);
 	EMatrix q_li_lf_goingDown = EMatrix::Zero(n, n);
@@ -366,7 +379,7 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double ne) co
 		   prevented divergence in the calculations of PS64 */
 		int index = indexOutput(n, l);
 		double tau2 = 1. / _totalAv(index) / _totalAv(index);
-		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / ne));
+		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
 
 		// eq 43
 		double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);

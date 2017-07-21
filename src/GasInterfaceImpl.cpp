@@ -70,6 +70,7 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		const double Tmin = 10;
 		const double logTmax = log10(Tmax);
 		const double logTmin = log10(Tmin);
+		const double logTtolerance = 1.e-4;
 
 		double logTinit = log10(Tinit);
 
@@ -90,7 +91,7 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 		};
 
 		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(
-		                evaluateThermalBalance, logTinit, 4.e-6, logTmax, logTmin);
+		                evaluateThermalBalance, logTinit, logTtolerance, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
 		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv);
@@ -208,7 +209,8 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 			for (int i = 0; i < s.abundancev.size(); i++)
 			{
 				bigChange = abs(changev(i)) > 0.01 * previousAbundancev(i);
-				if (bigChange) break;
+				if (bigChange)
+					break;
 			}
 			stopCriterion = !_molecularLevels || !bigChange;
 		}
@@ -227,7 +229,8 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
 	Array lineEmv = _atomicLevels->emissivityv(s.HSolution);
-	if (_molecularLevels) lineEmv += _molecularLevels->emissivityv(s.H2Solution);
+	if (_molecularLevels)
+		lineEmv += _molecularLevels->emissivityv(s.H2Solution);
 
 	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
@@ -239,7 +242,8 @@ Array GasInterfaceImpl::emissivityv(const Solution& s) const
 Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
 	Array lineOp = _atomicLevels->opacityv(s.HSolution);
-	if (_molecularLevels) lineOp += _molecularLevels->emissivityv(s.H2Solution);
+	if (_molecularLevels)
+		lineOp += _molecularLevels->emissivityv(s.H2Solution);
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
@@ -285,14 +289,16 @@ double GasInterfaceImpl::heating(const Solution& s) const
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
 	double result = _atomicLevels->cooling(s.HSolution);
-	if (_molecularLevels) result += _molecularLevels->cooling(s.H2Solution);
+	if (_molecularLevels)
+		result += _molecularLevels->cooling(s.H2Solution);
 	return result;
 }
 
 double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
 	double result = _atomicLevels->heating(s.HSolution);
-	if (_molecularLevels) result += _molecularLevels->heating(s.H2Solution);
+	if (_molecularLevels)
+		result += _molecularLevels->heating(s.H2Solution);
 	return result;
 }
 
@@ -303,8 +309,9 @@ double GasInterfaceImpl::continuumCooling(const Solution& s) const
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
-	double result =_freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
+	double result = _freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
 	result += Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
-	if (_molecularLevels) result += _molecularLevels->dissociationHeating(s.H2Solution);
+	if (_molecularLevels)
+		result += _molecularLevels->dissociationHeating(s.H2Solution);
 	return result;
 }

@@ -1,6 +1,8 @@
 #include "ChemistrySolver.h"
 #include "ChemicalNetwork.h"
 
+#include <iostream>
+
 ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv, const EMatrix& productStoichvv,
                                  const EMatrix& conservationCoeffvv)
                 : _rvv(reactantStoichvv), _pvv(productStoichvv), _cvv(conservationCoeffvv)
@@ -133,16 +135,25 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
                                        std::function<EVector(const EVector& xv)> functionv,
                                        const EVector& x0v) const
 {
+	int counter = 0;
 	EVector xv = x0v;
 	bool converged = true;
 	do
 	{
+		counter++;
+
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
+
+		std::cout << "Newton-Raphson iteration " << counter << std::endl;
+		std::cout << "Jacobian: " << std::endl << jfvv << std::endl;
+		std::cout << "Function: " << std::endl << fv << std::endl;
 		EVector deltaxv = jfvv.colPivHouseholderQr().solve(fv);
 		// Converged if all densities have changed by less than 1 percent
+		std::cout << "Delta x: " << deltaxv << " x: " << xv << std::endl;
 		converged = (deltaxv.array().abs() < 0.01 * xv.array()).all();
 		xv += deltaxv;
+		if (counter > 10) abort();
 	} while (!converged);
 	return xv;
 }

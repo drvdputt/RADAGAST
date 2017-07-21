@@ -1,9 +1,10 @@
 #include "ChemicalNetwork.h"
 #include "IonizationBalance.h"
 
+#include <iostream>
+
 namespace
 {
-const int numReactions = 4;
 const int numSpecies = 4;
 const int numConserved = 2;
 // TODO temp hack, need general system for the whole code
@@ -29,20 +30,25 @@ ChemicalNetwork::ChemicalNetwork()
 	// Dissociation after excitation
 	// H2 -> H + H
 	_reactionv.emplace_back(Array{0, 0, 0, 1}, Array{0, 0, 2, 0});
+
+	_numReactions = _reactionv.size();
 }
 
 EMatrix ChemicalNetwork::reactantStoichvv() const
 {
-	EMatrix r(numSpecies, numReactions);
-	for (int j = 0; j < numReactions; j++)
+	EMatrix r(numSpecies, _numReactions);
+	for (int j = 0; j < _numReactions; j++)
+	{
+		std::cout << _reactionv[j]._rv << std::endl;
 		r.col(j) = _reactionv[j]._rv;
+	}
 	return r;
 }
 
 EMatrix ChemicalNetwork::productStoichvv() const
 {
-	EMatrix p(numSpecies, numReactions);
-	for (int j = 0; j < numReactions; j++)
+	EMatrix p(numSpecies, _numReactions);
+	for (int j = 0; j < _numReactions; j++)
 		p.col(j) = _reactionv[j]._pv;
 	return p;
 }
@@ -67,7 +73,7 @@ EMatrix ChemicalNetwork::conservationCoeffvv() const
 EVector ChemicalNetwork::rateCoeffv(double T, const Array& frequencyv,
                                     const Array& specificIntensityv, double kFromH2Levels) const
 {
-	EVector k(numReactions);
+	EVector k(_numReactions);
 
 	// Photoionization
 	// H + gamma -> ne + np

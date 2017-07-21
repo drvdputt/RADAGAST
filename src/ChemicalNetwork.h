@@ -56,6 +56,7 @@ private:
 	} Reaction;
 
 	std::vector<Reaction> _reactionv;
+	int _numReactions;
 };
 
 #endif /* GASMODULE_GIT_SRC_CHEMICALNETWORK_H_ */

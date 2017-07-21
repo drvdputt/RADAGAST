@@ -216,6 +216,9 @@ void Testing::runGasInterfaceImpl(const GasInterface& gi, const std::string& out
 	GasState gs;
 	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv);
 
+	cout << "Equilibrium temperature: " << gs.temperature() << endl;
+	cout << "Ionized fraction: " << gs.ionizedFraction() << endl;
+
 	const Array& emv = gs._emissivityv;
 	const Array& opv = gs._opacityv;
 	const Array& scav = gs._scatteringOpacityv * gs._previousISRFv;
@@ -450,10 +453,10 @@ void Testing::runFromFilesvsHardCoded()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gihhc(frequencyv, "hhc");
+	GasInterface gihhc(frequencyv, "hhc", false);
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasInterface gihff(frequencyv, "hff2");
+	GasInterface gihff(frequencyv, "hff2", false);
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
@@ -468,7 +471,7 @@ void Testing::runFullModel()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gihffFull(frequencyv, "");
+	GasInterface gihffFull(frequencyv, "", true);
 	runGasInterfaceImpl(gihffFull, "");
 }
 
