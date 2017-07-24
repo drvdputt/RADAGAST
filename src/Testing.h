@@ -54,6 +54,8 @@ void testACollapse();
     approached quite well. */
 void testPS64Collisions();
 
+void testChemistry();
+
 /** Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
     HydrogenFromFiles. */
 void compareFromFilesvsHardCoded();

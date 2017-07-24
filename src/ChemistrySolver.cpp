@@ -27,11 +27,12 @@ ChemistrySolver::~ChemistrySolver() = default;
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
 	EVector conservedQuantityv = _cvv * n0v;
-	EVector result = newtonRaphson([&](const EVector& nv) { return evaluateJvv(nv, rateCoeffv); },
-	              [&](const EVector& nv) {
-		              return evaluateFv(nv, rateCoeffv, conservedQuantityv);
-		      },
-	              n0v);
+	EVector result = newtonRaphson(
+	                [&](const EVector& nv) { return evaluateJvv(nv, rateCoeffv); },
+	                [&](const EVector& nv) {
+		                return evaluateFv(nv, rateCoeffv, conservedQuantityv);
+		        },
+	                n0v);
 	return result;
 }
 
@@ -130,7 +131,7 @@ double ChemistrySolver::densityProductDerivative(const EVector& nv, size_t r, si
 		return densityProductDerivative;
 	}
 }
- 
+
 EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)> jacobianfvv,
                                        std::function<EVector(const EVector& xv)> functionv,
                                        const EVector& x0v) const
@@ -144,16 +145,20 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
+		// TODO: remove rows (= equations) that are zero,
 
 		std::cout << "Newton-Raphson iteration " << counter << std::endl;
 		std::cout << "Jacobian: " << std::endl << jfvv << std::endl;
 		std::cout << "Function: " << std::endl << fv << std::endl;
-		EVector deltaxv = jfvv.colPivHouseholderQr().solve(fv);
+		EVector deltaxv = jfvv.colPivHouseholderQr().solve(-fv);
 		// Converged if all densities have changed by less than 1 percent
-		std::cout << "Delta x: " << deltaxv << " x: " << xv << std::endl;
-		converged = (deltaxv.array().abs() < 0.01 * xv.array()).all();
+		std::cout << "Delta x:\n" << deltaxv << std::endl << " x:\n" << xv << std::endl;
+		converged = (deltaxv.array().abs() <= 0.01 * xv.array()).all() ||
+		            (fv.array() == 0).all();
 		xv += deltaxv;
-		if (counter > 10) abort();
+
+		//		if (counter > 10)
+		//			abort();
 	} while (!converged);
 	return xv;
 }

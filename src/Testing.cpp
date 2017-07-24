@@ -1,5 +1,8 @@
 #include "Testing.h"
+#include "ChemicalNetwork.h"
+#include "ChemistrySolver.h"
 #include "Constants.h"
+#include "EigenAliases.h"
 #include "Error.h"
 #include "FreeBound.h"
 #include "GasInterface.h"
@@ -13,8 +16,6 @@
 #include "PhotoelectricHeating.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-
-#include <Eigen/Dense>
 
 using namespace std;
 
@@ -145,7 +146,7 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
-	ofstream out = IOTools::ofstreamFile("isrf.txt");
+	ofstream out = IOTools::ofstreamFile("testing/isrf.txt");
 	for (size_t b = 0; b < I_nu.size(); b++)
 		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	out.close();
@@ -393,6 +394,27 @@ void Testing::testPS64Collisions()
 		}
 		out.close();
 	}
+}
+
+void Testing::testChemistry()
+{
+	const double T = 10000;
+	vector<double> freqvec = generateGeometricGridv(200, 1e11, 1e16);
+	Array frequencyv(freqvec.data(), freqvec.size());
+	Array specificIntensityv = generateSpecificIntensityv(freqvec, 25000, 1);
+
+	ChemistrySolver cs(move(make_unique<ChemicalNetwork>()));
+	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, 0);
+	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted into H.
+	kv(2) = 0;
+	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
+	EVector n0v(4);
+	n0v << 25, 25, 75, 0;
+	EVector nv = cs.solveBalance(kv, n0v);
+	double ionizedFraction = Ionization::solveBalance(100, T, frequencyv, specificIntensityv);
+	cout << "Compare with ionized fraction calculation: " << endl;
+	cout << "f = " << ionizedFraction << endl;
+	assert(nv(1) / nv(2) - ionizedFraction < 0.01);
 }
 
 void Testing::compareFromFilesvsHardCoded()

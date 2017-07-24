@@ -4,6 +4,8 @@
 #include "Array.h"
 #include "EigenAliases.h"
 
+#include <map>
+#include <string>
 #include <vector>
 
 /** An object of this class will provide a self-consistent set of data that can be handed to a
@@ -12,6 +14,11 @@
 class ChemicalNetwork
 {
 public:
+	/** A publicly available map, which maps species names to the indices used in the vector
+	    Currently available names are "e-" for electrons "H+" for protons, "H" for atomic
+	    hydrogen and "H2" for molecular hydrogen. */
+	static const std::map<std::string, int> speciesIndex;
+
 	ChemicalNetwork();
 
 	/** Provides a matrix containing the stoichiometry of each included species s (rows) on the
@@ -43,8 +50,8 @@ public:
 	                   double kFromH2Levels) const;
 
 private:
-	// Put the reactions in a list for easy processing. The rate coefficients will be
-	// calculated individually though (i.e. not in a loop), while respecting the same order.
+	/** Put the reactions in a list for easy processing. The rate coefficients will be
+	    calculated individually though (i.e. not in a loop), while respecting the same order. */
 	typedef struct Reaction
 	{
 		Reaction(const Array& rv, const Array& pv)

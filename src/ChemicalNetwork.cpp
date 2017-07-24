@@ -12,6 +12,9 @@ const int numConserved = 2;
 // Species are (electron, proton, atomic H, molecular H2)
 }
 
+const std::map<std::string, int> ChemicalNetwork::speciesIndex = {
+                {"e-", 0}, {"H+", 1}, {"H", 2}, {"H2", 3}};
+
 ChemicalNetwork::ChemicalNetwork()
 {
 	// Add reactions like this:
