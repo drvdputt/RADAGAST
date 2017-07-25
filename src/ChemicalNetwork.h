@@ -19,7 +19,17 @@ public:
 	    hydrogen and "H2" for molecular hydrogen. */
 	static const std::map<std::string, int> speciesIndex;
 
+	/** Sets up a chemical network with a fixed set of reactions, added in the constructor. */
 	ChemicalNetwork();
+
+	/** Calculates the rate coefficients for each reaction. They still have to be multiplied
+	    with the densities of the reaction products, so watch out. The unit varies, but
+	    multiplying with the correct densities (for example *np*ne for radiative recombination)
+	    will amount to cm-3 s-1 as expected. Some of the arguments are rates which have been
+	    calculated somewhere else. This functions simply fill them in into the right spot of the
+	    k-vector. */
+	EVector rateCoeffv(double T, const Array& frequencyv, const Array& specificIntensityv,
+	                   double kFromH2Levels) const;
 
 private:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
@@ -48,25 +58,12 @@ public:
 	    from the initial guess of the chemical abundances. */
 	EMatrix conservationCoeffvv() const;
 
-	/** Calculates the rate coefficients for each reaction. They still have to be multiplied
-	    with the densities of the reaction products, so watch out. The unit varies, but
-	    multiplying with the correct densities (for example *np*ne for radiative recombination)
-	    will amount to cm-3 s-1 as expected. Some of the arguments are rates which have been
-	    calculated somewhere else. This functions simply fill them in into the right spot of the
-	    k-vector. */
-	EVector rateCoeffv(double T, const Array& frequencyv, const Array& specificIntensityv,
-	                   double kFromH2Levels) const;
-
 private:
 	/** Put the reactions in a list for easy processing. The rate coefficients will be
 	    calculated individually though (i.e. not in a loop), while respecting the same order. */
 	typedef struct Reaction
 	{
-		Reaction(const Array& rv, const Array& pv)
-		{
-			_rv = Eigen::Map<const EVector>(&rv[0], rv.size());
-			_pv = Eigen::Map<const EVector>(&pv[0], pv.size());
-		}
+		Reaction(const EVector& rv, const EVector& pv) : _rv(rv), _pv(pv) {}
 		EVector _rv, _pv;
 	} Reaction;
 

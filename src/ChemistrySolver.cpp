@@ -1,5 +1,6 @@
 #include "ChemistrySolver.h"
 #include "ChemicalNetwork.h"
+#include "DebugMacros.h"
 
 #include <iostream>
 
@@ -142,12 +143,15 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 	do
 	{
 		counter++;
+		std::cout << "NR-iteration " << counter << std::endl;
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
 		// TODO: remove rows (= equations) that are zero,
-		std::cout << "Newton-Raphson iteration " << counter << std::endl;
-		std::cout << "Jacobian: " << std::endl << jfvv << std::endl;
-		std::cout << "Function: " << std::endl << fv << std::endl;
+#ifdef PRINT_MATRICES
+		DEBUG("Newton-Raphson iteration " << counter << std::endl);
+		DEBUG("Jacobian: " << std::endl << jfvv << std::endl);
+		DEBUG("Function: " << std::endl << fv << std::endl);
+#endif
 		EVector deltaxv = jfvv.colPivHouseholderQr().solve(-fv);
 
 		/* Force the result to be positive: x + deltax >= 0 <==> deltax >= -x ==> deltax =
@@ -160,17 +164,20 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		   or when its relative abundance is negligibly small. Notice that the inequalities
 		   NEED to be 'smaller than or equal', in case one of the x'es is zero. */
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
-		                (deltaxv.array().abs() <= 1.e-17 * xv.array().abs()) ||
+		                (deltaxv.array().abs() <= 1.e-9 * xv.array().abs()) ||
 		                xv.array() <= 1.e-99 * xv.norm();
 		converged = convergedv.all() || (fv.array() == 0).all();
 
-		std::cout << "Delta x:\n"
-		          << deltaxv << std::endl
-		          << "previous x:\n"
-		          << xv << std::endl;
-		std::cout << "Convergedv: " << std::endl << convergedv << std::endl;
-
+#ifdef PRINT_MATRICES
+		DEBUG("Delta x:\n"
+		      << deltaxv << std::endl
+		      << "previous x:\n"
+		      << xv << std::endl
+		      << "Convergedv: " << std::endl
+		      << convergedv << std::endl);
+#endif
 		xv += deltaxv;
+
 	} while (!converged);
 	return xv;
 }

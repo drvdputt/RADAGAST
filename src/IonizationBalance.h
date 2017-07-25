@@ -28,7 +28,7 @@ double heating(double nH, double f, double T, const Array& frequencyv,
 
 /** Kinetic energy lost during recombination (basically the photon energy, minus the binding energy
     contribution. */
-double cooling(double nH, double f, double T);
+double cooling(double nH, double np, double ne, double T);
 
 const double THRESHOLD = 3.28984196e15; // Hertz;
 }

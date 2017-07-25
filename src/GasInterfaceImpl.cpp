@@ -18,15 +18,6 @@
 
 using namespace std;
 
-GasInterfaceImpl::GasInterfaceImpl(const Array& frequencyv)
-                : _frequencyv(frequencyv),
-                  _atomicLevels(make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(5),
-                                                            frequencyv)),
-                  _freeBound(make_unique<FreeBound>(frequencyv)),
-                  _freeFree(make_unique<FreeFree>(frequencyv))
-{
-}
-
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
                                    const Array& frequencyv)
                 : _frequencyv(frequencyv), _atomicLevels(std::move(atomModel)),
@@ -38,6 +29,11 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
 		_molecularLevels = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
 		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
 	}
+
+	ine = ChemicalNetwork::speciesIndex.at("e-");
+	inp = ChemicalNetwork::speciesIndex.at("H+");
+	inH = ChemicalNetwork::speciesIndex.at("H");
+	inH2 = ChemicalNetwork::speciesIndex.at("H2");
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
@@ -117,14 +113,13 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 	}
 #endif
 	// Put the relevant data into the gas state
-	gs = GasState(specificIntensityv, emv, opv, scv, s.T, s.f);
+	gs = GasState(specificIntensityv, emv, opv, scv, s.T, f(s));
 }
 
 GasInterfaceImpl::Solution
 GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& specificIntensityv) const
 {
 	Solution s;
-	s.n = ntotal;
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
@@ -147,13 +142,14 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 
 		// Initial guess for the chemistry
 		s.abundancev = EVector(4);
-		s.abundancev << 0, 0, ntotal / 2., ntotal / 4.;
+		s.abundancev << ntotal / 4., ntotal / 4., ntotal / 4., ntotal / 4.;
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
 
 		// Solve the levels for the first time using the initial guess
 		solveLevelBalances();
 
+		int counter = 0;
 		bool stopCriterion = false;
 		while (!stopCriterion)
 		{
@@ -189,35 +185,38 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 			else
 			{
 				// Just solve the ionization balance in the nebular approximation
-				s.f = Ionization::solveBalance(ntotal, T, _frequencyv,
-				                               specificIntensityv);
-				DEBUG("Ionized fraction = " << s.f << endl);
+				double f = Ionization::solveBalance(ntotal, T, _frequencyv,
+				                                    specificIntensityv);
+				DEBUG("Ionized fraction = " << f << endl);
 
 				// Neutral fraction
-				s.abundancev[inH] = ntotal * (1 - s.f);
+				s.abundancev[inH] = ntotal * (1 - f);
 				// Ionized fraction
-				s.abundancev[inp] = ntotal * s.f;
+				s.abundancev[inp] = ntotal * f;
 				// Electron density is simply equal to proton density
 				s.abundancev[ine] = s.abundancev[inp];
 				s.abundancev[inH2] = 0;
 			}
 			solveLevelBalances();
 
-			// TODO: stopCriterion = some evaluation
-			EVector changev = s.abundancev - previousAbundancev;
-			bool bigChange = false;
-			for (int i = 0; i < s.abundancev.size(); i++)
-			{
-				bigChange = abs(changev(i)) > 0.01 * previousAbundancev(i);
-				if (bigChange)
-					break;
-			}
-			stopCriterion = !_molecularLevels || !bigChange;
+			// An abundance has converged if it changes by less than 1%
+			EArray changev = s.abundancev - previousAbundancev;
+			// Or if it is negligible compared to the norm (or sum maybe?)
+			double norm = s.abundancev.norm();
+			Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
+			                changev.abs() <= 0.01 * previousAbundancev.array() ||
+					s.abundancev.array() < 1.e-99 * norm;
+			counter++;
+			DEBUG("Chemistry: " << counter << endl
+			                    << s.abundancev << endl
+			                    << "convergence: \n" << convergedv << endl);
+
+			// Currently, the implementation without molecules does not need iteration.
+			stopCriterion = !_molecularLevels || convergedv.all();
 		}
 	}
 	else
 	{
-		s.f = 0;
 		s.HSolution = _atomicLevels->solveBalance(0, 0, 0, T, specificIntensityv);
 		if (_molecularLevels)
 			s.H2Solution = _molecularLevels->solveBalance(0, 0, 0, T,
@@ -304,13 +303,15 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
-	return _freeFree->cooling(np_ne(s), s.T) + Ionization::cooling(s.n, s.f, s.T);
+	return _freeFree->cooling(np_ne(s), s.T) +
+	       Ionization::cooling(s.abundancev(inH), s.abundancev(inp), s.abundancev(ine), s.T);
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
 	double result = _freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
-	result += Ionization::heating(s.n, s.f, s.T, _frequencyv, s.specificIntensityv);
+	result += Ionization::heating(s.abundancev(inp), s.abundancev(ine), s.T, _frequencyv,
+	                              s.specificIntensityv);
 	if (_molecularLevels)
 		result += _molecularLevels->dissociationHeating(s.H2Solution);
 	return result;

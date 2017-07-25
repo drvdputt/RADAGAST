@@ -194,13 +194,13 @@ void Testing::testIonizationStuff()
 	out = IOTools::ofstreamFile("ionization/recombinationCooling.dat");
 	out << "#kT / eV \t alpha" << endl;
 	// by choosing these parameters, panel 2 of figure 9 from 2017-Mao should be reproduced
-	double nH = 1;
+	double n = 1;
 	double f = 1;
 	vector<double> kT_eVv = generateGeometricGridv(300, 1e-3, 1e3);
 	for (double kT_eV : kT_eVv)
 	{
 		double T = kT_eV / Constant::BOLTZMAN / Constant::ERG_EV;
-		double cool = Ionization::cooling(nH, f, T) / Constant::RYDBERG;
+		double cool = Ionization::cooling(n * (1 - f), f * n, f * n, T) / Constant::RYDBERG;
 		out << kT_eV << "\t" << cool << endl;
 	}
 	out.close();
@@ -401,17 +401,21 @@ void Testing::testChemistry()
 	const double T = 10000;
 	vector<double> freqvec = generateGeometricGridv(200, 1e11, 1e16);
 	Array frequencyv(freqvec.data(), freqvec.size());
-	Array specificIntensityv = generateSpecificIntensityv(freqvec, 25000, 1);
+	Array specificIntensityv = generateSpecificIntensityv(freqvec, 25000, 10);
 
 	ChemistrySolver cs(move(make_unique<ChemicalNetwork>()));
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, 0);
+
 	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted into H.
-	kv(2) = 1e-10;
+	double kdiss = 1e-9;
+	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
+
 	EVector n0v(4);
 	n0v << 25, 25, 75, 0;
 	EVector nv = cs.solveBalance(kv, n0v);
+
 	double ionizedFraction = Ionization::solveBalance(100, T, frequencyv, specificIntensityv);
+
 	cout << "Compare with ionized fraction calculation: " << endl;
 	cout << "f = " << ionizedFraction << endl;
 	assert(nv(1) / (nv(1) + nv(2)) - ionizedFraction < 0.01);
@@ -484,8 +488,10 @@ void Testing::runFromFilesvsHardCoded()
 
 void Testing::runFullModel()
 {
+	bool molecular = false;
+
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(200, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                generateGeometricGridv(2000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 	Array unrefined(tempFrequencyv.data(), tempFrequencyv.size());
 
@@ -493,7 +499,7 @@ void Testing::runFullModel()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gihffFull(frequencyv, "", true);
+	GasInterface gihffFull(frequencyv, "", molecular);
 	runGasInterfaceImpl(gihffFull, "");
 }
 
@@ -527,7 +533,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
 		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
-		       << cCool << tab << s.f << endl;
+		       << cCool << tab << gi.f(s) << endl;
 	}
 	output.close();
 

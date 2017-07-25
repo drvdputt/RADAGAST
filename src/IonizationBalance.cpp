@@ -92,12 +92,11 @@ double Ionization::recombinationRateCoeff(double T)
 	return a / (sqrt(T / T0) * pow(1 + sqrt(T / T0), 1 - b) * pow(1 + sqrt(T / T1), 1 + b));
 }
 
-double Ionization::heating(double nH, double f, double T, const Array& frequencyv,
+double Ionization::heating(double np, double ne, double T, const Array& frequencyv,
                            const Array& specificIntensityv)
 {
 	// Use formula 3.2 from Osterbrock
-	double ne = f * nH;
-	double numberOfIonizations = ne * ne * recombinationRateCoeff(T);
+	double numberOfIonizations = np * ne * recombinationRateCoeff(T);
 
 	size_t nFreq = frequencyv.size();
 	Array integrand(nFreq);
@@ -126,11 +125,11 @@ double Ionization::heating(double nH, double f, double T, const Array& frequency
 	return result;
 }
 
-double Ionization::cooling(double nH, double f, double T)
+double Ionization::cooling(double nH, double np, double ne, double T)
 {
+	// Kinetic energy lost through radiative recombination
 	double kT = Constant::BOLTZMAN * T;
 	double T_eV = kT * Constant::ERG_EV;
-	double ne = nH * f;
 
 	// use fit from 2017-Mao
 	// ft = beta / alpha
@@ -147,6 +146,10 @@ double Ionization::cooling(double nH, double f, double T)
 	//	            (1 + a1 * pow(T_eV, -b1));
 	double ft = a0 * pow(T_eV, -b0) / (1 + a1 * pow(T_eV, -b1));
 
-	double result = ne * ne * kT * recombinationRateCoeff(T) * ft;
+	double result = np * ne * kT * recombinationRateCoeff(T) * ft;
+
+	// Kinetic energy lost through collisional ionization (rate * ionization potential)
+	result += Constant::PLANCK * Ionization::THRESHOLD * ne * nH * collisionalRateCoeff(T);
+
 	return result;
 }

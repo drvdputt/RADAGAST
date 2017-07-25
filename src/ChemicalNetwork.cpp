@@ -24,7 +24,9 @@ ChemicalNetwork::ChemicalNetwork()
 	//_reactionv.emplace_back(Array{0, 0, 1, 0}, Array{1, 1, 0, 0});
 	addReaction({"H"}, {1}, {"e-", "H+"}, {1, 1});
 
-	// TODO: add collisional ionization
+	// Ionization by collision with electron
+	// H + e- -> H+ + 2e-
+	addReaction({"H", "e-"}, {1, 1}, {"H+", "e-"}, {1, 2});
 
 	// Radiative recombination
 	// e- + H+ -> H + gamma
@@ -39,6 +41,34 @@ ChemicalNetwork::ChemicalNetwork()
 	_numReactions = _reactionv.size();
 }
 
+EVector ChemicalNetwork::rateCoeffv(double T, const Array& frequencyv,
+                                    const Array& specificIntensityv, double kFromH2Levels) const
+{
+	EVector k(_numReactions);
+
+	int r = 0;
+
+	// Photoionization
+	// H + gamma -> ne + np
+	k(r) = Ionization::photoRateCoeff(frequencyv, specificIntensityv);
+
+	// Ionization by collision with electron
+	r++;
+	k(r) = Ionization::collisionalRateCoeff(T);
+
+	// Radiative recombination
+	// ne + np -> H + gamma
+	r++;
+	k(r) = Ionization::recombinationRateCoeff(T);
+
+	// Dissociation after excitation
+	// H2 -> H + H
+	r++;
+	k(r) = kFromH2Levels;
+
+	return k;
+}
+
 void ChemicalNetwork::addReaction(const std::vector<std::string>& reactantNamev,
                                   const Array& reactantStoichv,
                                   const std::vector<std::string>& productNamev,
@@ -51,13 +81,13 @@ void ChemicalNetwork::addReaction(const std::vector<std::string>& reactantNamev,
 		Error::runtime("Error adding reaction: productNamev and productStoichv size "
 		               "mismatch");
 
-	Array leftSidev(numSpecies);
+	EVector leftSidev = EVector::Zero(numSpecies);
 	for (size_t r = 0; r < reactantNamev.size(); r++)
-		leftSidev[speciesIndex.at(reactantNamev[r])] = reactantStoichv[r];
+		leftSidev(speciesIndex.at(reactantNamev[r])) += reactantStoichv[r];
 
-	Array rightSidev(numSpecies);
+	EVector rightSidev= EVector::Zero(numSpecies);
 	for (size_t p = 0; p < productNamev.size(); p++)
-		rightSidev[speciesIndex.at(productNamev[p])] = productStoichv[p];
+		rightSidev(speciesIndex.at(productNamev[p])) += productStoichv[p];
 
 	_reactionv.emplace_back(leftSidev, rightSidev);
 }
@@ -93,26 +123,4 @@ EMatrix ChemicalNetwork::conservationCoeffvv() const
 	c.row(1) = electronEq;
 
 	return c;
-}
-
-EVector ChemicalNetwork::rateCoeffv(double T, const Array& frequencyv,
-                                    const Array& specificIntensityv, double kFromH2Levels) const
-{
-	EVector k(_numReactions);
-
-	// Photoionization
-	// H + gamma -> ne + np
-	k(0) = Ionization::photoRateCoeff(frequencyv, specificIntensityv);
-
-	// TODO: add collisional ionization
-
-	// Radiative recombination
-	// ne + np -> H + gamma
-	k(1) = Ionization::recombinationRateCoeff(T);
-
-	// Dissociation after excitation
-	// H2 -> H + H
-	k(2) = kFromH2Levels;
-
-	return k;
 }

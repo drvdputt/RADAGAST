@@ -11,7 +11,7 @@ H2Levels::~H2Levels() = default;
 double H2Levels::dissociationRate(const NLevel::Solution& s) const
 {
 	// TODO
-	return 0;
+	return 1.e-9;
 }
 
 double H2Levels::dissociationHeating(const NLevel::Solution& s) const
