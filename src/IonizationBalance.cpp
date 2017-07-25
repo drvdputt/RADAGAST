@@ -34,6 +34,7 @@ double Ionization::solveBalance(double nH, double T, const Array& frequencyv,
 	//
 	DEBUG("Ionization rate is " << ne * recombinationRateCoeff(T) << " s-1" << endl);
 
+	// TODO: find better solution for this
 	// For very strong radiation fields, some numerical problems can appear... so we cap to 1.
 	return min(ne / nH, 1.);
 }

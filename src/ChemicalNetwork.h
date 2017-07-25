@@ -21,6 +21,14 @@ public:
 
 	ChemicalNetwork();
 
+private:
+	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
+	    network. */
+	void addReaction(const std::vector<std::string>& reactantNamev,
+	                 const Array& reactantStoichv, const std::vector<std::string>& productNamev,
+	                 const Array& productStoichv);
+
+public:
 	/** Provides a matrix containing the stoichiometry of each included species s (rows) on the
 	    left hand side of each reaction r (columns) of the network. Multiplying this matrix with
 	    a column vector of reaction speeds (in cm-3 s-1) will yield the destruction rate of each

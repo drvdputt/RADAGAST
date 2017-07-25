@@ -142,23 +142,35 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 	do
 	{
 		counter++;
-
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
 		// TODO: remove rows (= equations) that are zero,
-
 		std::cout << "Newton-Raphson iteration " << counter << std::endl;
 		std::cout << "Jacobian: " << std::endl << jfvv << std::endl;
 		std::cout << "Function: " << std::endl << fv << std::endl;
 		EVector deltaxv = jfvv.colPivHouseholderQr().solve(-fv);
-		// Converged if all densities have changed by less than 1 percent
-		std::cout << "Delta x:\n" << deltaxv << std::endl << " x:\n" << xv << std::endl;
-		converged = (deltaxv.array().abs() <= 0.01 * xv.array()).all() ||
-		            (fv.array() == 0).all();
-		xv += deltaxv;
 
-		//		if (counter > 10)
-		//			abort();
+		/* Force the result to be positive: x + deltax >= 0 <==> deltax >= -x ==> deltax =
+		   max(deltax, -x). */
+		deltaxv = deltaxv.array().max(-xv.array());
+
+		// TODO: use 'line search' instead to enforce positivity
+
+		/* We assume that a density has converged when the relative change is less than .1%,
+		   or when its relative abundance is negligibly small. Notice that the inequalities
+		   NEED to be 'smaller than or equal', in case one of the x'es is zero. */
+		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
+		                (deltaxv.array().abs() <= 1.e-17 * xv.array().abs()) ||
+		                xv.array() <= 1.e-99 * xv.norm();
+		converged = convergedv.all() || (fv.array() == 0).all();
+
+		std::cout << "Delta x:\n"
+		          << deltaxv << std::endl
+		          << "previous x:\n"
+		          << xv << std::endl;
+		std::cout << "Convergedv: " << std::endl << convergedv << std::endl;
+
+		xv += deltaxv;
 	} while (!converged);
 	return xv;
 }
