@@ -1,4 +1,3 @@
-#include "PhotoelectricHeating.h"
 #include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
@@ -7,6 +6,7 @@
 
 #include <cmath>
 #include <iomanip>
+#include "GrainPhotoelectricEffect.h"
 
 //#define EXACTGRID
 
@@ -18,7 +18,7 @@ vector<double> _filelambdav, _fileav;
 vector<vector<double>> _Qabsvv, _Qscavv, _asymmparvv;
 }
 
-void PhotoelectricHeatingRecipe::readQabs() const
+void GrainPhotoelectricEffect::readQabs() const
 {
 	///////////////////// Begin copy-paste from SKIRT
 	bool reverse = true;
@@ -93,7 +93,7 @@ void PhotoelectricHeatingRecipe::readQabs() const
 }
 
 std::vector<double>
-PhotoelectricHeatingRecipe::generateQabsv(double a, const std::vector<double>& wavelengthv) const
+GrainPhotoelectricEffect::generateQabsv(double a, const std::vector<double>& wavelengthv) const
 {
 	vector<double> Qabs(wavelengthv.size());
 	vector<double> QabsFromFileForA(_filelambdav.size());
@@ -141,7 +141,7 @@ PhotoelectricHeatingRecipe::generateQabsv(double a, const std::vector<double>& w
 	return Qabs;
 }
 
-double PhotoelectricHeatingRecipe::ionizationPotential(double a, int Z) const
+double GrainPhotoelectricEffect::ionizationPotential(double a, int Z) const
 {
 	double e2a = Constant::ESQUARE / a;
 	double ip_v = (Z + .5) * e2a;
@@ -161,7 +161,7 @@ double PhotoelectricHeatingRecipe::ionizationPotential(double a, int Z) const
 	return ip_v;
 }
 
-void PhotoelectricHeatingRecipe::chargeBalance(double a, const Environment& env,
+void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
                                                const std::vector<double>& Qabs, int& resultZmax,
                                                int& resultZmin, std::vector<double>& resultfZ) const
 {
@@ -306,7 +306,7 @@ void PhotoelectricHeatingRecipe::chargeBalance(double a, const Environment& env,
 	//    }
 }
 
-double PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const Array& wavelengthv,
+double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wavelengthv,
                                                  const std::vector<double>& Qabs,
                                                  const Array& energyDensity_lambda) const
 {
@@ -392,7 +392,7 @@ double PhotoelectricHeatingRecipe::heatingRateAZ(double a, int Z, const Array& w
 	return peIntegral + pdIntegral;
 }
 
-double PhotoelectricHeatingRecipe::heatingRateA(double a, const Environment& env,
+double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
                                                 const std::vector<double>& Qabs) const
 {
 	double totalHeatingForGrainSize = 0;
@@ -433,7 +433,7 @@ double PhotoelectricHeatingRecipe::heatingRateA(double a, const Environment& env
 	return totalHeatingForGrainSize;
 }
 
-double PhotoelectricHeatingRecipe::heatingRate(const Environment& env,
+double GrainPhotoelectricEffect::heatingRate(const Environment& env,
                                                const std::vector<double>& grainSizev,
                                                const std::vector<double>& grainDensityv,
                                                const std::vector<std::vector<double>>& absQvv) const
@@ -446,7 +446,7 @@ double PhotoelectricHeatingRecipe::heatingRate(const Environment& env,
 	return total;
 }
 
-double PhotoelectricHeatingRecipe::emissionRate(double a, int Z, const Array& wavelengthv,
+double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& wavelengthv,
                                                 const std::vector<double>& Qabs,
                                                 const Array& energyDensity_lambda) const
 {
@@ -521,7 +521,7 @@ double PhotoelectricHeatingRecipe::emissionRate(double a, int Z, const Array& wa
 	return peIntegral + pdIntegral;
 }
 
-double PhotoelectricHeatingRecipe::energyIntegral(double Elow, double Ehigh, double Emin,
+double GrainPhotoelectricEffect::energyIntegral(double Elow, double Ehigh, double Emin,
                                                   double Emax) const
 {
 	double Ediff = Ehigh - Elow;
@@ -538,7 +538,7 @@ double PhotoelectricHeatingRecipe::energyIntegral(double Elow, double Ehigh, dou
 	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
-double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double Elow,
+double GrainPhotoelectricEffect::yield(double a, int Z, double hnuDiff, double Elow,
                                          double Ehigh) const
 {
 	if (hnuDiff < 0)
@@ -581,7 +581,7 @@ double PhotoelectricHeatingRecipe::yield(double a, int Z, double hnuDiff, double
 	return y2 * min(y0 * y1, 1.);
 }
 
-int PhotoelectricHeatingRecipe::minimumCharge(double a) const
+int GrainPhotoelectricEffect::minimumCharge(double a) const
 {
 	double aA = a / Constant::ANG_CM;
 
@@ -591,7 +591,7 @@ int PhotoelectricHeatingRecipe::minimumCharge(double a) const
 	return floor(-Uait / 14.4 * aA) + 1;
 }
 
-double PhotoelectricHeatingRecipe::stickingCoefficient(double a, int Z, int z_i) const
+double GrainPhotoelectricEffect::stickingCoefficient(double a, int Z, int z_i) const
 {
 	// ions
 	if (z_i >= 0)
@@ -622,7 +622,7 @@ double PhotoelectricHeatingRecipe::stickingCoefficient(double a, int Z, int z_i)
 		return 0;
 }
 
-double PhotoelectricHeatingRecipe::collisionalChargingRate(double a, double gasT, int Z,
+double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
                                                            int particleCharge, double particleMass,
                                                            double particleDensity) const
 {
@@ -655,7 +655,7 @@ double PhotoelectricHeatingRecipe::collisionalChargingRate(double a, double gasT
 	       Jtilde;
 }
 
-double PhotoelectricHeatingRecipe::lambdaTilde(double tau, double ksi) const
+double GrainPhotoelectricEffect::lambdaTilde(double tau, double ksi) const
 {
 	// Found in 1987-Draine-Sutin
 	if (ksi < 0)
@@ -673,7 +673,7 @@ double PhotoelectricHeatingRecipe::lambdaTilde(double tau, double ksi) const
 	}
 }
 
-double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const Environment& env,
+double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
                                                             const std::vector<double>& fZ,
                                                             int Zmin) const
 {
@@ -738,7 +738,7 @@ double PhotoelectricHeatingRecipe::recombinationCoolingRate(double a, const Envi
 	return Constant::PI * a * a * particleSum + secondTerm;
 }
 
-double PhotoelectricHeatingRecipe::yieldFunctionTest() const
+double GrainPhotoelectricEffect::yieldFunctionTest() const
 {
 	// Parameters
 	const int Z = 10;
@@ -784,7 +784,7 @@ double PhotoelectricHeatingRecipe::yieldFunctionTest() const
 	return 0.0;
 }
 
-double PhotoelectricHeatingRecipe::heatingRateTest(double G0, double gasT, double ne) const
+double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
 {
 	// Wavelength grid
 	const vector<double>& frequencyv = Testing::generateGeometricGridv(
@@ -847,7 +847,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0, double gasT, doubl
 		cout << "Size " << a / Constant::ANG_CM << endl;
 
 		// Calculate and write out the heating efficiency
-		double heating = PhotoelectricHeatingRecipe::heatingRateA(a, env, Qabs);
+		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs);
 		double totalAbsorbed = Constant::PI * a * a * Constant::LIGHT * uTimesQabsIntegral;
 		efficiencyOf << a / Constant::ANG_CM << '\t' << heating / totalAbsorbed << '\n';
 
@@ -866,7 +866,7 @@ double PhotoelectricHeatingRecipe::heatingRateTest(double G0, double gasT, doubl
 	return 0.0;
 }
 
-double PhotoelectricHeatingRecipe::chargeBalanceTest(double G0, double gasT, double ne,
+double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
                                                      double np) const
 {
 	readQabs();

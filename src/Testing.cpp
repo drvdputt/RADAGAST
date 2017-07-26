@@ -7,13 +7,13 @@
 #include "FreeBound.h"
 #include "GasInterface.h"
 #include "GasInterfaceImpl.h"
+#include "GrainPhotoelectricEffect.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
 #include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
 #include "NLevel.h"
-#include "PhotoelectricHeating.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 
@@ -312,7 +312,7 @@ void Testing::testPhotoelectricHeating()
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
-	PhotoelectricHeatingRecipe phr;
+	GrainPhotoelectricEffect phr;
 	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{

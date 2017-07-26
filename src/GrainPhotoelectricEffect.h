@@ -8,9 +8,26 @@
 
 // TODO: convert everything to frequency units, or write interface
 // TODO: consider van Hoof's correction (see GasPhysics.pdf)
+// TODO: create a way to get the excess/deficit of electrons, and maybe charge exchange reaction rates
 
-class PhotoelectricHeatingRecipe
+class GrainPhotoelectricEffect
 {
+public:
+	GrainPhotoelectricEffect(bool carbonaceous)
+	                : _carbonaceous(carbonaceous), _workFunction(calcWorkFunction(carbonaceous))
+	{
+	}
+
+	static double calcWorkFunction(bool carbonaceous)
+	{
+		return carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
+	}
+
+private:
+	// Grain properties to use for tests (more detailes in generateQabs)
+	const bool _carbonaceous;
+	const double _workFunction;
+
 	/* Currently, the only public functions are test functions which output some files I can
 	   plot. */
 public:
@@ -113,10 +130,6 @@ private:
 	//	const double _ionizationFraction{3.e-4};
 	//	const double _electronDensity{_hydrogenDensity * _ionizationFraction};
 	//	double _gasTemperature{1.e3};
-
-	// Grain properties to use for tests (more detailes in generateQabs)
-	const bool _carbonaceous{true};
-	const double _workFunction{_carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV};
 
 	/* The radiation field to use for test will use this blackbody temperature to determine the
 	   shape. Its actual strength should be provided using the 'G0' argument of the test
