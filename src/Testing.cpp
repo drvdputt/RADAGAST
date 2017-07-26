@@ -298,25 +298,26 @@ void Testing::runGasInterfaceImpl(const GasInterface& gi, const std::string& out
 
 void Testing::testPhotoelectricHeating()
 {
-	double T = 1000;
+	double n = 2.5e1;
+	double f = 3.e-4;
+	double ne = n * f;
+	double gasT = 1000;
 	vector<double> G0values;
-	if (T == 1000)
+	if (gasT == 1000)
 	{
 		G0values = {2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
 	}
-	if (T == 100)
+	if (gasT == 100)
 	{
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
 	PhotoelectricHeatingRecipe phr;
-	phr.setGasTemperature(T);
-
 	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{
-		phr.chargeBalanceTest(G0);
-		phr.heatingRateTest(G0);
+		phr.chargeBalanceTest(G0, gasT, ne, ne);
+		phr.heatingRateTest(G0, gasT, ne);
 	}
 }
 
