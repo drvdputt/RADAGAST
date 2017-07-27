@@ -1,24 +1,29 @@
 #include "GrainInfo.h"
+#include "Error.h"
 
 namespace GasModule
 {
 GrainInfo::GrainInfo() = default;
 
-GrainInfo::GrainInfo(GrainType t, const std::vector<double>& grainSizev,
-                     const std::vector<std::vector<double>>& absQvv)
-                : _contents{SingleTypeAvailable(t)}, _carbon{t == GrainType::CARBON ? GrainData{grainSizev, absQvv}
-                                                               : GrainData{}},
-                  _silica{t == GrainType::SILICA ? GrainData{grainSizev, absQvv} : GrainData{}}
+GrainInfo::GrainInfo(GrainType t, const Array& grainSizev, const std::vector<Array>& absQvv)
+                : _hasCarbon(t == GrainType::CARBON), _hasSilica(t == GrainType::SILICA),
+                  _carbonSizeDist{t == GrainType::CARBON ? GrainSizeDistribution(grainSizev, absQvv)
+                                                 : GrainSizeDistribution{}},
+                  _silicaSizeDist{t == GrainType::SILICA ? GrainSizeDistribution(grainSizev, absQvv)
+                                                 : GrainSizeDistribution{}}
 {
+	Error::equalCheck("grainSizev.size() and absQvv.size()", grainSizev.size(), absQvv.size());
 }
 
-GrainInfo::GrainInfo(const std::vector<double>& carbonGrainSizev,
-                     const std::vector<std::vector<double>>& carbonAbsQvv,
-                     const std::vector<double>& silicaGrainSizev,
-                     const std::vector<std::vector<double>>& silicaAbsQvv)
-                : _contents{AvailableContents::BOTH}, _carbon(carbonGrainSizev, carbonAbsQvv),
-                  _silica(silicaGrainSizev, silicaAbsQvv)
+GrainInfo::GrainInfo(const Array& carbonGrainSizev, const std::vector<Array>& carbonAbsQvv,
+                     const Array& silicaGrainSizev, const std::vector<Array>& silicaAbsQvv)
+                : _hasCarbon{true}, _hasSilica{true}, _carbonSizeDist(carbonGrainSizev, carbonAbsQvv),
+                  _silicaSizeDist(silicaGrainSizev, silicaAbsQvv)
 {
+	Error::equalCheck("carbonGrainSizev.size() and carbonAbsQvv.size()",
+	                  carbonGrainSizev.size(), carbonAbsQvv.size());
+	Error::equalCheck("silicaGrainSizev.size() and silicaAbsQvv.size()",
+	                  silicaGrainSizev.size(), silicaAbsQvv.size());
 }
 
 } /* namespace GasModule */

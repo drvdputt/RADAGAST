@@ -13,9 +13,19 @@ static inline void runtime(std::string message)
 	abort();
 }
 
+template <typename T> void equalCheck(std::string variable_names, T value1, T value2)
+{
+	if (value1 != value2)
+	{
+		std::cerr << "Equality error: " << variable_names
+		          << " should be equal. Their values are " << value1 << " and " << value2
+		          << std::endl;
+		abort();
+	}
+}
+
 /** Prints a message to stderr and aborts if the given variable does not lie between min and max. */
-template<typename T>
-void rangeCheck(std::string variable, T value, T min, T max)
+template <typename T> void rangeCheck(std::string variable, T value, T min, T max)
 {
 	if (value <= min || value >= max)
 	{
@@ -26,9 +36,8 @@ void rangeCheck(std::string variable, T value, T min, T max)
 }
 
 /** Can probably be removed */
-template<typename T>
-void reportOverridden(std::string name, T original, T replacement,
-                                    std::string reason)
+template <typename T>
+void reportOverridden(std::string name, T original, T replacement, std::string reason)
 {
 	std::cout << std::scientific << name << "has been overridden from " << original << " to "
 	          << replacement << " because " << reason << std::endl;

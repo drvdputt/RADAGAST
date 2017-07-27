@@ -288,6 +288,31 @@ double GasInterfaceImpl::heating(const Solution& s) const
 	return lineHeat + contHeat;
 }
 
+double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInfo& g) const
+{
+
+	double grainPhotoelectricHeating{0};
+	if (g.hasCarbon() || g.hasSilica())
+	{
+		// TODO: Ayyy I need wavelengths here, better start converting everything in
+		// GrainPhotoElectricEffect to frequency units, and specific intensity instead of
+		// energy density per lambda. And i need a list of particle charges.
+		double ne = s.abundancev[ine];
+		double np = s.abundancev[inp];
+		GrainPhotoelectricEffect::Environment env(
+		                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1}, {ne, np},
+		                {Constant::ELECTRONMASS, Constant::PROTONMASS});
+
+		if (g.hasCarbon())
+			grainPhotoelectricHeating +=
+			                _graphGrainHeat.heatingRate(env, g._carbonSizeDist);
+		if (g.hasSilica())
+			grainPhotoelectricHeating +=
+			                _silicGrainHeat.heatingRate(env, g._silicaSizeDist);
+	}
+	return heating(s) + grainPhotoelectricHeating;
+}
+
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
 	double result = _atomicLevels->cooling(s.HSolution);

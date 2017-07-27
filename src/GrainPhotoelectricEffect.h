@@ -3,6 +3,7 @@
 
 #include "Array.h"
 #include "Constants.h"
+#include "GrainInfo.h"
 
 #include <vector>
 
@@ -43,6 +44,7 @@ private:
 	/* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
 	   (2001) */
 
+public:
 	/* Gathers the parameters of the gas environment which are repeatedly needed. */
 	typedef struct Environment
 	{
@@ -70,25 +72,23 @@ private:
 	    the wavelength-dependent absorption efficiency for a certain grain size. Therefore, the
 	    rows should be indexed in the same way as grainSizev, while the columns should be
 	    indexed like env.wavelengthv. Calls heatinRateA for every grain size. */
-	double heatingRate(const Environment& env, const std::vector<double>& grainSizev,
-	                   const std::vector<double>& grainDensityv,
-	                   const std::vector<std::vector<double>>& absQvv) const;
+	double heatingRate(const Environment&,
+	                   const GasModule::GrainInfo::GrainSizeDistribution&) const;
 
+private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain a
 	    charge distribution, and then calls heatingRateAZ for every charge Z. */
-	double heatingRateA(double a, const Environment& env,
-	                    const std::vector<double>& Qabs) const;
+	double heatingRateA(double a, const Environment& env, const Array& Qabs) const;
 
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
 	    wavelength. */
-	void chargeBalance(double a, const Environment& env, const std::vector<double>& Qabs,
-	                   int& resultZmax, int& resultZmin, std::vector<double>& resultfZ) const;
+	void chargeBalance(double a, const Environment& env, const Array& Qabs, int& resultZmax,
+	                   int& resultZmin, std::vector<double>& resultfZ) const;
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */
-	double heatingRateAZ(double a, int Z, const Array& wavelengthv,
-	                     const std::vector<double>& Qabs,
+	double heatingRateAZ(double a, int Z, const Array& wavelengthv, const Array& Qabs,
 	                     const Array& energyDensity_lambda) const;
 
 	/** Implements WD01 equations 2, 4 and 5. */
@@ -96,8 +96,7 @@ private:
 
 	/** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
 	    according to equation 25 of WD01. */
-	double emissionRate(double a, int Z, const Array& wavelengthv,
-	                    const std::vector<double>& Qabs,
+	double emissionRate(double a, int Z, const Array& wavelengthv, const Array& Qabs,
 	                    const Array& energyDensity_lambda) const;
 
 	/** Calculates the integral over the energy in WD01 equation 39. */

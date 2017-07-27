@@ -107,23 +107,22 @@ public:
 	    emissivity. */
 	double cooling(const Solution&) const;
 
-	/** The total bolometric absorption, in erg / s / cm^3. This is an integral of the opacity
-	    times the radiation field. */
+	/** Total heating sans grains */
 	double heating(const Solution&) const;
 
-	/** The bolometric emission by the lines only. The emissivity of the photon re-emissions is
-	    also included in this value. */
+	/** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
+	double heating(const Solution&, const GasModule::GrainInfo&) const;
+
+	/** The cooling by the lines only. */
 	double lineCooling(const Solution&) const;
 
-	/** The bolometric absorption by the lines only. The absorption of re-emitted line photons
-	    is also included here. */
+	/** The heating by the lines only. */
 	double lineHeating(const Solution&) const;
 
-	/** The bolometric emission by the continuum only (= cooling by recombination + free-free
-	    continuum) */
+	/** The cooling by recombination + free-free continuum */
 	double continuumCooling(const Solution&) const;
 
-	/** The bolometric absorption by the continuum only (free-free heating) in erg / s / cm3 */
+	/** The heating by processes involving the continuum [erg / s / cm3]. */
 	double continuumHeating(const Solution&) const;
 
 	inline double np_ne(const Solution& s) const

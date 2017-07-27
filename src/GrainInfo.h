@@ -1,6 +1,8 @@
 #ifndef GASMODULE_GIT_SRC_GRAININFO_H_
 #define GASMODULE_GIT_SRC_GRAININFO_H_
 
+#include "Array.h"
+
 #include <vector>
 
 namespace GasModule
@@ -11,18 +13,6 @@ namespace GasModule
 class GrainInfo
 {
 public:
-	/* Well this is over engineered ... */
-	enum class AvailableContents
-	{
-		// All members empty
-		EMPTY,
-		// Carbon members filled in, silicate data empty
-		CARBON,
-		// Vice versa
-		SILICA,
-		// All members filled in
-		BOTH
-	};
 
 	/** Creates and empty GrainInfo. */
 	GrainInfo();
@@ -33,41 +23,41 @@ public:
 		CARBON,
 		SILICA
 	};
-	/** Converts the grain type argument of this constructor to a status. */
-	static AvailableContents SingleTypeAvailable(GrainType t)
-	{
-		return t == GrainType::CARBON ? AvailableContents::CARBON
-		                              : AvailableContents::SILICA;
-	}
-
-	GrainInfo(GrainType t, const std::vector<double>& grainSizev,
-	          const std::vector<std::vector<double>>& absQvv);
+	GrainInfo(GrainType t, const Array& grainSizev,
+	          const std::vector<Array>& absQvv);
 
 	/** Constructor for a mix of carbonaceous and silicate. */
-	GrainInfo(const std::vector<double>& carbonGrainSizev,
-	          const std::vector<std::vector<double>>& carbonAbsQvv,
-	          const std::vector<double>& silicaGrainSizev,
-	          const std::vector<std::vector<double>>& silicaAbsQvv);
+	GrainInfo(const Array& carbonGrainSizev,
+	          const std::vector<Array>& carbonAbsQvv,
+	          const Array& silicaGrainSizev,
+	          const std::vector<Array>& silicaAbsQvv);
+
+	bool hasCarbon() const {return _hasCarbon;}
+	bool hasSilica() const {return _hasSilica;}
+
 
 private:
-	const AvailableContents _contents{AvailableContents::EMPTY};
+	bool _hasCarbon{false};
+	bool _hasSilica{false};
 
-	typedef struct GrainData
+public:
+	typedef struct GrainSizeDistribution
 	{
-		GrainData() = default;
-		GrainData(const std::vector<double>& grainSizev,
-		          const std::vector<std::vector<double>> absQvv)
+		GrainSizeDistribution() = default;
+		GrainSizeDistribution(const Array& grainSizev,
+		          const std::vector<Array> absQvv)
 		                : _grainSizev{grainSizev}, _absQvv{absQvv}
 		{
 		}
-		const std::vector<double> _grainSizev;
-		const std::vector<std::vector<double>> _absQvv;
+		const Array _grainSizev;
+		const Array _grainDensityv;
+		const std::vector<Array> _absQvv;
 	} GrainData;
 
 	// Carbonaceous (graphite and PAH) grains
-	const GrainData _carbon;
+	const GrainSizeDistribution _carbonSizeDist;
 	// Silicate grains
-	const GrainData _silica;
+	const GrainSizeDistribution _silicaSizeDist;
 };
 } /* namespace GasModule */
 
