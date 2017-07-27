@@ -3,6 +3,7 @@
 
 #include "Array.h"
 #include "GasState.h"
+#include "GrainInfo.h"
 #include "GrainPhotoelectricEffect.h"
 #include "NLevel.h"
 
@@ -79,12 +80,14 @@ public:
 	    for a certain electron temperature, under influence of a blackbody isrf of that same
 	    temperature. Can be used by the client to manually set the temperature and calculate
 	    some properties which can be used as an initial guess. */
-	void solveInitialGuess(GasState&, double n, double T) const;
+	void solveInitialGuess(GasModule::GasState&, double n, double T,
+	                       const GasModule::GrainInfo&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
 	    guess, and a vector containing the radiation field in specific intensity per frequency
 	    units (on the same frequency grid as the one provided at construction). */
-	void solveBalance(GasState&, double n, double Tinit, const Array& specificIntensity) const;
+	void solveBalance(GasModule::GasState&, double n, double Tinit,
+	                  const Array& specificIntensity, const GasModule::GrainInfo&) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
 	    until equilibrium is found. */

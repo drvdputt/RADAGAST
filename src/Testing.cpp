@@ -206,16 +206,17 @@ void Testing::testIonizationStuff()
 	out.close();
 }
 
-void Testing::runGasInterfaceImpl(const GasInterface& gi, const std::string& outputPath, double Tc,
-                                  double G0, double n, double expectedTemperature)
+void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath,
+                                  double Tc, double G0, double n, double expectedTemperature)
 {
 	const Array& frequencyv = gi.frequencyv();
 
 	Array specificIntensityv = generateSpecificIntensityv(
 	                vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
 
-	GasState gs;
-	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv);
+	GasModule::GasState gs;
+	GasModule::GrainInfo grainInfo{};
+	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, grainInfo);
 
 	cout << "Equilibrium temperature: " << gs.temperature() << endl;
 	cout << "Ionized fraction: " << gs.ionizedFraction() << endl;
@@ -312,7 +313,7 @@ void Testing::testPhotoelectricHeating()
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
-	GrainPhotoelectricEffect phr;
+	GrainPhotoelectricEffect phr{true};
 	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{
@@ -480,16 +481,16 @@ void Testing::runFromFilesvsHardCoded()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gihhc(frequencyv, "hhc", false);
+	GasModule::GasInterface gihhc(frequencyv, "hhc", false);
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasInterface gihff(frequencyv, "hff2", false);
+	GasModule::GasInterface gihff(frequencyv, "hff2", false);
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
 void Testing::runFullModel()
 {
-	bool molecular = false;
+	bool molecular = true;
 
 	vector<double> tempFrequencyv =
 	                generateGeometricGridv(2000, Constant::LIGHT / (1e4 * Constant::UM_CM),
@@ -500,7 +501,7 @@ void Testing::runFullModel()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasInterface gihffFull(frequencyv, "", molecular);
+	GasModule::GasInterface gihffFull(frequencyv, "", molecular);
 	runGasInterfaceImpl(gihffFull, "");
 }
 

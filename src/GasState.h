@@ -4,19 +4,27 @@
 #include <string>
 #include <valarray>
 
+namespace GasModule
+{
 class GasInterface;
+}
+
+class GasInterfaceImpl;
 
 namespace Testing
 {
-void runGasInterfaceImpl(const GasInterface&, const std::string&, double, double, double, double);
+void runGasInterfaceImpl(const GasModule::GasInterface&, const std::string&, double, double, double,
+                         double);
 }
 
+namespace GasModule
+{
 class GasState
 {
 	friend class GasInterface;
-	friend class GasInterfaceImpl;
-	friend void Testing::runGasInterfaceImpl(const GasInterface&, const std::string&, double,
-	                                         double, double, double);
+	friend class ::GasInterfaceImpl;
+	friend void Testing::runGasInterfaceImpl(const GasModule::GasInterface&, const std::string&,
+	                                         double, double, double, double);
 
 public:
 	GasState() {}
@@ -44,5 +52,6 @@ private:
 	double _temperature{0};
 	double _ionizedFraction{0};
 };
+} /* namespace GasModule */
 
 #endif /* _GASSTATE_H_ */

@@ -2,12 +2,15 @@
 #define _SRC_GASINTERFACE_H_
 
 #include "GasState.h"
+#include "GrainInfo.h"
 
 #include <memory>
 #include <string>
 
 class GasInterfaceImpl;
 
+namespace GasModule
+{
 /** The interface class that other codes should use. This class and GasState should be the only
     direct dependencies introduced in another code. Hence, the rest of the gas module code does not
     have to be recompiled whenever a change is made to a source file of the host code which makes
@@ -25,11 +28,6 @@ public:
 
 	~GasInterface();
 
-	/** Sets a new frequency grid. This is a costly operation, which recreates everything from
-	    scratch. The foreseen use case of this function is to facilitate refinement of the
-	    frequency grid. */
-	//	void setFrequencyv(const std::valarray<double>& frequencyv);
-
 	/** Returns the frequency grid used. This may come in handy later, for example for
 	    situations where the code generates its own frequency points. */
 	std::valarray<double> frequencyv() const { return _frequencyv; }
@@ -43,13 +41,14 @@ public:
 	    way the optical properties are calculated (derived from densities vs caching them for
 	    example) are entirely up to the implementations of the functions below and the
 	    definition in GasState.h. */
-	void updateGasState(GasState& gs, double n, double Tinit,
-	                    const std::valarray<double>& specificIntensityv) const;
+	void updateGasState(GasState&, double n, double Tinit,
+	                    const std::valarray<double>& specificIntensityv,
+	                    const GrainInfo&) const;
 
 	/** Does the same as the above, but without an input radiation field. Instead, a blackbody
 	    of the given temperature is used to calculate GasState. It is recommended to apply this
 	    function to all gas states before starting a simulation. */
-	void initializeGasState(GasState& gs, double n, double T) const;
+	void initializeGasState(GasState&, double n, double T, const GrainInfo&) const;
 
 	// USAGE 2: Translate GasState into optical properties //
 
@@ -93,5 +92,5 @@ public:
 	/* This can be used to test individual components of the implementation. */
 	const GasInterfaceImpl* pimpl() const { return _pimpl.get(); }
 };
-
+} /* namespace GasModule */
 #endif /* _SRC_GASINTERFACE_H_ */

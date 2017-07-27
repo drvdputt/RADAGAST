@@ -8,6 +8,8 @@
 
 using namespace std;
 
+namespace GasModule
+{
 GasInterface::GasInterface(const valarray<double>& frequencyv, const string& atomChoice,
                            bool moleculeChoice)
                 : _frequencyv(frequencyv)
@@ -32,29 +34,25 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const string& ato
 
 GasInterface::~GasInterface() = default;
 
-//void GasInterface::setFrequencyv(const Array& frequencyv)
-//{
-//	_frequencyv = frequencyv;
-//	_pimpl = make_unique<GasInterfaceImpl>(frequencyv);
-//}
-
-void GasInterface::updateGasState(GasState& gs, double density, double Tinit,
-                                  const valarray<double>& specificIntensityv) const
+void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
+                                  const valarray<double>& specificIntensityv,
+                                  const GrainInfo& grainInfo) const
 {
-	gs._previousISRFv = specificIntensityv;
-	if (density > 0)
-		_pimpl->solveBalance(gs, density, Tinit, specificIntensityv);
+	gasState._previousISRFv = specificIntensityv;
+	if (n > 0)
+		_pimpl->solveBalance(gasState, n, Tinit, specificIntensityv, grainInfo);
 	else
-		zeroOpticalProperties(gs);
+		zeroOpticalProperties(gasState);
 }
 
-void GasInterface::initializeGasState(GasState& gs, double density, double temperature) const
+void GasInterface::initializeGasState(GasState& gasState, double n, double T,
+                                      const GrainInfo& grainInfo) const
 {
-	gs._previousISRFv = Array(_frequencyv.size());
-	if (density > 0)
-		_pimpl->solveInitialGuess(gs, density, temperature);
+	gasState._previousISRFv = Array(_frequencyv.size());
+	if (n > 0)
+		_pimpl->solveInitialGuess(gasState, n, T, grainInfo);
 	else
-		zeroOpticalProperties(gs);
+		zeroOpticalProperties(gasState);
 }
 
 double GasInterface::emissivity_SI(const GasState& gs, size_t iFreq) const
@@ -86,3 +84,4 @@ void GasInterface::zeroOpticalProperties(GasState& gs) const
 	gs._temperature = 0;
 	gs._ionizedFraction = 0;
 }
+} /* namespace GasModule */

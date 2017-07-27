@@ -38,7 +38,8 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
-void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
+void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, double T,
+                                         const GasModule::GrainInfo& gi) const
 {
 	Array isrfGuess(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -46,11 +47,12 @@ void GasInterfaceImpl::solveInitialGuess(GasState& gs, double n, double T) const
 		double freq = _frequencyv[iFreq];
 		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
 	}
-	solveBalance(gs, n, T, isrfGuess);
+	solveBalance(gs, n, T, isrfGuess, gi);
 }
 
-void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
-                                    const Array& specificIntensityv) const
+void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Tinit,
+                                    const Array& specificIntensityv,
+                                    const GasModule::GrainInfo& gi) const
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
@@ -113,7 +115,7 @@ void GasInterfaceImpl::solveBalance(GasState& gs, double n, double Tinit,
 	}
 #endif
 	// Put the relevant data into the gas state
-	gs = GasState(specificIntensityv, emv, opv, scv, s.T, f(s));
+	gs = GasModule::GasState(specificIntensityv, emv, opv, scv, s.T, f(s));
 }
 
 GasInterfaceImpl::Solution
@@ -205,11 +207,12 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 			double norm = s.abundancev.norm();
 			Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 			                changev.abs() <= 0.01 * previousAbundancev.array() ||
-					s.abundancev.array() < 1.e-99 * norm;
+			                s.abundancev.array() < 1.e-99 * norm;
 			counter++;
 			DEBUG("Chemistry: " << counter << endl
 			                    << s.abundancev << endl
-			                    << "convergence: \n" << convergedv << endl);
+			                    << "convergence: \n"
+			                    << convergedv << endl);
 
 			// Currently, the implementation without molecules does not need iteration.
 			stopCriterion = !_molecularLevels || convergedv.all();
