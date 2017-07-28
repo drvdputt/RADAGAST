@@ -54,8 +54,8 @@ private:
 	    functions should take the parameters hnuDiff, Emin and Elow as defined in the
 	    body of rateIntegral. */
 	double
-	rateIntegral(double a, int Z, const Array& wavelengthv, const Array& Qabs,
-	             const Array& energyDensity_lambda,
+	rateIntegral(double a, int Z, const Array& frequencyv, const Array& Qabs,
+	             const Array& specificIntensityv,
 	             std::function<double(double hnuDiffpet, double Emin, double Elow)> peFunction,
 	             std::function<double(double hnuDiffpdt, double Emin)> pdFunction) const;
 
@@ -63,21 +63,20 @@ public:
 	/* Gathers the parameters of the gas environment which are repeatedly needed. */
 	typedef struct Environment
 	{
-		Environment(const Array& wavv, const Array& u_lambdav, double temperature,
-		            double electronDensity, double protonDensity,
-		            const std::vector<int>& chargev, const Array& densityv,
-		            const Array& massv)
-		                : wavelengthv(wavv), energyDensityv(u_lambdav), T(temperature),
-		                  ne(electronDensity), np(protonDensity), particleChargev(chargev),
-		                  particleDensityv(densityv), particleMassv(massv){};
+		Environment(const Array& frequencyv, const Array& specificIntensityv, double T,
+		            double ne, double np, const std::vector<int>& chargev,
+		            const Array& densityv, const Array& massv)
+		                : _frequencyv(frequencyv), specificIntensityv(specificIntensityv),
+		                  _T(T), _ne(ne), _np(np), _chargev(chargev), _densityv(densityv),
+		                  _massv(massv){};
 		// Radiation field
-		Array wavelengthv, energyDensityv;
+		Array _frequencyv, specificIntensityv;
 		// The gas temperature, and frequently used densities
-		double T, ne, np;
+		double _T, _ne, _np;
 		/* Properties of all the charged particles in the environment (also contains ne and
 		   np). */
-		std::vector<int> particleChargev;
-		Array particleDensityv, particleMassv;
+		std::vector<int> _chargev;
+		Array _densityv, _massv;
 	} Environment;
 
 	/** Calculate the total heating rate by the grains, given a certain environment.  Then, the
@@ -103,16 +102,16 @@ private:
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */
-	double heatingRateAZ(double a, int Z, const Array& wavelengthv, const Array& Qabs,
-	                     const Array& energyDensity_lambda) const;
+	double heatingRateAZ(double a, int Z, const Array& frequencyv, const Array& Qabs,
+	                     const Array& specificIntensityv) const;
 
 	/** Implements WD01 equations 2, 4 and 5. */
 	double ionizationPotential(double a, int Z) const;
 
 	/** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
 	    according to equation 25 of WD01. */
-	double emissionRate(double a, int Z, const Array& wavelengthv, const Array& Qabs,
-	                    const Array& energyDensity_lambda) const;
+	double emissionRate(double a, int Z, const Array& frequencyv, const Array& Qabs,
+	                    const Array& specificIntensityv) const;
 
 	/** Calculates the integral over the energy in WD01 equation 39. */
 	double energyIntegral(double Elow, double Ehigh, double Emin, double Emax) const;
@@ -157,7 +156,7 @@ private:
 
 	// Data to use for tests
 	void readQabs() const;
-	std::vector<double> generateQabsv(double a, const Array& wavelengthv) const;
+	Array generateQabsv(double a, const Array& frequencyv) const;
 };
 
 #endif /* _PHOTOELECTRICHEATING_H_ */

@@ -16,10 +16,11 @@ namespace Testing
 // UTILITY FUNCTIONS //
 std::vector<double> generateGeometricGridv(size_t nPoints, double min, double max);
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
+Array freqToWavGrid(const Array& frequencyv);
 void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower,
                          Array lineFreqv, Array lineWidthv);
 Array generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0);
-Array freqToWavSpecificIntensity(const std::vector<double>& frequencyv,
+Array freqToWavSpecificIntensity(const Array& frequencyv,
                                  const Array& specificIntensity_nu);
 
 /** This clumsy thing should give us a grid with some extra points in the correct locations. */

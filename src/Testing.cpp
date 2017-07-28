@@ -70,6 +70,17 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 	return wavelengthv;
 }
 
+Array Testing::freqToWavGrid(const Array& frequencyv)
+{
+	size_t numWav = frequencyv.size();
+	Array wavelengthv(numWav);
+	for (size_t iWav = 0; iWav < numWav; iWav++)
+	{
+		wavelengthv[iWav] = Constant::LIGHT / frequencyv[numWav - 1 - iWav];
+	}
+	return wavelengthv;
+}
+
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
                                   Array lineFreqv, Array freqWidthv)
 {
@@ -157,7 +168,7 @@ Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, do
 	return I_nu;
 }
 
-Array Testing::freqToWavSpecificIntensity(const vector<double>& frequencyv,
+Array Testing::freqToWavSpecificIntensity(const Array& frequencyv,
                                           const Array& specificIntensity_nu)
 {
 	Array I_lambda(frequencyv.size());
