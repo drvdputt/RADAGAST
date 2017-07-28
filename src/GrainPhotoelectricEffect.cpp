@@ -1,10 +1,10 @@
+#include "GrainPhotoelectricEffect.h"
 #include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
 
-#include "GrainPhotoelectricEffect.h"
 #include <cmath>
 #include <iomanip>
 
@@ -306,9 +306,11 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	//    }
 }
 
-double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wavelengthv,
-                                               const Array& Qabs,
-                                               const Array& energyDensity_lambda) const
+double GrainPhotoelectricEffect::rateIntegral(
+                double a, int Z, const Array& wavelengthv, const Array& Qabs,
+                const Array& energyDensity_lambda,
+                function<double(double hnuDiffpet, double Emin, double Elow)> peFunction,
+                function<double(double hnuDiffpdt, double Emin)> pdFunction) const
 {
 	const double e2a = Constant::ESQUARE / a;
 	size_t nLambda = wavelengthv.size();
@@ -320,14 +322,15 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 	// Quantities independent of nu
 	double ip_v = ionizationPotential(a, Z);
 
+	// WD01 eq 7
 	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2a /
-	                                              (1 + std::pow(27. * Constant::ANG_CM / a,
-	                                                            0.75)); // WD01 eq 7
+	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75));
 
-	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
+	// WD01 eq 6
+	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
 
-	double Elow = Z < 0 ? Emin : -(Z + 1) * e2a; // WD01 text between eq 10 and 11
+	// WD01 text between eq 10 and 11
+	double Elow = Z < 0 ? Emin : -(Z + 1) * e2a;
 
 	for (size_t lambda_index = 0; lambda_index < nLambda; lambda_index++)
 	{
@@ -338,30 +341,20 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 		{
 			// Quantities dependent on nu
 			double hnuDiff = hnu - hnu_pet;
-
-			double Emax = hnuDiff + Emin;
-			double Ehigh = Z < 0 ? Emax : hnuDiff;
-
-			// Calculate y2 from eq 11
-			double Ediff = Ehigh - Elow;
-			double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff /
-			                                            Ediff
-			                   : 1;
+			double Ehigh = Z < 0 ? Emin + hnuDiff : hnuDiff;
 
 			// The integral over the electron energy distribution
-			double IntE = energyIntegral(Elow, Ehigh, Emin, Emax);
 			double Y = yield(a, Z, hnuDiff, Elow, Ehigh);
-
 			peIntegrandv[lambda_index] = Y * Qabs[lambda_index] *
 			                             energyDensity_lambda[lambda_index] / hnu *
-			                             IntE / y2;
+			                             peFunction(hnuDiff, Emin, Elow);
 		}
 
 		// If applicable, also calculate integrand for photodetachment
 		if (Z < 0)
 		{
-			// Photodetachment
-			double hnu_pdt = ip_v + Emin; // eq 18
+			// Photodetachment, WD01 eq 18
+			double hnu_pdt = ip_v + Emin;
 
 			// No contribution below the photodetachment threshold
 			if (hnu > hnu_pdt)
@@ -369,11 +362,12 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 				double DeltaE = 3 / Constant::ERG_EV;
 				double x = (hnu - hnu_pdt) / DeltaE;
 				double denom = 1 + x * x / 3;
-				double sigma_pdt = x / denom / denom; // eq 20
+				// WD01 eq 20, with constant factor moved in front of integral (see below)
+				double sigma_pdt = x / denom / denom;
 
 				pdIntegrandv[lambda_index] = sigma_pdt *
 				                             energyDensity_lambda[lambda_index] /
-				                             hnu * (hnu - hnu_pdt + Emin);
+				                             hnu * pdFunction(hnu - hnu_pdt, Emin);
 			}
 		}
 	}
@@ -382,13 +376,38 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 	                    TemplatedUtils::integrate<double>(wavelengthv, peIntegrandv);
 
 	// Constant factor from sigma_pdt moved in front of integral
-	double pdIntegral =
-	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                TemplatedUtils::integrate<double>(
-	                                                                wavelengthv, pdIntegrandv)
-	                      : 0.;
+	double pdIntegral;
+	if (Z < 0)
+		pdIntegral = 1.2e-17 * (-Z) * Constant::LIGHT *
+		             TemplatedUtils::integrate<double>(wavelengthv, pdIntegrandv);
+	else
+		pdIntegral = 0.;
 
 	return peIntegral + pdIntegral;
+}
+
+double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wavelengthv,
+                                               const Array& Qabs,
+                                               const Array& energyDensity_lambda) const
+{
+	auto averageEnergyPE = [&](double hnuDiffpet, double Emin, double Elow) {
+		double Emax = hnuDiffpet + Emin;
+		double Ehigh = Z < 0 ? Emax : hnuDiffpet;
+
+		// Calculate y2 from eq 11
+		double Ediff = Ehigh - Elow;
+		double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff / Ediff : 1;
+
+		// The integral over the electron energy distribution
+		double IntE = energyIntegral(Elow, Ehigh, Emin, Emax);
+		return IntE / y2;
+	};
+	auto averageEnergyPD = [&](double hnuDiffpdt, double Emin) {
+		// WD01 eq 20, with constant factor moved in front of integral (see intergration function)
+		return hnuDiffpdt + Emin;
+	};
+	return rateIntegral(a, Z, wavelengthv, Qabs, energyDensity_lambda, averageEnergyPE,
+	                    averageEnergyPD);
 }
 
 double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
@@ -447,75 +466,9 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& wave
                                               const Array& Qabs,
                                               const Array& energyDensity_lambda) const
 {
-	const double e2a = Constant::ESQUARE / a;
-	size_t nLambda = wavelengthv.size();
-
-	// Calculate the integrandum at the frequencies of the wavelength grid
-	Array peIntegrandv(nLambda, 0);
-	Array pdIntegrandv(nLambda, 0);
-
-	// Quantities independent of nu
-	double ip_v = ionizationPotential(a, Z);
-
-	// WD01 eq 7
-	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75));
-
-	// WD01 eq 6
-	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
-
-	// WD01 text between eq 10 and 11
-	double Elow = Z < 0 ? Emin : -(Z + 1) * e2a;
-
-	for (size_t lambda_index = 0; lambda_index < nLambda; lambda_index++)
-	{
-		double hnu = Constant::PLANCKLIGHT / wavelengthv[lambda_index];
-
-		// No contribution below the photoelectric threshold
-		if (hnu > hnu_pet)
-		{
-			// Quantities dependent on nu
-			double hnuDiff = hnu - hnu_pet;
-			double Ehigh = Z < 0 ? Emin + hnuDiff : hnuDiff;
-
-			// The integral over the electron energy distribution
-			double Y = yield(a, Z, hnuDiff, Elow, Ehigh);
-
-			peIntegrandv[lambda_index] = Y * Qabs[lambda_index] *
-			                             energyDensity_lambda[lambda_index] / hnu;
-		}
-
-		if (Z < 0)
-		{
-			// Photodetachment, WD01 eq 18
-			double hnu_pdt = ip_v + Emin;
-
-			// No contribution below the photodetachment threshold
-			if (hnu > hnu_pdt)
-			{
-				double DeltaE = 3 / Constant::ERG_EV;
-				double x = (hnu - hnu_pdt) / DeltaE;
-				double denom = 1 + x * x / 3;
-				// Cross section, WD01 eq 20
-				double sigma_pdt = x / denom / denom;
-
-				pdIntegrandv[lambda_index] = sigma_pdt *
-				                             energyDensity_lambda[lambda_index] /
-				                             hnu;
-			}
-		}
-	}
-
-	double peIntegral = Constant::PI * a * a * Constant::LIGHT *
-	                    TemplatedUtils::integrate<double>(wavelengthv, peIntegrandv);
-
-	// Constant factor from sigma_pdt (WD01 eq 20) moved in front of integral
-	double pdIntegral =
-	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                TemplatedUtils::integrate<double>(
-	                                                                wavelengthv, pdIntegrandv)
-	                      : 0;
-	return peIntegral + pdIntegral;
+	return rateIntegral(a, Z, wavelengthv, Qabs, energyDensity_lambda,
+	                    [](double, double, double) -> double { return 1.; },
+	                    [](double, double) -> double { return 1; });
 }
 
 double GrainPhotoelectricEffect::energyIntegral(double Elow, double Ehigh, double Emin,

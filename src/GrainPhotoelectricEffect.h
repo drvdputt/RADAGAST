@@ -44,6 +44,21 @@ private:
 	/* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
 	   (2001) */
 
+	/** Calculates the integral of the partial emission rate (per wavelength interval)
+	    multiplied with a certain function of the wavelength f(lambda). To get the
+	    total emission rate (number of electrons per second), one can invoke this
+	    function with a lambda function that returns 1. To get the heating rate,
+	    f needs to be equal to the average energy of an emitted electron. Since this
+	    functions calculates an integral for both photoelectric effect and
+	    photodetachtment, two separate functions need to be given. The given
+	    functions should take the parameters hnuDiff, Emin and Elow as defined in the
+	    body of rateIntegral. */
+	double
+	rateIntegral(double a, int Z, const Array& wavelengthv, const Array& Qabs,
+	             const Array& energyDensity_lambda,
+	             std::function<double(double hnuDiffpet, double Emin, double Elow)> peFunction,
+	             std::function<double(double hnuDiffpdt, double Emin)> pdFunction) const;
+
 public:
 	/* Gathers the parameters of the gas environment which are repeatedly needed. */
 	typedef struct Environment
