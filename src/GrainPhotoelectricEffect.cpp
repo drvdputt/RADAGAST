@@ -92,8 +92,8 @@ void GrainPhotoelectricEffect::readQabs() const
 		d *= 100.; // m to cm
 }
 
-std::vector<double>
-GrainPhotoelectricEffect::generateQabsv(double a, const std::vector<double>& wavelengthv) const
+std::vector<double> GrainPhotoelectricEffect::generateQabsv(double a,
+                                                            const Array& wavelengthv) const
 {
 	vector<double> Qabs(wavelengthv.size());
 	vector<double> QabsFromFileForA(_filelambdav.size());
@@ -172,7 +172,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	double hnumax = Constant::PLANCKLIGHT / env.wavelengthv[0];
 
 	/* The maximum charge is one more than the highest charge which still allows ionization by
-	   photons of hnumax. */
+	 photons of hnumax. */
 	resultZmax = floor(
 	                ((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) /
 	                (1 + .3 / aA));
@@ -185,7 +185,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
 	/* We will cut off the distribution at some point past the maximum (in either the positive
-	   or the negative direction). */
+	 or the negative direction). */
 	double lowerLimit = 1.e-6;
 	int trimLow = 0;
 	int trimHigh = resultfZ.size() - 1;
@@ -314,15 +314,16 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 	size_t nLambda = wavelengthv.size();
 
 	// Two separate integrands for photoelectric effect and photodetachment
-	vector<double> peIntegrandv(nLambda, 0);
-	vector<double> pdIntegrandv(nLambda, 0);
+	Array peIntegrandv(nLambda);
+	Array pdIntegrandv(nLambda);
 
 	// Quantities independent of nu
 	double ip_v = ionizationPotential(a, Z);
 
 	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
-	                                                      0.75)); // WD01 eq 7
+	                     : -(Z + 1) * e2a /
+	                                              (1 + std::pow(27. * Constant::ANG_CM / a,
+	                                                            0.75)); // WD01 eq 7
 
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -343,10 +344,9 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 
 			// Calculate y2 from eq 11
 			double Ediff = Ehigh - Elow;
-			double y2 = Z >= 0
-			                            ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff /
-			                                              Ediff / Ediff
-			                            : 1;
+			double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff /
+			                                            Ediff
+			                   : 1;
 
 			// The integral over the electron energy distribution
 			double IntE = energyIntegral(Elow, Ehigh, Emin, Emax);
@@ -383,11 +383,10 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& wav
 
 	// Constant factor from sigma_pdt moved in front of integral
 	double pdIntegral =
-	                Z < 0
-	                                ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                  TemplatedUtils::integrate<double>(
-	                                                                  wavelengthv, pdIntegrandv)
-	                                : 0;
+	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
+	                                                TemplatedUtils::integrate<double>(
+	                                                                wavelengthv, pdIntegrandv)
+	                      : 0.;
 
 	return peIntegral + pdIntegral;
 }
@@ -437,7 +436,7 @@ double
 GrainPhotoelectricEffect::heatingRate(const Environment& env,
                                       const GasModule::GrainInfo::GrainSizeDistribution& gsd) const
 {
-	double total;
+	double total{0.};
 	for (size_t m = 0; m < gsd._grainSizev.size(); m++)
 		total += gsd._grainDensityv[m] *
 		         heatingRateA(gsd._grainSizev[m], env, gsd._absQvv[m]);
@@ -452,8 +451,8 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& wave
 	size_t nLambda = wavelengthv.size();
 
 	// Calculate the integrandum at the frequencies of the wavelength grid
-	vector<double> peIntegrandv(nLambda, 0);
-	vector<double> pdIntegrandv(nLambda, 0);
+	Array peIntegrandv(nLambda, 0);
+	Array pdIntegrandv(nLambda, 0);
 
 	// Quantities independent of nu
 	double ip_v = ionizationPotential(a, Z);
@@ -512,11 +511,10 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& wave
 
 	// Constant factor from sigma_pdt (WD01 eq 20) moved in front of integral
 	double pdIntegral =
-	                Z < 0
-	                                ? 1.2e-17 * (-Z) * Constant::LIGHT *
-	                                                  TemplatedUtils::integrate<double>(
-	                                                                  wavelengthv, pdIntegrandv)
-	                                : 0;
+	                Z < 0 ? 1.2e-17 * (-Z) * Constant::LIGHT *
+	                                                TemplatedUtils::integrate<double>(
+	                                                                wavelengthv, pdIntegrandv)
+	                      : 0;
 	return peIntegral + pdIntegral;
 }
 
@@ -527,14 +525,15 @@ double GrainPhotoelectricEffect::energyIntegral(double Elow, double Ehigh, doubl
 	double Ediff3 = Ediff * Ediff * Ediff;
 
 	/* Compute integral f(E)E dE analytically, with f(E) defined by WD01 eq 10 f(E) is a
-	   parabola, and therefore f(E)E is a third order polynomial.  Thus the integral of f(E)E dE
-	   is a fourth order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2
-	   -min2). */
+	 parabola, and therefore f(E)E is a third order polynomial.  Thus the integral of f(E)E dE
+	 is a fourth order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2
+	 -min2). */
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
-	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	                     (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	return 6 / Ediff3 *
+	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
+	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double GrainPhotoelectricEffect::yield(double a, int Z, double hnuDiff, double Elow,
@@ -720,15 +719,16 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	//	particleSum += _electronDensity * sqrt(eightkT3DivPi / Constant::PROTONMASS) * Zsum;
 
 	/* The second term of equation 42: autoionization of grains with the most negative charge
-	   inhibits the cooling of the gas. */
+	 inhibits the cooling of the gas. */
 	// EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
 	double secondTerm = 0;
 	/* This term is only included when the population of the maximally negative grain charge
-	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
-	   minimumCharge, (and Zmin > minimumCharge). */
+	 minimumCharge is significant. If it is not siginicant, then fZ will not cover
+	 minimumCharge, (and Zmin > minimumCharge). */
 	if (Zmin == minimumCharge(a))
-		secondTerm = fZ[0] * collisionalChargingRate(a, env.T, Zmin, -1,
-		                                             Constant::ELECTRONMASS, env.ne) *
+		secondTerm = fZ[0] *
+		             collisionalChargingRate(a, env.T, Zmin, -1, Constant::ELECTRONMASS,
+		                                     env.ne) *
 		             ionizationPotential(a, Zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
@@ -755,8 +755,10 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 		double ip_v = ionizationPotential(a, Z);
 
 		double Emin = Z >= 0 ? 0
-		                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
-		                                                      0.75)); // WD01 eq 7
+		                     : -(Z + 1) * e2a /
+		                                              (1 +
+		                                               std::pow(27. * Constant::ANG_CM / a,
+		                                                        0.75)); // WD01 eq 7
 
 		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
 
@@ -782,18 +784,22 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 
 double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
 {
+	// TODO: replace even more vectors by Arrays, only convert to vector when necessary
+
 	// Wavelength grid
-	const vector<double>& frequencyv = Testing::generateGeometricGridv(
+	const vector<double>& vecfrequencyv = Testing::generateGeometricGridv(
 	                _nWav, Constant::LIGHT / _maxWav, Constant::LIGHT / _minWav);
+	Array frequencyv(vecfrequencyv.data(), vecfrequencyv.size());
 
 	// Input spectrum
 	const Array& specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
 
 	// Convert to wavelength units
-	const vector<double>& wavelengthv = Testing::freqToWavGrid(frequencyv);
+	const vector<double>& wavvec = Testing::freqToWavGrid(vecfrequencyv);
+	Array wavelengthv(wavvec.data(), wavvec.size());
 	Array energyDensity_lambda =
 	                Constant::FPI / Constant::LIGHT *
-	                Testing::freqToWavSpecificIntensity(frequencyv, specificIntensityv);
+	                Testing::freqToWavSpecificIntensity(vecfrequencyv, specificIntensityv);
 
 	// Write out wavelengths and isrf
 	ofstream isrfOf = IOTools::ofstreamFile("photoelectric/isrf_ulambda.dat");
@@ -803,15 +809,14 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	isrfOf.close();
 
 	// Gather environment parameters
-	const Environment env(Array(wavelengthv.data(), wavelengthv.size()), energyDensity_lambda,
-	                      gasT, ne, ne, {-1, 1}, {ne, ne},
+	const Environment env(wavelengthv, energyDensity_lambda, gasT, ne, ne, {-1, 1}, {ne, ne},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
 	// Read absorption efficiency from SKIRT file into local memory
 	readQabs();
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
-	   as weights. */
+	 as weights. */
 	ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
 
 	// Grain sizes for test
@@ -835,9 +840,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		Array Qabs(vecQabs.data(), vecQabs.size());
 
 		// Integrate over the radiation field
-		vector<double> ulambdaTimesQabs(Qabs.size());
-		for (size_t n = 0; n < Qabs.size(); n++)
-			ulambdaTimesQabs[n] = Qabs[n] * energyDensity_lambda[n];
+		Array ulambdaTimesQabs = Qabs * energyDensity_lambda;
 		double uTimesQabsIntegral =
 		                TemplatedUtils::integrate<double>(wavelengthv, ulambdaTimesQabs);
 
@@ -870,16 +873,18 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 
 // Wavelength grid
 #ifdef EXACTGRID
-	vector<double> wavelengthv = _filelambdav;
+	vector<double> vecwavelengthv = _filelambdav;
 #else
-	vector<double> wavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
+	vector<double> vecwavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
 #endif
+	Array wavelengthv(vecwavelengthv.data(), vecwavelengthv.size());
 
 	// Input spectrum
+	// TODO: input spectrum now works with frequencies, and therefore this whole thing is incorrect
 	Array isrfv = Testing::generateSpecificIntensityv(wavelengthv, _Tc, G0);
 
-	const Environment env(Array(wavelengthv.data(), wavelengthv.size()), isrfv, gasT, ne, np,
-	                      {-1, 1}, {ne, np}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
+	const Environment env(wavelengthv, isrfv, gasT, ne, np, {-1, 1}, {ne, np},
+	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
 	// Grain size
 	double a = 200. * Constant::ANG_CM;

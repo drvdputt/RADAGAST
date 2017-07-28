@@ -13,7 +13,6 @@ namespace GasModule
 class GrainInfo
 {
 public:
-
 	/** Creates and empty GrainInfo. */
 	GrainInfo();
 
@@ -55,9 +54,9 @@ public:
 	} GrainData;
 
 	// Carbonaceous (graphite and PAH) grains
-	const GrainSizeDistribution _carbonSizeDist;
+	const GrainSizeDistribution _carbonSizeDist{};
 	// Silicate grains
-	const GrainSizeDistribution _silicaSizeDist;
+	const GrainSizeDistribution _silicaSizeDist{};
 };
 } /* namespace GasModule */
 

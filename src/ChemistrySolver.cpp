@@ -32,7 +32,7 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	                [&](const EVector& nv) { return evaluateJvv(nv, rateCoeffv); },
 	                [&](const EVector& nv) {
 		                return evaluateFv(nv, rateCoeffv, conservedQuantityv);
-		        },
+	                },
 	                n0v);
 	return result;
 }
@@ -146,7 +146,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		std::cout << "NR-iteration " << counter << std::endl;
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
-		// TODO: remove rows (= equations) that are zero,
+// TODO: remove rows (= equations) that are zero,
 #ifdef PRINT_MATRICES
 		DEBUG("Newton-Raphson iteration " << counter << std::endl);
 		DEBUG("Jacobian: " << std::endl << jfvv << std::endl);

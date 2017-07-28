@@ -110,7 +110,7 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	}
 }
 
-Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, double Tc, double G0)
+Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0)
 {
 	Array I_nu(frequencyv.size());
 	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
@@ -126,7 +126,7 @@ Array Testing::generateSpecificIntensityv(const vector<double>& frequencyv, doub
 		i++;
 	endUV = i + 1;
 	cout << "UV goes from " << startUV << " to " << endUV << endl;
-	vector<double> frequenciesUV(frequencyv.begin() + startUV, frequencyv.begin() + endUV);
+	vector<double> frequenciesUV(begin(frequencyv) + startUV, begin(frequencyv) + endUV);
 	vector<double> isrfUV(begin(I_nu) + startUV, begin(I_nu) + endUV);
 
 	// Integrate over the UV only
@@ -211,8 +211,7 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::
 {
 	const Array& frequencyv = gi.frequencyv();
 
-	Array specificIntensityv = generateSpecificIntensityv(
-	                vector<double>(begin(frequencyv), end(frequencyv)), Tc, G0);
+	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
 
 	GasModule::GasState gs;
 	GasModule::GrainInfo grainInfo{};
@@ -330,11 +329,7 @@ void Testing::testACollapse()
 	cout << "Compare this with values directly from NIST below:" << endl;
 	EMatrix nistA(5, 5);
 	// clang-format off
-	nistA << 0, 0, 0, 0, 0,
-			4.6986e+08, 0, 0, 0, 0,
-			5.5751e+07, 4.4101e+07, 0, 0, 0,
-			1.2785e+07, 8.4193e+06, 8.9860e+06, 0, 0,
-			4.1250e+06, 2.5304e+06, 2.2008e+06, 2.6993e+06, 0;
+	nistA << 0, 0, 0, 0, 0, 4.6986e+08, 0, 0, 0, 0, 5.5751e+07, 4.4101e+07, 0, 0, 0, 1.2785e+07, 8.4193e+06, 8.9860e+06, 0, 0, 4.1250e+06, 2.5304e+06, 2.2008e+06, 2.6993e+06, 0;
 	// clang-format on
 	cout << nistA << endl;
 	cout << "The element-wise relative difference is " << endl;
@@ -363,7 +358,7 @@ void Testing::testPS64Collisions()
 	EMatrix cvv = hff.cvv(T, ne, np);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards
-	   rate from level nl. */
+	 rate from level nl. */
 	EVector anlv = avv.rowwise().sum();
 	for (int n : std::array<int, 2>{4, 5})
 	{
@@ -403,9 +398,9 @@ void Testing::testChemistry()
 	const double T = 10000;
 	vector<double> freqvec = generateGeometricGridv(200, 1e11, 1e16);
 	Array frequencyv(freqvec.data(), freqvec.size());
-	Array specificIntensityv = generateSpecificIntensityv(freqvec, 25000, 10);
+	Array specificIntensityv = generateSpecificIntensityv(frequencyv, 25000, 10);
 
-	ChemistrySolver cs(move(make_unique<ChemicalNetwork>()));
+	ChemistrySolver cs(make_unique<ChemicalNetwork>());
 
 	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted into H.
 	double kdiss = 1e-9;
