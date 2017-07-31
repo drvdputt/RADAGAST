@@ -81,7 +81,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		function<int(double)> evaluateThermalBalance = [&](double logT) -> int {
 			counter++;
 			s = calculateDensities(n, pow(10., logT), specificIntensityv);
-			double netPowerIn = heating(s) - cooling(s);
+			double netPowerIn = heating(s, gi) - cooling(s);
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
 			               << endl);

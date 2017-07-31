@@ -5,9 +5,9 @@
 #include "Constants.h"
 #include "GrainInfo.h"
 
+#include <functional>
 #include <vector>
 
-// TODO: convert everything to frequency units, or write interface
 // TODO: consider van Hoof's correction (see GasPhysics.pdf)
 // TODO: create a way to get the excess/deficit of electrons, and maybe charge exchange reaction rates
 
