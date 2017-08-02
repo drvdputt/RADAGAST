@@ -30,10 +30,10 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
 		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
 	}
 
-	ine = ChemicalNetwork::speciesIndex.at("e-");
-	inp = ChemicalNetwork::speciesIndex.at("H+");
-	inH = ChemicalNetwork::speciesIndex.at("H");
-	inH2 = ChemicalNetwork::speciesIndex.at("H2");
+	ine = ChemicalNetwork::speciesIndexm.at("e-");
+	inp = ChemicalNetwork::speciesIndexm.at("H+");
+	inH = ChemicalNetwork::speciesIndexm.at("H");
+	inH2 = ChemicalNetwork::speciesIndexm.at("H2");
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
@@ -179,7 +179,7 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 				   reactions. The production vector would be (1 0 0 0) while the
 				   reactant vector would be zero (the grains don't disappear when
 				   they lose an electron) Grain recombination / charge exchange
-				   reaction could also be added. I need to think about wheter the
+				   reaction could also be added. I need to think about whether the
 				   'disappearing' particles will cause problems when couples with
 				   conservation equations. */
 			}
@@ -294,9 +294,6 @@ double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInfo& 
 	double grainPhotoelectricHeating{0};
 	if (g.hasCarbon() || g.hasSilica())
 	{
-		// TODO: Ayyy I need wavelengths here, better start converting everything in
-		// GrainPhotoElectricEffect to frequency units, and specific intensity instead of
-		// energy density per lambda. And i need a list of particle charges.
 		double ne = s.abundancev[ine];
 		double np = s.abundancev[inp];
 		GrainPhotoelectricEffect::Environment env(

@@ -143,7 +143,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 	do
 	{
 		counter++;
-		std::cout << "NR-iteration " << counter << std::endl;
+		std::cout << "NewtonRaphson-iteration " << counter << std::endl;
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
 // TODO: remove rows (= equations) that are zero,
