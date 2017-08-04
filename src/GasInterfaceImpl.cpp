@@ -292,7 +292,7 @@ double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInfo& 
 {
 
 	double grainPhotoelectricHeating{0};
-	if (g.hasCarbon() || g.hasSilica())
+	if (g.hasCarbonaceous() || g.hasSilicate())
 	{
 		double ne = s.abundancev[ine];
 		double np = s.abundancev[inp];
@@ -300,12 +300,12 @@ double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInfo& 
 		                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1}, {ne, np},
 		                {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
-		if (g.hasCarbon())
+		if (g.hasCarbonaceous())
 			grainPhotoelectricHeating +=
-			                _graphGrainHeat.heatingRate(env, g._carbonSizeDist);
-		if (g.hasSilica())
+			                _graphGrainHeat.heatingRate(env, g._carSizeDist);
+		if (g.hasSilicate())
 			grainPhotoelectricHeating +=
-			                _silicGrainHeat.heatingRate(env, g._silicaSizeDist);
+			                _silicGrainHeat.heatingRate(env, g._silSizeDist);
 	}
 	return heating(s) + grainPhotoelectricHeating;
 }

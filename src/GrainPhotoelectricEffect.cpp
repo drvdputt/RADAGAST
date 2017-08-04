@@ -492,10 +492,9 @@ double GrainPhotoelectricEffect::energyIntegral(double Elow, double Ehigh, doubl
 	 -min2). */
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
-	return 6 / Ediff3 *
-	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
+	                     (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double GrainPhotoelectricEffect::yield(double a, int Z, double hnuDiff, double Elow,
@@ -576,8 +575,10 @@ double GrainPhotoelectricEffect::stickingCoefficient(double a, int Z, int z_i) c
 		}
 		// positive grains
 		else
-			return (1 - pElasticScatter) * (-expm1(-a / le));
+
+		return (1 - pElasticScatter) * (-expm1(-a / le));
 	}
+	// more negative
 	else
 		return 0;
 }
@@ -660,25 +661,6 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 		particleSum += env._densityv[i] * sqrt(eightkT3DivPi / env._massv[i]) * Zsum;
 	}
 
-	// Previous implementation, which was correct. Kept for reference at the moment.
-	//	// electrons
-	//	double Zsum = 0;
-	//	for (int z = Zmin; z <= Zmax; z++)
-	//	{
-	//		double ksi = -z; // ksi = Ze / q_e = -Z
-	//		Zsum += stickingCoefficient(a, z, -1) * fZ[z - Zmin] * lambdaTilde(tau, ksi);
-	//	}
-	//	particleSum += _electronDensity * sqrt(eightkT3DivPi / Constant::ELECTRONMASS) * Zsum;
-	//
-	//	// (H+) ions
-	//	Zsum = 0;
-	//	for (int z = Zmin; z <= Zmax; z++)
-	//	{
-	//		double ksi = z; // ksi = Ze / q_i = z
-	//		Zsum += stickingCoefficient(a, z, 1) * fZ[z - Zmin] * lambdaTilde(tau, ksi);
-	//	}
-	//	particleSum += _electronDensity * sqrt(eightkT3DivPi / Constant::PROTONMASS) * Zsum;
-
 	/* The second term of equation 42: autoionization of grains with the most negative charge
 	 inhibits the cooling of the gas. */
 	// EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
@@ -687,9 +669,8 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	 minimumCharge is significant. If it is not siginicant, then fZ will not cover
 	 minimumCharge, (and Zmin > minimumCharge). */
 	if (Zmin == minimumCharge(a))
-		secondTerm = fZ[0] *
-		             collisionalChargingRate(a, env._T, Zmin, -1, Constant::ELECTRONMASS,
-		                                     env._ne) *
+		secondTerm = fZ[0] * collisionalChargingRate(a, env._T, Zmin, -1,
+		                                             Constant::ELECTRONMASS, env._ne) *
 		             ionizationPotential(a, Zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
@@ -715,13 +696,13 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 		// Quantities independent of nu
 		double ip_v = ionizationPotential(a, Z);
 
+		// WD01 eq 7
 		double Emin = Z >= 0 ? 0
-		                     : -(Z + 1) * e2a /
-		                                              (1 +
-		                                               std::pow(27. * Constant::ANG_CM / a,
-		                                                        0.75)); // WD01 eq 7
+		                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
+		                                                      0.75));
 
-		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin; // WD01 eq 6
+		// WD01 eq 6
+		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
 
 		double Elow = Z < 0 ? Emin : -(Z + 1) * e2a; // WD01 text between eq 10 and 11
 

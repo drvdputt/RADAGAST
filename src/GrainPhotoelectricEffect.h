@@ -9,11 +9,14 @@
 #include <vector>
 
 // TODO: consider van Hoof's correction (see GasPhysics.pdf)
-// TODO: create a way to get the excess/deficit of electrons, and maybe charge exchange reaction rates
+/* TODO: create a way to get the excess/deficit of electrons, and maybe charge exchange reaction
+   rates. */
 
 class GrainPhotoelectricEffect
 {
 public:
+	/** Creates an object with its members set to suitable values for either carbonaceous
+	    (carbonaceous == true) or silicate (carbonaceous == false) grains. */
 	GrainPhotoelectricEffect(bool carbonaceous)
 	                : _carbonaceous(carbonaceous), _workFunction(calcWorkFunction(carbonaceous))
 	{
@@ -138,11 +141,7 @@ private:
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin) const;
 
-	// Gas properties which worked for photoelectricheatingtest. Keep these as a reference.
-	//	const double _hydrogenDensity{2.5e1};
-	//	const double _ionizationFraction{3.e-4};
-	//	const double _electronDensity{_hydrogenDensity * _ionizationFraction};
-	//	double _gasTemperature{1.e3};
+// TODO: THE MEMBERS BELOW SHOULD BE REMOVED EVENTUALLY. THEY ONLY PLAY A ROLE IN SOME OF THE TESTS
 
 	/* The radiation field to use for test will use this blackbody temperature to determine the
 	   shape. Its actual strength should be provided using the 'G0' argument of the test

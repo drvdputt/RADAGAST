@@ -413,20 +413,29 @@ void Testing::testChemistry()
 
 	ChemistrySolver cs(make_unique<ChemicalNetwork>());
 
-	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted into H.
-	double kdiss = 1e-9;
+	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted
+	// into H.
+	double kdiss = 1e5;
 	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
-	EVector n0v(4);
-	n0v << 25, 25, 75, 0;
-	EVector nv = cs.solveBalance(kv, n0v);
+	int ie = ChemicalNetwork::speciesIndexm.at("e-");
+	int ip = ChemicalNetwork::speciesIndexm.at("H+");
+	int iH = ChemicalNetwork::speciesIndexm.at("H");
+	int iH2 = ChemicalNetwork::speciesIndexm.at("H2");
 
+	EVector n0v(4);
+	n0v(ie) = 25;
+	n0v(ip) = 25;
+	n0v(iH) = 75;
+	n0v(iH2) = 0.1;
+
+	EVector nv = cs.solveBalance(kv, n0v);
 	double ionizedFraction = Ionization::solveBalance(100, T, frequencyv, specificIntensityv);
 
 	cout << "Compare with ionized fraction calculation: " << endl;
 	cout << "f = " << ionizedFraction << endl;
-	assert(nv(1) / (nv(1) + nv(2)) - ionizedFraction < 0.01);
+	assert(abs(nv(ip) / (nv(ip) + nv(iH) + 2 * nv(iH2)) - ionizedFraction) < 0.01);
 }
 
 void Testing::compareFromFilesvsHardCoded()

@@ -19,44 +19,43 @@ public:
 	/** Constructor for carbonaceous or silicate only. */
 	enum class GrainType
 	{
-		CARBON,
-		SILICA
+		CARBONACEOUS,
+		SILICATE
 	};
-	GrainInfo(GrainType t, const Array& grainSizev,
+	GrainInfo(GrainType t, const Array& grainSizev, const Array& grainDensityv,
 	          const std::vector<Array>& absQvv);
 
 	/** Constructor for a mix of carbonaceous and silicate. */
-	GrainInfo(const Array& carbonGrainSizev,
-	          const std::vector<Array>& carbonAbsQvv,
-	          const Array& silicaGrainSizev,
-	          const std::vector<Array>& silicaAbsQvv);
+	GrainInfo(const Array& carbonGrainSizev, const Array& carbonaceousDensityv,
+	          const std::vector<Array>& carbonAbsQvv, const Array& silicaGrainSizev,
+	          const Array& silicateDensityv, const std::vector<Array>& silicaAbsQvv);
 
-	bool hasCarbon() const {return _hasCarbon;}
-	bool hasSilica() const {return _hasSilica;}
-
+	bool hasCarbonaceous() const { return _hasCar; }
+	bool hasSilicate() const { return _hasSil; }
 
 private:
-	bool _hasCarbon{false};
-	bool _hasSilica{false};
+	bool _hasCar{false};
+	bool _hasSil{false};
 
 public:
 	typedef struct GrainSizeDistribution
 	{
 		GrainSizeDistribution() = default;
-		GrainSizeDistribution(const Array& grainSizev,
-		          const std::vector<Array> absQvv)
-		                : _grainSizev{grainSizev}, _absQvv{absQvv}
+		GrainSizeDistribution(const Array& grainSizev, const Array& grainDensityv,
+		                      const std::vector<Array> absQvv)
+		                : _grainSizev{grainSizev},
+		                  _grainDensityv{grainDensityv}, _absQvv{absQvv}
 		{
 		}
 		const Array _grainSizev;
 		const Array _grainDensityv;
 		const std::vector<Array> _absQvv;
-	} GrainData;
+	} GrainSizeDistribution;
 
 	// Carbonaceous (graphite and PAH) grains
-	const GrainSizeDistribution _carbonSizeDist{};
+	const GrainSizeDistribution _carSizeDist{};
 	// Silicate grains
-	const GrainSizeDistribution _silicaSizeDist{};
+	const GrainSizeDistribution _silSizeDist{};
 };
 } /* namespace GasModule */
 

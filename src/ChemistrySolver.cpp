@@ -146,7 +146,10 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		std::cout << "NewtonRaphson-iteration " << counter << std::endl;
 		const EMatrix& jfvv = jacobianfvv(xv);
 		const EVector& fv = functionv(xv);
-// TODO: remove rows (= equations) that are zero,
+// TODO: remove species (== 1 row and 1 column) that cause numerical instability
+		// A typical culprit is a very high or very low dissociation rate for H2
+		// Then, we get like [small small small big] for H and [0 0 0 -big] for the H2 row
+
 #ifdef PRINT_MATRICES
 		DEBUG("Newton-Raphson iteration " << counter << std::endl);
 		DEBUG("Jacobian: " << std::endl << jfvv << std::endl);
