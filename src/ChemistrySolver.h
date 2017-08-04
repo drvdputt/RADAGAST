@@ -90,7 +90,7 @@ private:
 	    providing the system with rate coefficients, illustrates why it is useful to have this
 	    extra object. */
 	std::unique_ptr<const ChemicalNetwork> _cn;
-	EMatrix _rvv, _pvv, _cvv;
+	EMatrix _rStoichvv, _netStoichvv, _conservEqvv;
 	size_t _numSpecies, _numReactions, _numConserved;
 };
 

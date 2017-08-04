@@ -25,7 +25,7 @@ EVector TwoLevelHardcoded::gv() const { return the_gv; }
 
 EMatrix TwoLevelHardcoded::avv() const
 {
-	Eigen::Matrix2d the_avv;
+	EMatrix the_avv(2, 2);
 	// clang-format off
 	the_avv << 0, 0,
 		   2.29e-6, 0;
@@ -33,7 +33,7 @@ EMatrix TwoLevelHardcoded::avv() const
 	return the_avv;
 }
 
-EMatrix TwoLevelHardcoded::extraAvv() const { return Eigen::Matrix2d::Zero(); }
+EMatrix TwoLevelHardcoded::extraAvv() const { return EMatrix::Zero(2, 2); }
 
 EMatrix TwoLevelHardcoded::cvv(double T, double /* unused ne */, double /* unused np */) const
 {
@@ -58,11 +58,11 @@ EVector TwoLevelHardcoded::sourcev(double /* unused T */, double /* unused np */
                                    double /* unused ne */) const
 {
 	// There is no ion
-	return Eigen::Vector2d::Zero();
+	return EVector::Zero(2);
 }
 
 EVector TwoLevelHardcoded::sinkv(double /* unused T */, double /* unused np */,
                                  double /* unused ne */) const
 {
-	return Eigen::Vector2d::Zero();
+	return EVector::Zero(2);
 }

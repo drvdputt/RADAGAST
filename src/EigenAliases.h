@@ -3,8 +3,8 @@
 
 #include <Eigen/Dense>
 
-using EMatrix = Eigen::MatrixXd;
-using EVector = Eigen::VectorXd;
-using EArray = Eigen::ArrayXd;
+using EMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+using EVector = Eigen::Matrix<double, Eigen::Dynamic, 1>;
+using EArray = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>;
 
 #endif /* GASMODULE_GIT_SRC_EIGENALIASES_H_ */

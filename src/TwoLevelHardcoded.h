@@ -17,8 +17,8 @@ public:
 	EVector sourcev(double T, double ne, double np) const override;
 	EVector sinkv(double T, double ne, double np) const override;
 private:
-	Eigen::Vector2d the_ev;
-	Eigen::Vector2d the_gv;
+	EVector the_ev{EVector::Zero(2)};
+	EVector the_gv{EVector::Zero(2)};
 };
 
 #endif /* GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_ */
