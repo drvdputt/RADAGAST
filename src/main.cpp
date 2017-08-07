@@ -25,10 +25,10 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-//		Testing::testPhotoelectricHeating();
+		Testing::testPhotoelectricHeating();
 //		Testing::testIonizationStuff();
 //		Testing::testPS64Collisions();
-		Testing::testChemistry();
+//		Testing::testChemistry();
 //		Testing::testACollapse();
 //		Testing::compareFromFilesvsHardCoded();
 //		Testing::runFromFilesvsHardCoded();

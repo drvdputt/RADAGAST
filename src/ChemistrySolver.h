@@ -78,6 +78,10 @@ private:
 	                      std::function<EVector(const EVector& nv)> functionv,
 	                      const EVector& x0v) const;
 
+	EVector newtonRaphsonStep(const EMatrix& currentJvv, const EMatrix& currentFv,
+	                      std::function<EVector(const EVector& nv)> functionv,
+	                          const EVector& currentXv) const;
+
 	// DESIGN NOTE:
 	/** The calculation of the rate coefficients can be delegated to another object, as the
 	    arguments required to calculate them could be anything from the rest of the
