@@ -60,7 +60,7 @@ private:
 
 	/** Calculates the derivative of the density factor for reaction r, derived to the density
 	    of species j. */
-	double densityProductDerivative(const EVector& nv, size_t r, size_t j) const;
+	double densityProductDerivative(const EVector& nv, int r, int j) const;
 
 	/** Finds the root of a multivariate, multi-component function using the Newton-Raphson
 	    iteration method. The dimension of the function equals the number of equations of the
@@ -95,7 +95,7 @@ private:
 	    extra object. */
 	std::unique_ptr<const ChemicalNetwork> _cn;
 	EMatrix _rStoichvv, _netStoichvv, _conservEqvv;
-	size_t _numSpecies, _numReactions, _numConserved;
+	int _numSpecies, _numReactions, _numConserved;
 };
 
 #endif /* GASMODULE_GIT_SRC_CHEMISTRYSOLVER_H_ */
