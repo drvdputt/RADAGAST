@@ -74,7 +74,7 @@ NLevel::Solution NLevel::solveBalance(double density, double electronDensity, do
 		DEBUG("Max profile norm = " << maxNorm << endl);
 		DEBUG("Min profile norm = " << minNorm << endl);
 #endif
-#ifdef PRINT_MATRICES
+#ifdef PRINT_LEVEL_MATRICES
 		DEBUG("Aij" << endl << _avv << endl << endl);
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
@@ -188,7 +188,7 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 	Mvv.row(chooseConsvEq) = EVector::Ones(Mvv.cols());
 	b(chooseConsvEq) = n;
 
-#ifdef PRINT_MATRICES
+#ifdef PRINT_LEVEL_MATRICES
 	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
 #endif
 	// Call the linear solver

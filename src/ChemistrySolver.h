@@ -82,6 +82,10 @@ private:
 	                      std::function<EVector(const EVector& nv)> functionv,
 	                          const EVector& currentXv) const;
 
+	/** It might be better to use a third party solver such as the multidimensional root finding
+	    in GSL, or the unsupported nonlinear solver of Eigen. Or maybe SUNDIALS. */
+
+
 	// DESIGN NOTE:
 	/** The calculation of the rate coefficients can be delegated to another object, as the
 	    arguments required to calculate them could be anything from the rest of the

@@ -10,11 +10,12 @@
 	} while (0)
 #else
 
-#define PRINT_MATRICES
+//#define PRINT_LEVEL_MATRICES
+//#define PRINT_CHEMISTRY_MATRICES
 //
 //#define REPORT_LINE_QUALITY
 //
-#define DEBUG_CONTINUUM_DATA
+//#define DEBUG_CONTINUUM_DATA
 
 //#define ECHO_READIN
 

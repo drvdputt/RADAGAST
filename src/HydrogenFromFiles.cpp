@@ -250,7 +250,7 @@ EMatrix HydrogenFromFiles::avv() const
 				the_avv(i, f) = einsteinA(ni, nf);
 		}
 	}
-#ifdef PRINT_MATRICES
+#ifdef PRINT_LEVEL_MATRICES
 	DEBUG("Einstein A matrix:" << endl);
 	DEBUG(the_avv << endl);
 #endif
@@ -282,7 +282,7 @@ EMatrix HydrogenFromFiles::extraAvv() const
 		int index2 = indexOutput(2, -1);
 		the_extra(index2, index1s) = rate / 4.; // + 0 * 3 / 4.
 	}
-#ifdef PRINT_MATRICES
+#ifdef PRINT_LEVEL_MATRICES
 	DEBUG("Extra A" << endl);
 	DEBUG(the_extra << endl);
 #endif
@@ -392,12 +392,10 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 	{
 		double qBoth = ps64eq43(l);
 		double qUp = qBoth - qDown;
-		assert(qUp >= 0.);
 		q_li_lf_goingUp(l, l + 1) = qUp;
 
 		// will also be used in loop for l+1:
 		qDown = qUp * (2. * l + 1.) / (2. * l + 3.);
-		assert(qDown >= 0.);
 		q_li_lf_goingUp(l + 1, l) = qDown;
 	}
 	double qUp = 0;
@@ -405,15 +403,17 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 	{
 		double qBoth = ps64eq43(l);
 		double qDown = qBoth - qUp;
-		assert(qDown >= 0.);
 		q_li_lf_goingDown(l, l - 1) = qDown;
 
 		// will also be used in loop for l-1:
 		qUp = qDown * (2. * l + 1.) / (2. * l - 1.);
-		assert(qUp >= 0.);
 		q_li_lf_goingDown(l - 1, l) = qUp;
 	}
-	return (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
+	const EMatrix result = (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
+#ifdef SANITY
+	assert((result.array() >= 0).all());
+#endif
+	return result.array().max(0);
 }
 
 EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const

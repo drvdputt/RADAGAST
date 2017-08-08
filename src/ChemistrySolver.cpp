@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <iostream>
 
+//#include <gsl/gsl_multiroots.h>
+
 ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv, const EMatrix& productStoichvv,
                                  const EMatrix& conservationCoeffvv)
                 : _rStoichvv(reactantStoichvv), _netStoichvv(productStoichvv - reactantStoichvv),
@@ -18,7 +20,7 @@ ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv, const EMatrix&
 ChemistrySolver::ChemistrySolver(std::unique_ptr<const ChemicalNetwork> cn) : _cn(std::move(cn))
 {
 	_rStoichvv = _cn->reactantStoichvv();
-	_netStoichvv = _rStoichvv - _cn->productStoichvv();
+	_netStoichvv = _cn->productStoichvv() - _rStoichvv;
 	_conservEqvv = _cn->conservationCoeffvv();
 	_numSpecies = _rStoichvv.rows();
 	_numReactions = _rStoichvv.cols();
@@ -37,6 +39,15 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 		        },
 	                n0v);
 	return result;
+
+	//	// Use GSL
+	//	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_newton;
+	//	gsl_multiroot_fdfsolver* s = gsl_multiroot_fdfsolver_alloc(T, _numSpecies);
+	//
+	//	inf (* f) (const gsl_vector* x, void* params, gsl_vector* f);
+	//
+
+	return EVector::Zero(_numSpecies);
 }
 
 EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv,
@@ -78,20 +89,20 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 	EMatrix jvv(_numSpecies + _numConserved, _numSpecies);
 
 	// For every column (= derivative with respect to a different density)
-	for (int j = 0; j < _numSpecies; j++)
+	for (int jDeriv = 0; jDeriv < _numSpecies; jDeriv++)
 	{
 		/* Here we calculate the derivatives of the density products times the reaction
 		   rates and multiply with the rate coefficient. */
 		EVector kDerivativev(_numReactions);
 		for (int r = 0; r < _numReactions; r++)
-			kDerivativev(r) = rateCoeffv(r) * densityProductDerivative(nv, r, j);
+			kDerivativev(r) = rateCoeffv(r) * densityProductDerivative(nv, r, jDeriv);
 
 		// Fill in the top part of the column (= equilibrium part)
-		jvv.col(j).head(_numSpecies) = _netStoichvv * kDerivativev;
+		jvv.col(jDeriv).head(_numSpecies) = _netStoichvv * kDerivativev;
 
 		/* Fill in the bottom part of the column (= conservation part) These equations are
 		   simply linear, therefore the derivative is equal to the coefficient. */
-		jvv.col(j).tail(_numConserved) = _conservEqvv.col(j);
+		jvv.col(jDeriv).tail(_numConserved) = _conservEqvv.col(jDeriv);
 	}
 	return jvv;
 }
@@ -148,7 +159,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		// Do a first evaluation of jvv and fv to test the waters
 		const EMatrix& jvv = functionJvv(xv);
 		const EVector& fv = functionFv(xv);
-#ifdef PRINT_MATRICES
+#ifdef PRINT_CHEMISTRY_MATRICES
 		DEBUG("Jacobian: " << std::endl << jvv << std::endl);
 		DEBUG("Function: " << std::endl << fv << std::endl);
 #endif
@@ -174,20 +185,22 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 						restZero = false;
 				if (restZero && jvv(i, i))
 				{
-					allZeroButDiagonalv[i] = true;
 					// Delta will be explicitly set to (-fi / jii)
+					allZeroButDiagonalv[i] = true;
 				}
 			}
 
 			if (allZerov[i] || allZeroButDiagonalv[i])
 			{
+				// Equivalent to allZerov[i] || allZeroButDiagonalv[i],
+				// for convenience.
 				isRemovedv[i] = true;
 				countToRemove++;
 			}
 		}
 
 		// Split up the rest of the implementation
-		EVector deltaxv{EVector::Zero(_numSpecies)};
+		EVector deltaxv;
 		if (!countToRemove)
 		{
 			/* If no equations/species need to be removed, simply take a Newton-Raphson
@@ -216,7 +229,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			auto fullXvWithConstants = [&](const EVector& reducedXv) -> EVector {
 				EVector result{xv};
 				int reducedIndex{0};
-				for (int i = 0; i < _numSpecies; i++)
+				for (int i = 0; i < xv.size(); i++)
 				{
 					// All coefficients are zero -> keep current value constant
 					// *do nothing*
@@ -286,7 +299,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			   of the system. */
 			EVector currentReducedXv(newNumSp);
 			int reducedIndex{0};
-			for (int i = 0; i < _numSpecies; i++)
+			for (int i = 0; i < xv.size(); i++)
 				if (!isRemovedv[i])
 				{
 					currentReducedXv(reducedIndex) = xv(i);
@@ -300,8 +313,9 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			                                           funcReducedFv, currentReducedXv);
 
 			// Fill in the full deltaxv (zeros for species not included)
+			deltaxv = EVector::Zero(xv.size());
 			reducedIndex = 0;
-			for (int i = 0; i < _numSpecies; i++)
+			for (int i = 0; i < xv.size(); i++)
 			{
 				if (allZerov[i])
 					deltaxv(i) = 0;
@@ -323,8 +337,8 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		                xv.array().abs() <= 1.e-32 * xv.norm();
 		converged = convergedv.all() || (fv.array() == 0).all();
 
-#ifdef PRINT_MATRICES
-		DEBUG("Delta x:\n"
+#ifdef PRINT_CHEMISTRY_MATRICES
+		DEBUG("Actual delta x:\n"
 		      << deltaxv << std::endl
 		      << "previous x:\n"
 		      << xv << std::endl
@@ -341,9 +355,14 @@ EVector ChemistrySolver::newtonRaphsonStep(const EMatrix& currentJvv, const EMat
                                            std::function<EVector(const EVector& nv)> functionv,
                                            const EVector& currentXv) const
 {
+	DEBUG("Jvv \n" << currentJvv << std::endl);
+	DEBUG("Fv \n" << currentFv << std::endl);
+
 	EVector deltaxv = currentJvv.colPivHouseholderQr().solve(-currentFv);
 
-	EVector testProduct = -currentJvv * deltaxv;
+	DEBUG("raw DeltaXv \n" << deltaxv << std::endl);
+
+	EVector testProduct = currentJvv * deltaxv;
 	DEBUG("testProduct \n" << testProduct << std::endl);
 
 	/* A possible problem is that, when the density of a species i is zero, the > 0 density
@@ -368,8 +387,8 @@ EVector ChemistrySolver::newtonRaphsonStep(const EMatrix& currentJvv, const EMat
 	   case for factor=1, as the system is non-linear.  The second criterion can be dropped if
 	   no solution with a smaller ||f|| can be found. Another option is finding the minimum
 	   along the line. I'll keep that in mind for later maybe. */
-	double factor{1.}, factorReduce{0.9};
-	int count{0}, maxCount{10};
+	double factor{1.}, factorReduce{.5};
+	int count{0}, maxCount{20};
 	EVector newxv = currentXv + factor * deltaxv;
 	while (count < maxCount)
 	{

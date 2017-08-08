@@ -17,6 +17,7 @@ HEADERS=$(wildcard $(SRCDIR)/*h)
 # Includes
 INCDIR=./include
 EIGENDIR=./eigen3
+GSLDIR=$(HOME)/.local/gsl/include
 
 # Build directory: objects and dependency files
 OBJDIR=../obj
@@ -29,8 +30,8 @@ $(info $$DEPENDS are [$(DEPENDS)])
 DEPFLAGS=-MT $@ -MMD -MP -MF $(OBJDIR)/$*.Td
 
 # Compile flags
-CXXFLAGS=$(DEPFLAGS) -I$(INCDIR) -isystem$(EIGENDIR) -O0 -g -std=c++14 -Wall\
--Wextra -Werror=return-type -pedantic -DREPOROOT=\""$(shell pwd)"\"
+CXXFLAGS=$(DEPFLAGS) -I$(INCDIR) -isystem$(GSLDIR) -isystem$(EIGENDIR) -O0 -g \
+-std=c++14 -Wall -Wextra -Werror=return-type -pedantic -DREPOROOT=\""$(shell pwd)"\"
 
 # The final target
 all: $(PROGRAM)

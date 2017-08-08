@@ -142,9 +142,14 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 
-		// Initial guess for the chemistry
+		// Initial guess for the chemistry. Rather important for getting good convergence.
+		double iniNH2 = ntotal / 4;
+		double iniAtomAndIon = ntotal / 2;
+		double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
+		                                         specificIntensityv);
 		s.abundancev = EVector(4);
-		s.abundancev << ntotal / 4., ntotal / 4., ntotal / 4., ntotal / 4.;
+		s.abundancev << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
+		                (1 - guessF) * iniAtomAndIon, iniNH2;
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
 
@@ -224,6 +229,7 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 		if (_molecularLevels)
 			s.H2Solution = _molecularLevels->solveBalance(0, 0, 0, T,
 			                                              specificIntensityv);
+		s.abundancev = EVector::Zero(ChemicalNetwork::speciesIndexm.size());
 	}
 	return s;
 }
