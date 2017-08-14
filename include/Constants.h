@@ -15,6 +15,7 @@ constexpr double HMASS_AMU = 1.0078250321;    // Hydrogen mass in atomic mass un
 constexpr double HMASS_CGS = 1.67353263e-24;  // Hydrogen mass in gm.
 
 // Conversion factors and common constant combinations.
+constexpr double HBAR = PLANCK / 2. / PI;
 constexpr double PLANCKLIGHT = (PLANCK) * (LIGHT);   // hc in erg cm
 constexpr double IPLANCKLIGHT = 1.0 / (PLANCKLIGHT); // 1/hc
 constexpr double FPI = 4.0 * (PI);                   // 4pi

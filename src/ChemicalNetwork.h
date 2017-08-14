@@ -25,7 +25,8 @@ public:
 private:
 	/** Prepare the species index. All the names will be given an arbirary index, which can
 	    later be retrieved using **/
-	static std::map<std::string, int> createSpeciesIndexm(const std::vector<std::string>& namev);
+	static std::map<std::string, int>
+	createSpeciesIndexm(const std::vector<std::string>& namev);
 
 public:
 	/** Calculates the rate coefficients for each reaction. They still have to be multiplied
@@ -35,7 +36,8 @@ public:
 	    calculated somewhere else. This functions simply fill them in into the right spot of the
 	    k-vector. */
 	EVector rateCoeffv(double T, const Array& frequencyv, const Array& specificIntensityv,
-	                   double kFromH2Levels) const;
+	                   double kDissFromH2Levels, double kH2FormationGrain = 0.) const;
+
 private:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Also gives the reaction a number, and the reaction is added to the reaction

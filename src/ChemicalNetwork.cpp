@@ -30,7 +30,6 @@ ChemicalNetwork::ChemicalNetwork()
 {
 	// Photoionization
 	// H + gamma -> e- + H+
-	//_reactionv.emplace_back(Array{0, 0, 1, 0}, Array{1, 1, 0, 0});
 	addReaction("H photoionization", {"H"}, {1}, {"e-", "H+"}, {1, 1});
 
 	// Ionization by collision with electron
@@ -39,38 +38,33 @@ ChemicalNetwork::ChemicalNetwork()
 
 	// Radiative recombination
 	// e- + H+ -> H + gamma
-	//_reactionv.emplace_back(Array{1, 1, 0, 0}, Array{0, 0, 1, 0});
 	addReaction("H radiative recombination", {"e-", "H+"}, {1, 1}, {"H"}, {1});
 
 	// Dissociation after excitation
 	// H2 -> H + H
-	//_reactionv.emplace_back(Array{0, 0, 0, 1}, Array{0, 0, 2, 0});
 	addReaction("H2 dissociation", {"H2"}, {1}, {"H"}, {2});
+
+	// H2 formation on grain surfaces
+	// H + H -> H2
+	// Need to put 1 here for the H stoichiometry, because the rate scales with nH instead of
+	// nH^2 (see rateCoeffv()). By then using twice the reaction rate, we end up with an equal
+	// tempo of H2 formation, but on that scales only linearly with nH.
+	addReaction("H2 formation", {"H"}, {1}, {"H2"}, {.5});
 
 	_numReactions = _reactionv.size();
 }
 
 EVector ChemicalNetwork::rateCoeffv(double T, const Array& frequencyv,
-                                    const Array& specificIntensityv, double kFromH2Levels) const
+                                    const Array& specificIntensityv, double kDissFromH2Levels,
+                                    double kH2FormationGrain) const
 {
 	EVector k(_numReactions);
-
-	// Photoionization
-	// H + gamma -> ne + np
 	k(reactionIndex("H photoionization")) =
 	                Ionization::photoRateCoeff(frequencyv, specificIntensityv);
-
-	// Ionization by collision with electron
 	k(reactionIndex("H collisional ionization")) = Ionization::collisionalRateCoeff(T);
-
-	// Radiative recombination
-	// ne + np -> H + gamma
 	k(reactionIndex("H radiative recombination")) = Ionization::recombinationRateCoeff(T);
-
-	// Dissociation after excitation
-	// H2 -> H + H
-	k(reactionIndex("H2 dissociation")) = kFromH2Levels;
-
+	k(reactionIndex("H2 dissociation")) = kDissFromH2Levels;
+	k(reactionIndex("H2 formation")) = kH2FormationGrain;
 	return k;
 }
 
