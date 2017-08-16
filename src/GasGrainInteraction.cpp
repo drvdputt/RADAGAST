@@ -13,29 +13,27 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInfo& g, doub
 		for (int i = 0; i < numSizes; i++)
 		{
 			// Number density
-			double n_d{gsd._grainDensityv[i]};
+			double nd{gsd._grainDensityv[i]};
 
 			// Cross section of the grain
-			double sigma_d{gsd._grainSizev[i]};
-			sigma_d *= sigma_d / 4.;
+			double sigmad{gsd._grainSizev[i]};
+			sigmad *= sigmad / 4.;
 
 			// Formation efficiency epsilon
-			double Es;
-			double Td; // TODO: graininfo should contain some kind of dust temperature
-			double EHp;
-			double EHc;
-			double a;
-			double F;
-			double nu_Hc;
+			double Es{gsd._par._es};
+			double Td{gsd._tv[i]};
+			double EHp{gsd._par._eHp};
+			double EHc{gsd._par._eHc};
+			double aSqrt{gsd._par._aSqrt};
+			double F{gsd._par._f};
+			double nu_Hc{gsd._par._nuHc};
 			double sqrtEHp_Es = sqrt(EHp - Es);
 			double sqrtEHc_Es = sqrt(EHc - Es);
 
 			// 1 / B
 			double oneOverB{4. * exp(Es / Td) * sqrtEHp_Es / sqrtEHc_Es +
 			                8 * sqrt(Constant::PI * Td) / (EHc - Es) *
-			                                exp(-2 * a *
-			                                    sqrt(2 * Constant::HMASS_CGS /
-			                                         Constant::HBAR / Constant::HBAR)) *
+			                                exp(-2 * aSqrt) *
 			                                exp(EHp / Td) * sqrtEHc_Es};
 			double onePlusSqrtFrac{1 * sqrtEHc_Es / sqrtEHp_Es};
 			double oneOverKsi{1 +
@@ -49,7 +47,7 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInfo& g, doub
 			                    0.2 * Tgas / 100. + 0.08 * (Tgas * Tgas / 10000.)};
 
 			// factor n_d * sigma_d * epsilon_H2 * S_h
-			total += gsd._grainDensityv[i] * sigma_d * epsilon / oneOverStick;
+			total += nd * sigmad * epsilon / oneOverStick;
 		}
 	}
 	return 0.5 * thermalVelocityH;
