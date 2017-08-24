@@ -302,9 +302,9 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::
 
 	cout << "TestHydrogenCalculator done" << endl;
 
-	//	cout << "----------------------------------" << endl;
-	//	cout << "plotting heating curve..." << endl;
-	//	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
+	cout << "----------------------------------" << endl;
+	cout << "plotting heating curve..." << endl;
+	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
 }
 
 void Testing::testPhotoelectricHeating()
@@ -323,7 +323,7 @@ void Testing::testPhotoelectricHeating()
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	}
 
-	GrainPhotoelectricEffect phr{true};
+	GrainPhotoelectricEffect phr{GasModule::GrainType::CAR};
 	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{
@@ -415,7 +415,7 @@ void Testing::testChemistry()
 
 	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted
 	// into H.
-	double kdiss = 1e-30;
+	double kdiss = 0;
 	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
@@ -425,9 +425,9 @@ void Testing::testChemistry()
 	int iH2 = ChemicalNetwork::speciesIndexm.at("H2");
 
 	EVector n0v(4);
-	n0v(ie) = 50;
-	n0v(ip) = 50;
-	n0v(iH) = 50;
+	n0v(ie) = 0;
+	n0v(ip) = 0;
+	n0v(iH) = 100;
 	n0v(iH2) = 0;
 
 	EVector nv = cs.solveBalance(kv, n0v);

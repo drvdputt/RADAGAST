@@ -3,47 +3,28 @@
 
 namespace GasModule
 {
-GrainInfo::GrainInfo() = default;
 
-GrainInfo::GrainInfo(GrainType t, const Array& grainSizev, const Array& grainDensityv,
-                     const std::vector<Array>& absQvv, const Array& Tv)
-                : _hasCar{t == GrainType::CAR}, _hasSil{t == GrainType::SIL},
-                  _carSizeDist{t == GrainType::CAR
-                                               ? GrainSizeDistribution(
-                                                                 grainSizev, grainDensityv, absQvv,
-                                                                 Tv,
-                                                                 sfcInteractionPar(GrainType::CAR))
-                                               : GrainSizeDistribution{}},
-                  _silSizeDist{t == GrainType::SIL
-                                               ? GrainSizeDistribution(
-                                                                 grainSizev, grainDensityv, absQvv,
-                                                                 Tv,
-                                                                 sfcInteractionPar(GrainType::SIL))
-                                               : GrainSizeDistribution{}}
+GrainInfo::Population::Population(GrainType type, const Array& sizev, const Array& densityv,
+                                  const Array& temperaturev, const std::vector<Array>& qAbsvv)
+                : _type{type}, _sizev{sizev}, _densityv{densityv},
+                  _temperaturev{temperaturev}, _qAbsvv{qAbsvv}
 {
-	Error::equalCheck("grainSizev.size() and absQvv.size()", grainSizev.size(), absQvv.size());
-	Error::equalCheck("grainSizev.size() and grainDensityv.size()", grainSizev.size(),
-	                  grainDensityv.size());
+	Error::equalCheck("sizev.size() and densityv.size()", sizev.size(), densityv.size());
+	Error::equalCheck("sizev.size() and temperaturev.size()", sizev.size(), temperaturev.size());
+	Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
 }
+
+GrainInfo::GrainInfo() = default;
 
 GrainInfo::GrainInfo(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
                      const std::vector<Array>& carbonaceousAbsQvv, const Array& carTv,
                      const Array& silicateGrainSizev, const Array& silicateDensityv,
                      const std::vector<Array>& silicateAbsQvv, const Array& silTv)
-                : _hasCar{true}, _hasSil{true},
-                  _carSizeDist(carbonaceousGrainSizev, carbonaceousDensityv, carbonaceousAbsQvv,
-                               carTv, sfcInteractionPar(GrainType::CAR)),
-                  _silSizeDist(silicateGrainSizev, silicateDensityv, silicateAbsQvv, silTv,
-                               sfcInteractionPar(GrainType::SIL))
+                : _populationv{{GrainType::CAR, carbonaceousGrainSizev, carbonaceousDensityv, carTv,
+                                carbonaceousAbsQvv},
+                               {GrainType::SIL, silicateGrainSizev, silicateDensityv, silTv,
+                                silicateAbsQvv}}
 {
-	Error::equalCheck("carbonaceousGrainSizev.size() and carbonaceousAbsQvv.size()",
-	                  carbonaceousGrainSizev.size(), carbonaceousAbsQvv.size());
-	Error::equalCheck("carbonaceousGrainSizev.size() and carbonaceousDensityv.size()",
-	                  carbonaceousGrainSizev.size(), carbonaceousDensityv.size());
-	Error::equalCheck("silicateGrainSizev.size() and silicateAbsQvv.size()",
-	                  silicateGrainSizev.size(), silicateAbsQvv.size());
-	Error::equalCheck("silicateGrainSizev.size() and silicateDensityv.size()",
-	                  silicateGrainSizev.size(), silicateDensityv.size());
 }
 
 } /* namespace GasModule */

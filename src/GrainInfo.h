@@ -7,58 +7,51 @@
 
 namespace GasModule
 {
-/** Class that a client code should use to pass the grain properties in a cell. The AbsQvv
-    members should contain the absorption efficiency for each grain size (first index) and each
-    frequency/wavelength. */
+/** List of possible grain types */
+enum class GrainType
+{
+	CAR,
+	SIL
+};
+
+/** Class that a client code should use to pass the grain properties in a cell. This class contains
+    a list of grain models, for each of which a set of properties must be given. These properties,
+    are listed in the nested 'Population' class. */
 class GrainInfo
 {
 public:
+	/** The properties that need to be given per grain model that needs to be included. The
+	    grain type can be one of the types listed in the enum above. Then, an array of sizes,
+	    number densities, and one of temperatures needs to be specified (consider even using
+	    grain temperature distributions (for each grain size!) in the future). The temperatures
+	    are important for the H2 formation rate on the surfaces of the grains. The absorption
+	    efficiency also needs to be given (need to review its exact definition). It represents
+	    the number of photons absorbed from an ambient radiation field at a certain wavelength.
+	    It needs to be given for each grain size, and for each point of the frequency grid. */
+	class Population
+	{
+	public:
+		Population(GrainType type, const Array& sizev, const Array& densityv,
+		           const Array& temperaturev, const std::vector<Array>& qAbsvv);
+
+		const GrainType _type;
+		const Array _sizev, _densityv, _temperaturev;
+		const std::vector<Array> _qAbsvv;
+	};
+
 	/** Creates and empty GrainInfo. */
 	GrainInfo();
-
-	/** Constructor for carbonaceous or silicate only. */
-	enum class GrainType
-	{
-		CAR,
-		SIL
-	};
-	GrainInfo(GrainType t, const Array& grainSizev, const Array& grainDensityv,
-	          const std::vector<Array>& absQvv, const Array& Tv);
 
 	/** Constructor for a mix of carbonaceous and silicate. */
 	GrainInfo(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
 	          const std::vector<Array>& carbonaceousAbsQvv, const Array& carTv,
 	          const Array& silicateGrainSizev, const Array& silicateDensityv,
 	          const std::vector<Array>& silicateAbsQvv, const Array& silTv);
-	bool hasCarbonaceous() const { return _hasCar; }
-	bool hasSilicate() const { return _hasSil; }
+
+	std::vector<Population> populationv() const { return _populationv; }
 
 private:
-	bool _hasCar{false};
-	bool _hasSil{false};
-
-public:
-	typedef struct GrainSizeDistribution
-	{
-		GrainSizeDistribution() = default;
-		GrainSizeDistribution(const Array& grainSizev, const Array& grainDensityv,
-		                      const std::vector<Array> absQvv, const Array& Tv,
-		                      const GrainInfo::SurfaceInteractionParameters& par)
-		                : _grainSizev{grainSizev},
-		                  _grainDensityv{grainDensityv}, _absQvv{absQvv}, _tv{Tv}, _par{par}
-		{
-		}
-		const Array _grainSizev{};
-		const Array _grainDensityv{};
-		const std::vector<Array> _absQvv{};
-		const Array _tv{};
-		const GrainInfo::SurfaceInteractionParameters _par;
-	} GrainSizeDistribution;
-
-	// Carbonaceous (graphite and PAH) grains
-	const GrainSizeDistribution _carSizeDist{};
-	// Silicate grains
-	const GrainSizeDistribution _silSizeDist{};
+	const std::vector<Population> _populationv{};
 };
 } /* namespace GasModule */
 

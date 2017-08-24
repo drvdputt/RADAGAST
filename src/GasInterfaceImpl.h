@@ -151,9 +151,6 @@ private:
 	/* Continuum contributions */
 	std::unique_ptr<FreeBound> _freeBound;
 	std::unique_ptr<FreeFree> _freeFree;
-
-	GrainPhotoelectricEffect _silicGrainHeat{false};
-	GrainPhotoelectricEffect _graphGrainHeat{true};
 };
 
 #endif /* _HYDROGENCALCULATOR_H_ */

@@ -460,14 +460,13 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	return totalHeatingForGrainSize;
 }
 
-double
-GrainPhotoelectricEffect::heatingRate(const Environment& env,
-                                      const GasModule::GrainInfo::GrainSizeDistribution& gsd) const
+double GrainPhotoelectricEffect::heatingRate(const Environment& env,
+                                             const GasModule::GrainInfo::Population& grainPop) const
 {
 	double total{0.};
-	for (size_t m = 0; m < gsd._grainSizev.size(); m++)
-		total += gsd._grainDensityv[m] *
-		         heatingRateA(gsd._grainSizev[m], env, gsd._absQvv[m]);
+	for (size_t m = 0; m < grainPop._sizev.size(); m++)
+		total += grainPop._densityv[m] *
+		         heatingRateA(grainPop._sizev[m], env, grainPop._qAbsvv[m]);
 	return total;
 }
 
@@ -576,7 +575,7 @@ double GrainPhotoelectricEffect::stickingCoefficient(double a, int Z, int z_i) c
 		// positive grains
 		else
 
-		return (1 - pElasticScatter) * (-expm1(-a / le));
+			return (1 - pElasticScatter) * (-expm1(-a / le));
 	}
 	// more negative
 	else

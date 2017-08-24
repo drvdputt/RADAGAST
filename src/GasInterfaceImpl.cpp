@@ -6,6 +6,7 @@
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
+#include "GrainProperties.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
 #include "HydrogenFromFiles.h"
@@ -296,22 +297,25 @@ double GasInterfaceImpl::heating(const Solution& s) const
 
 double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInfo& g) const
 {
-
 	double grainPhotoelectricHeating{0};
-	if (g.hasCarbonaceous() || g.hasSilicate())
-	{
-		double ne = s.abundancev[ine];
-		double np = s.abundancev[inp];
-		GrainPhotoelectricEffect::Environment env(
-		                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1}, {ne, np},
-		                {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
-		if (g.hasCarbonaceous())
-			grainPhotoelectricHeating +=
-			                _graphGrainHeat.heatingRate(env, g._carSizeDist);
-		if (g.hasSilicate())
-			grainPhotoelectricHeating +=
-			                _silicGrainHeat.heatingRate(env, g._silSizeDist);
+	for (const auto& pop : g.populationv())
+	{
+		auto type = pop._type;
+		if (GrainProperties::heatingAvailable(type))
+		{
+			// Choose the correct parameters for the photoelectric heating calculation
+			GrainPhotoelectricEffect gpe(type);
+
+			// Specify the environment parameters
+			double ne = s.abundancev[ine];
+			double np = s.abundancev[inp];
+			GrainPhotoelectricEffect::Environment env(
+			                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1},
+			                {ne, np}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
+
+			grainPhotoelectricHeating += gpe.heatingRate(env, pop);
+		}
 	}
 	return heating(s) + grainPhotoelectricHeating;
 }

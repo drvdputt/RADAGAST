@@ -1,32 +1,36 @@
 #include "GasGrainInteraction.h"
 #include "Constants.h"
 #include "GrainInfo.h"
+#include "GrainProperties.h"
 
 double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInfo& g, double thermalVelocityH,
                                              double Tgas)
 {
 	double total{0};
 
-	for (const auto& gsd : {g._carSizeDist, g._silSizeDist})
+	// Using auto here to avoid having to specify all the namespaces
+	const auto& grainPopv = g.populationv();
+	for (const auto& grainPop : grainPopv)
 	{
-		int numSizes = gsd._grainDensityv.size();
+		const auto& surfaceParams = GrainProperties::sfcInteractionPar(grainPop._type);
+		int numSizes = grainPop._sizev.size();
 		for (int i = 0; i < numSizes; i++)
 		{
 			// Number density
-			double nd{gsd._grainDensityv[i]};
+			double nd{grainPop._densityv[i]};
+			double Td{grainPop._temperaturev[i]};
 
 			// Cross section of the grain
-			double sigmad{gsd._grainSizev[i]};
+			double sigmad{grainPop._sizev[i]};
 			sigmad *= sigmad / 4.;
 
 			// Formation efficiency epsilon
-			double Es{gsd._par._es};
-			double Td{gsd._tv[i]};
-			double EHp{gsd._par._eHp};
-			double EHc{gsd._par._eHc};
-			double aSqrt{gsd._par._aSqrt};
-			double F{gsd._par._f};
-			double nu_Hc{gsd._par._nuHc};
+			double Es{surfaceParams._es};
+			double EHp{surfaceParams._eHp};
+			double EHc{surfaceParams._eHc};
+			double aSqrt{surfaceParams._aSqrt};
+			double F{surfaceParams._f};
+			double nu_Hc{surfaceParams._nuHc};
 			double sqrtEHp_Es = sqrt(EHp - Es);
 			double sqrtEHc_Es = sqrt(EHc - Es);
 

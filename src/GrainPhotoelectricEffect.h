@@ -17,14 +17,16 @@ class GrainPhotoelectricEffect
 public:
 	/** Creates an object with its members set to suitable values for either carbonaceous
 	    (carbonaceous == true) or silicate (carbonaceous == false) grains. */
-	GrainPhotoelectricEffect(bool carbonaceous)
-	                : _carbonaceous(carbonaceous), _workFunction(calcWorkFunction(carbonaceous))
+	GrainPhotoelectricEffect(GasModule::GrainType t)
+	                : _carbonaceous{t == GasModule::GrainType::CAR},
+	                  _workFunction{calcWorkFunction(t)}
 	{
 	}
 
-	static double calcWorkFunction(bool carbonaceous)
+	static double calcWorkFunction(GasModule::GrainType t)
 	{
-		return carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
+		return t == GasModule::GrainType::CAR ? 4.4 / Constant::ERG_EV
+		                                      : 8 / Constant::ERG_EV;
 	}
 
 private:
@@ -90,7 +92,7 @@ public:
 	    rows should be indexed in the same way as grainSizev, while the columns should be
 	    indexed like env.wavelengthv. Calls heatinRateA for every grain size. */
 	double heatingRate(const Environment&,
-	                   const GasModule::GrainInfo::GrainSizeDistribution&) const;
+	                   const GasModule::GrainInfo::Population& grainPop) const;
 
 private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain a
@@ -141,7 +143,7 @@ private:
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin) const;
 
-// TODO: THE MEMBERS BELOW SHOULD BE REMOVED EVENTUALLY. THEY ONLY PLAY A ROLE IN SOME OF THE TESTS
+	// TODO: THE MEMBERS BELOW SHOULD BE REMOVED EVENTUALLY. THEY ONLY PLAY A ROLE IN SOME OF THE TESTS
 
 	/* The radiation field to use for test will use this blackbody temperature to determine the
 	   shape. Its actual strength should be provided using the 'G0' argument of the test
