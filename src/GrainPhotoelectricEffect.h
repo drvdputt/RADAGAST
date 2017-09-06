@@ -3,8 +3,7 @@
 
 #include "Array.h"
 #include "Constants.h"
-#include "GrainInfo.h"
-
+#include "GrainInterface.h"
 #include <functional>
 #include <vector>
 
@@ -68,6 +67,13 @@ public:
 	/* Gathers the parameters of the gas environment which are repeatedly needed. */
 	typedef struct Environment
 	{
+		/** This constructor creates an environment struct for the photoelectric heating
+		    calculation. It takes a frequency grid, a specific intensity of the ambient
+		    radiation field for each of those frequencies, a gas temperature, an electron
+		    an proton density, and then three lists which specify the particles which
+		    participate in the charging of the grains. A list of particle charges, number
+		    densities and a list containing the mass of each particle type should be
+		    provided. */
 		Environment(const Array& frequencyv, const Array& specificIntensityv, double T,
 		            double ne, double np, const std::vector<int>& chargev,
 		            const Array& densityv, const Array& massv)
@@ -92,7 +98,7 @@ public:
 	    rows should be indexed in the same way as grainSizev, while the columns should be
 	    indexed like env.wavelengthv. Calls heatinRateA for every grain size. */
 	double heatingRate(const Environment&,
-	                   const GasModule::GrainInfo::Population& grainPop) const;
+	                   const GasModule::GrainInterface::Population& grainPop) const;
 
 private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain a

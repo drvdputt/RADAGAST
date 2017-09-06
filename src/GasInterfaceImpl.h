@@ -3,7 +3,7 @@
 
 #include "Array.h"
 #include "GasState.h"
-#include "GrainInfo.h"
+#include "GrainInterface.h"
 #include "GrainPhotoelectricEffect.h"
 #include "NLevel.h"
 
@@ -81,13 +81,13 @@ public:
 	    temperature. Can be used by the client to manually set the temperature and calculate
 	    some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasModule::GasState&, double n, double T,
-	                       const GasModule::GrainInfo&) const;
+	                       const GasModule::GrainInterface&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
 	    guess, and a vector containing the radiation field in specific intensity per frequency
 	    units (on the same frequency grid as the one provided at construction). */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
-	                  const Array& specificIntensity, const GasModule::GrainInfo&) const;
+	                  const Array& specificIntensity, const GasModule::GrainInterface&) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
 	    until equilibrium is found. */
@@ -111,7 +111,7 @@ public:
 	double heating(const Solution&) const;
 
 	/** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
-	double heating(const Solution&, const GasModule::GrainInfo&) const;
+	double heating(const Solution&, const GasModule::GrainInterface&) const;
 
 	/** The cooling by the lines only. */
 	double lineCooling(const Solution&) const;

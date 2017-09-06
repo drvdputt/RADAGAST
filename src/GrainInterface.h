@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_GRAININFO_H_
-#define GASMODULE_GIT_SRC_GRAININFO_H_
+#ifndef GASMODULE_GIT_SRC_GRAININTERFACE_H_
+#define GASMODULE_GIT_SRC_GRAININTERFACE_H_
 
 #include "Array.h"
 
@@ -16,8 +16,11 @@ enum class GrainType
 
 /** Class that a client code should use to pass the grain properties in a cell. This class contains
     a list of grain models, for each of which a set of properties must be given. These properties,
-    are listed in the nested 'Population' class. */
-class GrainInfo
+    are listed in the nested 'Population' class. Another class, closely related to this one but not
+    to be included by the client code, is GrainTypeProperties. It contains a bunch of functions that
+    return parameters pertaining to the different choices of GrainType listed above. Those functions
+    are in a separate file because they have no use in the public interface. */
+class GrainInterface
 {
 public:
 	/** The properties that need to be given per grain model that needs to be included. The
@@ -40,13 +43,13 @@ public:
 	};
 
 	/** Creates and empty GrainInfo. */
-	GrainInfo();
+	GrainInterface();
 
 	/** Constructor for a mix of carbonaceous and silicate. */
-	GrainInfo(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
-	          const std::vector<Array>& carbonaceousAbsQvv, const Array& carTv,
-	          const Array& silicateGrainSizev, const Array& silicateDensityv,
-	          const std::vector<Array>& silicateAbsQvv, const Array& silTv);
+	GrainInterface(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
+	               const std::vector<Array>& carbonaceousAbsQvv, const Array& carTv,
+	               const Array& silicateGrainSizev, const Array& silicateDensityv,
+	               const std::vector<Array>& silicateAbsQvv, const Array& silTv);
 
 	std::vector<Population> populationv() const { return _populationv; }
 
@@ -55,4 +58,4 @@ private:
 };
 } /* namespace GasModule */
 
-#endif /* GASMODULE_GIT_SRC_GRAININFO_H_ */
+#endif /* GASMODULE_GIT_SRC_GRAININTERFACE_H_ */

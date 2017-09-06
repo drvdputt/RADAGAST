@@ -36,7 +36,7 @@ GasInterface::~GasInterface() = default;
 
 void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
                                   const valarray<double>& specificIntensityv,
-                                  const GrainInfo& grainInfo) const
+                                  const GrainInterface& grainInfo) const
 {
 	gasState._previousISRFv = specificIntensityv;
 	if (n > 0)
@@ -46,7 +46,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 }
 
 void GasInterface::initializeGasState(GasState& gasState, double n, double T,
-                                      const GrainInfo& grainInfo) const
+                                      const GrainInterface& grainInfo) const
 {
 	gasState._previousISRFv = Array(_frequencyv.size());
 	if (n > 0)

@@ -1,27 +1,28 @@
 #include "GasGrainInteraction.h"
 #include "Constants.h"
-#include "GrainInfo.h"
-#include "GrainProperties.h"
 
-double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInfo& g, double thermalVelocityH,
-                                             double Tgas)
+#include "GrainInterface.h"
+#include "GrainTypeProperties.h"
+
+double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gInterface,
+                                             double thermalVelocityH, double Tgas)
 {
 	double total{0};
 
 	// Using auto here to avoid having to specify all the namespaces
-	const auto& grainPopv = g.populationv();
+	const auto& grainPopv = gInterface.populationv();
 	for (const auto& grainPop : grainPopv)
 	{
-		const auto& surfaceParams = GrainProperties::sfcInteractionPar(grainPop._type);
+		const auto& surfaceParams = GrainTypeProperties::sfcInteractionPar(grainPop._type);
 		int numSizes = grainPop._sizev.size();
-		for (int i = 0; i < numSizes; i++)
+		for (int iSize = 0; iSize < numSizes; iSize++)
 		{
 			// Number density
-			double nd{grainPop._densityv[i]};
-			double Td{grainPop._temperaturev[i]};
+			double nd{grainPop._densityv[iSize]};
+			double Td{grainPop._temperaturev[iSize]};
 
 			// Cross section of the grain
-			double sigmad{grainPop._sizev[i]};
+			double sigmad{grainPop._sizev[iSize]};
 			sigmad *= sigmad / 4.;
 
 			// Formation efficiency epsilon
@@ -36,8 +37,7 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInfo& g, doub
 
 			// 1 / B
 			double oneOverB{4. * exp(Es / Td) * sqrtEHp_Es / sqrtEHc_Es +
-			                8 * sqrt(Constant::PI * Td) / (EHc - Es) *
-			                                exp(-2 * aSqrt) *
+			                8 * sqrt(Constant::PI * Td) / (EHc - Es) * exp(-2 * aSqrt) *
 			                                exp(EHp / Td) * sqrtEHc_Es};
 			double onePlusSqrtFrac{1 * sqrtEHc_Es / sqrtEHp_Es};
 			double oneOverKsi{1 +

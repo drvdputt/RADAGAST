@@ -2,10 +2,9 @@
 #define _SRC_GASINTERFACE_H_
 
 #include "GasState.h"
-#include "GrainInfo.h"
-
 #include <memory>
 #include <string>
+#include "GrainInterface.h"
 
 class GasInterfaceImpl;
 
@@ -43,12 +42,12 @@ public:
 	    definition in GasState.h. */
 	void updateGasState(GasState&, double n, double Tinit,
 	                    const std::valarray<double>& specificIntensityv,
-	                    const GrainInfo&) const;
+	                    const GrainInterface&) const;
 
 	/** Does the same as the above, but without an input radiation field. Instead, a blackbody
 	    of the given temperature is used to calculate GasState. It is recommended to apply this
 	    function to all gas states before starting a simulation. */
-	void initializeGasState(GasState&, double n, double T, const GrainInfo&) const;
+	void initializeGasState(GasState&, double n, double T, const GrainInterface&) const;
 
 	// USAGE 2: Translate GasState into optical properties //
 

@@ -461,7 +461,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 }
 
 double GrainPhotoelectricEffect::heatingRate(const Environment& env,
-                                             const GasModule::GrainInfo::Population& grainPop) const
+                                             const GasModule::GrainInterface::Population& grainPop) const
 {
 	double total{0.};
 	for (size_t m = 0; m < grainPop._sizev.size(); m++)

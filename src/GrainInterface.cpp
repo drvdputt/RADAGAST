@@ -1,10 +1,11 @@
-#include "GrainInfo.h"
+#include "GrainInterface.h"
+
 #include "Error.h"
 
 namespace GasModule
 {
 
-GrainInfo::Population::Population(GrainType type, const Array& sizev, const Array& densityv,
+GrainInterface::Population::Population(GrainType type, const Array& sizev, const Array& densityv,
                                   const Array& temperaturev, const std::vector<Array>& qAbsvv)
                 : _type{type}, _sizev{sizev}, _densityv{densityv},
                   _temperaturev{temperaturev}, _qAbsvv{qAbsvv}
@@ -14,9 +15,9 @@ GrainInfo::Population::Population(GrainType type, const Array& sizev, const Arra
 	Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
 }
 
-GrainInfo::GrainInfo() = default;
+GrainInterface::GrainInterface() = default;
 
-GrainInfo::GrainInfo(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
+GrainInterface::GrainInterface(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
                      const std::vector<Array>& carbonaceousAbsQvv, const Array& carTv,
                      const Array& silicateGrainSizev, const Array& silicateDensityv,
                      const std::vector<Array>& silicateAbsQvv, const Array& silTv)

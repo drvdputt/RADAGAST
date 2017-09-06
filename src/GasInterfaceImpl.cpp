@@ -6,7 +6,7 @@
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
-#include "GrainProperties.h"
+#include "GrainTypeProperties.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
 #include "HydrogenFromFiles.h"
@@ -40,7 +40,7 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, double T,
-                                         const GasModule::GrainInfo& gi) const
+                                         const GasModule::GrainInterface& gi) const
 {
 	Array isrfGuess(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -53,7 +53,7 @@ void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, doub
 
 void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Tinit,
                                     const Array& specificIntensityv,
-                                    const GasModule::GrainInfo& gi) const
+                                    const GasModule::GrainInterface& gi) const
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(_frequencyv, specificIntensityv);
@@ -295,14 +295,14 @@ double GasInterfaceImpl::heating(const Solution& s) const
 	return lineHeat + contHeat;
 }
 
-double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInfo& g) const
+double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterface& g) const
 {
 	double grainPhotoelectricHeating{0};
 
 	for (const auto& pop : g.populationv())
 	{
 		auto type = pop._type;
-		if (GrainProperties::heatingAvailable(type))
+		if (GrainTypeProperties::heatingAvailable(type))
 		{
 			// Choose the correct parameters for the photoelectric heating calculation
 			GrainPhotoelectricEffect gpe(type);
