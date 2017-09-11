@@ -51,6 +51,9 @@ public:
 	               const Array& silicateGrainSizev, const Array& silicateDensityv,
 	               const std::vector<Array>& silicateAbsQvv, const Array& silTv);
 
+	/** Constructor which takes a vector of predefined populations. */
+	GrainInterface(const std::vector<Population>& populationv);
+
 	std::vector<Population> populationv() const { return _populationv; }
 
 private:

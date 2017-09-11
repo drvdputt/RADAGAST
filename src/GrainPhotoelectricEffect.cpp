@@ -143,6 +143,15 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 	return Array(QabsWav.data(), QabsWav.size());
 }
 
+std::vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av, const Array& frequencyv)
+{
+	readQabs();
+	std::vector<Array> result;
+	for (double a : av)
+		result.emplace_back(generateQabsv(a, frequencyv));
+	return result;
+}
+
 double GrainPhotoelectricEffect::ionizationPotential(double a, int Z) const
 {
 	double e2a = Constant::ESQUARE / a;

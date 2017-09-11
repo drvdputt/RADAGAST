@@ -66,7 +66,15 @@ void compareFromFilesvsHardCoded();
     written out to separate files. */
 void runFromFilesvsHardCoded();
 
+/** Generates a GasInterface object with the maximum number of levels and a suitable frequency
+    grid. */
+GasModule::GasInterface genFullModel();
+
+/** Run the model with the maximum number of levels, and iterate until the temperature converges. */
 void runFullModel();
+
+/** A test run for the model with a fixed dust model included. */
+void runWithDust();
 }
 
 #endif /* _TESTING_H_ */

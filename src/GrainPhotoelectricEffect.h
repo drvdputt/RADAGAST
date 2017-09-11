@@ -28,6 +28,8 @@ public:
 		                                      : 8 / Constant::ERG_EV;
 	}
 
+	static std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
+
 private:
 	// Grain properties to use for tests (more detailes in generateQabs)
 	const bool _carbonaceous;

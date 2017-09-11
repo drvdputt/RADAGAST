@@ -7,6 +7,7 @@
 #include "FreeBound.h"
 #include "GasInterface.h"
 #include "GasInterfaceImpl.h"
+#include "GrainInterface.h"
 #include "GrainPhotoelectricEffect.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
@@ -95,8 +96,8 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 		// Add a point at the center of the line, while keeping the vector sorted
 		TemplatedUtils::sortedInsert<double, vector<double>>(lineFreqv[i], grid);
 
-		// Skip the wing points of line if it lies near the core of the previous one, to prevent too much
-		// points from bunching up.
+		/* Skip the wing points of line if it lies near the core of the previous one, to
+		   prevent too much points from bunching up. */
 		if (i > 0 && (lineFreqv[i] - lineFreqv[i - 1]) / freqWidthv[i - 1] < 0.01)
 			continue;
 
@@ -225,7 +226,7 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
 
 	GasModule::GasState gs;
-	GasModule::GrainInfo grainInfo{};
+	GasModule::GrainInterface grainInfo{};
 	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, grainInfo);
 
 	cout << "Equilibrium temperature: " << gs.temperature() << endl;
@@ -307,6 +308,46 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::
 	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
 }
 
+void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
+                               const Array& specificIntensityv, double n)
+{
+	const string tab = "\t";
+	const int samples = 200;
+
+	double T = 10;
+	double factor = pow(1000000. / 10., 1. / samples);
+
+	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
+	output << "# 0temperature 1net 2heat 3cool"
+	       << " 4lineNet 5lineHeat 6lineCool"
+	       << " 7continuumNet 8continuumHeat 9continuumCool"
+	       << " 10ionizedFrac" << endl;
+	for (int N = 0; N < samples; N++, T *= factor)
+	{
+		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv);
+		double heat = gi.heating(s);
+		double cool = gi.cooling(s);
+		double lHeat = gi.lineHeating(s);
+		double lCool = gi.lineCooling(s);
+		double cHeat = gi.continuumHeating(s);
+		double cCool = gi.continuumCooling(s);
+
+		double netHeating = heat - cool;
+		double netLine = lHeat - lCool;
+		double netCont = cHeat - cCool;
+
+		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
+		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
+		       << cCool << tab << gi.f(s) << endl;
+	}
+	output.close();
+
+	double isrf = TemplatedUtils::integrate<double>(gi.frequencyv(), specificIntensityv);
+
+	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
+	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
+}
+
 void Testing::testPhotoelectricHeating()
 {
 	double n = 2.5e1;
@@ -315,13 +356,9 @@ void Testing::testPhotoelectricHeating()
 	double gasT = 1000;
 	vector<double> G0values;
 	if (gasT == 1000)
-	{
 		G0values = {2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
-	}
 	if (gasT == 100)
-	{
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
-	}
 
 	GrainPhotoelectricEffect phr{GasModule::GrainType::CAR};
 	phr.yieldFunctionTest();
@@ -504,7 +541,7 @@ void Testing::runFromFilesvsHardCoded()
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
-void Testing::runFullModel()
+GasModule::GasInterface Testing::genFullModel()
 {
 	bool molecular = true;
 
@@ -517,46 +554,35 @@ void Testing::runFullModel()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasModule::GasInterface gihffFull(frequencyv, "", molecular);
-	runGasInterfaceImpl(gihffFull, "");
+	return {frequencyv, "", molecular};
 }
 
-void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                               const Array& specificIntensityv, double n)
+void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
+
+void Testing::runWithDust()
 {
-	const string tab = "\t";
-	const int samples = 200;
+	GasModule::GasInterface gasInterface{genFullModel()};
+	double nHtotal = 10;
 
-	double T = 10;
-	double factor = pow(1000000. / 10., 1. / samples);
+	std::vector<GasModule::GrainInterface::Population> grainPopv;
 
-	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
-	output << "# 0temperature 1net 2heat 3cool"
-	       << " 4lineNet 5lineHeat 6lineCool"
-	       << " 7continuumNet 8continuumHeat 9continuumCool"
-	       << " 10ionizedFrac" << endl;
-	for (int N = 0; N < samples; N++, T *= factor)
-	{
-		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv);
-		double heat = gi.heating(s);
-		double cool = gi.cooling(s);
-		double lHeat = gi.lineHeating(s);
-		double lCool = gi.lineCooling(s);
-		double cHeat = gi.continuumHeating(s);
-		double cCool = gi.continuumCooling(s);
+	Array sizev, densityv, temperaturev;
+	// Provide sizes in cm
+	sizev = {1e-7, 1e-6, 1e-5};
+	densityv = {0.01, 0.005, 0.0025}; // number of grain per H atom
+	densityv *= nHtotal; // density in cm-3
+	// Actually, a temperature distribution per grain size is the most detailed form we'll be
+	// using. Maybe we need multiple versions of the grain interface with regards to storing the
+	// grain temperatures.
+	temperaturev = {50, 20, 10};
+	// And now I need some absorption efficiencies for every wavelength. Let's try to use the
+	// old photoelectric heating test code.
+	std::vector<Array> qAbsvv{GrainPhotoelectricEffect::qAbsvvForTesting(
+	                sizev, gasInterface.frequencyv())};
 
-		double netHeating = heat - cool;
-		double netLine = lHeat - lCool;
-		double netCont = cHeat - cCool;
+	grainPopv.emplace_back(GasModule::GrainType::CAR, sizev, densityv, temperaturev, qAbsvv);
 
-		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
-		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
-		       << cCool << tab << gi.f(s) << endl;
-	}
-	output.close();
+	GasModule::GrainInterface grainInterface{grainPopv};
 
-	double isrf = TemplatedUtils::integrate<double>(gi.frequencyv(), specificIntensityv);
-
-	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
-	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
+	// TODO: generate a radiation field and run that thing
 }

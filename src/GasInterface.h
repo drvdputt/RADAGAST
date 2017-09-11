@@ -25,6 +25,8 @@ public:
 	GasInterface(const std::valarray<double>& frequencyv, const std::string& atomChoice = "",
 	             bool moleculeChoice = false);
 
+	GasInterface(GasInterface&&) = default;
+
 	~GasInterface();
 
 	/** Returns the frequency grid used. This may come in handy later, for example for
