@@ -561,11 +561,26 @@ void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
 
 void Testing::runWithDust()
 {
+	// Gas model
 	GasModule::GasInterface gasInterface{genFullModel()};
-	double nHtotal = 10;
+	const Array& frequencyv{gasInterface.frequencyv()};
 
+	// Radiation field
+	double Tc{1e4};
+	double G0{500};
+	Array specificIntensityv{generateSpecificIntensityv(frequencyv, Tc, G0)};
+
+	cout << "freqv size " << frequencyv.size() << " specIntv size "
+	     << specificIntensityv.size();
+
+	// Gas density
+	double nHtotal{10};
+	double Tinit{8000};
+
+	// Grain model
 	std::vector<GasModule::GrainInterface::Population> grainPopv;
 
+	// TODO: need a reasonable grain size distribution and DGR for testing here
 	Array sizev, densityv, temperaturev;
 	// Provide sizes in cm
 	sizev = {1e-7, 1e-6, 1e-5};
@@ -580,9 +595,15 @@ void Testing::runWithDust()
 	std::vector<Array> qAbsvv{GrainPhotoelectricEffect::qAbsvvForTesting(
 	                sizev, gasInterface.frequencyv())};
 
-	grainPopv.emplace_back(GasModule::GrainType::CAR, sizev, densityv, temperaturev, qAbsvv);
+	// TODO: check if the qabsvv has loaded correctly
+	//
+	//
 
+	// Construct grain info using list of population objects
+	grainPopv.emplace_back(GasModule::GrainType::CAR, sizev, densityv, temperaturev, qAbsvv);
 	GasModule::GrainInterface grainInterface{grainPopv};
 
-	// TODO: generate a radiation field and run that thing
+	// Run
+	GasModule::GasState gs{};
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
 }

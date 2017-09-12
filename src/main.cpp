@@ -25,7 +25,7 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-		Testing::testPhotoelectricHeating();
+//		Testing::testPhotoelectricHeating();
 //		Testing::testIonizationStuff();
 //		Testing::testPS64Collisions();
 //		Testing::testChemistry();
@@ -33,6 +33,7 @@ int main()
 //		Testing::compareFromFilesvsHardCoded();
 //		Testing::runFromFilesvsHardCoded();
 //		Testing::runFullModel();
+		Testing::runWithDust();
 	}
 	catch (const std::exception& ex)
 	{
