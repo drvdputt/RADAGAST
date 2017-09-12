@@ -14,11 +14,12 @@ using namespace std;
 
 namespace
 {
-vector<double> _filelambdav, _fileav;
-vector<vector<double>> _Qabsvv, _Qscavv, _asymmparvv;
+vector<double> FILELAMBDAV, FILEAV;
+vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
 }
 
-void GrainPhotoelectricEffect::readQabs() const
+/* hacks hacks hacks */
+void GrainPhotoelectricEffect::readQabs(bool car)
 {
 	///////////////////// Begin copy-paste from SKIRT
 	bool reverse = true;
@@ -28,7 +29,7 @@ void GrainPhotoelectricEffect::readQabs() const
 	size_t _Nlambda, _Na;
 	// open the file
 	ifstream file;
-	if (_carbonaceous)
+	if (car)
 		file = IOTools::ifstreamRepoFile("dat/Gra_81.dat");
 	else
 		file = IOTools::ifstreamRepoFile("dat/suvSil_81.dat");
@@ -45,11 +46,11 @@ void GrainPhotoelectricEffect::readQabs() const
 	getline(file, line); // ignore anything else on this line
 
 	// resize the vectors
-	_filelambdav.resize(_Nlambda);
-	_fileav.resize(_Na);
-	_Qabsvv.resize(_Nlambda, vector<double>(_Na));
-	_Qscavv.resize(_Nlambda, vector<double>(_Na));
-	_asymmparvv.resize(_Nlambda, vector<double>(_Na));
+	FILELAMBDAV.resize(_Nlambda);
+	FILEAV.resize(_Na);
+	QABSVV.resize(_Nlambda, vector<double>(_Na));
+	QSCAVV.resize(_Nlambda, vector<double>(_Na));
+	ASYMMPARVV.resize(_Nlambda, vector<double>(_Na));
 
 	// determine the loop conditions for wavelength lines
 	int kbeg = reverse ? _Nlambda - 1 : 0;
@@ -60,23 +61,23 @@ void GrainPhotoelectricEffect::readQabs() const
 	double dummy;
 	for (size_t i = 0; i < _Na; i++)
 	{
-		file >> _fileav[i];
-		_fileav[i] *= 1e-6; // convert from micron to m
+		file >> FILEAV[i];
+		FILEAV[i] *= 1e-6; // convert from micron to m
 		getline(file, line); // ignore anything else on this line
 
 		for (int k = kbeg; k != kend; k += kinc)
 		{
 			if (skip1)
 				file >> dummy;
-			file >> _filelambdav[k];
-			_filelambdav[k] *= 1e-6; // convert from micron to m
+			file >> FILELAMBDAV[k];
+			FILELAMBDAV[k] *= 1e-6; // convert from micron to m
 			if (skip2)
 				file >> dummy;
-			file >> _Qabsvv[k][i];
-			file >> _Qscavv[k][i];
+			file >> QABSVV[k][i];
+			file >> QSCAVV[k][i];
 			if (skip3)
 				file >> dummy;
-			file >> _asymmparvv[k][i];
+			file >> ASYMMPARVV[k][i];
 			getline(file, line); // ignore anything else on this line
 		}
 	}
@@ -86,17 +87,17 @@ void GrainPhotoelectricEffect::readQabs() const
 	///////////////////// End copy-paste from SKIRT
 
 	// Convert the wavelengths and grain sizes from microns to centimeters
-	for (double& d : _filelambdav)
+	for (double& d : FILELAMBDAV)
 		d *= 100.; // m to cm
-	for (double& d : _fileav)
+	for (double& d : FILEAV)
 		d *= 100.; // m to cm
 }
 
-Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv) const
+Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 {
 	Array wavelengthv = Testing::freqToWavGrid(frequencyv);
 	vector<double> QabsWav(wavelengthv.size());
-	vector<double> QabsWavFromFileForA(_filelambdav.size());
+	vector<double> QabsWavFromFileForA(FILELAMBDAV.size());
 
 	// very simple model
 	//        for (size_t i = 0; i < wavelength.size(); i++)
@@ -107,27 +108,27 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 	//            1000 Ang
 	//        }
 
-	if (a <= _fileav[0]) // extrapolate propto a
+	if (a <= FILEAV[0]) // extrapolate propto a
 	{
-		for (size_t i = 0; i < _filelambdav.size(); i++)
-			QabsWavFromFileForA[i] = _Qabsvv[i][0] * a / _fileav[0];
+		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
+			QabsWavFromFileForA[i] = QABSVV[i][0] * a / FILEAV[0];
 	}
 	else // interpolated from data
 	{
-		size_t a_index = TemplatedUtils::index(a, _fileav);
-		double normalDistance = (a - _fileav[a_index - 1]) /
-		                        (_fileav[a_index] - _fileav[a_index - 1]);
+		size_t a_index = TemplatedUtils::index(a, FILEAV);
+		double normalDistance = (a - FILEAV[a_index - 1]) /
+		                        (FILEAV[a_index] - FILEAV[a_index - 1]);
 		// interpolate the values from the file for a specific grain size
-		for (size_t i = 0; i < _filelambdav.size(); i++)
-			QabsWavFromFileForA[i] = _Qabsvv[i][a_index - 1] * (1 - normalDistance) +
-			                         _Qabsvv[i][a_index] * normalDistance;
+		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
+			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
+			                         QABSVV[i][a_index] * normalDistance;
 	}
 
 #ifdef EXACTGRID
 	return QabsWavFromFileForA;
 #endif
 
-	QabsWav = TemplatedUtils::linearResample<vector<double>>(QabsWavFromFileForA, _filelambdav,
+	QabsWav = TemplatedUtils::linearResample<vector<double>>(QabsWavFromFileForA, FILELAMBDAV,
 	                                                         wavelengthv, -1, -1);
 #ifdef PLOT_QABS
 	std::stringstream filename;
@@ -145,7 +146,8 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 
 std::vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av, const Array& frequencyv)
 {
-	readQabs();
+	// Choose carbon
+	readQabs(true);
 	std::vector<Array> result;
 	for (double a : av)
 		result.emplace_back(generateQabsv(a, frequencyv));
@@ -747,7 +749,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
 	// Read absorption efficiency from SKIRT file into local memory
-	readQabs();
+	readQabs(_carbonaceous);
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
 	 as weights. */
@@ -802,11 +804,11 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
                                                    double np) const
 {
-	readQabs();
+	readQabs(_carbonaceous);
 
 // Wavelength grid
 #ifdef EXACTGRID
-	vector<double> vecwavelengthv = _filelambdav;
+	vector<double> vecwavelengthv = FILELAMBDAV;
 #else
 	vector<double> vecwavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
 #endif

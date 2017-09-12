@@ -28,6 +28,12 @@ public:
 		                                      : 8 / Constant::ERG_EV;
 	}
 
+	/* Some static hacks. The first one reads some data ripped from SKIRT into variables
+	   declared in the cpp file. Then, a Qabsv for a single size can be generated using
+	   generateQabsv. The third function, qAbsvvForTesting does the read step, and then calls
+	   the second function for every size of the list. */
+	static void readQabs(bool car);
+	static Array generateQabsv(double a, const Array& frequencyv);
 	static std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
 
 private:
@@ -164,8 +170,6 @@ private:
 	const double _maxWav{1000 * Constant::UM_CM};
 
 	// Data to use for tests
-	void readQabs() const;
-	Array generateQabsv(double a, const Array& frequencyv) const;
-};
+	};
 
 #endif /* _PHOTOELECTRICHEATING_H_ */
