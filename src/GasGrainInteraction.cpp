@@ -5,9 +5,11 @@
 #include "GrainTypeProperties.h"
 
 double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gInterface,
-                                             double thermalVelocityH, double Tgas)
+                                             double Tgas)
 {
 	double total{0};
+
+	double thermalVelocityH{sqrt(Constant::BOLTZMAN * Tgas / Constant::HMASS_CGS)};
 
 	// Using auto here to avoid having to specify all the namespaces
 	const auto& grainPopv = gInterface.populationv();

@@ -324,7 +324,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	       << " 10ionizedFrac" << endl;
 	for (int N = 0; N < samples; N++, T *= factor)
 	{
-		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv);
+		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv, {});
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -570,9 +570,6 @@ void Testing::runWithDust()
 	double G0{500};
 	Array specificIntensityv{generateSpecificIntensityv(frequencyv, Tc, G0)};
 
-	cout << "freqv size " << frequencyv.size() << " specIntv size "
-	     << specificIntensityv.size();
-
 	// Gas density
 	double nHtotal{10};
 	double Tinit{8000};
@@ -584,12 +581,12 @@ void Testing::runWithDust()
 	Array sizev, densityv, temperaturev;
 	// Provide sizes in cm
 	sizev = {1e-7, 1e-6, 1e-5};
-	densityv = {0.01, 0.005, 0.0025}; // number of grain per H atom
+	densityv = {0.1, 0.05, 0.025}; // number of grain per H atom
 	densityv *= nHtotal; // density in cm-3
 	// Actually, a temperature distribution per grain size is the most detailed form we'll be
 	// using. Maybe we need multiple versions of the grain interface with regards to storing the
 	// grain temperatures.
-	temperaturev = {50, 20, 10};
+	temperaturev = {15, 10, 5};
 	// And now I need some absorption efficiencies for every wavelength. Let's try to use the
 	// old photoelectric heating test code.
 	std::vector<Array> qAbsvv{GrainPhotoelectricEffect::qAbsvvForTesting(

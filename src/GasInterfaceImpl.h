@@ -91,7 +91,8 @@ public:
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
 	    until equilibrium is found. */
-	Solution calculateDensities(double n, double T, const Array& specificIntensityv) const;
+	Solution calculateDensities(double n, double T, const Array& specificIntensityv,
+	                            const GasModule::GrainInterface&) const;
 
 public:
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */

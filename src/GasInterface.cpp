@@ -16,20 +16,20 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const string& ato
 {
 	unique_ptr<NLevel> boundBound;
 	if (!atomChoice.compare("twolevel"))
-		boundBound = make_unique<NLevel>(make_shared<TwoLevelHardcoded>(), frequencyv);
+		boundBound = make_unique<NLevel>(make_shared<TwoLevelHardcoded>(), _frequencyv);
 	else if (!atomChoice.compare("hhc"))
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenHardcoded>(),
-		                                         frequencyv);
+		                                         _frequencyv);
 	else if (!atomChoice.compare("hff2"))
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(2),
-		                                         frequencyv);
+		                                         _frequencyv);
 	else if (!atomChoice.compare("hff4"))
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(4),
-		                                         frequencyv);
+		                                         _frequencyv);
 	else
 		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(),
-		                                         frequencyv);
-	_pimpl = make_unique<GasInterfaceImpl>(move(boundBound), moleculeChoice, frequencyv);
+		                                         _frequencyv);
+	_pimpl = make_unique<GasInterfaceImpl>(move(boundBound), moleculeChoice, _frequencyv);
 }
 
 GasInterface::~GasInterface() = default;

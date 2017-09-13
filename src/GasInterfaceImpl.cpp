@@ -6,6 +6,7 @@
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
+#include "GasGrainInteraction.h"
 #include "GrainTypeProperties.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
@@ -81,7 +82,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		int counter = 0;
 		function<int(double)> evaluateThermalBalance = [&](double logT) -> int {
 			counter++;
-			s = calculateDensities(n, pow(10., logT), specificIntensityv);
+			s = calculateDensities(n, pow(10., logT), specificIntensityv, gi);
 			double netPowerIn = heating(s, gi) - cooling(s);
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
@@ -93,11 +94,11 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		                evaluateThermalBalance, logTinit, logTtolerance, logTmax, logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
-		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv);
+		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi);
 	}
 	else
 	{
-		s = calculateDensities(0, 0, specificIntensityv);
+		s = calculateDensities(0, 0, specificIntensityv, gi);
 	}
 
 	const Array& emv = emissivityv(s);
@@ -120,7 +121,8 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 }
 
 GasInterfaceImpl::Solution
-GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& specificIntensityv) const
+GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& specificIntensityv,
+                                     const GasModule::GrainInterface& gi) const
 {
 	Solution s;
 	s.T = T;
@@ -167,10 +169,11 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 			if (_molecularLevels)
 			{
 				// Calculate fixed rate coefficients
-				double kFromH2Levels =
+				double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
+				double kDissH2Levels =
 				                _molecularLevels->dissociationRate(s.H2Solution);
 				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
-				                T, _frequencyv, specificIntensityv, kFromH2Levels);
+				                T, _frequencyv, specificIntensityv, kDissH2Levels, kFormH2);
 
 				// Solve chemistry network
 				s.abundancev = _chemSolver->solveBalance(reactionRates,
