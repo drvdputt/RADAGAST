@@ -36,7 +36,7 @@ public:
 	    calculated somewhere else. This functions simply fill them in into the right spot of the
 	    k-vector. */
 	EVector rateCoeffv(double T, const Array& frequencyv, const Array& specificIntensityv,
-	                   double kDissFromH2Levels, double kH2FormationGrain = 0.) const;
+	                   double kDissFromH2Levels, double kH2FormationGrain) const;
 
 private:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
