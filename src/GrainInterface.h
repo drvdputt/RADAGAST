@@ -1,8 +1,7 @@
 #ifndef GASMODULE_GIT_SRC_GRAININTERFACE_H_
 #define GASMODULE_GIT_SRC_GRAININTERFACE_H_
 
-#include "Array.h"
-
+#include <valarray>
 #include <vector>
 
 namespace GasModule
@@ -34,22 +33,28 @@ public:
 	class Population
 	{
 	public:
-		Population(GrainType type, const Array& sizev, const Array& densityv,
-		           const Array& temperaturev, const std::vector<Array>& qAbsvv);
+		Population(GrainType type, const std::valarray<double>& sizev,
+		           const std::valarray<double>& densityv,
+		           const std::valarray<double>& temperaturev,
+		           const std::vector<std::valarray<double>>& qAbsvv);
 
 		const GrainType _type;
-		const Array _sizev, _densityv, _temperaturev;
-		const std::vector<Array> _qAbsvv;
+		const std::valarray<double> _sizev, _densityv, _temperaturev;
+		const std::vector<std::valarray<double>> _qAbsvv;
 	};
 
 	/** Creates and empty GrainInfo. */
 	GrainInterface();
 
 	/** Constructor for a mix of carbonaceous and silicate. */
-	GrainInterface(const Array& carbonaceousGrainSizev, const Array& carbonaceousDensityv,
-	               const std::vector<Array>& carbonaceousAbsQvv, const Array& carTv,
-	               const Array& silicateGrainSizev, const Array& silicateDensityv,
-	               const std::vector<Array>& silicateAbsQvv, const Array& silTv);
+	GrainInterface(const std::valarray<double>& carbonaceousGrainSizev,
+	               const std::valarray<double>& carbonaceousDensityv,
+	               const std::vector<std::valarray<double>>& carbonaceousAbsQvv,
+	               const std::valarray<double>& carTv,
+	               const std::valarray<double>& silicateGrainSizev,
+	               const std::valarray<double>& silicateDensityv,
+	               const std::vector<std::valarray<double>>& silicateAbsQvv,
+	               const std::valarray<double>& silTv);
 
 	/** Constructor which takes a vector of predefined populations. */
 	GrainInterface(const std::vector<Population>& populationv);

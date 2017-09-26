@@ -1,5 +1,6 @@
 #include "GrainInterface.h"
 
+#include "Array.h"
 #include "Error.h"
 
 namespace GasModule

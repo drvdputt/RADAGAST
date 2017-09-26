@@ -450,10 +450,10 @@ void Testing::testChemistry()
 
 	ChemistrySolver cs(make_unique<ChemicalNetwork>());
 
-	// Apply an artificial dissociation. If chemistry is correct, all H2 should be converted
-	// into H.
+	// Formation and dissociation rates should come from somewhere else
+	double kform = 0;
 	double kdiss = 0;
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss);
+	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss, kform);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
 	int ie = ChemicalNetwork::speciesIndexm.at("e-");
