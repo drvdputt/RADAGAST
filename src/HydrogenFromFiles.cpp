@@ -336,6 +336,7 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 	{
 		for (int n = 0; n <= _resolvedUpTo; n++)
 		{
+			// The formulae of PS64 are implemented separately
 			EMatrix qvv = PS64CollisionRateCoeff(n, T, np);
 			// Fill in the collision rates for all combinations of li lf
 			for (int li = 0; li < n; li++)
@@ -352,7 +353,12 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 			}
 		}
 	}
-	return the_cvv;
+#ifdef SANITY
+	assert((result.array() >= 0).all());
+#endif
+
+	// Make all negative entries 0... FIXME investigate if a more better solution exists
+	return the_cvv.array().max(0);
 }
 
 EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) const
