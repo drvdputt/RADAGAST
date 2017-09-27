@@ -116,8 +116,8 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 	else // interpolated from data
 	{
 		size_t a_index = TemplatedUtils::index(a, FILEAV);
-		double normalDistance = (a - FILEAV[a_index - 1]) /
-		                        (FILEAV[a_index] - FILEAV[a_index - 1]);
+		double normalDistance =
+		                (a - FILEAV[a_index - 1]) / (FILEAV[a_index] - FILEAV[a_index - 1]);
 		// interpolate the values from the file for a specific grain size
 		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
 			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
@@ -144,7 +144,8 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 	return Array(QabsWav.data(), QabsWav.size());
 }
 
-std::vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av, const Array& frequencyv)
+std::vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av,
+                                                              const Array& frequencyv)
 {
 	// Choose carbon
 	readQabs(true);
@@ -194,7 +195,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	resultZmin = minimumCharge(a);
 
 	if (resultZmax < resultZmin)
-		Error::runtime("Zmax is smaller than Zmin");
+		Error::runtime("Zmax is smaller than Zmin. This can happen when the grains are too"
+		               "small for the recipe used.");
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
 	/* We will cut off the distribution at some point past the maximum (in either the positive
@@ -439,7 +441,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	int Zmin, Zmax;
 	chargeBalance(a, env, Qabs, Zmax, Zmin, fZ);
 
-	printf("Z in (%d, %d)\n", Zmin, Zmax);
+	DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
 
 	for (int Z = Zmin; Z <= Zmax; Z++)
 	{
@@ -471,8 +473,9 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	return totalHeatingForGrainSize;
 }
 
-double GrainPhotoelectricEffect::heatingRate(const Environment& env,
-                                             const GasModule::GrainInterface::Population& grainPop) const
+double
+GrainPhotoelectricEffect::heatingRate(const Environment& env,
+                                      const GasModule::GrainInterface::Population& grainPop) const
 {
 	double total{0.};
 	for (size_t m = 0; m < grainPop._sizev.size(); m++)

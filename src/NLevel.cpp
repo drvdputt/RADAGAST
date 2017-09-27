@@ -243,6 +243,7 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 {
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 
+	// this can become negative! // FIXME
 	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
 	                   Cvv(upper, lower) // decay rate of top level
 	                   + Cvv(lower, upper); // decay rate of bottom level

@@ -240,8 +240,8 @@ EMatrix HydrogenFromFiles::avv() const
 			// Resolved to collapsed should not exist (downward) or be zero (upward).
 			else if (li >= 0 && lf < 0)
 			{
-				// The collapsed-collapsed equivalent should always be 0 in this
-				// case.
+				/* The collapsed-collapsed equivalent should always be 0 in this
+				   case. */
 				the_avv(i, f) = einsteinA(ni, nf);
 				assert(the_avv(i, f) == 0.);
 			}
@@ -313,8 +313,8 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 			for (int f = 0; f < _numL; f++)
 			{
 				const HydrogenLevel& fin = _levelOrdering[f];
-				/* For downward transitions, calculate the collision rate, and derive the
-			   rate for the corresponding upward transition too. */
+				/* For downward transitions, calculate the collision rate, and
+				   derive the rate for the corresponding upward transition too. */
 				if (ini.e() > fin.e())
 				{
 					double UpsilonDown = eCollisionStrength(ini, fin, T_eV);
@@ -325,7 +325,8 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 					the_cvv(i, f) += Cif;
 					the_cvv(f, i) += Cfi;
 				}
-				// for upward transitions do nothing because we already covered them above
+				/* for upward transitions do nothing because we already covered them
+				   above */
 			}
 		}
 	}
@@ -343,7 +344,8 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 				for (int lf = 0; lf < n; lf++)
 				{
 					int f = indexOutput(n, lf);
-					// None of the previous contributions should have been l-changing
+					/* None of the previous contributions should have been
+					   l-changing */
 					assert(the_cvv(i, f) == 0);
 					the_cvv(i, f) += qvv(li, lf) * np;
 				}
