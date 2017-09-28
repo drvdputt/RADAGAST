@@ -29,18 +29,31 @@ class GasState
 public:
 	GasState() {}
 
-	double temperature() { return _temperature; }
-	double ionizedFraction() { return _ionizedFraction; }
+	/** Returns the gas temperature. */
+	double temperature() const { return _temperature; }
+
+	/** Returns the density of a species included in the model. For
+	    the moment, some "inside knowledge" about the indices is required (0:e-, 1:H+, 2:H,
+	    3:H2), but of course a more human readable format is desired for the future. TODO: use
+	    some kind of map instead of "secret" indices. */
+	double density(int i) const { return _densityv[i]; }
+	double density_SI(int i) const { return 1e6 * _densityv[i]; }
+
+	double ionizedFraction() const
+	{
+		return _densityv[1] / (_densityv[1] + _densityv[2] + _densityv[3]);
+	}
 
 private:
 	/** Private constructor, only to be used by friended class which acts as a factory and can
 	    fill in all the members. */
 	GasState(const std::valarray<double>& previousISRFv,
 	         const std::valarray<double>& emissivityv, const std::valarray<double>& opacityv,
-	         const std::valarray<double>& scatteringOpacityv, double T, double f)
+	         const std::valarray<double>& scatteringOpacityv, double T,
+	         const std::valarray<double>& densityv)
 	                : _previousISRFv(previousISRFv), _emissivityv(emissivityv),
 	                  _opacityv(opacityv), _scatteringOpacityv(scatteringOpacityv),
-	                  _temperature(T), _ionizedFraction(f)
+	                  _temperature(T), _densityv(densityv)
 	{
 	}
 
@@ -50,7 +63,7 @@ private:
 
 	/** Some diagnostics which are publicly available */
 	double _temperature{0};
-	double _ionizedFraction{0};
+	std::valarray<double> _densityv{0};
 };
 } /* namespace GasModule */
 

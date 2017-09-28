@@ -117,11 +117,12 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 	}
 #endif
 	// Put the relevant data into the gas state
-	gs = GasModule::GasState(specificIntensityv, emv, opv, scv, s.T, f(s));
+	Array densityv(s.speciesNv.data(), s.speciesNv.size());
+	gs = GasModule::GasState(specificIntensityv, emv, opv, scv, s.T, densityv);
 }
 
 GasInterfaceImpl::Solution
-GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& specificIntensityv,
+GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& specificIntensityv,
                                      const GasModule::GrainInterface& gi) const
 {
 	Solution s;
@@ -131,27 +132,27 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
 	   scope by reference, so the lambda function can modify s. */
 	auto solveLevelBalances = [&]() {
-		double nH = s.abundancev[inH];
-		double ne = s.abundancev[ine];
-		double np = s.abundancev[inp];
-		double nH2 = s.abundancev[inH2];
+		double nH = s.speciesNv[inH];
+		double ne = s.speciesNv[ine];
+		double np = s.speciesNv[inp];
+		double nH2 = s.speciesNv[inH2];
 		s.HSolution = _atomicLevels->solveBalance(nH, ne, np, T, specificIntensityv);
 		if (_molecularLevels)
 			s.H2Solution = _molecularLevels->solveBalance(nH2, ne, np, T,
 			                                              specificIntensityv);
 	};
 
-	if (ntotal > 0)
+	if (nHtotal > 0)
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 
 		// Initial guess for the chemistry. Rather important for getting good convergence.
-		double iniNH2 = ntotal / 4;
-		double iniAtomAndIon = ntotal / 2;
+		double iniNH2 = nHtotal / 4;
+		double iniAtomAndIon = nHtotal / 2;
 		double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
 		                                         specificIntensityv);
-		s.abundancev = EVector(4);
-		s.abundancev << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
+		s.speciesNv = EVector(4);
+		s.speciesNv << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
 		                (1 - guessF) * iniAtomAndIon, iniNH2;
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
@@ -163,7 +164,7 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 		bool stopCriterion = false;
 		while (!stopCriterion)
 		{
-			EVector previousAbundancev = s.abundancev;
+			EVector previousAbundancev = s.speciesNv;
 
 			// When including H2
 			if (_molecularLevels)
@@ -173,11 +174,12 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 				double kDissH2Levels =
 				                _molecularLevels->dissociationRate(s.H2Solution);
 				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
-				                T, _frequencyv, specificIntensityv, kDissH2Levels, kFormH2);
+				                T, _frequencyv, specificIntensityv, kDissH2Levels,
+				                kFormH2);
 
 				// Solve chemistry network
-				s.abundancev = _chemSolver->solveBalance(reactionRates,
-				                                         s.abundancev);
+				s.speciesNv = _chemSolver->solveBalance(reactionRates,
+				                                         s.speciesNv);
 
 				/* TODO: Add effect of grain charging to chemical network. I think
 				   it might be possible to do this by imposing a conservation
@@ -196,30 +198,30 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 			else
 			{
 				// Just solve the ionization balance in the nebular approximation
-				double f = Ionization::solveBalance(ntotal, T, _frequencyv,
+				double f = Ionization::solveBalance(nHtotal, T, _frequencyv,
 				                                    specificIntensityv);
 				DEBUG("Ionized fraction = " << f << endl);
 
 				// Neutral fraction
-				s.abundancev[inH] = ntotal * (1 - f);
+				s.speciesNv[inH] = nHtotal * (1 - f);
 				// Ionized fraction
-				s.abundancev[inp] = ntotal * f;
+				s.speciesNv[inp] = nHtotal * f;
 				// Electron density is simply equal to proton density
-				s.abundancev[ine] = s.abundancev[inp];
-				s.abundancev[inH2] = 0;
+				s.speciesNv[ine] = s.speciesNv[inp];
+				s.speciesNv[inH2] = 0;
 			}
 			solveLevelBalances();
 
 			// An abundance has converged if it changes by less than 1%
-			EArray changev = s.abundancev - previousAbundancev;
+			EArray changev = s.speciesNv - previousAbundancev;
 			// Or if it is negligible compared to the norm (or sum maybe?)
-			double norm = s.abundancev.norm();
+			double norm = s.speciesNv.norm();
 			Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 			                changev.abs() <= 0.01 * previousAbundancev.array() ||
-			                s.abundancev.array() < 1.e-99 * norm;
+			                s.speciesNv.array() < 1.e-99 * norm;
 			counter++;
 			DEBUG("Chemistry: " << counter << endl
-			                    << s.abundancev << endl
+			                    << s.speciesNv << endl
 			                    << "convergence: \n"
 			                    << convergedv << endl);
 
@@ -233,7 +235,7 @@ GasInterfaceImpl::calculateDensities(double ntotal, double T, const Array& speci
 		if (_molecularLevels)
 			s.H2Solution = _molecularLevels->solveBalance(0, 0, 0, T,
 			                                              specificIntensityv);
-		s.abundancev = EVector::Zero(ChemicalNetwork::speciesIndexm.size());
+		s.speciesNv = EVector::Zero(ChemicalNetwork::speciesIndexm.size());
 	}
 	return s;
 }
@@ -311,8 +313,8 @@ double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterf
 			GrainPhotoelectricEffect gpe(type);
 
 			// Specify the environment parameters
-			double ne = s.abundancev[ine];
-			double np = s.abundancev[inp];
+			double ne = s.speciesNv[ine];
+			double np = s.speciesNv[inp];
 			GrainPhotoelectricEffect::Environment env(
 			                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1},
 			                {ne, np}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
@@ -342,13 +344,13 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
 	return _freeFree->cooling(np_ne(s), s.T) +
-	       Ionization::cooling(s.abundancev(inH), s.abundancev(inp), s.abundancev(ine), s.T);
+	       Ionization::cooling(s.speciesNv(inH), s.speciesNv(inp), s.speciesNv(ine), s.T);
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
 	double result = _freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
-	result += Ionization::heating(s.abundancev(inp), s.abundancev(ine), s.T, _frequencyv,
+	result += Ionization::heating(s.speciesNv(inp), s.speciesNv(ine), s.T, _frequencyv,
 	                              s.specificIntensityv);
 	if (_molecularLevels)
 		result += _molecularLevels->dissociationHeating(s.H2Solution);

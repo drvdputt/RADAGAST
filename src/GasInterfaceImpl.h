@@ -60,7 +60,7 @@ public:
 	{
 		Array specificIntensityv;
 		double T;
-		EVector abundancev;
+		EVector speciesNv;
 		NLevel::Solution HSolution;
 		NLevel::Solution H2Solution;
 	} Solution;
@@ -128,15 +128,15 @@ public:
 
 	inline double np_ne(const Solution& s) const
 	{
-		return s.abundancev(ine) * s.abundancev(inp);
+		return s.speciesNv(ine) * s.speciesNv(inp);
 	}
 
 	inline double f(const Solution& s) const
 	{
-		return s.abundancev(inp) / (s.abundancev(inH) + 2 * s.abundancev(inH2));
+		return s.speciesNv(inp) / (s.speciesNv(inH) + 2 * s.speciesNv(inH2));
 	}
 
-	inline double nAtomic(const Solution& s) const { return s.abundancev[inH]; }
+	inline double nAtomic(const Solution& s) const { return s.speciesNv[inH]; }
 
 private:
 	/* To be set in constructor */
