@@ -11,7 +11,9 @@ public:
 	H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequencyv);
 	~H2Levels();
 
-	double dissociationRate(const Solution& s) const;
+	/** The dissociation rate, both by direct photodissociation and the indirect Solomon process
+	    derived from the level population solution. */
+	double dissociationRate(const Solution& s, const Array& specificIntensityv) const;
 	double dissociationHeating(const Solution& s) const;
 
 private:

@@ -27,6 +27,9 @@ T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLef
                          T fUpperLeft, T fUpperRight);
 
 template <typename T, typename T1, typename T2>
+T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax);
+
+template <typename T, typename T1, typename T2>
 T integrate(const T1& xContainer, const T2& yContainer);
 
 template <typename T, typename T1> inline size_t index(T val, const T1& container);
@@ -108,13 +111,14 @@ T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLef
     and support iteration using std::begin and std::end. Should work with vector and valarray for T1
     and T2. */
 template <typename T, typename T1, typename T2>
-T integrate(const T1& xContainer, const T2& yContainer)
+T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax)
 {
 	T answer = 0.0;
 	if (xContainer.size() > 1)
 	{
-		auto iy = std::begin(yContainer) + 1;
-		for (auto ix = std::begin(xContainer) + 1; ix != std::end(xContainer); ix++, iy++)
+		auto iy = std::begin(yContainer) + iMin;
+		auto ixEnd = std::begin(xContainer) + iMax + 1; // TODO make sure this is correct
+		for (auto ix = std::begin(xContainer) + 1; ix != ixEnd; ix++, iy++)
 		{
 			answer += 0.5 * (*ix - *(ix - 1)) * (*iy + *(iy - 1));
 		}
@@ -124,6 +128,13 @@ T integrate(const T1& xContainer, const T2& yContainer)
 		answer = yContainer[0];
 	}
 	return answer;
+}
+
+template <typename T, typename T1, typename T2>
+T integrate(const T1& xContainer, const T2& yContainer)
+{
+	return integrate<T, T1, T2>(xContainer, yContainer, size_t{0},
+	                            size_t{xContainer.size() - 1});
 }
 
 /** Finds the index of the first element >= val, in the iterable container `container'. */

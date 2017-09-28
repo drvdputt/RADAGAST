@@ -171,15 +171,17 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			{
 				// Calculate fixed rate coefficients
 				double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
-				double kDissH2Levels =
-				                _molecularLevels->dissociationRate(s.H2Solution);
+				double kDissH2Levels = _molecularLevels->dissociationRate(
+				                s.H2Solution, s.specificIntensityv);
+
+				cout << "Formation rate " << kFormH2 << endl;
+				cout << "Dissociation rate " << kDissH2Levels << endl;
+
+				// Solve chemistry network
 				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
 				                T, _frequencyv, specificIntensityv, kDissH2Levels,
 				                kFormH2);
-
-				// Solve chemistry network
-				s.speciesNv = _chemSolver->solveBalance(reactionRates,
-				                                         s.speciesNv);
+				s.speciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv);
 
 				/* TODO: Add effect of grain charging to chemical network. I think
 				   it might be possible to do this by imposing a conservation
