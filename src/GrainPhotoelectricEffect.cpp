@@ -479,8 +479,14 @@ GrainPhotoelectricEffect::heatingRate(const Environment& env,
 {
 	double total{0.};
 	for (size_t m = 0; m < grainPop._sizev.size(); m++)
-		total += grainPop._densityv[m] *
-		         heatingRateA(grainPop._sizev[m], env, grainPop._qAbsvv[m]);
+	{
+		/* FIXME: temporarily ignore the contribution of the large grains to speed up the
+		   calculation */
+		const double& a{grainPop._sizev[m]};
+		if (a < 500 * Constant::ANG_CM)
+			total += grainPop._densityv[m] *
+			         heatingRateA(grainPop._sizev[m], env, grainPop._qAbsvv[m]);
+	}
 	return total;
 }
 
