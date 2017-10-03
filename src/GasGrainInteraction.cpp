@@ -56,5 +56,5 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 			total += nd * sigmad * epsilon / oneOverStick;
 		}
 	}
-	return 0.5 * thermalVelocityH;
+	return 0.5 * thermalVelocityH * total;
 }

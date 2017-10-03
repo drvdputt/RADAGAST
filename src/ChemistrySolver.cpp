@@ -211,8 +211,6 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		}
 		else
 		{
-			std::cout << "Solving modified system" << std::endl;
-
 			/* If there are some species/equations giving the algorithm trouble, we will
 			   redefine the system here No doubt that this is very hacky, and possibly a
 			   bit too specialized. */

@@ -41,7 +41,7 @@ public:
 
 	double ionizedFraction() const
 	{
-		return _densityv[1] / (_densityv[1] + _densityv[2] + _densityv[3]);
+		return _densityv[1] / (_densityv[1] + _densityv[2] /*+ 2 * _densityv[3]*/);
 	}
 
 private:
