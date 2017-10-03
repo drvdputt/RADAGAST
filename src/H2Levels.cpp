@@ -23,7 +23,9 @@ double H2Levels::dissociationRate(const NLevel::Solution& s, const Array& specif
 
 	// eq 4 and 5
 	double Iuv{F0 / 2.07e7};
-	return 5.8e-11 * Iuv;
+	double result{5.8e-11 * Iuv};
+
+	return result;
 }
 
 double H2Levels::dissociationHeating(const NLevel::Solution& s) const

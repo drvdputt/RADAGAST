@@ -7,6 +7,8 @@
 
 //#include <gsl/gsl_multiroots.h>
 
+constexpr int MAXNEWTONRAPHSONITERATIONS{100};
+
 ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv, const EMatrix& productStoichvv,
                                  const EMatrix& conservationCoeffvv)
                 : _rStoichvv(reactantStoichvv), _netStoichvv(productStoichvv - reactantStoichvv),
@@ -335,7 +337,8 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 		                deltaxv.array().abs() <= 1.e-9 * xv.array().abs() ||
 		                xv.array().abs() <= 1.e-32 * xv.norm();
-		converged = convergedv.all() || (fv.array() == 0).all();
+		converged = convergedv.all() || (fv.array() == 0).all() ||
+		            iNRIteration > MAXNEWTONRAPHSONITERATIONS;
 
 #ifdef PRINT_CHEMISTRY_MATRICES
 		DEBUG("Actual delta x:\n"

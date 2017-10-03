@@ -116,17 +116,14 @@ T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax
 	T answer = 0.0;
 	if (xContainer.size() > 1)
 	{
+		auto ix = std::begin(xContainer) + iMin;
 		auto iy = std::begin(yContainer) + iMin;
 		auto ixEnd = std::begin(xContainer) + iMax + 1; // TODO make sure this is correct
-		for (auto ix = std::begin(xContainer) + 1; ix != ixEnd; ix++, iy++)
-		{
+		for (; ix != ixEnd; ix++, iy++)
 			answer += 0.5 * (*ix - *(ix - 1)) * (*iy + *(iy - 1));
-		}
 	}
 	else
-	{
 		answer = yContainer[0];
-	}
 	return answer;
 }
 

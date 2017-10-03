@@ -71,6 +71,9 @@ private:
 	             std::function<double(double hnuDiffpet, double Emin, double Elow)> peFunction,
 	             std::function<double(double hnuDiffpdt, double Emin)> pdFunction) const;
 
+	/** Formula for Emin (WD01 eq 7 replaced by van Hoof (2004) eq 1). */
+	double eMin(double a, int Z) const;
+
 public:
 	/* Gathers the parameters of the gas environment which are repeatedly needed. */
 	typedef struct Environment
@@ -152,6 +155,9 @@ private:
 
 	/** Draine & Sutin (1987) equations 3.6-3.10. */
 	double lambdaTilde(double tau, double ksi) const;
+
+	/** Draine & Sutin (1987) equation 2.4a (with nu replaced by ksi in notation). */
+	double thetaKsi(double ksi) const;
 
 	/** The energy removed from the gas by particle sticking to a grain, WD01 equation 42. */
 	double recombinationCoolingRate(double a, const Environment& env,

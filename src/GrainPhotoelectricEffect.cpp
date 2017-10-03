@@ -186,7 +186,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	double hnumax = Constant::PLANCK * *(end(env._frequencyv) - 1);
 
 	/* The maximum charge is one more than the highest charge which still allows ionization by
-	 photons of hnumax. */
+	   photons of hnumax. */
 	resultZmax = floor(
 	                ((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) /
 	                (1 + .3 / aA));
@@ -200,7 +200,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
 	/* We will cut off the distribution at some point past the maximum (in either the positive
-	 or the negative direction). */
+	   or the negative direction). */
 	double lowerLimit = 1.e-6;
 	int trimLow = 0;
 	int trimHigh = resultfZ.size() - 1;
@@ -339,9 +339,7 @@ double GrainPhotoelectricEffect::rateIntegral(
 	// Quantities independent of nu
 	double ip_v = ionizationPotential(a, Z);
 
-	// WD01 eq 7
-	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75));
+	double Emin{eMin(a, Z)};
 
 	// WD01 eq 6
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
@@ -406,6 +404,19 @@ double GrainPhotoelectricEffect::rateIntegral(
 		pdIntegral = 0.;
 
 	return peIntegral + pdIntegral;
+}
+
+double GrainPhotoelectricEffect::eMin(double a, int Z) const
+{
+	// WD01 eq 7 replaced by van Hoof (2004) eq 1
+	//	double Emin = Z >= 0 ? 0
+	//	                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75));
+	if (Z >= -1)
+		return 0;
+	else
+		return thetaKsi(Z + 1) *
+		       (1 -
+		        0.3 * std::pow(a / 10 / Constant::ANG_CM, -0.45) * std::pow(Z + 1, -0.26));
 }
 
 double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& frequencyvv,
@@ -481,7 +492,7 @@ GrainPhotoelectricEffect::heatingRate(const Environment& env,
 	for (size_t m = 0; m < grainPop._sizev.size(); m++)
 	{
 		/* FIXME: temporarily ignore the contribution of the large grains to speed up the
-		   calculation */
+         	   calculation */
 		const double& a{grainPop._sizev[m]};
 		if (a < 500 * Constant::ANG_CM)
 			total += grainPop._densityv[m] *
@@ -506,9 +517,9 @@ double GrainPhotoelectricEffect::energyIntegral(double Elow, double Ehigh, doubl
 	double Ediff3 = Ediff * Ediff * Ediff;
 
 	/* Compute integral f(E)E dE analytically, with f(E) defined by WD01 eq 10 f(E) is a
-	 parabola, and therefore f(E)E is a third order polynomial.  Thus the integral of f(E)E dE
-	 is a fourth order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2
-	 -min2). */
+	   parabola, and therefore f(E)E is a third order polynomial.  Thus the integral of f(E)E dE
+	   is a fourth order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2
+	   -min2). */
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
 	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
@@ -623,7 +634,7 @@ double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, 
 	else if (ksi > 0)
 	{
 		double toSquare = 1. + 1. / sqrt(4. * tau + 3. * ksi);
-		Jtilde = toSquare * toSquare * exp(-ksi / (1. + 1. / sqrt(ksi)) / tau);
+		Jtilde = toSquare * toSquare * exp(-thetaKsi(ksi) / tau);
 	}
 	else
 	{
@@ -635,7 +646,8 @@ double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, 
 
 double GrainPhotoelectricEffect::lambdaTilde(double tau, double ksi) const
 {
-	// Found in 1987-Draine-Sutin
+	/* Found in 1987-Draine-Sutin (writing ksi instead of nu, to avoid confuction with
+	   frequency). */
 	if (ksi < 0)
 	{
 		return (2. - ksi / tau) * (1. + 1. / sqrt(tau - ksi));
@@ -643,12 +655,18 @@ double GrainPhotoelectricEffect::lambdaTilde(double tau, double ksi) const
 	else if (ksi > 0)
 	{
 		return (2. + ksi / tau) * (1. + 1. / sqrt(3. / 2. / tau + 3. * ksi)) *
-		       exp(-ksi / (1. + 1. / sqrt(ksi)) / tau);
+		       exp(-thetaKsi(ksi) / tau);
 	}
 	else
 	{
 		return 2. + 3. / 2. * sqrt(Constant::PI / 2. / tau);
 	}
+}
+
+double GrainPhotoelectricEffect::thetaKsi(double ksi) const
+{
+	// Note that this is an approximation. The exact soluation is actually a root of an equation
+	return ksi > 0 ? ksi / (1. + 1. / sqrt(ksi)) : 0;
 }
 
 double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
@@ -681,12 +699,12 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	}
 
 	/* The second term of equation 42: autoionization of grains with the most negative charge
-	 inhibits the cooling of the gas. */
+	   inhibits the cooling of the gas. */
 	// EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
 	double secondTerm = 0;
 	/* This term is only included when the population of the maximally negative grain charge
-	 minimumCharge is significant. If it is not siginicant, then fZ will not cover
-	 minimumCharge, (and Zmin > minimumCharge). */
+	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
+	   minimumCharge, (and Zmin > minimumCharge). */
 	if (Zmin == minimumCharge(a))
 		secondTerm = fZ[0] * collisionalChargingRate(a, env._T, Zmin, -1,
 		                                             Constant::ELECTRONMASS, env._ne) *
@@ -715,10 +733,7 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 		// Quantities independent of nu
 		double ip_v = ionizationPotential(a, Z);
 
-		// WD01 eq 7
-		double Emin = Z >= 0 ? 0
-		                     : -(Z + 1) * e2a / (1 + std::pow(27. * Constant::ANG_CM / a,
-		                                                      0.75));
+		double Emin{eMin(a, Z)};
 
 		// WD01 eq 6
 		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
@@ -761,7 +776,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	readQabs(_carbonaceous);
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
-	 as weights. */
+	   as weights. */
 	ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
 
 	// Grain sizes for test

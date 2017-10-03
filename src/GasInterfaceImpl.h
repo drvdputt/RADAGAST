@@ -148,7 +148,7 @@ private:
 
 	/* Pointers to other parts of the implementation, to make late initialization possible */
 	std::unique_ptr<NLevel> _atomicLevels;
-	std::unique_ptr<H2Levels> _molecularLevels;
+	std::unique_ptr<H2Levels> _molecular;
 	/* Continuum contributions */
 	std::unique_ptr<FreeBound> _freeBound;
 	std::unique_ptr<FreeFree> _freeFree;

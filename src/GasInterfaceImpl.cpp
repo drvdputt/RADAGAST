@@ -20,6 +20,8 @@
 
 using namespace std;
 
+constexpr int MAXCHEMISTRYITERATIONS{100};
+
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
                                    const Array& frequencyv)
                 : _frequencyv(frequencyv), _atomicLevels(std::move(atomModel)),
@@ -28,7 +30,7 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
 {
 	if (molecular)
 	{
-		_molecularLevels = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
+		_molecular = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
 		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
 	}
 
@@ -129,19 +131,6 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
-	/* Lambda function, because it is only needed in this scope. The [&] passes the current
-	   scope by reference, so the lambda function can modify s. */
-	auto solveLevelBalances = [&]() {
-		double nH = s.speciesNv[inH];
-		double ne = s.speciesNv[ine];
-		double np = s.speciesNv[inp];
-		double nH2 = s.speciesNv[inH2];
-		s.HSolution = _atomicLevels->solveBalance(nH, ne, np, T, specificIntensityv);
-		if (_molecularLevels)
-			s.H2Solution = _molecularLevels->solveBalance(nH2, ne, np, T,
-			                                              specificIntensityv);
-	};
-
 	if (nHtotal > 0)
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
@@ -157,6 +146,19 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
 
+		/* Lambda function, because it is only needed in this scope. The [&] passes the current
+		   scope by reference, so the lambda function can modify s. */
+		auto solveLevelBalances = [&]() {
+			double nH = s.speciesNv[inH];
+			double ne = s.speciesNv[ine];
+			double np = s.speciesNv[inp];
+			double nH2 = s.speciesNv[inH2];
+			s.HSolution = _atomicLevels->solveBalance(nH, ne, np, T,
+			                                          specificIntensityv);
+			if (_molecular)
+				s.H2Solution = _molecular->solveBalance(nH2, ne, np, T,
+				                                        specificIntensityv);
+		};
 		// Solve the levels for the first time using the initial guess
 		solveLevelBalances();
 
@@ -166,16 +168,20 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		{
 			EVector previousAbundancev = s.speciesNv;
 
+			// Put breakpoint in case of NaN here
+			if (previousAbundancev.array().isNaN().any())
+				Error::runtime("Nan in chemistry solution!");
+
 			// When including H2
-			if (_molecularLevels)
+			if (_molecular)
 			{
 				// Calculate fixed rate coefficients
 				double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
-				double kDissH2Levels = _molecularLevels->dissociationRate(
+				double kDissH2Levels = _molecular->dissociationRate(
 				                s.H2Solution, s.specificIntensityv);
 
-				cout << "Formation rate " << kFormH2 << endl;
-				cout << "Dissociation rate " << kDissH2Levels << endl;
+				DEBUG("Formation rate " << kFormH2 << endl);
+				DEBUG("Dissociation rate " << kDissH2Levels << endl);
 
 				// Solve chemistry network
 				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
@@ -228,15 +234,15 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			                    << convergedv << endl);
 
 			// Currently, the implementation without molecules does not need iteration.
-			stopCriterion = !_molecularLevels || convergedv.all();
+			stopCriterion = !_molecular || convergedv.all() ||
+			                counter > MAXCHEMISTRYITERATIONS;
 		}
 	}
 	else
 	{
 		s.HSolution = _atomicLevels->solveBalance(0, 0, 0, T, specificIntensityv);
-		if (_molecularLevels)
-			s.H2Solution = _molecularLevels->solveBalance(0, 0, 0, T,
-			                                              specificIntensityv);
+		if (_molecular)
+			s.H2Solution = _molecular->solveBalance(0, 0, 0, T, specificIntensityv);
 		s.speciesNv = EVector::Zero(ChemicalNetwork::speciesIndexm.size());
 	}
 	return s;
@@ -245,8 +251,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
 	Array lineEmv = _atomicLevels->emissivityv(s.HSolution);
-	if (_molecularLevels)
-		lineEmv += _molecularLevels->emissivityv(s.H2Solution);
+	if (_molecular)
+		lineEmv += _molecular->emissivityv(s.H2Solution);
 
 	Array contEmCoeffv(_frequencyv.size());
 	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
@@ -258,8 +264,8 @@ Array GasInterfaceImpl::emissivityv(const Solution& s) const
 Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
 	Array lineOp = _atomicLevels->opacityv(s.HSolution);
-	if (_molecularLevels)
-		lineOp += _molecularLevels->emissivityv(s.H2Solution);
+	if (_molecular)
+		lineOp += _molecular->emissivityv(s.H2Solution);
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
@@ -330,16 +336,16 @@ double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterf
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
 	double result = _atomicLevels->cooling(s.HSolution);
-	if (_molecularLevels)
-		result += _molecularLevels->cooling(s.H2Solution);
+	if (_molecular)
+		result += _molecular->cooling(s.H2Solution);
 	return result;
 }
 
 double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
 	double result = _atomicLevels->heating(s.HSolution);
-	if (_molecularLevels)
-		result += _molecularLevels->heating(s.H2Solution);
+	if (_molecular)
+		result += _molecular->heating(s.H2Solution);
 	return result;
 }
 
@@ -354,7 +360,7 @@ double GasInterfaceImpl::continuumHeating(const Solution& s) const
 	double result = _freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
 	result += Ionization::heating(s.speciesNv(inp), s.speciesNv(ine), s.T, _frequencyv,
 	                              s.specificIntensityv);
-	if (_molecularLevels)
-		result += _molecularLevels->dissociationHeating(s.H2Solution);
+	if (_molecular)
+		result += _molecular->dissociationHeating(s.H2Solution);
 	return result;
 }
