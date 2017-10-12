@@ -81,18 +81,18 @@ public:
 	    temperature. Can be used by the client to manually set the temperature and calculate
 	    some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasModule::GasState&, double n, double T,
-	                       const GasModule::GrainInterface&) const;
+			       const GasModule::GrainInterface&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
 	    guess, and a vector containing the radiation field in specific intensity per frequency
 	    units (on the same frequency grid as the one provided at construction). */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
-	                  const Array& specificIntensity, const GasModule::GrainInterface&) const;
+			  const Array& specificIntensity, const GasModule::GrainInterface&) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
 	    until equilibrium is found. */
 	Solution calculateDensities(double n, double T, const Array& specificIntensityv,
-	                            const GasModule::GrainInterface&) const;
+				    const GasModule::GrainInterface&) const;
 
 public:
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
@@ -104,15 +104,22 @@ public:
 	/** A possible scattering opacity */
 	Array scatteringOpacityv(const Solution&) const;
 
+	///////////////////////////////////////
+	// HEATING AND COOLING CONTRIBUTIONS //
+	///////////////////////////////////////
+
 	/** The total bolometric emission, in erg / s / cm^3, obtained by integrating the
 	    emissivity. */
 	double cooling(const Solution&) const;
 
-	/** Total heating sans grains */
-	double heating(const Solution&) const;
-
 	/** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
 	double heating(const Solution&, const GasModule::GrainInterface&) const;
+
+	/** Total heating sans grains. */
+	double heating(const Solution&) const;
+
+	/** The heating by the grains only. */
+	double grainHeating(const Solution&, const GasModule::GrainInterface&) const;
 
 	/** The cooling by the lines only. */
 	double lineCooling(const Solution&) const;

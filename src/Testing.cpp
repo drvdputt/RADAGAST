@@ -566,8 +566,8 @@ void Testing::runWithDust()
 	const Array& frequencyv{gasInterface.frequencyv()};
 
 	// Radiation field
-	double Tc{1e4};
-	double G0{500};
+	double Tc{4e4};
+	double G0{1e3};
 	Array specificIntensityv{generateSpecificIntensityv(frequencyv, Tc, G0)};
 
 	// Gas density
@@ -581,7 +581,7 @@ void Testing::runWithDust()
 	Array sizev, densityv, temperaturev;
 	// Provide sizes in cm
 	sizev = {1e-7, 1e-6, 1e-5};
-	densityv = {0.1, 0.05, 0.025}; // number of grain per H atom
+	densityv = {0.1, 0.05, 0.025}; // number of grains per H atom
 	densityv *= nHtotal; // density in cm-3
 	// Actually, a temperature distribution per grain size is the most detailed form we'll be
 	// using. Maybe we need multiple versions of the grain interface with regards to storing the

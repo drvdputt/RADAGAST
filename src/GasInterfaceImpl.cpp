@@ -120,7 +120,11 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 #endif
 	// Put the relevant data into the gas state
 	Array densityv(s.speciesNv.data(), s.speciesNv.size());
-	gs = GasModule::GasState(specificIntensityv, emv, opv, scv, s.T, densityv);
+	// Derive this again, just for diagnostics
+	double h2form = GasGrain::surfaceH2FormationRateCoeff(gi, s.T) * s.speciesNv[inH];
+	double grainHeat = grainHeating(s, gi);
+	gs = GasModule::GasState(specificIntensityv, emv, opv, scv, s.T, densityv, h2form,
+	                         grainHeat);
 }
 
 GasInterfaceImpl::Solution
@@ -300,6 +304,11 @@ double GasInterfaceImpl::cooling(const Solution& s) const
 	return lineCool + contCool;
 }
 
+double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterface& g) const
+{
+	return heating(s) + grainHeating(s, g);
+}
+
 double GasInterfaceImpl::heating(const Solution& s) const
 {
 	double lineHeat = lineHeating(s);
@@ -308,29 +317,27 @@ double GasInterfaceImpl::heating(const Solution& s) const
 	return lineHeat + contHeat;
 }
 
-double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterface& g) const
+double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainInterface& g) const
 {
 	double grainPhotoelectricHeating{0};
-
+	// Specify the environment parameters
+	double ne = s.speciesNv[ine];
+	double np = s.speciesNv[inp];
+	GrainPhotoelectricEffect::Environment env(_frequencyv, s.specificIntensityv, s.T, ne, np,
+	                                          {-1, 1}, {ne, np},
+	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
 	for (const auto& pop : g.populationv())
 	{
-		auto type = pop._type;
+		const auto& type = pop._type;
 		if (GrainTypeProperties::heatingAvailable(type))
 		{
-			// Choose the correct parameters for the photoelectric heating calculation
+			/* Choose the correct parameters for the photoelectric heating calculation
+			   based on the type (a.k.a. composition) of the population. */
 			GrainPhotoelectricEffect gpe(type);
-
-			// Specify the environment parameters
-			double ne = s.speciesNv[ine];
-			double np = s.speciesNv[inp];
-			GrainPhotoelectricEffect::Environment env(
-			                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1},
-			                {ne, np}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
-
 			grainPhotoelectricHeating += gpe.heatingRate(env, pop);
 		}
 	}
-	return heating(s) + grainPhotoelectricHeating;
+	return grainPhotoelectricHeating;
 }
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const

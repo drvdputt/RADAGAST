@@ -31,6 +31,8 @@ public:
 
 	/** Returns the gas temperature. */
 	double temperature() const { return _temperature; }
+	double h2form() const { return _h2form; }
+	double grainHeat() const { return _grainHeat; }
 
 	/** Returns the density of a species included in the model. For
 	    the moment, some "inside knowledge" about the indices is required (0:e-, 1:H+, 2:H,
@@ -50,10 +52,10 @@ private:
 	GasState(const std::valarray<double>& previousISRFv,
 	         const std::valarray<double>& emissivityv, const std::valarray<double>& opacityv,
 	         const std::valarray<double>& scatteringOpacityv, double T,
-	         const std::valarray<double>& densityv)
+	         const std::valarray<double>& densityv, double h2form, double grainHeat)
 	                : _previousISRFv(previousISRFv), _emissivityv(emissivityv),
 	                  _opacityv(opacityv), _scatteringOpacityv(scatteringOpacityv),
-	                  _temperature(T), _densityv(densityv)
+		_temperature(T), _densityv(densityv), _h2form(h2form), _grainHeat(grainHeat)
 	{
 	}
 
@@ -64,6 +66,7 @@ private:
 	/** Some diagnostics which are publicly available */
 	double _temperature{0};
 	std::valarray<double> _densityv{0};
+	double _h2form{0}, _grainHeat{0};
 };
 } /* namespace GasModule */
 
