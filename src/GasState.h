@@ -29,9 +29,11 @@ class GasState
 public:
 	GasState() {}
 
-	/** Returns the gas temperature. */
+	/** Returns the gas temperature in K. */
 	double temperature() const { return _temperature; }
+	/** Returns the formation rate of H2, in cm-3 s-1 */
 	double h2form() const { return _h2form; }
+	/** Return the heating rate by the grains in erg cm-3 s-1 */
 	double grainHeat() const { return _grainHeat; }
 
 	/** Returns the density of a species included in the model. For

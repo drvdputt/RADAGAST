@@ -57,19 +57,20 @@ private:
 	   (2001) */
 
 	/** Calculates the integral of the partial emission rate (per wavelength interval)
-	    multiplied with a certain function of the wavelength f(lambda). To get the
-	    total emission rate (number of electrons per second), one can invoke this
-	    function with a lambda function that returns 1. To get the heating rate,
-	    f needs to be equal to the average energy of an emitted electron. Since this
-	    functions calculates an integral for both photoelectric effect and
-	    photodetachtment, two separate functions need to be given. The given
-	    functions should take the parameters hnuDiff, Emin and Elow as defined in the
-	    body of rateIntegral. */
+	    multiplied with a certain function of the wavelength f(lambda) of choice. To get the
+	    total emission rate (number of electrons per second), one can invoke this function with
+	    a lambda function that returns 1. To get the heating rate, f needs to be equal to the
+	    average energy of an emitted electron. Since this functions calculates an integral for
+	    both photoelectric effect and photodetachtment, two separate functions need to be given.
+	    peFunction is the function which will be integrated with the photoelectric yield, while
+	    pdFunction will be integrated with the photodissociation cross section. The given
+	    functions should take the parameters hnuDiff, Emin and Elow as defined in the body of
+	    rateIntegral. */
 	double
-	rateIntegral(double a, int Z, const Array& frequencyv, const Array& Qabs,
+		rateIntegral(double a, int Z, double Emin, const Array& frequencyv, const Array& Qabs,
 	             const Array& specificIntensityv,
-	             std::function<double(double hnuDiffpet, double Emin, double Elow)> peFunction,
-	             std::function<double(double hnuDiffpdt, double Emin)> pdFunction) const;
+	             std::function<double(double hnuDiffpet, double Elow)> peFunction,
+	             std::function<double(double hnuDiffpdt)> pdFunction) const;
 
 	/** Formula for Emin (WD01 eq 7 replaced by van Hoof (2004) eq 1). */
 	double eMin(double a, int Z) const;
