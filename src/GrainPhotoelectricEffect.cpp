@@ -428,7 +428,7 @@ GrainPhotoelectricEffect::rateIntegral(double a, int Z, double Emin, const Array
 
 double GrainPhotoelectricEffect::eMin(double a, int Z) const
 {
-#define VANHOOF_EMIN
+//#define VANHOOF_EMIN
 #ifdef VANHOOF_EMIN
 	// replaced by van Hoof (2004) eq 1
 	if (Z >= -1)
