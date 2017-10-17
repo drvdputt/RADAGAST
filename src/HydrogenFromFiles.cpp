@@ -354,7 +354,7 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 		}
 	}
 #ifdef SANITY
-	assert((result.array() >= 0).all());
+	assert((the_cvv.array() >= 0).all());
 #endif
 
 	// Make all negative entries 0... FIXME investigate if a more better solution exists
