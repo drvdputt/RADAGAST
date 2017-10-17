@@ -33,8 +33,6 @@ void GrainPhotoelectricEffect::readQabs(bool car)
 		file = IOTools::ifstreamRepoFile("dat/Gra_81.dat");
 	else
 		file = IOTools::ifstreamRepoFile("dat/suvSil_81.dat");
-	if (!file)
-		cout << "Grain data not found!" << endl;
 
 	// skip header lines and read the grid size
 	string line;
@@ -131,7 +129,7 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 	QabsWav = TemplatedUtils::linearResample<vector<double>>(QabsWavFromFileForA, FILELAMBDAV,
 	                                                         wavelengthv, -1, -1);
 #ifdef PLOT_QABS
-	std::stringstream filename;
+	stringstream filename;
 	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2)
 	         << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream qabsfile = IOTools::ofstreamFile(filename.str());
@@ -144,12 +142,11 @@ Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
 	return Array(QabsWav.data(), QabsWav.size());
 }
 
-std::vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av,
-                                                              const Array& frequencyv)
+vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av, const Array& frequencyv)
 {
 	// Choose carbon
 	readQabs(true);
-	std::vector<Array> result;
+	vector<Array> result;
 	for (double a : av)
 		result.emplace_back(generateQabsv(a, frequencyv));
 	return result;
@@ -177,7 +174,7 @@ double GrainPhotoelectricEffect::ionizationPotential(double a, int Z) const
 
 void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, const Array& Qabs,
                                              int& resultZmax, int& resultZmin,
-                                             std::vector<double>& resultfZ) const
+                                             vector<double>& resultfZ) const
 {
 	// Express a in angstroms
 	double aA = a / Constant::ANG_CM;
@@ -439,14 +436,12 @@ double GrainPhotoelectricEffect::eMin(double a, int Z) const
 	{
 		double ksi{-static_cast<double>(Z) - 1};
 		return thetaKsi(ksi) *
-		       (1 -
-		        0.3 * std::pow(a / 10 / Constant::ANG_CM, -0.45) * std::pow(ksi, -0.26));
+		       (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(ksi, -0.26));
 	}
 #else
 	// WD01 eq 7
 	double e2_a{Constant::ESQUARE / a};
-	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2_a / (1 + std::pow(27. * Constant::ANG_CM / a, 0.75));
+	double Emin = Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
 	return Emin;
 #endif
 }
@@ -499,7 +494,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
 // #define PLOT_FZ
 #ifdef PLOT_FZ
-	std::stringstream filename;
+	stringstream filename;
 	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
 	         << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream outvar = IOTools::ofstreamFile(filename.str());
@@ -514,9 +509,6 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 		outvar << z << '\t' << fZ[z - Zmin] << '\n';
 	outvar.close();
 #endif
-	if (netHeatingForGrainSize < 0)
-		cout << "negative heatA" << endl;
-
 	return netHeatingForGrainSize;
 }
 
@@ -706,8 +698,7 @@ double GrainPhotoelectricEffect::thetaKsi(double ksi) const
 }
 
 double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
-                                                          const std::vector<double>& fZ,
-                                                          int Zmin) const
+                                                          const vector<double>& fZ, int Zmin) const
 {
 	// Calculates WD01 equation 42
 	double kT = Constant::BOLTZMAN * env._T;
@@ -819,14 +810,14 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	double aMin = 3 * Constant::ANG_CM;
 	double aMax = 10000 * Constant::ANG_CM;
 	const size_t Na = 180;
-	double aStepFactor = std::pow(aMax / aMin, 1. / Na);
+	double aStepFactor = pow(aMax / aMin, 1. / Na);
 	double a = aMin;
 
 	// Output file will contain one line for every grain size
 	stringstream efficiencyFnSs;
 	efficiencyFnSs << "photoelectric/efficiencyG" << setprecision(4) << scientific << G0
 	               << ".dat";
-	std::ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
+	ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
 
 	// For every grain size
 	for (size_t m = 0; m < Na; m++)
@@ -839,15 +830,8 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		double intensityQabsIntegral =
 		                TemplatedUtils::integrate<double>(frequencyv, intensityTimesQabs);
 
-		cout << "Size " << a / Constant::ANG_CM << endl;
-
 		// Calculate and write out the heating efficiency
 		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs);
-		if (heating < 0)
-		{
-			cout << "negative heating rate" << endl;
-			// Error::runtime("Negative heating rate");
-		}
 		double totalAbsorbed = Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
 		efficiencyOf << a / Constant::ANG_CM << '\t' << heating / totalAbsorbed << '\n';
 
@@ -897,10 +881,9 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	int Zmax, Zmin;
 	chargeBalance(a, env, Qabsv, Zmax, Zmin, fZv);
 
-	std::cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size()
-	          << std::endl;
+	cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << endl;
 
-	std::ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
+	ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
 	out << "# carbon = " << _carbonaceous << endl;
 	out << "# a = " << a << endl;
 	out << "# Teff = " << _Tc << endl;
