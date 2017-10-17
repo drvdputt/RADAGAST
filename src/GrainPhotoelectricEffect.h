@@ -66,11 +66,10 @@ private:
 	    pdFunction will be integrated with the photodissociation cross section. The given
 	    functions should take the parameters hnuDiff, Emin and Elow as defined in the body of
 	    rateIntegral. */
-	double
-		rateIntegral(double a, int Z, double Emin, const Array& frequencyv, const Array& Qabs,
-	             const Array& specificIntensityv,
-	             std::function<double(double hnuDiffpet, double Elow)> peFunction,
-	             std::function<double(double hnuDiffpdt)> pdFunction) const;
+	double rateIntegral(double a, int Z, double Emin, const Array& frequencyv,
+	                    const Array& Qabs, const Array& specificIntensityv,
+	                    std::function<double(double hnuDiffpet, double Elow)> peFunction,
+	                    std::function<double(double hnuDiffpdt)> pdFunction) const;
 
 	/** Formula for Emin (WD01 eq 7 replaced by van Hoof (2004) eq 1). */
 	double eMin(double a, int Z) const;
@@ -177,6 +176,6 @@ private:
 	const double _maxWav{1000 * Constant::UM_CM};
 
 	// Data to use for tests
-	};
+};
 
 #endif /* _PHOTOELECTRICHEATING_H_ */
