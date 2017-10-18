@@ -490,7 +490,10 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	}
 
 	// The net heating rate (eq 41 without denominator)
-	double recCool{recombinationCoolingRate(a, env, fZ, Zmin)};
+	double recCool{0};
+#ifdef INCLUDERECCOOL
+	recCool = recombinationCoolingRate(a, env, fZ, Zmin);
+#endif
 	double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
 // #define PLOT_FZ
 #ifdef PLOT_FZ
