@@ -7,7 +7,9 @@ else
 endif
 
 # Binary target
-PROGRAM=../bin/test
+BINDIR=../bin
+$(shell mkdir -p $(BINDIR))
+PROGRAM=$(BINDIR)/test
 
 # Main source
 SRCDIR=./src
