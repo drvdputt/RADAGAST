@@ -80,7 +80,7 @@ NLevel::Solution NLevel::solveBalance(double density, double electronDensity, do
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
 		EVector sourcev = _ldp->sourcev(temperature, electronDensity, protonDensity);
-		EVector sinkv = _ldp->sinkv(temperature, electronDensity, protonDensity);
+		EVector sinkv = _ldp->sinkv(temperature, s.n, electronDensity, protonDensity);
 		// Calculate Fij and bi and solve F.n = b
 		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
 	}

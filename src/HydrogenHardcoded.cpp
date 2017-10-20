@@ -208,7 +208,7 @@ EVector HydrogenHardcoded::sourcev(double T, double ne, double np) const
 	return alphav * ne * np;
 }
 
-EVector HydrogenHardcoded::sinkv(double T, double ne, double np) const
+EVector HydrogenHardcoded::sinkv(double T, double n, double ne, double np) const
 {
 	double sink = Ionization::recombinationRateCoeff(T) / NLV;
 	return EVector::Constant(NLV, sink * ne * np);

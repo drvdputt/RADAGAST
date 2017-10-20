@@ -24,9 +24,8 @@ const double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMA
 
 FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 {
-	readFullData("dat/gauntff_merged_Z01.dat");
-	readIntegratedData("dat/gauntff_freqint_Z01.dat");
-	DEBUG("Constructed FreeFree" << endl);
+	readFullData();
+	readIntegratedData();
 }
 
 /* Some of the code in this file (mainly the code for reading in the date) is an adaptation of the
@@ -72,11 +71,11 @@ FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
  2015, MNRAS, 449, 2112
  */
 
-void FreeFree::readFullData(const string& file)
+void FreeFree::readFullData()
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input = IOTools::ifstreamRepoFile(file);
+	ifstream input{IOTools::ifstreamRepoFile("dat/gauntff_merged_Z01.dat")};
 
 	// buffer
 	string line;
@@ -94,10 +93,7 @@ void FreeFree::readFullData(const string& file)
 	long magic;
 	istringstream(line) >> magic;
 	if (magic != gaunt_magic && magic != gaunt_magic2)
-	{
-		cerr << "read_table() found wrong magic number in file %s.\n" << endl;
 		Error::runtime("read_table() found wrong magic number in file %s.\n");
-	}
 
 	/* read dimensions of the table */
 	size_t np_gam2, np_u;
@@ -150,9 +146,7 @@ void FreeFree::readFullData(const string& file)
 	for (size_t ipu = 0; ipu < np_u; ipu++)
 	{
 		for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
-		{
 			out << _fileGauntFactorvv(ipu, ipg2) << '\t';
-		}
 		out << endl;
 	}
 	out.close();
@@ -160,11 +154,11 @@ void FreeFree::readFullData(const string& file)
 	DEBUG("Successfully read gauntff.dat" << endl);
 }
 
-void FreeFree::readIntegratedData(const string& file)
+void FreeFree::readIntegratedData()
 {
 	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
 	// 420)
-	ifstream input(IOTools::ifstreamRepoFile(file));
+	ifstream input{IOTools::ifstreamRepoFile("dat/gauntff_freqint_Z01.dat")};
 
 	// buffer
 	string line;
@@ -181,10 +175,7 @@ void FreeFree::readIntegratedData(const string& file)
 	long magic;
 	istringstream(line) >> magic;
 	if (magic != gaunt_magic)
-	{
-		cerr << "read_table() found wrong magic number in file %s.\n" << endl;
 		Error::runtime("read_table() found wrong magic number in file %s.\n");
-	}
 
 	/* read dimensions of the table */
 	size_t np_gam2;
@@ -226,9 +217,7 @@ void FreeFree::readIntegratedData(const string& file)
 	ofstream out;
 	out.open("freefree/integratedgauntff.dat");
 	for (double logg2 = -5.9; logg2 < 9.9; logg2 += .1)
-	{
 		out << logg2 << '\t' << integratedGauntFactor(logg2) << '\n';
-	}
 	out.close();
 #endif
 }

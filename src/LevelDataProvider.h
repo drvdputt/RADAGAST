@@ -31,22 +31,22 @@ public:
 	   vectors for level calculations. These are usually called only once, during the setup of a
 	   typical run. */
 
-	/** Returns the number of levels */
+	/** Returns the number of levels. */
 	virtual int numLv() const = 0;
 
-	/** Returns a vector containing the energy of each level */
+	/** Returns a vector containing the energy of each level. [erg]*/
 	virtual EVector ev() const = 0;
 
-	/** Returns a vector containing the degeneracy of each level */
+	/** Returns a vector containing the degeneracy of each level. */
 	virtual EVector gv() const = 0;
 
 	/** Returns a matrix containing the Einstein A coefficients for all levels. Indexed on
-	    (upper, lower), making it a lower triangle matrix. */
+	    (upper, lower), making it a lower triangle matrix. [s-1] */
 	virtual EMatrix avv() const = 0;
 
 	/** Returns a matrix containing any extra spontaneous decays between levels. This matrix can
 	    be used to describe spontaneous decays that do NOT produce line radiation (for example
-	    two-photon processes, which generate a continuum instead). */
+	    two-photon processes, which generate a continuum instead). [s-1] */
 	virtual EMatrix extraAvv() const = 0;
 
 	// FUNCTIONS RETURNING VARIABLE DATA //
@@ -54,13 +54,24 @@ public:
 	    temperature. */
 
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
-	    the partner density), for a given temperature and proton and electron
-	    densities. Calculate the collision rates Cij. Rij = Cij * ni = q_ij * np * ni --> Cij =
-	    q_ij * np with np the density of collision partners */
+	    the partner density), for a given temperature and proton and electron densities.
+	    Calculate the collision rates Cij. The rate we need, Rij = Cij * ni = q_ij * np * ni -->
+	    Cij = q_ij * np with np the density of collision partner. This function return Cij in
+	    these equations, hence the unit is [s-1]. */
 	virtual EMatrix cvv(double T, double ne, double np) const = 0;
 
+	/** Return a vector which describes the rate at which new atoms/molecules appear directly
+	    into the levels, due to external processes such as recombination or the atom/molecule
+	    being a reaction product. These values will appear as constants in the equilibrium
+	    equations. [cm-3 s-1] */
 	virtual EVector sourcev(double T, double ne, double np) const = 0;
-	virtual EVector sinkv(double T, double ne, double np) const = 0;
+
+	/** Returns a vector which describes the fractional rate at which atoms/molecules will
+	    disappear from a level, for example because they are being ionized, or because they are
+	    involed in a chemical reaction. These values typically depend on the radiation field and
+	    other environmental parameters. In the equilibrium equations, this value will be
+	    muliplied by the level population density, hence the unit needs to be [s-1]. */
+	virtual EVector sinkv(double T, double n, double ne, double np) const = 0;
 };
 
 #endif /* _SRC_LEVELDATAPROVIDER_H_ */

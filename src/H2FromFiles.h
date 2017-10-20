@@ -15,7 +15,7 @@ public:
 	EMatrix extraAvv() const override;
 	EMatrix cvv(double T, double ne, double np) const override;
 	EVector sourcev(double T, double ne, double np) const override;
-	EVector sinkv(double T, double ne, double np) const override;
+	EVector sinkv(double T, double n, double ne, double np) const override;
 };
 
 #endif /* H2FROMFILES_H_ */

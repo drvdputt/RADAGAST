@@ -1,10 +1,9 @@
 #include "Testing.h"
 
-#include <execinfo.h>
-
-#include <unistd.h>
 #include <csignal>
+#include <execinfo.h>
 #include <iostream>
+#include <unistd.h>
 
 void handler(int sig)
 {
@@ -25,14 +24,14 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-//		Testing::testPhotoelectricHeating();
-//		Testing::testIonizationStuff();
-//		Testing::testPS64Collisions();
-//		Testing::testChemistry();
-//		Testing::testACollapse();
-//		Testing::compareFromFilesvsHardCoded();
-//		Testing::runFromFilesvsHardCoded();
-//		Testing::runFullModel();
+		Testing::testPhotoelectricHeating();
+		Testing::testIonizationStuff();
+		Testing::testPS64Collisions();
+		Testing::testChemistry();
+		Testing::testACollapse();
+		Testing::compareFromFilesvsHardCoded();
+		Testing::runFromFilesvsHardCoded();
+		Testing::runFullModel();
 		Testing::runWithDust();
 	}
 	catch (const std::exception& ex)

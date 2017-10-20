@@ -131,7 +131,7 @@ void HydrogenFromFiles::readData()
 		}
 	}
 
-	ifstream h_coll_str = IOTools::ifstreamFile(REPOROOT "/dat/h_coll_str.dat");
+	ifstream h_coll_str = IOTools::ifstreamRepoFile("dat/h_coll_str.dat");
 	getline(h_coll_str, line);
 	getline(h_coll_str, line);
 	while (line.compare(0, 2, "-1"))
@@ -336,7 +336,8 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 	{
 		for (int n = 0; n <= _resolvedUpTo; n++)
 		{
-			// The formulae of PS64 are implemented separately
+			/* The formulae of PS64 are implemented separately. The result is indexed on
+			   li, lf. */
 			EMatrix qvv = PS64CollisionRateCoeff(n, T, np);
 			// Fill in the collision rates for all combinations of li lf
 			for (int li = 0; li < n; li++)
@@ -354,7 +355,8 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 		}
 	}
 #ifdef SANITY
-	assert((the_cvv.array() >= 0).all());
+	if (!(the_cvv.array() >= 0).all())
+		DEBUG("NEGATIVE COLLISION RATE");
 #endif
 
 	// Make all negative entries 0... FIXME investigate if a more better solution exists
@@ -448,6 +450,7 @@ EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
 
 	EVector alphav = EVector::Zero(_numL);
 
+	// Now loop over all levels, and add the correct recombination coefficient
 	for (int f = 0; f < _numL; f++)
 	{
 		const HydrogenLevel& final = _levelOrdering[f];
@@ -478,15 +481,16 @@ EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
 	return alphav * ne * np;
 }
 
-EVector HydrogenFromFiles::sinkv(double T, double ne, double np) const
+EVector HydrogenFromFiles::sinkv(double T, double n, double ne, double np) const
 {
 	/* The ionization rate calculation makes no distinction between the levels.  When
 	   the upper level population is small, and its decay rate is large, the second term
 	   doesn't really matter. Therefore, we choose the sink to be the same for each
 	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 	   => sink = totalsource / n because n0/n + n1/n = 1. */
-	double sink = Ionization::recombinationRateCoeff(T) / _numL;
-	return EVector::Constant(_numL, sink * ne * np);
+	double totalSource = ne * np * Ionization::recombinationRateCoeff(T);
+	double sink = totalSource / n; // Sink rate per (atom per cm3)
+	return EVector::Constant(_numL, sink);
 }
 
 double HydrogenFromFiles::energy(int n, int l) const
@@ -578,33 +582,33 @@ double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial, const Hydrogen
 
 double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
 {
-	/* Alternatively to all the mappy things below, we could use a nested vector filled up with
-	   zeros. */
+	/* Find the requested transition in the map that translates n,l to the index in the Anderson
+	   file. */
+	auto uAndersonIndexIt = _nlToAndersonIndexm.find({ni, li});
+	auto lAndersonIndexIt = _nlToAndersonIndexm.find({nf, lf});
 	auto indexMapEnd = _nlToAndersonIndexm.end();
-	// When the level is not included in the range of the data, the result is 0
-	auto uIndexIt = _nlToAndersonIndexm.find({ni, li});
-	auto lIndexIt = _nlToAndersonIndexm.find({nf, lf});
-	if (uIndexIt == indexMapEnd || lIndexIt == indexMapEnd)
+	/* When either of the levels is not in the map, that means there are no transitions
+	   involving this level in the data set. The result is 0. */
+	if (uAndersonIndexIt == indexMapEnd || lAndersonIndexIt == indexMapEnd)
 		return 0;
 
-	int uIndex = uIndexIt->second;
-	int lIndex = lIndexIt->second;
-	if (uIndex <= lIndex)
+	int uAndersonIndex = uAndersonIndexIt->second;
+	int lAndersonIndex = lAndersonIndexIt->second;
+	if (uAndersonIndex <= lAndersonIndex)
 		Error::runtime("This function should only be used for downward collisional "
 		               "transitions");
 
-	// When the levels are included, but the specific transition isn't, the result is also zero.
-	auto UpsilonvIt = _andersonUpsilonvm.find({uIndex, lIndex});
+	// Try to find this transition in the data set.
+	auto UpsilonvIt = _andersonUpsilonvm.find({uAndersonIndex, lAndersonIndex});
+	// If there is no entry, the result is 0.
 	if (UpsilonvIt == _andersonUpsilonvm.end())
 		return 0;
-	else
-	{
-		/* If data is available for this transition, interpolate at the given temperature
-		   (in eV). */
-		double Upsilon_ip = TemplatedUtils::evaluateLinInterpf<double, Array, Array>(
-		                T_eV, _andersonTempv, UpsilonvIt->second);
-		return Upsilon_ip;
-	}
+
+	/* If data is available for this transition, interpolate the Upsilon(T)-array (at the given
+	   temperature (in eV). */
+	double Upsilon_ip = TemplatedUtils::evaluateLinInterpf<double, Array, Array>(
+	                T_eV, _andersonTempv, UpsilonvIt->second);
+	return Upsilon_ip;
 }
 
 double HydrogenFromFiles::eCollisionStrength(int ni, int nf, int lf, double T_eV) const

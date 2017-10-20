@@ -43,7 +43,7 @@ EVector H2FromFiles::sourcev(double T, double ne, double np) const
 	return EVector::Zero(1);
 }
 
-EVector H2FromFiles::sinkv(double T, double ne, double np) const
+EVector H2FromFiles::sinkv(double T, double n, double ne, double np) const
 {
 	return EVector::Zero(1);
 }

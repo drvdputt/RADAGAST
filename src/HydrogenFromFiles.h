@@ -78,21 +78,25 @@ public:
 	/* Returns the number of levels */
 	int numLv() const override;
 
+	/* Gives the index of the (n, l) energy level which is used in the output functions. To get
+	   the energy of the n=5, l=2 level for example, one can call i = indexOutput(5, 2). The
+	   energy you need will be the i'th element of the output vector produced by the
+	   ev()-function (which the client should have cached, since this function is "slow"). */
 	int indexOutput(int n, int l) const;
 
-	/** Returns a vector containing the energy of each level */
+	/** Returns a vector containing the energy of each level. [erg] */
 	EVector ev() const override;
 
-	/** Returns a vector containing the degeneracy of each level */
+	/** Returns a vector containing the degeneracy of each level. */
 	EVector gv() const override;
 
 	/** Returns a matrix containing the Einstein A coefficients for all levels. Indexed on
-	    (upper, lower), making it a lower triangle matrix. */
+	    (upper, lower), making it a lower triangle matrix. [s-1] */
 	EMatrix avv() const override;
 
 	/** Returns a matrix containing any extra spontaneous decays between levels. This matrix can
 	    be used to describe spontaneous decays that do NOT produce line radiation (for example
-	    two-photon processes, which generate a continuum instead). */
+	    two-photon processes, which generate a continuum instead). [s-1] */
 	EMatrix extraAvv() const override;
 
 	/** Return a pair of indices indication the upper and lower level of the two-photon
@@ -110,7 +114,8 @@ public:
 	    temperature. */
 
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
-	    the partner density), for a given temperature and proton and electron densities. */
+	    the partner density: [cm3 s-1 * cm-3 = s-1]), for a given temperature and proton and
+	    electron densities. */
 	EMatrix cvv(double T, double ne, double np) const override;
 
 private:
@@ -119,17 +124,25 @@ private:
 	    or li=n-1) of the l-range, and calculates the q_nli->nlf based on the q_n(li-1),n(lf-1)
 	    or q_n(li+1),n(lf-1). The results are returned as a tridiagonal matrix indexed on
 	    (li,lf), of dimension n x n. Used only by cvv, and after prepareForOutput, and hence
-	    declared private here. */
+	    declared private here. [cm3 s-1] */
 	EMatrix PS64CollisionRateCoeff(int n, double T, double ne) const;
 
 public:
 	/** Returns a vector containing the source terms for the equilibrium equations, such as the
 	    partial recombination rates into each level. Note that this function is separated from
-	    the ionization balance calculation, as there only the total recombination rate
-	    matters. As with the other functions, the way this vector is obtained depends entirely
-	    on the subclass. */
+	    the ionization balance calculation, as there only the total recombination rate matters.
+	    In this case, this function returns the partial recombination rate into each level,
+	    interpolated from some formulae found in 2015-Raga (for levels 3-5) , and Draine's book
+	    (for levels 1, 2). The l-resolved recombination rates are just weighed by the degeneracy
+	    of the level, for levels 3, 4 and 5. TODO: Use better data here. [cm-3 s-1] */
 	EVector sourcev(double T, double ne, double np) const override;
-	EVector sinkv(double T, double ne, double np) const override;
+
+	/** Produces the sink term to be used by the equilibrium equations. In this case, hydrogen
+	    disappears from the level populations because it's being ionized. In the current
+	    implementation, all the ionization is assumed to be drawn equally from all levels. TODO:
+	    add the effects of H2 formation in here?. Take care of this using actual ionization
+	    cross sections? [s-1] */
+	EVector sinkv(double T, double n, double ne, double np) const override;
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
 	//-----------------------------------------//
@@ -138,13 +151,13 @@ public:
 	    these should be safe to call. */
 private:
 	/** Returns energy of a level read in from CHIANTI, given the principal (n) and angular
-	    momentum (l) numbers. Already averaged over different j. */
+	    momentum (l) numbers. Already averaged over different j. [erg] */
 	double energy(int n, int l) const;
 	/** Collapsed version */
 	double energy(int n) const;
 
 	/** Return the merged A coefficient using the values read in from the CHIANTI
-	    database. These are collapsed over the different j-values. */
+	    database. These are collapsed over the different j-values. [s-1] */
 	double einsteinA(int ni, int li, int nf, int lf) const;
 	/** With the initial level collapsed */
 	double einsteinA(int ni, int nf, int lf) const;
@@ -153,10 +166,11 @@ private:
 	/** Version that automatically uses the correct overload */
 	double einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const;
 
-	/** Return the the total electron collision strength (Upsilon). For the moment, there are
+	/** Return the the total electron collision strength (Upsilon [dimensionless]). For the moment, there are
 	    only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys., 2002, 35,
-	    1613).  Note that only queries for downward (in energy) transitions have the potential
-	    to return a nonzero result.  Need separate function for proton collision strength? */
+	    1613). Note that only queries for downward (in energy) transitions have the potential to
+	    return a nonzero result. The temperature needs to be given in electron volt in this
+	    case. Need separate function for proton collision strength? */
 	double eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const;
 	/** With the initial level collapsed */
 	double eCollisionStrength(int ni, int nf, int lf, double T_eV) const;
@@ -176,20 +190,15 @@ private:
 	/* The total number of levels listed in the elvlc file from CHIANTI */
 	int _chiantiNumLvl{0};
 
-	/* With the following shorthand */
-	inline int indexCHIANTI(int n, int l, int twoJplus1) const
-	{
-		return _nljToChiantiIndexm.at({n, l, twoJplus1});
-	}
-
 	/* The Einstein A coefficientes read in from the wgfa file from CHIANTI */
 	EMatrix _chiantiAvv;
 
-	/* The entries are the collision strength in function of the temperature points.  The
-	   anderson data only lists downward collisions. We store each collision strenght as
-	   function of the temperature using a map. This map is indexed on {upper Anderson index,
-	   lower Anderson index}, and the arrays contained in it are indexed the same way as the
-	   temperature points listed in _andersonTempv. The latter are in electron volt. */
+	/* The entries are the collision strength (dimensionless), at different temperature points
+	   as listed in the Anderson data file. The Anderson data only lists downward collisions. We
+	   store each collision strength between to levels as a function of the temperature using a
+	   map. This map is indexed on pairs of integers: {upper Anderson index, lower Anderson
+	   index}. The arrays contained in it are indexed the same way as the temperature points
+	   listed in _andersonTempv. The latter are in electron volt. */
 	std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
 	Array _andersonTempv{{0.5, 1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 25.0}};
 
@@ -205,6 +214,12 @@ private:
 	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
 	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1}. */
 	std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
+
+	/* With the following shorthand */
+	inline int indexCHIANTI(int n, int l, int twoJplus1) const
+	{
+		return _nljToChiantiIndexm.at({n, l, twoJplus1});
+	}
 
 	/* The same, but for the indices like in Anderson+2000 table 1 */
 	std::map<std::array<int, 2>, int> _nlToAndersonIndexm;

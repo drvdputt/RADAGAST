@@ -11,8 +11,8 @@ public:
 	FreeFree(const Array& frequencyv);
 
 private:
-	void readFullData(const std::string& file);
-	void readIntegratedData(const std::string& file);
+	void readFullData();
+	void readIntegratedData();
 	double gauntFactor(double logu, double logg2) const;
 	double integratedGauntFactor(double logg2) const;
 

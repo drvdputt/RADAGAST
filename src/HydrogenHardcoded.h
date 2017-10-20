@@ -40,7 +40,7 @@ public:
 	/** Returns a vector containing partial recombination rates based on fits I found somewhere
 	    (see source code for origin). */
 	EVector sourcev(double T, double ne, double np) const override;
-	EVector sinkv(double T, double ne, double np) const override;
+	EVector sinkv(double T, double n, double ne, double np) const override;
 
 private:
 	EVector the_ev;

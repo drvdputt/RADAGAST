@@ -54,15 +54,13 @@ EMatrix TwoLevelHardcoded::cvv(double T, double /* unused ne */, double /* unuse
 	return Cvv;
 }
 
-EVector TwoLevelHardcoded::sourcev(double /* unused T */, double /* unused np */,
-                                   double /* unused ne */) const
+EVector TwoLevelHardcoded::sourcev(double T, double np, double ne) const
 {
 	// There is no ion
 	return EVector::Zero(2);
 }
 
-EVector TwoLevelHardcoded::sinkv(double /* unused T */, double /* unused np */,
-                                 double /* unused ne */) const
+EVector TwoLevelHardcoded::sinkv(double T, double n, double np, double ne) const
 {
 	return EVector::Zero(2);
 }
