@@ -54,24 +54,24 @@ public:
 	// USAGE 2: Translate GasState into optical properties //
 
 	/** The functions below hould provide a fast implementation to obtain the optical
-	    properties.  The implementation will depend on what is stored in a GasState object. A
+	    properties. The implementation will depend on what is stored in a GasState object. A
 	    good balance between the size of the GasState objects and the computation time needed
 	    for the optical properties needs to be found. */
 
 	/** Based on the information in the given GasState, this function returns the emissivity in
 	    SI units, for a given frequency index. (converted from 1 erg / cm3 / s / Hz / sr = 0.1 J
-	    / m3 / s / Hz / sr). */
+	    / m3 / s / Hz / sr). [W m-3 Hz-1 sr-1] */
 	double emissivity_SI(const GasState& gs, size_t iFreq) const;
 
-	/** Returns the total opacity in SI units (converted from 1 / cm = 100 * 1 / m). */
+	/** Returns the total opacity in SI units (converted from 1 / cm = 100 * 1 / m). [m-1]*/
 	double opacity_SI(const GasState& gs, size_t iFreq) const;
 
 	/** Returns the scattering opacity. Currently there is are no contributions, and this
-	    function simply returns zero for each prequency */
+	    function simply returns zero for each prequency. [m-1] */
 	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
 
 	/** Return the absorption opacity. Currently, all opacity is absorption opacity and the
-	    albedo is therefore zero. */
+	    albedo is therefore zero. [m-1] */
 	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
 
 private:
