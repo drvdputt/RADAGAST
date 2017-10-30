@@ -1,5 +1,5 @@
-#ifndef _SRC_ERROR_H_
-#define _SRC_ERROR_H_
+#ifndef GASMODULE_GIT_SRC_ERROR_H_
+#define GASMODULE_GIT_SRC_ERROR_H_
 
 #include <iostream>
 
@@ -43,4 +43,4 @@ void reportOverridden(std::string name, T original, T replacement, std::string r
 	          << replacement << " because " << reason << std::endl;
 }
 } /* namespace Error */
-#endif /* _SRC_ERROR_H_ */
+#endif /* GASMODULE_GIT_SRC_ERROR_H_ */

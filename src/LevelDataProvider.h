@@ -1,5 +1,5 @@
-#ifndef _SRC_LEVELDATAPROVIDER_H_
-#define _SRC_LEVELDATAPROVIDER_H_
+#ifndef GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_
+#define GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_
 
 #include "EigenAliases.h"
 
@@ -74,4 +74,4 @@ public:
 	virtual EVector sinkv(double T, double n, double ne, double np) const = 0;
 };
 
-#endif /* _SRC_LEVELDATAPROVIDER_H_ */
+#endif /* GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_ */

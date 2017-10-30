@@ -1,5 +1,5 @@
-#ifndef _SRC_HYDROGENLEVELS_H_
-#define _SRC_HYDROGENLEVELS_H_
+#ifndef GASMODULE_GIT_SRC_HYDROGENLEVELS_H_
+#define GASMODULE_GIT_SRC_HYDROGENLEVELS_H_
 
 #include "NLevel.h"
 
@@ -21,4 +21,4 @@ private:
 	std::shared_ptr<const HydrogenDataProvider> _hdp;
 };
 
-#endif /* _SRC_HYDROGENLEVELS_H_ */
+#endif /* GASMODULE_GIT_SRC_HYDROGENLEVELS_H_ */

@@ -1,11 +1,16 @@
-#ifndef _SRC_GASINTERFACE_H_
-#define _SRC_GASINTERFACE_H_
+#ifndef GASMODULE_GIT_SRC_GASINTERFACE_H_
+#define GASMODULE_GIT_SRC_GASINTERFACE_H_
 
 #include "GasState.h"
-#include <memory>
-#include <string>
 #include "GrainInterface.h"
 
+#include <memory>
+#include <string>
+
+/** The real implementation is in GasInterfaceImpl(.h/.cpp). We only forward declare here, to hide
+    as many dependencies as possible. Currently, a client code only needs GasState.h,
+    GrainInterface.h, and this file in its include path. All public facing functionality (all
+    classes and functions in the aforementioned files), falls under the namepace GasModule. */
 class GasInterfaceImpl;
 
 namespace GasModule
@@ -94,4 +99,4 @@ public:
 	const GasInterfaceImpl* pimpl() const { return _pimpl.get(); }
 };
 } /* namespace GasModule */
-#endif /* _SRC_GASINTERFACE_H_ */
+#endif /* GASMODULE_GIT_SRC_GASINTERFACE_H_ */

@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_NLEVEL_H_
-#define GASMODULE_GIT_SRC_NLEVEL_H_
+#ifndef GASMODULE_GITGASMODULE_GIT_SRC_NLEVEL_H_
+#define GASMODULE_GITGASMODULE_GIT_SRC_NLEVEL_H_
 
 #include "Array.h"
 #include "EigenAliases.h"
