@@ -35,23 +35,24 @@ class H2Levels;
     explicitly invoked from this class.
 
     When more species which are optically or thermally active are added, the hydrogen-specific parts
-    of this class might be moved down in the call hierarchy. The species should be intercompatible
-    so they can be put in a list, and the functions which calculate their individual optical
-    properties should be callable from a loop. The total net heating rate for the gas mixture should
-    take into account chemical heating, as well as the heating/cooling contributions which the
-    species provide independently. This clearly calls for polymorphism. The decision still has to be
-    made on how we want to group the processes.  We could make a list of objects representing each
-    species, and indicate which of the objects provides heating, cooling, line emission, continuum,
-    emission, opacity... or we could make separate lists of of heating providers, line emission
-    provides, opacity providers ... and do a multiple inheritance thing. Or a maybe even a lambda
-    function approach, where we make lists of functions that need to be called to get the total
-    heating, emission, opacity...
+    of this class might be moved down in the call hierarchy. The species should be polymorphic so
+    they can be put in a list, and the functions which calculate their individual optical properties
+    should be callable from a loop. The total net heating rate for the gas mixture should take into
+    account chemical heating, as well as the heating/cooling contributions which the species provide
+    independently.
 
-    Some members also have their own balance calculations (at the moment only the NLevel member).
-    This way, the calculation of the level populations, is delegated to NLevel. It's pretty clear
-    that we can put all the NLevel systems into a list, and call solveBalance. But different
+    The decision still has to be made on how we want to group the processes. We could make a list of
+    objects representing each species, and indicate which of the objects provides heating, cooling,
+    line emission, continuum, emission, opacity... or we could make separate lists of of heating
+    providers, line emission provides, opacity providers ... and do a multiple inheritance thing. Or
+    a maybe even a lambda function approach, where we make lists of functions that need to be called
+    to get the total heating, emission, opacity...
+
+    It's pretty clear that we can put all the NLevel systems into a list, and call solveBalance. So
+    solveBalance should have the same signature for all subclasses of NLevel. But different
     subclasses of NLevel provide some different information, such as HydrogenLevels for the
-    two-photon continuum, or H2Levels for dissociation rates. */
+    two-photon continuum, or H2Levels for dissociation rates. This explains the need for
+    subclassing. */
 
 class GasInterfaceImpl
 {
@@ -133,10 +134,7 @@ public:
 	/** The heating by processes involving the continuum [erg / s / cm3]. */
 	double continuumHeating(const Solution&) const;
 
-	inline double np_ne(const Solution& s) const
-	{
-		return s.speciesNv(ine) * s.speciesNv(inp);
-	}
+	inline double np_ne(const Solution& s) const { return s.speciesNv(ine) * s.speciesNv(inp); }
 
 	inline double f(const Solution& s) const
 	{

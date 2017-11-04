@@ -1,8 +1,14 @@
 #ifndef GASMODULE_GIT_SRC_GRAININTERFACE_H_
 #define GASMODULE_GIT_SRC_GRAININTERFACE_H_
 
+#include <functional>
 #include <valarray>
 #include <vector>
+
+namespace GrainTypeProperties
+{
+class SfcInteractionPar;
+}
 
 namespace GasModule
 {
@@ -41,20 +47,21 @@ public:
 		const GrainType _type;
 		const std::valarray<double> _sizev, _densityv, _temperaturev;
 		const std::vector<std::valarray<double>> _qAbsvv;
+
+		/** Dust properties which default to the ones defined in GrainTypeProperties, either
+		    constants or as lambda functions. */
+		std::function<GrainTypeProperties::SfcInteractionPar(GrainType t)> _h2FormationPars;
+		std::function<bool(GrainType t)> _heatingAvailable;
+		std::function<double(GrainType t)> _workFunction;
+		std::function<double(GrainType t, double a, int Z, double hnu)> _photoElectricYield;
+		std::function<double(GrainType t, double a)> _autoIonizationThreshold;
+		std::function<double(GrainType t, double a, int Z, double z_i)>
+		                _stickingCoefficient;
 	};
 
-	/** Creates and empty GrainInfo. */
+	/** Creates and empty GrainInterface, equivalent to no dust at all. Use this constructor
+	    when invoking the gas module to just completely ignore the effects of dust. */
 	GrainInterface();
-
-	/** Constructor for a mix of carbonaceous and silicate. */
-	GrainInterface(const std::valarray<double>& carbonaceousGrainSizev,
-	               const std::valarray<double>& carbonaceousDensityv,
-	               const std::vector<std::valarray<double>>& carbonaceousAbsQvv,
-	               const std::valarray<double>& carTv,
-	               const std::valarray<double>& silicateGrainSizev,
-	               const std::valarray<double>& silicateDensityv,
-	               const std::vector<std::valarray<double>>& silicateAbsQvv,
-	               const std::valarray<double>& silTv);
 
 	/** Constructor which takes a vector of predefined populations. */
 	GrainInterface(const std::vector<Population>& populationv);

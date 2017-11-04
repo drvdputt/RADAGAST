@@ -28,6 +28,8 @@ public:
 		                                      : 8 / Constant::ERG_EV;
 	}
 
+	// DATA TO USE FOR TESTS
+
 	/* Some static hacks. The first one reads some data ripped from SKIRT into variables
 	   declared in the cpp file. Then, a Qabsv for a single size can be generated using
 	   generateQabsv. The third function, qAbsvvForTesting does the read step, and then calls
@@ -37,7 +39,7 @@ public:
 	static std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
 
 private:
-	// Grain properties to use for tests (more detailes in generateQabs)
+	// Grain properties to use for tests (more details in generateQabs)
 	const bool _carbonaceous;
 	const double _workFunction;
 
@@ -159,7 +161,9 @@ private:
 	/** Draine & Sutin (1987) equation 2.4a (with nu replaced by ksi in notation). */
 	double thetaKsi(double ksi) const;
 
-	/** The energy removed from the gas by particle sticking to a grain, WD01 equation 42. */
+	/** The energy removed from the gas by particle sticking to a grain, WD01 equation 42. TODO:
+	    figure out how this fits in with the gas-grain collisional energy exchange. I've
+	    disabled this for now, using the INCLUDERECCOOL macro. */
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin) const;
 
@@ -174,8 +178,6 @@ private:
 	const std::size_t _nWav{200};
 	const double _minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
 	const double _maxWav{1000 * Constant::UM_CM};
-
-	// Data to use for tests
 };
 
 #endif /* _PHOTOELECTRICHEATING_H_ */
