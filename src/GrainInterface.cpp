@@ -2,20 +2,24 @@
 
 #include "Array.h"
 #include "Error.h"
+#include "GrainType.h"
 #include "GrainTypeProperties.h"
 
 namespace GasModule
 {
 
-GrainInterface::Population::Population(GrainType type, const Array& sizev, const Array& densityv,
-                                       const Array& temperaturev, const std::vector<Array>& qAbsvv)
+SfcInteractionPar::SfcInteractionPar(double EH2, double Es, double EHp, double EHc, double aSqrt,
+                                     double nuH2, double nuHc, double F)
+                : _valid{true}, _eH2{EH2}, _es{Es}, _eHp{EHp}, _eHc{EHc}, _aSqrt{aSqrt},
+                  _nuH2{nuH2}, _nuHc{nuHc}, _f{F}
+{
+}
+
+GrainInterface::Population::Population(GrainTypeLabel type, const Array& sizev,
+                                       const Array& densityv, const Array& temperaturev,
+                                       const std::vector<Array>& qAbsvv)
                 : _type{type}, _sizev{sizev}, _densityv{densityv}, _temperaturev{temperaturev},
-                  _qAbsvv{qAbsvv}, _h2FormationPars{GrainTypeProperties::sfcInteractionPar},
-                  _heatingAvailable{GrainTypeProperties::heatingAvailable},
-                  _workFunction{GrainTypeProperties::workFunction} _photoElectricYield{
-                                  GrainTypeProperties::photoElectricYield},
-                  _autoIonizationThreshold{GrainTypeProperties::autoIonizationThreshold},
-                  _stickingCoefficient{GrainTypeProperties::stickingCoefficient}
+                  _qAbsvv{qAbsvv}, _builtin{GrainTypeFactory::makeBuiltin(type)}
 {
 	Error::equalCheck("sizev.size() and densityv.size()", sizev.size(), densityv.size());
 	Error::equalCheck("sizev.size() and temperaturev.size()", sizev.size(),
@@ -23,11 +27,29 @@ GrainInterface::Population::Population(GrainType type, const Array& sizev, const
 	Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
 }
 
+GrainInterface::Population::Population(Population&& other) = default;
+
+GrainInterface::Population::~Population() = default;
+
 GrainInterface::GrainInterface() = default;
 
-GrainInterface::GrainInterface(const std::vector<Population>& populationv)
+GrainInterface::~GrainInterface() = default;
+
+GrainInterface::GrainInterface(const std::vector<GrainInterface::Population>* populationv)
                 : _populationv{populationv}
 {
+}
+
+int GrainInterface::numPopulations() const { return _populationv ? _populationv->size() : 0; }
+
+const GrainInterface::Population* GrainInterface::population(int i) const
+{
+	return _populationv ? _populationv->data() + i : nullptr;
+}
+
+const std::vector<GrainInterface::Population>* GrainInterface::populationv() const
+{
+	return _populationv;
 }
 
 } /* namespace GasModule */

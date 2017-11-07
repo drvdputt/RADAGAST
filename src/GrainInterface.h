@@ -2,18 +2,45 @@
 #define GASMODULE_GIT_SRC_GRAININTERFACE_H_
 
 #include <functional>
+#include <memory>
 #include <valarray>
 #include <vector>
 
-namespace GrainTypeProperties
-{
-class SfcInteractionPar;
-}
+class GrainType;
 
 namespace GasModule
 {
-/** List of possible grain types */
-enum class GrainType
+
+// NEEDED FOR H2 FORMATION //
+/** Parameters for the formation of H2 on the surface on the grain. See 2013-Röllig et al. table
+    C.1. */
+typedef struct SfcInteractionPar
+{
+	SfcInteractionPar() = default;
+	SfcInteractionPar(double EH2, double Es, double EHp, double EHc, double aSqrt, double nuH2,
+	                  double nuHc, double F);
+	/* This boolean is set to false when the default constructor is called, signifiying that the
+	   created object does not contain any useful information (meaning that the graintype for
+	   which it was contructed is not supported, and that the graintype given in the
+	   corresponding static function should be skipped for the H2 formation rate calculation. */
+	bool _valid{false};
+	const double _eH2{0}, _es{0}, _eHp{0}, _eHc{0}, _aSqrt{0}, _nuH2{0}, _nuHc{0}, _f{0};
+} SfcInteractionPar;
+
+/** Function signature for custom ionization potential. */
+typedef std::function<double(double a, int Z)> IonizationPotentialf;
+
+/** Function signature for custom photoelectric yield. */
+typedef std::function<double(double a, int Z, double hnu)> PhotoelectricYieldf;
+
+/** Function signature for custom autionization threshold. */
+typedef std::function<double(double a)> AutoIonizationThresholdf;
+
+/** Function signature for custom sticking coefficient. */
+typedef std::function<double(double a, int Z, double z_i)> StickingCoefficientf;
+
+/** List of grain types which have built-in values for these properties. */
+enum class GrainTypeLabel
 {
 	CAR,
 	SIL
@@ -39,37 +66,59 @@ public:
 	class Population
 	{
 	public:
-		Population(GrainType type, const std::valarray<double>& sizev,
+		/** For CAR or SIL grain type. The built-in values for some of the quantities for h2
+		    formation and the photoelectric effect will be used. Remember to use move
+		    construction, because of the unique_ptr member. TODO: make this more elegant or
+		    something. Not using a move constructor will not compile. This is something I
+		    should ask peter about. */
+		Population(GrainTypeLabel type, const std::valarray<double>& sizev,
 		           const std::valarray<double>& densityv,
 		           const std::valarray<double>& temperaturev,
 		           const std::vector<std::valarray<double>>& qAbsvv);
 
-		const GrainType _type;
-		const std::valarray<double> _sizev, _densityv, _temperaturev;
-		const std::vector<std::valarray<double>> _qAbsvv;
+		/** For custom grain types. Some lambda functions need to be provided. */
+		Population(const std::valarray<double>& sizev,
+		           const std::valarray<double>& densityv,
+		           const std::valarray<double>& temperaturev,
+		           const std::vector<std::valarray<double>>& qAbsvv,
+		           const SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
+		           double workFunction, IonizationPotentialf ionizationpotentialf,
+		           PhotoelectricYieldf photoElectricYieldf,
+		           AutoIonizationThresholdf autoIonizationThresholdf,
+		           StickingCoefficientf stickingCoefficientf);
 
-		/** Dust properties which default to the ones defined in GrainTypeProperties, either
-		    constants or as lambda functions. */
-		std::function<GrainTypeProperties::SfcInteractionPar(GrainType t)> _h2FormationPars;
-		std::function<bool(GrainType t)> _heatingAvailable;
-		std::function<double(GrainType t)> _workFunction;
-		std::function<double(GrainType t, double a, int Z, double hnu)> _photoElectricYield;
-		std::function<double(GrainType t, double a)> _autoIonizationThreshold;
-		std::function<double(GrainType t, double a, int Z, double z_i)>
-		                _stickingCoefficient;
+		// Undelete the move constructor
+		Population(Population&&);
+		~Population();
+
+		GrainTypeLabel _type;
+		const std::valarray<double>&_sizev, _densityv, _temperaturev;
+		const std::vector<std::valarray<double>>& _qAbsvv;
+
+	private:
+		/** Properties which should be provided either by calling the big constructor, or by
+		    functions of the builtin grain types. In the latter case, the following pointer
+		    will be initialized, and the correct functions will be called using
+		    polymorphism. A builtin grain type instance will be assigned to this pointer
+		    based on the "type" argument in the top constructor. */
+		std::unique_ptr<GrainType> _builtin;
 	};
 
-	/** Creates and empty GrainInterface, equivalent to no dust at all. Use this constructor
-	    when invoking the gas module to just completely ignore the effects of dust. */
+	/** Constructor which takes a vector of predefined populations (by pointer). */
+	GrainInterface(const std::vector<Population>* populationv);
+
+	/** Default constructor, equivalent to no grains at all. */
 	GrainInterface();
 
-	/** Constructor which takes a vector of predefined populations. */
-	GrainInterface(const std::vector<Population>& populationv);
+	~GrainInterface();
 
-	std::vector<Population> populationv() const { return _populationv; }
+	int numPopulations() const;
+	const Population* population(int i) const;
+	const std::vector<Population>* populationv() const;
 
 private:
-	const std::vector<Population> _populationv{};
+	// Default constructor is empty vector
+	const std::vector<Population>* _populationv;
 };
 } /* namespace GasModule */
 

@@ -360,7 +360,7 @@ void Testing::testPhotoelectricHeating()
 	if (gasT == 100)
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 
-	GrainPhotoelectricEffect phr{GasModule::GrainType::CAR};
+	GrainPhotoelectricEffect phr{GasModule::GrainTypeLabel::CAR};
 	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{
@@ -453,7 +453,8 @@ void Testing::testChemistry()
 	// Formation and dissociation rates should come from somewhere else
 	double kform = 0;
 	double kdiss = 0;
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss, kform);
+	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss,
+	                                              kform);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
 	int ie = ChemicalNetwork::speciesIndexm.at("e-");
@@ -597,8 +598,8 @@ void Testing::runWithDust()
 	//
 
 	// Construct grain info using list of population objects
-	grainPopv.emplace_back(GasModule::GrainType::CAR, sizev, densityv, temperaturev, qAbsvv);
-	GasModule::GrainInterface grainInterface{grainPopv};
+	grainPopv.emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev, qAbsvv);
+	GasModule::GrainInterface grainInterface{&grainPopv};
 
 	// Run
 	GasModule::GasState gs{};

@@ -16,15 +16,15 @@ class GrainPhotoelectricEffect
 public:
 	/** Creates an object with its members set to suitable values for either carbonaceous
 	    (carbonaceous == true) or silicate (carbonaceous == false) grains. */
-	GrainPhotoelectricEffect(GasModule::GrainType t)
-	                : _carbonaceous{t == GasModule::GrainType::CAR},
+	GrainPhotoelectricEffect(GasModule::GrainTypeLabel t)
+	                : _carbonaceous{t == GasModule::GrainTypeLabel::CAR},
 	                  _workFunction{calcWorkFunction(t)}
 	{
 	}
 
-	static double calcWorkFunction(GasModule::GrainType t)
+	static double calcWorkFunction(GasModule::GrainTypeLabel t)
 	{
-		return t == GasModule::GrainType::CAR ? 4.4 / Constant::ERG_EV
+		return t == GasModule::GrainTypeLabel::CAR ? 4.4 / Constant::ERG_EV
 		                                      : 8 / Constant::ERG_EV;
 	}
 

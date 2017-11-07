@@ -12,8 +12,8 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 	double thermalVelocityH{sqrt(Constant::BOLTZMAN * Tgas / Constant::HMASS_CGS)};
 
 	// Using auto here to avoid having to specify all the namespaces
-	const auto& grainPopv = gInterface.populationv();
-	for (const auto& grainPop : grainPopv)
+	const auto* grainPopv = gInterface.populationv();
+	for (const auto& grainPop : *grainPopv)
 	{
 		const auto& surfaceParams = GrainTypeProperties::sfcInteractionPar(grainPop._type);
 		int numSizes = grainPop._sizev.size();
