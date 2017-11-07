@@ -1,6 +1,6 @@
 #include "CarbonaceousGrain.h"
 #include "Constants.h"
-#include "WeinGartnerDraine2001.h"
+#include "WeingartnerDraine2001.h"
 
 CarbonaceousGrain::CarbonaceousGrain()
                 : GrainType({520, 260, 800, 30000, 14, 3e12, 1.3e13, 1e-10}, true,

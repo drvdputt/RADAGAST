@@ -16,28 +16,13 @@ class GrainPhotoelectricEffect
 public:
 	GrainPhotoelectricEffect(const GrainType& grainType);
 
-	// DATA TO USE FOR TESTS
-
-	/* Some static hacks. The first one reads some data ripped from SKIRT into variables
-	   declared in the cpp file. Then, a Qabsv for a single size can be generated using
-	   generateQabsv. The third function, qAbsvvForTesting does the read step, and then calls
-	   the second function for every size of the list. */
-	static void readQabs(bool car);
-	static Array generateQabsv(double a, const Array& frequencyv);
-	static std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
-
-private:
-	// TODO remove these
-	/* const bool _carbonaceous; */
-	/* const double _workFunction; */
-
+public:
 	/* Currently, the only public functions are test functions which output some files I can
 	   plot. */
-public:
 	double yieldFunctionTest() const;
 
 	/* Makes a plot of the heating efficiency in function of the grain size. Saved as a
-	 two-column file in $(pwd)/photoelectric using the filename. */
+	   two-column file in $(pwd)/photoelectric using the filename. */
 	double heatingRateTest(double G0, double gasT, double ne) const;
 
 	double chargeBalanceTest(double G0, double gasT, double ne, double np) const;
@@ -131,7 +116,8 @@ private:
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin) const;
 
-	// TODO: THE MEMBERS BELOW SHOULD BE REMOVED EVENTUALLY. THEY ONLY PLAY A ROLE IN SOME OF THE TESTS
+	// TODO: THE MEMBERS BELOW SHOULD BE REMOVED EVENTUALLY. THEY ONLY PLAY A ROLE IN SOME OF
+	// THE TESTS
 
 	/* The radiation field to use for test will use this blackbody temperature to determine the
 	   shape. Its actual strength should be provided using the 'G0' argument of the test

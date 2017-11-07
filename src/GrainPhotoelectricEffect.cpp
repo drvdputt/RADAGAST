@@ -19,146 +19,6 @@ GrainPhotoelectricEffect::GrainPhotoelectricEffect(const GrainType& grainType)
 {
 }
 
-/* FIXME: hacks hacks hacks */
-namespace
-{
-vector<double> FILELAMBDAV, FILEAV;
-vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
-}
-
-void GrainPhotoelectricEffect::readQabs(bool car)
-{
-	///////////////////// Begin copy-paste from SKIRT
-	bool reverse = true;
-	bool skip1 = false;
-	bool skip2 = false;
-	bool skip3 = false;
-	size_t _Nlambda, _Na;
-	// open the file
-	ifstream file;
-	if (car)
-		file = IOTools::ifstreamRepoFile("dat/Gra_81.dat");
-	else
-		file = IOTools::ifstreamRepoFile("dat/suvSil_81.dat");
-
-	// skip header lines and read the grid size
-	string line;
-	while (file.peek() == '#')
-		getline(file, line);
-	file >> _Na;
-	getline(file, line); // ignore anything else on this line
-	file >> _Nlambda;
-	getline(file, line); // ignore anything else on this line
-
-	// resize the vectors
-	FILELAMBDAV.resize(_Nlambda);
-	FILEAV.resize(_Na);
-	QABSVV.resize(_Nlambda, vector<double>(_Na));
-	QSCAVV.resize(_Nlambda, vector<double>(_Na));
-	ASYMMPARVV.resize(_Nlambda, vector<double>(_Na));
-
-	// determine the loop conditions for wavelength lines
-	int kbeg = reverse ? _Nlambda - 1 : 0;
-	int kend = reverse ? -1 : _Nlambda;
-	int kinc = reverse ? -1 : 1;
-
-	// read the data blocks
-	double dummy;
-	for (size_t i = 0; i < _Na; i++)
-	{
-		file >> FILEAV[i];
-		FILEAV[i] *= 1e-6; // convert from micron to m
-		getline(file, line); // ignore anything else on this line
-
-		for (int k = kbeg; k != kend; k += kinc)
-		{
-			if (skip1)
-				file >> dummy;
-			file >> FILELAMBDAV[k];
-			FILELAMBDAV[k] *= 1e-6; // convert from micron to m
-			if (skip2)
-				file >> dummy;
-			file >> QABSVV[k][i];
-			file >> QSCAVV[k][i];
-			if (skip3)
-				file >> dummy;
-			file >> ASYMMPARVV[k][i];
-			getline(file, line); // ignore anything else on this line
-		}
-	}
-
-	// close the file
-	file.close();
-	///////////////////// End copy-paste from SKIRT
-
-	// Convert the wavelengths and grain sizes from microns to centimeters
-	for (double& d : FILELAMBDAV)
-		d *= 100.; // m to cm
-	for (double& d : FILEAV)
-		d *= 100.; // m to cm
-}
-
-Array GrainPhotoelectricEffect::generateQabsv(double a, const Array& frequencyv)
-{
-	Array wavelengthv = Testing::freqToWavGrid(frequencyv);
-	vector<double> QabsWav(wavelengthv.size());
-	vector<double> QabsWavFromFileForA(FILELAMBDAV.size());
-
-	// very simple model
-	//        for (size_t i = 0; i < wavelength.size(); i++)
-	//        {
-	//            Qabs[i] = .75;
-	//            if (a < 100 * Constant::ANG_CM) Qabs[i] *= a / 100 / Constant::ANG_CM; // this
-	//            works pretty well to simulate the leveling off of the heating efficiency at
-	//            1000 Ang
-	//        }
-
-	if (a <= FILEAV[0]) // extrapolate propto a
-	{
-		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
-			QabsWavFromFileForA[i] = QABSVV[i][0] * a / FILEAV[0];
-	}
-	else // interpolated from data
-	{
-		size_t a_index = TemplatedUtils::index(a, FILEAV);
-		double normalDistance =
-		                (a - FILEAV[a_index - 1]) / (FILEAV[a_index] - FILEAV[a_index - 1]);
-		// interpolate the values from the file for a specific grain size
-		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
-			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
-			                         QABSVV[i][a_index] * normalDistance;
-	}
-
-#ifdef EXACTGRID
-	return QabsWavFromFileForA;
-#endif
-
-	QabsWav = TemplatedUtils::linearResample<vector<double>>(QabsWavFromFileForA, FILELAMBDAV,
-	                                                         wavelengthv, -1, -1);
-#ifdef PLOT_QABS
-	stringstream filename;
-	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2)
-	         << fixed << a / Constant::ANG_CM << ".txt";
-	ofstream qabsfile = IOTools::ofstreamFile(filename.str());
-	for (size_t i = 0; i < _frequencyv.size(); i++)
-		qabsfile << _frequencyv[i] * Constant::CM_UM << '\t' << QabsWav[i] << endl;
-	qabsfile.close();
-#endif
-	// Reverse order to make Qabs a function of frequency index
-	reverse(begin(QabsWav), end(QabsWav));
-	return Array(QabsWav.data(), QabsWav.size());
-}
-
-vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av, const Array& frequencyv)
-{
-	// Choose carbon
-	readQabs(true);
-	vector<Array> result;
-	for (double a : av)
-		result.emplace_back(generateQabsv(a, frequencyv));
-	return result;
-}
-
 int GrainPhotoelectricEffect::minimumCharge(double a) const
 {
 	double Uait = _grainType.autoIonizationThreshold(a);
@@ -465,13 +325,12 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	recCool = recombinationCoolingRate(a, env, fZ, Zmin);
 #endif
 	double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
-// #define PLOT_FZ
+	#define PLOT_FZ
 #ifdef PLOT_FZ
 	stringstream filename;
 	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
 	         << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream outvar = IOTools::ofstreamFile(filename.str());
-	outvar << "# carbon = " << _carbonaceous << endl;
 	outvar << "# a = " << a << endl;
 	// outvar << "# Teff = " << _Tc << endl;
 	// outvar << "# G0 = " << _G0 << endl;
@@ -508,6 +367,35 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& freq
 	return rateIntegral(a, Z, WD01::eMin(a, Z), frequencyv, Qabs, specificIntensityv,
 	                    [](double, double) -> double { return 1.; },
 	                    [](double) -> double { return 1; });
+}
+
+double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
+                                                         int particleCharge, double particleMass,
+                                                         double particleDensity) const
+{
+	double kT = Constant::BOLTZMAN * gasT;
+
+	// WD eq 26: akT / q^2 = akT / e^2 / z^2
+	double tau = a * kT / Constant::ESQUARE / particleCharge / particleCharge;
+	// Ze / q = Z / z
+	double ksi = static_cast<double>(Z) / static_cast<double>(particleCharge);
+
+	double Jtilde;
+	if (ksi < 0)
+	{
+		Jtilde = (1. - ksi / tau) * (1. + sqrt(2. / (tau - 2. * ksi)));
+	}
+	else if (ksi > 0)
+	{
+		double toSquare = 1. + 1. / sqrt(4. * tau + 3. * ksi);
+		Jtilde = toSquare * toSquare * exp(-WD01::thetaKsi(ksi) / tau);
+	}
+	else
+	{
+		Jtilde = 1. + sqrt(Constant::PI / 2. / tau);
+	}
+	return particleDensity * _grainType.stickingCoefficient(a, Z, particleCharge) *
+	       sqrt(8. * kT * Constant::PI / particleMass) * a * a * Jtilde;
 }
 
 double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
@@ -608,10 +496,6 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	const Environment env(frequencyv, specificIntensityv, gasT, ne, ne, {-1, 1}, {ne, ne},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
-	bool carbon{true};
-	// Read absorption efficiency from SKIRT file into local memory
-	readQabs(carbon);
-
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
 	   as weights. */
 	ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
@@ -633,7 +517,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	for (size_t m = 0; m < Na; m++)
 	{
 		// From the data read in from the SKIRT file, interpolate an absorption efficiency.
-		const Array& Qabs = generateQabsv(a, frequencyv);
+		const Array& Qabs = Testing::generateQabsv(a, frequencyv);
 
 		// Integrate over the radiation field
 		Array intensityTimesQabs = Qabs * specificIntensityv;
@@ -660,44 +544,12 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	return 0.0;
 }
 
-double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
-                                                         int particleCharge, double particleMass,
-                                                         double particleDensity) const
-{
-	double kT = Constant::BOLTZMAN * gasT;
-
-	// WD eq 26: akT / q^2 = akT / e^2 / z^2
-	double tau = a * kT / Constant::ESQUARE / particleCharge / particleCharge;
-	// Ze / q = Z / z
-	double ksi = static_cast<double>(Z) / static_cast<double>(particleCharge);
-
-	double Jtilde;
-	if (ksi < 0)
-	{
-		Jtilde = (1. - ksi / tau) * (1. + sqrt(2. / (tau - 2. * ksi)));
-	}
-	else if (ksi > 0)
-	{
-		double toSquare = 1. + 1. / sqrt(4. * tau + 3. * ksi);
-		Jtilde = toSquare * toSquare * exp(-WD01::thetaKsi(ksi) / tau);
-	}
-	else
-	{
-		Jtilde = 1. + sqrt(Constant::PI / 2. / tau);
-	}
-	return particleDensity * _grainType.stickingCoefficient(a, Z, particleCharge) *
-	       sqrt(8. * kT * Constant::PI / particleMass) * a * a * Jtilde;
-}
-
 double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
                                                    double np) const
 {
-	bool carbon{true};
-	readQabs(carbon);
-
 // Wavelength grid
 #ifdef EXACTGRID
-	vector<double> vecwavelengthv = FILELAMBDAV;
+	vector<double> vecwavelengthv = Testing::FILELAMBDAV;
 #else
 	vector<double> vecwavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
 #endif
@@ -714,7 +566,7 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	double a = 200. * Constant::ANG_CM;
 
 	// Qabs for each frequency
-	Array Qabsv = generateQabsv(a, frequencyv);
+	Array Qabsv = Testing::generateQabsv(a, frequencyv);
 
 	// Calculate charge distribution
 	vector<double> fZv;
@@ -724,7 +576,6 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << endl;
 
 	ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
-	out << "# carbon = " << carbon << endl;
 	out << "# a = " << a << endl;
 	out << "# Teff = " << _Tc << endl;
 	out << "# G0 = " << G0 << endl;
