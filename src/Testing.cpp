@@ -9,6 +9,7 @@
 #include "GasInterfaceImpl.h"
 #include "GrainInterface.h"
 #include "GrainPhotoelectricEffect.h"
+#include "GrainType.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
 #include "HydrogenLevels.h"
@@ -360,7 +361,9 @@ void Testing::testPhotoelectricHeating()
 	if (gasT == 100)
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 
-	GrainPhotoelectricEffect phr{GasModule::GrainTypeLabel::CAR};
+	unique_ptr<GrainType> grainType{
+	                GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLabel::CAR)};
+	GrainPhotoelectricEffect phr(*grainType);
 	phr.yieldFunctionTest();
 	for (double G0 : G0values)
 	{
@@ -598,7 +601,8 @@ void Testing::runWithDust()
 	//
 
 	// Construct grain info using list of population objects
-	grainPopv.emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev, qAbsvv);
+	grainPopv.emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
+	                       qAbsvv);
 	GasModule::GrainInterface grainInterface{&grainPopv};
 
 	// Run

@@ -1,8 +1,7 @@
 #include "GasGrainInteraction.h"
 #include "Constants.h"
-
 #include "GrainInterface.h"
-#include "GrainTypeProperties.h"
+#include "GrainType.h"
 
 double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gInterface,
                                              double Tgas)
@@ -15,7 +14,7 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 	const auto* grainPopv = gInterface.populationv();
 	for (const auto& grainPop : *grainPopv)
 	{
-		const auto& surfaceParams = GrainTypeProperties::sfcInteractionPar(grainPop._type);
+		const auto& surfaceParams = grainPop.type()->sfcInteractionPar();
 		int numSizes = grainPop._sizev.size();
 		for (int iSize = 0; iSize < numSizes; iSize++)
 		{
@@ -42,9 +41,8 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 			                8 * sqrt(Constant::PI * Td) / (EHc - Es) * exp(-2 * aSqrt) *
 			                                exp(EHp / Td) * sqrtEHc_Es};
 			double onePlusSqrtFrac{1 * sqrtEHc_Es / sqrtEHp_Es};
-			double oneOverKsi{1 +
-			                  nu_Hc / 2. / F * exp(-1.5 * EHc / Td) * onePlusSqrtFrac *
-			                                  onePlusSqrtFrac};
+			double oneOverKsi{1 + nu_Hc / 2. / F * exp(-1.5 * EHc / Td) *
+			                                      onePlusSqrtFrac * onePlusSqrtFrac};
 			// eps = (1 + B)^-1 * ksi
 			double epsilon{1 / (1 + 1 / oneOverB) / oneOverKsi};
 

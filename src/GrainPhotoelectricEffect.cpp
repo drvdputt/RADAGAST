@@ -1,9 +1,11 @@
 #include "GrainPhotoelectricEffect.h"
 #include "DebugMacros.h"
 #include "Error.h"
+#include "GrainType.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
+#include "WeingartnerDraine2001.h"
 
 #include <cmath>
 #include <iomanip>
@@ -12,13 +14,18 @@
 
 using namespace std;
 
+GrainPhotoelectricEffect::GrainPhotoelectricEffect(const GrainType& grainType)
+                : _grainType{grainType}
+{
+}
+
+/* FIXME: hacks hacks hacks */
 namespace
 {
 vector<double> FILELAMBDAV, FILEAV;
 vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
 }
 
-/* hacks hacks hacks */
 void GrainPhotoelectricEffect::readQabs(bool car)
 {
 	///////////////////// Begin copy-paste from SKIRT
@@ -152,24 +159,10 @@ vector<Array> GrainPhotoelectricEffect::qAbsvvForTesting(const Array& av, const 
 	return result;
 }
 
-double GrainPhotoelectricEffect::ionizationPotential(double a, int Z) const
+int GrainPhotoelectricEffect::minimumCharge(double a) const
 {
-	double e2_a = Constant::ESQUARE / a;
-	double ip_v = (Z + .5) * e2_a;
-	if (Z >= 0)
-	{
-		// use the same expression for carbonaceous and silicate
-		ip_v += _workFunction + (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
-	}
-	else if (_carbonaceous)
-	{
-		ip_v += _workFunction - e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
-	}
-	else // if silicate
-	{
-		ip_v += 3 / Constant::ERG_EV; // WD01 eq 5
-	}
-	return ip_v;
+	double Uait = _grainType.autoIonizationThreshold(a);
+	return WD01::minimumCharge(a, Uait);
 }
 
 void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, const Array& Qabs,
@@ -184,9 +177,9 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 
 	/* The maximum charge is one more than the highest charge which still allows ionization by
 	   photons of hnumax. */
-	resultZmax = floor(
-	                ((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) /
-	                (1 + .3 / aA));
+	resultZmax = floor(((hnumax - _grainType.workFunction()) * Constant::ERG_EV / 14.4 * aA +
+	                    .5 - .3 / aA) /
+	                   (1 + .3 / aA));
 
 	// The minimum charge is the most negative charge for which autoionization does not occur
 	resultZmin = minimumCharge(a);
@@ -356,7 +349,7 @@ GrainPhotoelectricEffect::rateIntegral(double a, int Z, double Emin, const Array
 	double Elow = Z < 0 ? Emin : -(Z + 1) * e2_a;
 
 	// Quantities independent of nu
-	double ip_v = ionizationPotential(a, Z);
+	double ip_v = _grainType.ionizationPotential(a, Z);
 	// WD01 eq 6
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
 	// Photodetachment, WD01 eq 18
@@ -377,10 +370,11 @@ GrainPhotoelectricEffect::rateIntegral(double a, int Z, double Emin, const Array
 		{
 			// Quantities dependent on nu
 			double hnuDiff = hnu - hnu_pet;
-			double Ehigh = Z < 0 ? Emin + hnuDiff : hnuDiff;
+			// TODO use this somewhere: double Ehigh = Z < 0 ? Emin + hnuDiff : hnuDiff;
 
 			// The integral over the electron energy distribution
-			double Y = yield(a, Z, hnuDiff, Elow, Ehigh);
+			double Y = _grainType.photoElectricYield(a, Z, hnu);
+
 			// dimensionless * dimensionless * (energy / time / freq / area / angle) / energy
 			// * <function unit> * dFreq =  <function unit> / time / area / angle
 			peIntegrandv[iFreq] = Y * Qabs[iFreq] * specificIntensityv[iFreq] / hnu *
@@ -418,32 +412,11 @@ GrainPhotoelectricEffect::rateIntegral(double a, int Z, double Emin, const Array
 	return peIntegral + pdIntegral;
 }
 
-double GrainPhotoelectricEffect::eMin(double a, int Z) const
-{
-//#define VANHOOF_EMIN
-#ifdef VANHOOF_EMIN
-	// replaced by van Hoof (2004) eq 1
-	if (Z >= -1)
-		return 0;
-	else
-	{
-		double ksi{-static_cast<double>(Z) - 1};
-		return thetaKsi(ksi) *
-		       (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(ksi, -0.26));
-	}
-#else
-	// WD01 eq 7
-	double e2_a{Constant::ESQUARE / a};
-	double Emin = Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
-	return Emin;
-#endif
-}
-
 double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& frequencyvv,
                                                const Array& Qabs,
                                                const Array& specificIntensityv) const
 {
-	double Emin{eMin(a, Z)};
+	double Emin = WD01::eMin(a, Z);
 
 	// WD01 eq 39 (energy integral term of the integrand)
 	auto averageEnergyPE = [&](double hnuDiffpet, double Elow) {
@@ -455,7 +428,7 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 		double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff / Ediff : 1;
 
 		// The integral over the electron energy distribution (integral E f(E) dE)
-		double IntE = energyIntegral(Elow, Ehigh, Emin, Emax);
+		double IntE = WD01::energyIntegral(Elow, Ehigh, Emin, Emax);
 		return IntE / y2;
 	};
 	// WD01 eq 40 (term in parentheses of the integrand)
@@ -532,167 +505,9 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& freq
                                               const Array& Qabs,
                                               const Array& specificIntensityv) const
 {
-	return rateIntegral(a, Z, eMin(a, Z), frequencyv, Qabs, specificIntensityv,
+	return rateIntegral(a, Z, WD01::eMin(a, Z), frequencyv, Qabs, specificIntensityv,
 	                    [](double, double) -> double { return 1.; },
 	                    [](double) -> double { return 1; });
-}
-
-double GrainPhotoelectricEffect::energyIntegral(double Elow, double Ehigh, double Emin,
-                                                double Emax) const
-{
-	double Ediff = Ehigh - Elow;
-	double Ediff3 = Ediff * Ediff * Ediff;
-
-	/* Compute integral f(E)E dE analytically, with f(E) defined by WD01 eq 10 f(E) is a
-	   parabola, and therefore f(E)E is a third order polynomial.  Thus the integral of f(E)E dE
-	   is a fourth order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2
-	   -min2). */
-	double Emax2 = Emax * Emax;
-	double Emin2 = Emin * Emin;
-	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	                     (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
-}
-
-double GrainPhotoelectricEffect::yield(double a, int Z, double hnuDiff, double Elow,
-                                       double Ehigh) const
-{
-	if (hnuDiff < 0)
-		Error::runtime("Frequency is smaller than photoelectric threshold.");
-
-	// Compute yield (y2, y1, y0, and finally Y)
-
-	// Calculate y2 from eq 11
-	double Ediff = Ehigh - Elow;
-	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
-
-	// Calculate y1 from grain properties and eq 13, 14
-	// double imaginaryRefIndex = 1; // should be wavelength-dependent
-	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
-	const double la = 100 * Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
-	double beta = a / la;
-	const double le = 10 * Constant::ANG_CM;
-	double alpha = beta + a / le;
-
-	double alpha2 = alpha * alpha;
-	double beta2 = beta * beta;
-	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
-	            (beta2 - 2. * beta - 2. * expm1(-beta));
-
-	// Calculate y0 from eq 9, 16, 17
-	double thetaOverW = hnuDiff;
-	if (Z >= 0)
-		thetaOverW += (Z + 1) * Constant::ESQUARE / a;
-	thetaOverW /= _workFunction;
-	double thetaOverWtothe5th = thetaOverW * thetaOverW;
-	thetaOverWtothe5th *= thetaOverWtothe5th * thetaOverW;
-
-	double y0;
-	// Different formulae for carbonaceous and silicate
-	if (_carbonaceous)
-		y0 = 9e-3 * thetaOverWtothe5th / (1 + 3.7e-2 * thetaOverWtothe5th);
-	else
-		y0 = 0.5 * thetaOverW / (1. + 5. * thetaOverW);
-
-	return y2 * min(y0 * y1, 1.);
-}
-
-int GrainPhotoelectricEffect::minimumCharge(double a) const
-{
-	double aA = a / Constant::ANG_CM;
-
-	// WD01 eq 23
-	double Uait = _carbonaceous ? 3.9 + 0.12 * aA + 2. / aA : 2.5 + 0.07 * aA + 8. / aA;
-	// WD01 eq 24
-	return floor(-Uait / 14.4 * aA) + 1;
-}
-
-double GrainPhotoelectricEffect::stickingCoefficient(double a, int Z, int z_i) const
-{
-	// ions
-	if (z_i >= 0)
-		return 1;
-	// electrons
-	else if (z_i == -1)
-	{
-		// electron mean free path length in grain
-		double le = 10. * Constant::ANG_CM;
-		double pElasticScatter = .5;
-		// negative and neutral grains
-		if (Z <= 0)
-		{
-			if (Z > minimumCharge(a))
-			{
-				// number of carbon atoms
-				double NC = 468 * a * a * a / 1.e-21;
-				return 0.5 * (-expm1(-a / le)) / (1 + exp(20 - NC));
-			}
-			else
-				return 0;
-		}
-		// positive grains
-		else
-			return (1 - pElasticScatter) * (-expm1(-a / le));
-	}
-	// more negative
-	else
-		return 0;
-}
-
-double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
-                                                         int particleCharge, double particleMass,
-                                                         double particleDensity) const
-{
-	double stick = stickingCoefficient(a, Z, particleCharge);
-
-	double kT = Constant::BOLTZMAN * gasT;
-
-	// WD eq 26: akT / q^2 = akT / e^2 / z^2
-	double tau = a * kT / Constant::ESQUARE / particleCharge / particleCharge;
-	// Ze / q = Z / z
-	double ksi = static_cast<double>(Z) / static_cast<double>(particleCharge);
-
-	double Jtilde;
-	if (ksi < 0)
-	{
-		Jtilde = (1. - ksi / tau) * (1. + sqrt(2. / (tau - 2. * ksi)));
-	}
-	else if (ksi > 0)
-	{
-		double toSquare = 1. + 1. / sqrt(4. * tau + 3. * ksi);
-		Jtilde = toSquare * toSquare * exp(-thetaKsi(ksi) / tau);
-	}
-	else
-	{
-		Jtilde = 1. + sqrt(Constant::PI / 2. / tau);
-	}
-	return particleDensity * stick * sqrt(8. * kT * Constant::PI / particleMass) * a * a *
-	       Jtilde;
-}
-
-double GrainPhotoelectricEffect::lambdaTilde(double tau, double ksi) const
-{
-	/* Found in 1987-Draine-Sutin (writing ksi instead of nu, to avoid confuction with
-	   frequency). */
-	if (ksi < 0)
-	{
-		return (2. - ksi / tau) * (1. + 1. / sqrt(tau - ksi));
-	}
-	else if (ksi > 0)
-	{
-		return (2. + ksi / tau) * (1. + 1. / sqrt(3. / 2. / tau + 3. * ksi)) *
-		       exp(-thetaKsi(ksi) / tau);
-	}
-	else
-	{
-		return 2. + 3. / 2. * sqrt(Constant::PI / 2. / tau);
-	}
-}
-
-double GrainPhotoelectricEffect::thetaKsi(double ksi) const
-{
-	// Note that this is an approximation. The exact soluation is actually a root of an equation
-	return ksi > 0 ? ksi / (1. + 1. / sqrt(ksi)) : 0;
 }
 
 double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
@@ -717,8 +532,8 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 		{
 			// ksi = Ze / q_i = Z / z_i
 			double ksi = Z / static_cast<double>(z_i);
-			Zsum += stickingCoefficient(a, Z, z_i) * fZ[Z - Zmin] *
-			        lambdaTilde(tau, ksi);
+			Zsum += _grainType.stickingCoefficient(a, Z, z_i) * fZ[Z - Zmin] *
+			        WD01::lambdaTilde(tau, ksi);
 		}
 		particleSum += env._densityv[i] * sqrt(eightkT3DivPi / env._massv[i]) * Zsum;
 	}
@@ -731,9 +546,10 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
 	   minimumCharge, (and Zmin > minimumCharge). */
 	if (Zmin == minimumCharge(a))
-		secondTerm = fZ[0] * collisionalChargingRate(a, env._T, Zmin, -1,
-		                                             Constant::ELECTRONMASS, env._ne) *
-		             ionizationPotential(a, Zmin - 1);
+		secondTerm = fZ[0] *
+		             collisionalChargingRate(a, env._T, Zmin, -1, Constant::ELECTRONMASS,
+		                                     env._ne) *
+		             _grainType.ionizationPotential(a, Zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
 }
@@ -753,28 +569,23 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 	for (double a : av)
 	{
 		out << "# a = " << a << '\n';
-		const double e2_a = Constant::ESQUARE / a;
 
 		// Quantities independent of nu
-		double ip_v = ionizationPotential(a, Z);
+		double ip_v = _grainType.ionizationPotential(a, Z);
 
-		double Emin{eMin(a, Z)};
+		double Emin{WD01::eMin(a, Z)};
 
 		// WD01 eq 6
 		double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
-
-		double Elow = Z < 0 ? Emin : -(Z + 1) * e2_a; // WD01 text between eq 10 and 11
 
 		double hnu = hnuMin;
 		const double step = (hnuMax - hnuMin) / N;
 		for (size_t n = 0; n < N; n++)
 		{
 			double hnuDiff = hnu - hnu_pet;
-			double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
-
 			if (hnuDiff > 0)
 				out << hnu * Constant::ERG_EV << '\t'
-				    << yield(a, Z, hnuDiff, Elow, Ehigh) << '\n';
+				    << _grainType.photoElectricYield(a, Z, hnu) << '\n';
 			hnu += step;
 		}
 		out << '\n';
@@ -797,8 +608,9 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	const Environment env(frequencyv, specificIntensityv, gasT, ne, ne, {-1, 1}, {ne, ne},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
+	bool carbon{true};
 	// Read absorption efficiency from SKIRT file into local memory
-	readQabs(_carbonaceous);
+	readQabs(carbon);
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation field
 	   as weights. */
@@ -848,10 +660,40 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	return 0.0;
 }
 
+double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
+                                                         int particleCharge, double particleMass,
+                                                         double particleDensity) const
+{
+	double kT = Constant::BOLTZMAN * gasT;
+
+	// WD eq 26: akT / q^2 = akT / e^2 / z^2
+	double tau = a * kT / Constant::ESQUARE / particleCharge / particleCharge;
+	// Ze / q = Z / z
+	double ksi = static_cast<double>(Z) / static_cast<double>(particleCharge);
+
+	double Jtilde;
+	if (ksi < 0)
+	{
+		Jtilde = (1. - ksi / tau) * (1. + sqrt(2. / (tau - 2. * ksi)));
+	}
+	else if (ksi > 0)
+	{
+		double toSquare = 1. + 1. / sqrt(4. * tau + 3. * ksi);
+		Jtilde = toSquare * toSquare * exp(-WD01::thetaKsi(ksi) / tau);
+	}
+	else
+	{
+		Jtilde = 1. + sqrt(Constant::PI / 2. / tau);
+	}
+	return particleDensity * _grainType.stickingCoefficient(a, Z, particleCharge) *
+	       sqrt(8. * kT * Constant::PI / particleMass) * a * a * Jtilde;
+}
+
 double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
                                                    double np) const
 {
-	readQabs(_carbonaceous);
+	bool carbon{true};
+	readQabs(carbon);
 
 // Wavelength grid
 #ifdef EXACTGRID
@@ -882,7 +724,7 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << endl;
 
 	ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
-	out << "# carbon = " << _carbonaceous << endl;
+	out << "# carbon = " << carbon << endl;
 	out << "# a = " << a << endl;
 	out << "# Teff = " << _Tc << endl;
 	out << "# G0 = " << G0 << endl;

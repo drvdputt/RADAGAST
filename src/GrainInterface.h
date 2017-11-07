@@ -91,7 +91,8 @@ public:
 		Population(Population&&);
 		~Population();
 
-		GrainTypeLabel _type;
+		const GrainType* type() const { return _type.get(); }
+
 		const std::valarray<double>&_sizev, _densityv, _temperaturev;
 		const std::vector<std::valarray<double>>& _qAbsvv;
 
@@ -101,7 +102,7 @@ public:
 		    will be initialized, and the correct functions will be called using
 		    polymorphism. A builtin grain type instance will be assigned to this pointer
 		    based on the "type" argument in the top constructor. */
-		std::unique_ptr<GrainType> _builtin;
+		std::unique_ptr<GrainType> _type;
 	};
 
 	/** Constructor which takes a vector of predefined populations (by pointer). */

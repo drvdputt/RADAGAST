@@ -14,19 +14,7 @@
 class GrainPhotoelectricEffect
 {
 public:
-	/** Creates an object with its members set to suitable values for either carbonaceous
-	    (carbonaceous == true) or silicate (carbonaceous == false) grains. */
-	GrainPhotoelectricEffect(GasModule::GrainTypeLabel t)
-	                : _carbonaceous{t == GasModule::GrainTypeLabel::CAR},
-	                  _workFunction{calcWorkFunction(t)}
-	{
-	}
-
-	static double calcWorkFunction(GasModule::GrainTypeLabel t)
-	{
-		return t == GasModule::GrainTypeLabel::CAR ? 4.4 / Constant::ERG_EV
-		                                      : 8 / Constant::ERG_EV;
-	}
+	GrainPhotoelectricEffect(const GrainType& grainType);
 
 	// DATA TO USE FOR TESTS
 
@@ -39,9 +27,9 @@ public:
 	static std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
 
 private:
-	// Grain properties to use for tests (more details in generateQabs)
-	const bool _carbonaceous;
-	const double _workFunction;
+	// TODO remove these
+	/* const bool _carbonaceous; */
+	/* const double _workFunction; */
 
 	/* Currently, the only public functions are test functions which output some files I can
 	   plot. */
@@ -55,9 +43,6 @@ public:
 	double chargeBalanceTest(double G0, double gasT, double ne, double np) const;
 
 private:
-	/* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
-	   (2001) */
-
 	/** Calculates the integral of the partial emission rate (per wavelength interval)
 	    multiplied with a certain function of the wavelength f(lambda) of choice. To get the
 	    total emission rate (number of electrons per second), one can invoke this function with
@@ -72,9 +57,6 @@ private:
 	                    const Array& Qabs, const Array& specificIntensityv,
 	                    std::function<double(double hnuDiffpet, double Elow)> peFunction,
 	                    std::function<double(double hnuDiffpdt)> pdFunction) const;
-
-	/** Formula for Emin (WD01 eq 7 replaced by van Hoof (2004) eq 1). */
-	double eMin(double a, int Z) const;
 
 public:
 	/* Gathers the parameters of the gas environment which are repeatedly needed. */
@@ -118,6 +100,10 @@ private:
 	    charge distribution, and then calls heatingRateAZ for every charge Z. */
 	double heatingRateA(double a, const Environment& env, const Array& Qabs) const;
 
+	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
+	    immediately autoionize when an electron is captured. */
+	int minimumCharge(double a) const;
+
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
 	    wavelength. */
@@ -129,37 +115,15 @@ private:
 	double heatingRateAZ(double a, int Z, const Array& frequencyv, const Array& Qabs,
 	                     const Array& specificIntensityv) const;
 
-	/** Implements WD01 equations 2, 4 and 5. */
-	double ionizationPotential(double a, int Z) const;
-
 	/** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
 	    according to equation 25 of WD01. */
 	double emissionRate(double a, int Z, const Array& frequencyv, const Array& Qabs,
 	                    const Array& specificIntensityv) const;
 
-	/** Calculates the integral over the energy in WD01 equation 39. */
-	double energyIntegral(double Elow, double Ehigh, double Emin, double Emax) const;
-
-	/** Calculates the photoelectric yield according to WD01 equation 12. */
-	double yield(double a, int Z, double hnuDiff, double Elow, double Ehigh) const;
-
-	/** Implementes WD01 equations 23, 24. Calculates the negative charge necessary for a grain
-	    to immediately autoionize when an electron is captured. */
-	int minimumCharge(double a) const;
-
-	/** The sticking coefficient based on equations 1 and 27-30 */
-	double stickingCoefficient(double a, int Z, int z_i) const;
-
-	/** The rate [s-1] at which a grain is charged by colliding with other particles. Taken from
-	    Draine & Sutin (1987) equations 3.1-3.5. */
+	/** The rate [s-1] at which a grain is charged by colliding with other particles. Taken from Draine
+	    & Sutin (1987) equations 3.1-3.5. */
 	double collisionalChargingRate(double a, double gasT, int Z, int particleCharge,
 	                               double particleMass, double particleDensity) const;
-
-	/** Draine & Sutin (1987) equations 3.6-3.10. */
-	double lambdaTilde(double tau, double ksi) const;
-
-	/** Draine & Sutin (1987) equation 2.4a (with nu replaced by ksi in notation). */
-	double thetaKsi(double ksi) const;
 
 	/** The energy removed from the gas by particle sticking to a grain, WD01 equation 42. TODO:
 	    figure out how this fits in with the gas-grain collisional energy exchange. I've
@@ -178,6 +142,8 @@ private:
 	const std::size_t _nWav{200};
 	const double _minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
 	const double _maxWav{1000 * Constant::UM_CM};
+
+	const GrainType& _grainType;
 };
 
 #endif /* _PHOTOELECTRICHEATING_H_ */

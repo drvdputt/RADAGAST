@@ -1,6 +1,6 @@
 #include "SilicateGrain.h"
 #include "Constants.h"
-
+#include "WeingartnerDraine2001.h"
 // TODO: Implement everything, and maybe use file-local constants instead of members of the parent
 // class. At least put the constants next to their names, and then hand them over.
 
@@ -10,10 +10,22 @@ SilicateGrain::SilicateGrain()
 {
 }
 
-double SilicateGrain::photoElectricYield(double a, int z, double hnu) const { return 0.; }
+double SilicateGrain::photoElectricYield(double a, int z, double hnu) const
+{
+	return WD01::yield(a, z, hnu, false);
+}
 
-double SilicateGrain::ionizationPotential(double a, int z) const { return 0.; }
+double SilicateGrain::ionizationPotential(double a, int z) const
+{
+	return WD01::ionizationPotential(a, z, false);
+}
 
-double SilicateGrain::autoIonizationThreshold(double a) const { return 0; }
+double SilicateGrain::autoIonizationThreshold(double a) const
+{
+	return WD01::autoIonizationThreshold(a, false);
+}
 
-double SilicateGrain::stickingCoefficient(double a, int z, int z_i) const { return 0; }
+double SilicateGrain::stickingCoefficient(double a, int z, int z_i) const
+{
+	return WD01::stickingCoefficient(a, z, z_i, false);
+}

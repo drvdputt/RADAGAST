@@ -7,7 +7,7 @@
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "GasGrainInteraction.h"
-#include "GrainTypeProperties.h"
+#include "GrainType.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
 #include "HydrogenFromFiles.h"
@@ -328,12 +328,12 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
 	for (const auto& pop : *g.populationv())
 	{
-		const auto& type = pop._type;
-		if (GrainTypeProperties::heatingAvailable(type))
+		const auto* type = pop.type();
+		if (type->heatingAvailable())
 		{
 			/* Choose the correct parameters for the photoelectric heating calculation
 			   based on the type (a.k.a. composition) of the population. */
-			GrainPhotoelectricEffect gpe(type);
+			GrainPhotoelectricEffect gpe(*type);
 			grainPhotoelectricHeating += gpe.heatingRate(env, pop);
 		}
 	}
