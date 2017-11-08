@@ -138,7 +138,7 @@ Array Testing::generateQabsv(double a, const Array& frequencyv)
 #endif
 	QabsWav = TemplatedUtils::linearResample<vector<double>>(QabsWavFromFileForA, FILELAMBDAV,
 	                                                         wavelengthv, -1, -1);
-#define PLOT_QABS
+// #define PLOT_QABS
 #ifdef PLOT_QABS
 	stringstream filename;
 	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2)
@@ -467,7 +467,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	       << " 10ionizedFrac" << endl;
 	for (int N = 0; N < samples; N++, T *= factor)
 	{
-		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv, {});
+		GasModule::GrainInterface gri{};
+		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv, gri);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);

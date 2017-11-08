@@ -10,20 +10,21 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 
 	double thermalVelocityH{sqrt(Constant::BOLTZMAN * Tgas / Constant::HMASS_CGS)};
 
-	// Using auto here to avoid having to specify all the namespaces
-	const auto* grainPopv = gInterface.populationv();
-	for (const auto& grainPop : *grainPopv)
+	int numPop = gInterface.numPopulations();
+	for (int iPop = 0; iPop < numPop; numPop++)
 	{
-		const auto& surfaceParams = grainPop.type()->sfcInteractionPar();
-		int numSizes = grainPop._sizev.size();
+		const GasModule::GrainInterface::Population* pop = gInterface.population(iPop);
+		const GrainType* grainType = pop->type();
+		const GasModule::SfcInteractionPar& surfaceParams = grainType->sfcInteractionPar();
+		int numSizes = pop->_sizev.size();
 		for (int iSize = 0; iSize < numSizes; iSize++)
 		{
 			// Number density
-			double nd{grainPop._densityv[iSize]};
-			double Td{grainPop._temperaturev[iSize]};
+			double nd{pop->_densityv[iSize]};
+			double Td{pop->_temperaturev[iSize]};
 
 			// Cross section of the grain
-			double sigmad{grainPop._sizev[iSize]};
+			double sigmad{pop->_sizev[iSize]};
 			sigmad *= sigmad / 4.;
 
 			// Formation efficiency epsilon
@@ -41,8 +42,9 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 			                8 * sqrt(Constant::PI * Td) / (EHc - Es) * exp(-2 * aSqrt) *
 			                                exp(EHp / Td) * sqrtEHc_Es};
 			double onePlusSqrtFrac{1 * sqrtEHc_Es / sqrtEHp_Es};
-			double oneOverKsi{1 + nu_Hc / 2. / F * exp(-1.5 * EHc / Td) *
-			                                      onePlusSqrtFrac * onePlusSqrtFrac};
+			double oneOverKsi{1 +
+			                  nu_Hc / 2. / F * exp(-1.5 * EHc / Td) * onePlusSqrtFrac *
+			                                  onePlusSqrtFrac};
 			// eps = (1 + B)^-1 * ksi
 			double epsilon{1 / (1 + 1 / oneOverB) / oneOverKsi};
 

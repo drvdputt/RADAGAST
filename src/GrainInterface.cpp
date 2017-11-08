@@ -44,7 +44,8 @@ int GrainInterface::numPopulations() const { return _populationv ? _populationv-
 
 const GrainInterface::Population* GrainInterface::population(int i) const
 {
-	return _populationv ? _populationv->data() + i : nullptr;
+	if (!_populationv) Error::runtime("No populations in this object!");
+	return &(*_populationv)[i];
 }
 
 const std::vector<GrainInterface::Population>* GrainInterface::populationv() const

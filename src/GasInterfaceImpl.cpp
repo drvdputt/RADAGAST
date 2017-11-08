@@ -326,15 +326,17 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 	GrainPhotoelectricEffect::Environment env(_frequencyv, s.specificIntensityv, s.T, ne, np,
 	                                          {-1, 1}, {ne, np},
 	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
-	for (const auto& pop : *g.populationv())
+	int numPop = g.numPopulations();
+	for (int iPop = 0; iPop < numPop; numPop++)
 	{
-		const auto* type = pop.type();
+		const GasModule::GrainInterface::Population* pop = g.population(iPop);
+		const GrainType* type = pop->type();
 		if (type->heatingAvailable())
 		{
 			/* Choose the correct parameters for the photoelectric heating calculation
 			   based on the type (a.k.a. composition) of the population. */
 			GrainPhotoelectricEffect gpe(*type);
-			grainPhotoelectricHeating += gpe.heatingRate(env, pop);
+			grainPhotoelectricHeating += gpe.heatingRate(env, *pop);
 		}
 	}
 	return grainPhotoelectricHeating;

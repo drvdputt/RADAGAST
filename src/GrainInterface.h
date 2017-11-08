@@ -118,8 +118,8 @@ public:
 	const std::vector<Population>* populationv() const;
 
 private:
-	// Default constructor is empty vector
-	const std::vector<Population>* _populationv;
+	// Default constructor is nullptr
+	const std::vector<Population>* _populationv{nullptr};
 };
 } /* namespace GasModule */
 
