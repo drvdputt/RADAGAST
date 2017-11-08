@@ -27,6 +27,9 @@ double autoIonizationThreshold(double a, bool carbonaceous);
 /** Implements WD01 equation 24. */
 int minimumCharge(double a, double Uait);
 
+/** Combines eq 23 and 24 */
+int minimumCharge(double a, bool carbonaceous);
+
 /** The sticking coefficient based on equations 1 and 27-30 */
 double stickingCoefficient(double a, int Z, int z_i, bool carbonaceous);
 

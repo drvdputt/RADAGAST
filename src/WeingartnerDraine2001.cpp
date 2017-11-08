@@ -66,10 +66,9 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
 	   -min2). */
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
-	return 6 / Ediff3 *
-	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
+	                     (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
@@ -135,6 +134,11 @@ int WD01::minimumCharge(double a, double Uait)
 {
 	// WD01 eq 24
 	return floor(-Uait / 14.4 * a / Constant::ANG_CM) + 1;
+}
+
+int WD01::minimumCharge(double a, bool carbonaceous)
+{
+	return minimumCharge(a, autoIonizationThreshold(a, carbonaceous));
 }
 
 double WD01::stickingCoefficient(double a, int Z, int z_i, bool carbonaceous)
