@@ -108,8 +108,6 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 		}
 		// Move the cursor to the center of the new bounds
 		currentZ = floor((lowerbound + upperbound) / 2.);
-		// cout << "Searching maximum in ("<<lowerbound<<" | "<<currentZ<<" |
-		// "<<upperbound<<")"<<endl;
 	}
 	// The result of the binary search
 	centerZ = currentZ;
@@ -123,7 +121,12 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	{
 		int index = z - resultZmin;
 		// f(z) =  f(z-1) * up(z-1) / down(z)
-		resultfZ[index] = resultfZ[index - 1] * chargeUpRate(z - 1) / chargeDownRate(z);
+		double up = chargeUpRate(z - 1);
+		double down = chargeDownRate(z);
+		resultfZ[index] = resultfZ[index - 1] * up / down;
+
+		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
+			Error::runtime("invalid value in charge distribution");
 
 		// Cut off calculation once the values past the maximum have a relative size of 1e-6
 		// or less Detects the maximum
@@ -145,7 +148,9 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	{
 		int index = z - resultZmin;
 		// f(z) = f(z+1) * down(z+1) / up(z)
-		resultfZ[index] = resultfZ[index + 1] * chargeDownRate(z + 1) / chargeUpRate(z);
+		double up = chargeUpRate(z);
+		double down = chargeDownRate(z+1);
+		resultfZ[index] = resultfZ[index + 1] * down / up;
 
 		// Similar detection for cutoff
 		if (!passedMaximum && resultfZ[index] < resultfZ[index + 1])
@@ -164,6 +169,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	   of all the memory for the initial fZ buffer). */
 
 	// Trim the top first! Makes things (i.e. dealing with the indices) much easier.
+
 	resultfZ.erase(resultfZ.begin() + trimHigh + 1, resultfZ.end());
 	resultZmax = resultZmin + trimHigh;
 
@@ -312,6 +318,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	for (int Z = Zmin; Z <= Zmax; Z++)
 	{
 		double fZz = fZ[Z - Zmin];
+		if (isnan(fZz)) Error::runtime("nan in fz");
 		double heatAZ = heatingRateAZ(a, Z, env._frequencyv, Qabs, env.specificIntensityv);
 
 		/* Fraction of grains in this charge state * heating by a single particle of charge
@@ -321,11 +328,12 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 
 	// The net heating rate (eq 41 without denominator)
 	double recCool{0};
+//#define INCLUDERECCOOL
 #ifdef INCLUDERECCOOL
 	recCool = recombinationCoolingRate(a, env, fZ, Zmin);
 #endif
 	double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
-	#define PLOT_FZ
+//#define PLOT_FZ
 #ifdef PLOT_FZ
 	stringstream filename;
 	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
@@ -434,9 +442,8 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
 	   minimumCharge, (and Zmin > minimumCharge). */
 	if (Zmin == minimumCharge(a))
-		secondTerm = fZ[0] *
-		             collisionalChargingRate(a, env._T, Zmin, -1, Constant::ELECTRONMASS,
-		                                     env._ne) *
+		secondTerm = fZ[0] * collisionalChargingRate(a, env._T, Zmin, -1,
+		                                             Constant::ELECTRONMASS, env._ne) *
 		             _grainType.ionizationPotential(a, Zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
@@ -503,7 +510,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	// Grain sizes for test
 	double aMin = 3 * Constant::ANG_CM;
 	double aMax = 10000 * Constant::ANG_CM;
-	const size_t Na = 180;
+	const size_t Na = 90;
 	double aStepFactor = pow(aMax / aMin, 1. / Na);
 	double a = aMin;
 
@@ -527,7 +534,11 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		// Calculate and write out the heating efficiency
 		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs);
 		double totalAbsorbed = Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
-		efficiencyOf << a / Constant::ANG_CM << '\t' << heating / totalAbsorbed << '\n';
+		double efficiency = heating / totalAbsorbed;
+		if (isnan(efficiency))
+			cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed << endl;
+
+		efficiencyOf << a / Constant::ANG_CM << '\t' << efficiency << '\n';
 
 		// Calculate and write out the ISRF-averaged absorption efficiency
 		double intensityIntegral =

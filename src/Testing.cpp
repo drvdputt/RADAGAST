@@ -1,3 +1,4 @@
+#include "Testing.h"
 #include "ChemicalNetwork.h"
 #include "ChemistrySolver.h"
 #include "Constants.h"
@@ -17,7 +18,6 @@
 #include "NLevel.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
-#include "Testing.h"
 
 #include <iomanip>
 #include <sstream>
@@ -30,8 +30,6 @@ namespace
 vector<double> FILELAMBDAV, FILEAV;
 vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
 }
-
-#define PLOT_QABS
 
 void Testing::readQabs(bool car)
 {
@@ -507,15 +505,17 @@ void Testing::testPhotoelectricHeating()
 		G0values = {2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
 	if (gasT == 100)
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
+	vector<int> pickValues{0, 1, 2, 3, 4};
 
 	unique_ptr<GrainType> grainType{
 	                GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLabel::CAR)};
 	GrainPhotoelectricEffect phr(*grainType);
 	phr.yieldFunctionTest();
-	for (double G0 : G0values)
+
+	for (int i : pickValues)
 	{
-		phr.chargeBalanceTest(G0, gasT, ne, ne);
-		phr.heatingRateTest(G0, gasT, ne);
+		phr.chargeBalanceTest(G0values[i], gasT, ne, ne);
+		phr.heatingRateTest(G0values[i], gasT, ne);
 	}
 }
 

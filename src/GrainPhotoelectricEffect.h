@@ -7,7 +7,8 @@
 #include <functional>
 #include <vector>
 
-// TODO: consider van Hoof's correction (see GasPhysics.pdf)
+// TODO: Try to fix weird charge balance for some sizes (see code-notes section bugs) when using van
+// Hoof's correction (see GasPhysics.pdf)
 /* TODO: create a way to get the excess/deficit of electrons, and maybe charge exchange reaction
    rates. */
 
@@ -129,6 +130,7 @@ private:
 	const double _minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
 	const double _maxWav{1000 * Constant::UM_CM};
 
+	/* Graintype-specific properties are provided by this object. */
 	const GrainType& _grainType;
 };
 
