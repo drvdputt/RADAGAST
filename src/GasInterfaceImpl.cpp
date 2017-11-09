@@ -327,9 +327,9 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 	                                          {-1, 1}, {ne, np},
 	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
 	int numPop = g.numPopulations();
-	for (int iPop = 0; iPop < numPop; numPop++)
+	for (int i = 0; i < numPop; i++)
 	{
-		const GasModule::GrainInterface::Population* pop = g.population(iPop);
+		const GasModule::GrainInterface::Population* pop = g.population(i);
 		const GrainType* type = pop->type();
 		if (type->heatingAvailable())
 		{
