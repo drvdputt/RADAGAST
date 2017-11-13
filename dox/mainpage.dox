@@ -17,17 +17,18 @@ Note that this debug build will ouput quite a number of debug messages. To build
 for inclusion in another code, see the instructions below.
 
 \subsection include_build_subsec Include it 'manually'
+
 The simplest way to use the gas module in your code, is to modify the Makefile a bit, build the code
 separately, and then set the correct compiler flags in your project.
 
-In the Makefile of the gas module, add the -DSILENT preprocessor option to disable all debug
-messages. Add -O3 and remove -g for optimization. Not sure if this will work, but might be useful:
-adjust the target directories.
+In the Makefile of the gas module, add the \c -DSILENT preprocessor option to disable all debug
+messages. Add \c -O3 and remove \c -g for optimization. Not sure if this will work, but might be
+useful: adjust the target directories.
 
 To include the gas module in your code and link the result, use this include flag: \c
--I<target_dir>/include, where target_dir is the target directory you specified in the make file. For
-the linking step, add the linker path -L<target_dir>/lib (this is where libgasmodule.a will be put)
-and the linker flag -lgasmodule.
+-I\<target_dir\>/include, where \c \<target_dir\> is the target directory you specified in the make
+file. For the linking step, add the linker path \c -L\<target_dir\>/lib (this is where
+libgasmodule.a will be put) and the linker flag \c -lgasmodule.
 
 \subsection cmake_build_subsec Include in a CMake project
 
@@ -38,8 +39,8 @@ based on the structure of SKIRT in terms of a CMake project.
 In SKIRT, the source code of extra libraries such as cfitsio or voro is included as a subproject, in
 sister directories of the core; so we have SKIRT/core/ SKIRT/fitsio and SKIRT/voro.
 SKIRT/CMakeLists.txt lists all these subdirectories, with an add_subdirectory command for each of
-them. Adding the gas module is straightforward: simply add a directory SKIRT/gasmodule, and put
-add_subdirectory(gasmodule) to SKIRT/CMakeLists.txt.
+them. Adding the gas module is straightforward: simply add a directory SKIRT/gasmodule, and put \c
+add_subdirectory(gasmodule) in SKIRT/CMakeLists.txt.
 
 In this subdirectory, make a new CMakeLists file, and there put something like this:
 
