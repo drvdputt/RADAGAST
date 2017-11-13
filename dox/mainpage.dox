@@ -1,13 +1,81 @@
 /*! \mainpage GasModule Index
- *
- * \section intro_sec Instructions for using GasModule in another code
- *
- * This is the introduction.
- *
- * \subsection cmake_subsec CMake
- * Include as subproject
- *
- * * \subsection make_subsec Make
- * Include flags  
- * 
- */
+
+\section build_sec Build instructions
+\subsection debug_build_subsec Debug build
+
+The Makefile that comes with the repo compiles the code in the parent directory of the repo. During
+the compilation step, all the object files (*.o) will be placed in ../obj. Dependency files (*.d)
+are also generated for each object file; for each *.o file, we let the compiler generate a *.d file
+which described the dependency of the object itself on its inluded headers, as well as any recursive
+dependencies for the headers.
+
+These objects will then be linked into a binary called 'test', which is placed in ../bin. All the
+objects are also placed in an archive at '../lib/libgasmodule.a', allowing it to be linked to other
+codes.
+
+Note that this debug build will ouput quite a number of debug messages. To build a version suitable
+for inclusion in another code, see the instructions below.
+
+\subsection include_build_subsec Include it 'manually'
+The simplest way to use the gas module in your code, is to modify the Makefile a bit, build the code
+separately, and then set the correct compiler flags in your project.
+
+In the Makefile of the gas module, add the -DSILENT preprocessor option to disable all debug
+messages. Add -O3 and remove -g for optimization. Not sure if this will work, but might be useful:
+adjust the target directories.
+
+To include the gas module in your code and link the result, use this include flag: \c
+-I<target_dir>/include, where target_dir is the target directory you specified in the make file. For
+the linking step, add the linker path -L<target_dir>/lib (this is where libgasmodule.a will be put)
+and the linker flag -lgasmodule.
+
+\subsection cmake_build_subsec Include in a CMake project
+
+It is possible to add instructions to the CMakelists that create the gadmodule library as part of
+the build process for the whole project. We use CMake to build SKIRT, so these instructions will be
+based on the structure of SKIRT in terms of a CMake project.
+
+In SKIRT, the source code of extra libraries such as cfitsio or voro is included as a subproject, in
+sister directories of the core; so we have SKIRT/core/ SKIRT/fitsio and SKIRT/voro.
+SKIRT/CMakeLists.txt lists all these subdirectories, with an add_subdirectory command for each of
+them. Adding the gas module is straightforward: simply add a directory SKIRT/gasmodule, and put
+add_subdirectory(gasmodule) to SKIRT/CMakeLists.txt.
+
+In this subdirectory, make a new CMakeLists file, and there put something like this:
+
+\code 
+# ------------------------------------------------------------------
+# Builds a library from the GasModule source
+# ------------------------------------------------------------------
+
+# set the target name
+set(TARGET gasmodule)
+
+# source files and their headers
+file(GLOB SOURCES "/Users/drvdputt/GasModule/git/src/*.cpp")
+file(GLOB HEADERS "/Users/drvdputt/GasModule/git/src/*.hpp")
+# create the library target
+add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
+
+# Eigen dependencies
+include_directories(SYSTEM /Users/drvdputt/GasModule/git/eigen3)
+
+# GasModule header-only dependencies
+include_directories(/Users/drvdputt/GasModule/git/include)
+
+# adjust C++ compiler flags to our needs
+include("../../SMILE/build/CompilerFlags.cmake")
+
+# The SYSTEM flag for the eigen3 include will suppress the thousands of warnings thrown (in our
+# case, because of compiler flags).
+	
+\endcode
+
+If any of the subprojects make use of the gasmodule (SKIRT/core in our case), put the following in
+their CMakeLists.txt:
+
+\code
+target_link_libraries(gasmodule)
+include_directories(/Users/drvdputt/GasModule/git/src)
+\endcode
+*/
