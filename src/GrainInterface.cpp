@@ -1,9 +1,7 @@
 #include "GrainInterface.h"
-
 #include "Array.h"
 #include "Error.h"
 #include "GrainType.h"
-#include "GrainTypeProperties.h"
 
 namespace GasModule
 {
@@ -44,7 +42,8 @@ int GrainInterface::numPopulations() const { return _populationv ? _populationv-
 
 const GrainInterface::Population* GrainInterface::population(int i) const
 {
-	if (!_populationv) Error::runtime("No populations in this object!");
+	if (!_populationv)
+		Error::runtime("No populations in this object!");
 	return &(*_populationv)[i];
 }
 
