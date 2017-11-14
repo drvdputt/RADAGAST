@@ -44,12 +44,11 @@ ChemicalNetwork::ChemicalNetwork()
 	// H2 -> H + H
 	addReaction("H2 dissociation", {"H2"}, {1}, {"H"}, {2});
 
-	// H2 formation on grain surfaces
-	// H + H -> H2
-	// Need to put 1 here for the H stoichiometry, because the rate scales with nH instead of
-	// nH^2 (see rateCoeffv()). By then using twice the reaction rate, we end up with an equal
-	// tempo of H2 formation, but on that scales only linearly with nH.
-	addReaction("H2 formation", {"H"}, {1}, {"H2"}, {.5});
+	/* H2 formation on grain surfaces H + H -> H2 Need to put 1 here for the H stoichiometry,
+	   because the rate scales with nH instead of nH^2 (see rateCoeffv()). By then using twice
+	   (not the word 'half' in the label) the reaction rate, we end up with an equal tempo of H2
+	   formation, but on that scales only linearly with nH. */
+	addReaction("half H2 formation", {"H"}, {1}, {"H2"}, {.5});
 
 	_numReactions = _reactionv.size();
 }
@@ -64,7 +63,9 @@ EVector ChemicalNetwork::rateCoeffv(double T, const Array& frequencyv,
 	k(reactionIndex("H collisional ionization")) = Ionization::collisionalRateCoeff(T);
 	k(reactionIndex("H radiative recombination")) = Ionization::recombinationRateCoeff(T);
 	k(reactionIndex("H2 dissociation")) = kDissFromH2Levels;
-	k(reactionIndex("H2 formation")) = kH2FormationGrain;
+	/* The rate of this reaction is twice the H2 formation rate. See comment in constructor
+	   implementation. */
+	k(reactionIndex("half H2 formation")) = 2 * kH2FormationGrain;
 	return k;
 }
 
