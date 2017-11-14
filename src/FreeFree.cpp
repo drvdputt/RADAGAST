@@ -73,8 +73,8 @@ FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
 
 void FreeFree::readFullData()
 {
-	// Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
-	// 420)
+	/* Translated to c++ from interpolate3.c that came with the 2014 van Hoof paper (MNRAS 444
+	   420) */
 	ifstream input{IOTools::ifstreamRepoFile("dat/gauntff_merged_Z01.dat")};
 
 	// buffer

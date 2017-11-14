@@ -3,8 +3,6 @@
 
 TwoLevelHardcoded::TwoLevelHardcoded()
 {
-	/* toy model of CII 158 um from https://www.astro.umd.edu/~jph/N-level.pdf bottom of page
-	   4. This makes collisional deexcitation important for densities > 20-50 / cm3. */
 	// Level and transition information
 	//	_Ev << 0, .00786 / Constant::ERG_EV;
 	//	_gv << 1, 1;

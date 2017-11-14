@@ -7,22 +7,31 @@
 
 class ChemicalNetwork;
 
+/** This class contains an implementation to solve a chemical network. The details of the chemical
+    network are provided by the instance of a \c ChemicalNetwork given to the constructor of this
+    class. A pointer to the given \c ChemicalNetwork object will be stored. There is a getter for
+    this pointer so the client can access it to generate reaction rate coefficients. Only the
+    chemical network object knows what the reactions really mean; In fact, this class does not even
+    know which element has which index in the solution vector. This class just solves the chemical
+    equations oblivious of any underlying details. */
 class ChemistrySolver
 {
 public:
-	/** Create a chemistry network with coefficients specified in the following matrices:
-	    reactantStoichvv contains the stoichiometry for each reactant (the left side of the
-	    reaction). productStoichvv contains the stoichiometric numbers for the reaction products
-	    (the right side). The rows of these matrices are indexed per species, while each column
-	    stands for a certain reaction. It will be assumed that the reaction rates scale with the
-	    product of the reactant densities (to the power of their stoich. number on the left hand
-	    side). This makes it easy to compute the Jacobian of the time derivative of the
-	    densities. The last two arguments are a matrix and a vector representing conservation
-	    equations. Each row represents the conservation of a certain quantity q;
-	    conservationCoeffvv should contain the amount of q contained in each species of the
-	    chemical network. The complementary vector qvv indicates the desired value of each q. By
-	    multiplying the convervation coefficient matrix with the species density vector, we
-	    obtain as such our set of conservation equations. */
+	/** This constructor is pretty difficult to use, but this description nicely describes the
+	    responsibilities of the \c ChemicalNetwork class. Create a chemistry network with
+	    coefficients specified in the following matrices: reactantStoichvv contains the
+	    stoichiometry for each reactant (the left side of the reaction). productStoichvv
+	    contains the stoichiometric numbers for the reaction products (the right side). The rows
+	    of these matrices are indexed per species, while each column stands for a certain
+	    reaction. It will be assumed that the reaction rates scale with the product of the
+	    reactant densities (to the power of their stoich. number on the left hand side). This
+	    makes it easy to compute the Jacobian of the time derivative of the densities. The last
+	    two arguments are a matrix and a vector representing conservation equations. Each row
+	    represents the conservation of a certain quantity q; conservationCoeffvv should contain
+	    the amount of q contained in each species of the chemical network. The complementary
+	    vector qvv indicates the desired value of each q. By multiplying the convervation
+	    coefficient matrix with the species density vector, we obtain as such our set of
+	    conservation equations. */
 	ChemistrySolver(const EMatrix& reactantStoichvv, const EMatrix& productStoichvv,
 	                const EMatrix& conservationCoeffvv);
 
@@ -78,6 +87,8 @@ private:
 	                      std::function<EVector(const EVector& nv)> functionv,
 	                      const EVector& x0v) const;
 
+	/** Calculate the \f$ \delta x \f$ for a single Newton-Raphson step. Some modifications are
+	    applied to the 'raw' solution preventing \f$x\f$ from becoming negative. */
 	EVector newtonRaphsonStep(const EMatrix& currentJvv, const EMatrix& currentFv,
 	                      std::function<EVector(const EVector& nv)> functionv,
 	                          const EVector& currentXv) const;
@@ -85,13 +96,12 @@ private:
 	/** It might be better to use a third party solver such as the multidimensional root finding
 	    in GSL, or the unsupported nonlinear solver of Eigen. Or maybe SUNDIALS. */
 
-
 	// DESIGN NOTE:
 	/** The calculation of the rate coefficients can be delegated to another object, as the
 	    arguments required to calculate them could be anything from the rest of the
 	    simulation. This object will provide data that is self-consistent (same number of
 	    indices, and in the same order, etc.) To get a set of rate coefficients which is
-	    consitent with the data given at setup, the user can then simply ask for the
+	    consistent with the data given at setup, the user can then simply ask for the
 	    ChemicalNetwork and call its rateCoeffv(<many arguments>) function.  One can also opt to
 	    not use a chemicalnetwork object, and just fill in everything in the constructor
 	    manually. The fact that one then needs to remember what was originally filled in when

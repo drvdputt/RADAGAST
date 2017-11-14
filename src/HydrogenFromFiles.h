@@ -7,12 +7,18 @@
 #include <map>
 #include <vector>
 
+/** This class will read a number of files on construction, and partially process this data. When
+    the output functions (\c avv(), \c ev(), etc.) are called, the data is distilled into
+    matrices/vectors which can be used by \c HydrogenLevels, to do the calculation of the level
+    populations. */
 class HydrogenFromFiles : public HydrogenDataProvider
 {
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
 	//------------------------------//
 public:
+	/** Creates a new \c HydrogenFromFiles object, reads in all the data, and fills in a couple
+	    of data members useful for the output functions. */
 	HydrogenFromFiles(int resolvedUpTo = 5);
 
 private:

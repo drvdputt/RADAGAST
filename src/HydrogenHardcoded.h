@@ -3,6 +3,9 @@
 
 #include "HydrogenDataProvider.h"
 
+/** This provides data for a hydrogen level model in a hardcoded way. It is mainly for educational
+    and compararive purposes. I used it to check if the implementation of \c HydrogenFromFiles
+    correctly processed the j-resolved coefficients it read in, for example. */
 class HydrogenHardcoded : public HydrogenDataProvider
 {
 public:
@@ -13,6 +16,7 @@ public:
 
 	/** Returns a vector containing the energy of each level */
 	EVector ev() const override;
+
 	/** Returns a vector containing the degeneracy of each level */
 	EVector gv() const override;
 

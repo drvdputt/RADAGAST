@@ -57,7 +57,10 @@ class H2Levels;
 class GasInterfaceImpl
 {
 public:
-	typedef struct
+	/** The main routine returns a \c Solution object. This struct contains a bunch of
+	    information about the final state, including similar \c Solution objects for the levels.
+	    By passing around this object, the operation of the module can be kept thread-safe. */
+	typedef struct Solution
 	{
 		Array specificIntensityv;
 		double T;
@@ -96,6 +99,12 @@ public:
 				    const GasModule::GrainInterface&) const;
 
 public:
+	/** @name Properties of final state
+
+	    These function calculate the properties which depend on the state of the gas. They all
+	    take a \c Solution object as an argument, which can be obtained by calling \c
+	    calculateDensities(). */
+
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
 	Array emissivityv(const Solution&) const;
 
@@ -134,6 +143,9 @@ public:
 	/** The heating by processes involving the continuum [erg / s / cm3]. */
 	double continuumHeating(const Solution&) const;
 
+	/** The product of the proton and electron density. By putting this in a function,
+	    refactoring the way the densities are stored will be easier, should it happen in the
+	    future. */
 	inline double np_ne(const Solution& s) const { return s.speciesNv(ine) * s.speciesNv(inp); }
 
 	inline double f(const Solution& s) const

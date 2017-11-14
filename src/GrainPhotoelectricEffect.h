@@ -12,14 +12,20 @@
 /* TODO: create a way to get the excess/deficit of electrons, and maybe charge exchange reaction
    rates. */
 
+/** This class provides an implementation of the photoelectric heating recipe described in
+    Weingartner \& Draine (2001), hereafter WD01. */
 class GrainPhotoelectricEffect
 {
 public:
+	/** Create a photoelectric effect object. Requires an instance of one of the \c GrainType
+	subclasses. The \c SilicateGrain and \c CarbonaceousGrain types are 'native' to this recipe,
+	i.e. their implementations are also based on formulae from WD01. With some optimism, it
+	should be possible to use this recipe for other types of grains, if the right functions and
+	properties (yield, ionization potentials, etc.) are provided. For this purpose, the \c
+	GrainType subclass \c CustomGrain can be used. */
 	GrainPhotoelectricEffect(const GrainType& grainType);
 
 public:
-	/* Currently, the only public functions are test functions which output some files I can
-	   plot. */
 	double yieldFunctionTest() const;
 
 	/* Makes a plot of the heating efficiency in function of the grain size. Saved as a
@@ -45,7 +51,8 @@ private:
 	                    std::function<double(double hnuDiffpdt)> pdFunction) const;
 
 public:
-	/* Gathers the parameters of the gas environment which are repeatedly needed. */
+	/** Gathers the parameters of the gas environment needed to run the photoelectric heating
+	    recipe. */
 	typedef struct Environment
 	{
 		/** This constructor creates an environment struct for the photoelectric heating

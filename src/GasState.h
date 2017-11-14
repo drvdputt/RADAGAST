@@ -19,6 +19,16 @@ void runGasInterfaceImpl(const GasModule::GasInterface&, const std::string&, dou
 
 namespace GasModule
 {
+
+/** This class is part of the 'public' \c GasModule interface. It provides a way to store the output
+    of the calculations done in the gas module in an opaque manner. A client code should typically
+    have a list of \c GasState objects; one per computational volume element. The \c GasInterface is
+    a friend class, as it is used to retrieve different properties from these gas states. By making
+    these objects opaque, it is made sure that client codes do not depend on how the different
+    properties are stored, and how the emissivity and opacity can be obtained. This way, we can
+    change the way the result is stored and the spectra are calculated, which will help in finding a
+    trade-off between storage space and computation time (e.g. storing whole spectra vs calculating
+    them on the fly from a minimal set of properties). */
 class GasState
 {
 	friend class GasInterface;
@@ -27,6 +37,8 @@ class GasState
 	                                         double, double, double, double);
 
 public:
+	/** Creates an empty GasState object. The resulting object can't be used for anything,
+	    except to allocate space, and handing it to the update function of the \c GasInterface. */
 	GasState() {}
 
 	/** Returns the gas temperature in K. */
@@ -43,6 +55,7 @@ public:
 	double density(int i) const { return _densityv[i]; }
 	double density_SI(int i) const { return 1e6 * _densityv[i]; }
 
+	/** Return the ionized fraction (protons / (proton + neutral)). */
 	double ionizedFraction() const
 	{
 		return _densityv[1] / (_densityv[1] + _densityv[2] /*+ 2 * _densityv[3]*/);

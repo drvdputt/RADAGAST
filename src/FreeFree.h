@@ -5,15 +5,27 @@
 
 #include <string>
 
+/** This class provides implementations for quantities related to the free-free processes in a
+    hydrogen plasma. It is mainly based on the data for the free-free Gaunt factor that I got from a
+    2014 paper from van Hoof et al. (MNRAS 444 420). */
 class FreeFree
 {
 public:
+	/** All the data is read in during construction. The given frequency grid will be used for
+	    the output. */
 	FreeFree(const Array& frequencyv);
 
 private:
+	/** Reads in gauntff_merged_Z01.dat. */
 	void readFullData();
+
+	/** Reads in gauntff_freqint_Z01.dat. */
 	void readIntegratedData();
+
+	/** Returns the gaunt factor, interpolated for a specific log(u) and log(gamma^2). */
 	double gauntFactor(double logu, double logg2) const;
+
+	/** Return the frequency-integrated guant factor, interpolated for a specific log(gamma^2). */
 	double integratedGauntFactor(double logg2) const;
 
 public:
