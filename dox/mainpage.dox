@@ -79,4 +79,76 @@ their CMakeLists.txt:
 target_link_libraries(gasmodule)
 include_directories(/Users/drvdputt/GasModule/git/src)
 \endcode
+
+\section example_sec Usage examples
+\subsection setup_example_subsec Setup
+
+\code
+#include "GasInterface.h"
+
+// Set up the gas module by creating a GasInterface object.
+GasModule::GasInterface gasInterface(frequencyv);
+
+// Make some place to store a gas state per cell.
+std::vector<GasModule::GasState> gasStatev(numCells);
+\endcode
+
+\subsection update_example_subsec Update gas states
+
+\code
+// This is a regular for loop, but the code below should be thread safe, and hence safe for use in a
+// parallel implementation of loops, if you have one.
+for (int cell = 0; cell < numCells; cell++) {
+  // Gather physical quantities in the cell (semi-pseudocode)
+
+  // Get the specific intensity in frequency units (erg s-1 cm-2 sr-1 Hz-1), for the frequencies of
+  // the grid (pseudocode).
+  const std::valarray<double>& specificIntensityv = i_nuv(cell);
+
+  // Get H density in cm-3, temperature guess.
+  double nH = hdensity(cell);
+  double Tguess = 8000;
+
+  // Create grain interface object (see example below).
+  const GasModule::GrainInterface& gi = makeGrainInterface(cell);
+
+  // Call the update function.
+  gasInterface.updateGasState(gasStatev[cell], nH, Tguess, gi);
+}
+\endcode
+
+\subsection graininterface_example_subsec Creating a grain interface object
+
+This is more complicated when using the custom grain model, as many quantities and functions that
+depend on the grain model are required. Let's keep it to a simple example, using one of the built-in
+grain types.
+
+\code
+#include "GrainInterface.h"
+
+GasModule::GrainInterface makeGrainInterface(cell) {
+  // First make a list of populations.
+  std::vector<GasModule::GrainInterface::Population> populationv;
+  populationv.reserve(numPop(cell));
+
+  for (pop = 0; pop < numPop(cell); pop++) {
+     // Gather the following properties for each population in the cell (semi-pseudocode)
+
+     // Choose whether to use the carbonaceous or silicate built-in type
+     GasModule::GrainTypeLabel type = GasModule::GrainTypeLabel::CAR;
+
+     // Gather these physical quantities
+     std::valarray<double>& sizev = sizes(pop);
+     std::valarray<double>& densityv = number_densities_per_size(pop);
+     std::valarray<double>& temperaturev = temperatures_per_size(pop);
+     std::vector<std::valarray<double>>& qAbsvv = qabs_per_wavelength_per_size(pop);
+
+     // Add a new population to the list
+     populationv.emplace_back(type, sizev, densityv, temperaturev, qAbsvv);
+  }
+  // These populations will be stored in the new grain interface object
+  return GasModule::GrainInterface(populationv);
+}
+\endcode
+
 */
