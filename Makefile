@@ -23,17 +23,17 @@ OPTFLAGS=-O0 -g -Wall -Wextra -Werror=return-type -pedantic
 TARGETDIR=$(shell pwd)/..
 
 # Binary target
-BINDIR="$(TARGETDIR)"/bin
+BINDIR=$(TARGETDIR)/bin
 
 # Objects and dependency files
-OBJDIR="$(TARGETDIR)"/obj
+OBJDIR=$(TARGETDIR)/obj
 
 # Archive the objects that will be created into a library, for easy linking by the client code.
-LIBDIR="$(TARGETDIR)"/lib
+LIBDIR=$(TARGETDIR)/lib
 
 # Symlink the headers describing the public interface, to have a clear and minimal include path for
 # the client code.
-PUBLIC_INCLUDEDIR="$(TARGETDIR)"/include
+PUBLIC_INCLUDEDIR=$(TARGETDIR)/include
 
 # Source directories
 # ==================
@@ -94,10 +94,9 @@ DEPFLAGS=-MT $@ -MMD -MP -MF $(OBJDIR)/$*.Td
 # ==============
 
 # All the flags. Do not change. Change the variables above instead.
-CXXFLAGS=$(OPTFLAGS) $(DEPFLAGS) $(INCFLAGS) -std=c++14 -DREPOROOT=\""$(shell pwd)"\"
+CXXFLAGS=$(OPTFLAGS) $(INCFLAGS) $(DEPFLAGS) -std=c++14 -DREPOROOT=\""$(shell pwd)"\"
 
 # The final targets
-.PHONY: all
 all: $(PROGRAM) $(LIBFILE) $(INTERFACELINKS)
 
 # Linking step
@@ -127,7 +126,6 @@ $(OBJDIR)/%.d: ;
 # Never automatically delete .d files
 .PRECIOUS: $(OBJDIR)/%.d
 
-.PHONY: clean
 clean:
 	rm $(OBJDIR)/*.o $(OBJDIR)/*.d $(OBJDIR)/*.Td $(PROGRAM) $(INTERFACELINKS) $(LIBFILE)
 
