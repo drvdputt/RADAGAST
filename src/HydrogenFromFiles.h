@@ -41,23 +41,31 @@ private:
 	class HydrogenLevel
 	{
 	public:
-		// Three constructors, for different degrees of collapsedness
+		/** Constructor for an nlJ-resolved level. Takes \f$n\f$ and \f$l\f$ as integers,
+		    and \f$2j + 1\f$ instead of \f$j\f$ so an int can be used. */
 		HydrogenLevel(int n, int l, int twoJplus1, double e)
 		                : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
 		{
 		}
+		/** Constructor for an nl-resolved level. Puts -1 at the place of \f$2j+1\f$. */
 		HydrogenLevel(int n, int l, double e) : _n(n), _l(l), _twoJplus1(-1), _e(e) {}
+
 		HydrogenLevel(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
 
+		bool nljResolved() const {return _twoJplus1 >= 0;}
+		bool nlResolved() const {return _l >= 0 && _twoJplus1 < 0;}
+		bool nCollapsed() const {return _l < 0;}
 		int n() const { return _n; }
 		int l() const { return _l; }
 		int twoJplus1() const { return _twoJplus1; }
 		double e() const { return _e; }
+
+		/** Degeneracy of the level. */
 		double g() const
 		{
-			if (_l < 0)
+			if (nCollapsed())
 				return 2 * _n * _n;
-			else if (_twoJplus1 < 0)
+			else if (nlResolved())
 				return 4 * _l + 2;
 			else
 				return _twoJplus1;

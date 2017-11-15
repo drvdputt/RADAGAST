@@ -14,7 +14,7 @@ const int cNMAX = 5;
 
 inline vector<int> twoJplus1range(int l)
 {
-	/* If l > 0, then j can be either l + 0.5 or l - 0.5. For an s state, j is always 1/2 and
+	/* If l > 0, then j can be either l + 0.5 or l - 0.5. If l==0, j is always 1/2 and
 	   2j+1 can only be 2 */
 	return l > 0 ? vector<int>({2 * l, 2 * l + 2}) : vector<int>({2});
 }
@@ -232,13 +232,13 @@ EMatrix HydrogenFromFiles::avv() const
 			int nf = final.n();
 			int lf = final.l();
 			// Both resolved
-			if (li >= 0 && lf >= 0)
+			if (initial.nlResolved() && final.nlResolved())
 				the_avv(i, f) = einsteinA(ni, li, nf, lf);
 			// Collapsed to resolved
-			else if (li < 0 && lf >= 0)
+			else if (initial.nCollapsed() && final.nlResolved())
 				the_avv(i, f) = einsteinA(ni, nf, lf);
 			// Resolved to collapsed should not exist (downward) or be zero (upward).
-			else if (li >= 0 && lf < 0)
+			else if (initial.nlResolved() && final.nCollapsed())
 			{
 				/* The collapsed-collapsed equivalent should always be 0 in this
 				   case. */
@@ -265,6 +265,9 @@ EMatrix HydrogenFromFiles::extraAvv() const
 
 	// Check if the n2 level is resolved, and retrieve the Key, Value pair
 	auto index2sIt = _nlToOutputIndexm.find({2, 0});
+	/* If the level is collapsed, the pair 0,2 won't be found, and the find function will return
+	   'end'. So if the result is not 'end', this means that the resolved 2,0 level was
+	   found. */
 	bool n2Resolved = index2sIt != _nlToOutputIndexm.end();
 
 	// Hardcode the two-photon decay of 2s to 1s
@@ -428,6 +431,8 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 
 EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
 {
+	/* TODO: find better recombination coefficients. */
+
 	/* for now use the hardcoded implementation, but this needs to change (is copy paste from
 	   HydrogenHardcoded). */
 	double T4 = T / 1.e4;
@@ -561,14 +566,14 @@ double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial, const Hydrogen
 	else
 	{
 		// Resolved-resolved
-		if (initial.l() >= 0 && final.l() >= 0)
+		if (initial.nlResolved() && final.nlResolved())
 			return einsteinA(initial.n(), initial.l(), final.n(), final.l());
 		// Collapsed-resolved
-		else if (initial.l() < 0 && final.l() >= 0)
+		else if (initial.nCollapsed() && final.nlResolved())
 			return einsteinA(initial.n(), final.n(), final.l());
 		/* Resolved-collapsed (should not be called, and if it is, the collapsed-collapsed
 		   result should be zero). */
-		else if (initial.l() >= 0 && final.l() < 0)
+		else if (initial.nlResolved() && final.nCollapsed())
 		{
 			double a = einsteinA(initial.n(), final.n());
 			assert(a == 0);
@@ -638,15 +643,15 @@ double HydrogenFromFiles::eCollisionStrength(const HydrogenLevel& initial,
 	else
 	{
 		// Resolved-resolved
-		if (initial.l() >= 0 && final.l() >= 0)
+		if (initial.nlResolved() && final.nlResolved())
 			return eCollisionStrength(initial.n(), initial.l(), final.n(), final.l(),
 			                          T_eV);
 		// Collapsed-resolved
-		else if (initial.l() < 0 && final.l() >= 0)
+		else if (initial.nCollapsed() && final.nlResolved())
 			return eCollisionStrength(initial.n(), final.n(), final.l(), T_eV);
 		/* Resolved-collapsed (should not be called as this does not exist for downward
 		   transitions, and if it is, the collapsed-collapsed result should be zero. */
-		else if (initial.l() >= 0 && final.l() < 0)
+		else if (initial.nlResolved() && final.nCollapsed())
 		{
 			double eCollStr = eCollisionStrength(initial.n(), final.n(), T_eV);
 			assert(eCollStr == 0);
