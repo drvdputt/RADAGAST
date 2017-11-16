@@ -105,8 +105,8 @@ public:
 		std::unique_ptr<GrainType> _type;
 	};
 
-	/** Constructor which takes a vector of predefined populations (by pointer). */
-	GrainInterface(const std::vector<Population>* populationv);
+	/** Constructor which takes a vector of predefined populations. */
+	GrainInterface(const std::vector<Population>& populationv);
 
 	/** Default constructor, equivalent to no grains at all. */
 	GrainInterface();
@@ -118,8 +118,8 @@ public:
 	const std::vector<Population>* populationv() const;
 
 private:
-	// Default constructor is nullptr
-	const std::vector<Population>* _populationv{nullptr};
+	// Default initialization is nullptr
+	const std::vector<Population>& _populationv;
 };
 } /* namespace GasModule */
 

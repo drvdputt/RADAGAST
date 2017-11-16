@@ -750,7 +750,7 @@ void Testing::runWithDust()
 	// Construct grain info using list of population objects
 	grainPopv.emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
 	                       qAbsvv);
-	GasModule::GrainInterface grainInterface{&grainPopv};
+	GasModule::GrainInterface grainInterface{grainPopv};
 
 	// Run
 	GasModule::GasState gs{};

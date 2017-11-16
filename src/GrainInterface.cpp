@@ -3,6 +3,13 @@
 #include "Error.h"
 #include "GrainType.h"
 
+namespace
+{
+/* Variable to help with default constructor. This way, the vector reference member can be bound to
+   an empty vector for the default constructor. */
+std::vector<GasModule::GrainInterface::Population> EMPTYPOPV{};
+}
+
 namespace GasModule
 {
 
@@ -29,27 +36,27 @@ GrainInterface::Population::Population(Population&& other) = default;
 
 GrainInterface::Population::~Population() = default;
 
-GrainInterface::GrainInterface() = default;
+GrainInterface::GrainInterface() : _populationv{EMPTYPOPV} {}
 
 GrainInterface::~GrainInterface() = default;
 
-GrainInterface::GrainInterface(const std::vector<GrainInterface::Population>* populationv)
+GrainInterface::GrainInterface(const std::vector<GrainInterface::Population>& populationv)
                 : _populationv{populationv}
 {
 }
 
-int GrainInterface::numPopulations() const { return _populationv ? _populationv->size() : 0; }
+int GrainInterface::numPopulations() const { return _populationv.size(); }
 
 const GrainInterface::Population* GrainInterface::population(int i) const
 {
-	if (!_populationv)
+	if (_populationv.empty())
 		Error::runtime("No populations in this object!");
-	return &(*_populationv)[i];
+	return &_populationv[i];
 }
 
 const std::vector<GrainInterface::Population>* GrainInterface::populationv() const
 {
-	return _populationv;
+	return &_populationv;
 }
 
 } /* namespace GasModule */

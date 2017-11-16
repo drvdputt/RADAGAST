@@ -361,7 +361,6 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 	if (!(the_cvv.array() >= 0).all())
 		DEBUG("NEGATIVE COLLISION RATE");
 #endif
-
 	// Make all negative entries 0... FIXME investigate if a more better solution exists
 	return the_cvv.array().max(0);
 }
