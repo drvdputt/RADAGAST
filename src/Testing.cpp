@@ -726,9 +726,6 @@ void Testing::runWithDust()
 	double nHtotal{10};
 	double Tinit{8000};
 
-	// Grain model
-	std::vector<GasModule::GrainInterface::Population> grainPopv;
-
 	// TODO: need a reasonable grain size distribution and DGR for testing here
 	Array sizev, densityv, temperaturev;
 	// Provide sizes in cm
@@ -741,16 +738,17 @@ void Testing::runWithDust()
 	temperaturev = {15, 10, 5};
 	// And now I need some absorption efficiencies for every wavelength. Let's try to use the
 	// old photoelectric heating test code.
-	std::vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.frequencyv())};
+	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.frequencyv())};
 
 	// TODO: check if the qabsvv has loaded correctly
 	//
 	//
 
 	// Construct grain info using list of population objects
-	grainPopv.emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
-	                       qAbsvv);
-	GasModule::GrainInterface grainInterface{grainPopv};
+	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
+	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
+	                        qAbsvv);
+	GasModule::GrainInterface grainInterface(move(grainPopv));
 
 	// Run
 	GasModule::GasState gs{};

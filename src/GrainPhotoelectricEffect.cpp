@@ -357,13 +357,13 @@ GrainPhotoelectricEffect::heatingRate(const Environment& env,
                                       const GasModule::GrainInterface::Population& grainPop) const
 {
 	double total{0.};
-	for (size_t m = 0; m < grainPop._sizev.size(); m++)
+	for (size_t m = 0; m < grainPop.numSizes(); m++)
 	{
 		/* FIXME: temporarily ignore the contribution of the large grains to speed up the
 		   calculation */
-		double a{grainPop._sizev[m]};
+		double a{grainPop.sizev()[m]};
 		if (a < 500 * Constant::ANG_CM)
-			total += grainPop._densityv[m] * heatingRateA(a, env, grainPop._qAbsvv[m]);
+			total += grainPop.densityv()[m] * heatingRateA(a, env, grainPop.qAbsvv()[m]);
 	}
 	return total;
 }

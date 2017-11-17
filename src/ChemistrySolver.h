@@ -83,14 +83,14 @@ private:
 	    are already of the correct value in the initial guess. Practical example: the total
 	    number of protons will not change while different estimates for the chemical equilibrium
 	    are explored. In practice, the algorithm repeatedly solves \f$ J . x = - f \f$. */
-	EVector newtonRaphson(std::function<EMatrix(const EVector& nv)> jacobianfvv,
-	                      std::function<EVector(const EVector& nv)> functionv,
+	EVector newtonRaphson(std::function<EMatrix(const EVector& xv)> jacobianfvv,
+	                      std::function<EVector(const EVector& xv)> functionv,
 	                      const EVector& x0v) const;
 
 	/** Calculate the \f$ \delta x \f$ for a single Newton-Raphson step. Some modifications are
 	    applied to the 'raw' solution preventing \f$x\f$ from becoming negative. */
 	EVector newtonRaphsonStep(const EMatrix& currentJvv, const EMatrix& currentFv,
-	                      std::function<EVector(const EVector& nv)> functionv,
+	                          std::function<EVector(const EVector& xv)> functionv,
 	                          const EVector& currentXv) const;
 
 	/** It might be better to use a third party solver such as the multidimensional root finding

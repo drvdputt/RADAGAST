@@ -5,6 +5,7 @@
 
 double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gInterface,
                                              double Tgas)
+
 {
 	double total{0};
 
@@ -16,15 +17,15 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 		const GasModule::GrainInterface::Population* pop = gInterface.population(i);
 		const GrainType* grainType = pop->type();
 		const GasModule::SfcInteractionPar& surfaceParams = grainType->sfcInteractionPar();
-		int numSizes = pop->_sizev.size();
+		int numSizes = pop->numSizes();
 		for (int iSize = 0; iSize < numSizes; iSize++)
 		{
 			// Number density
-			double nd{pop->_densityv[iSize]};
-			double Td{pop->_temperaturev[iSize]};
+			double nd{pop->densityv()[iSize]};
+			double Td{pop->temperaturev()[iSize]};
 
 			// Cross section of the grain
-			double sigmad{pop->_sizev[iSize]};
+			double sigmad{pop->sizev()[iSize]};
 			sigmad *= sigmad / 4.;
 
 			// Formation efficiency epsilon

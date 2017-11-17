@@ -82,21 +82,35 @@ public:
 		           const std::valarray<double>& temperaturev,
 		           const std::vector<std::valarray<double>>& qAbsvv,
 		           const SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
-		           double workFunction, IonizationPotentialf ionizationpotentialf,
+		           double workFunction, IonizationPotentialf ionizationPotentialf,
 		           PhotoelectricYieldf photoElectricYieldf,
 		           AutoIonizationThresholdf autoIonizationThresholdf,
 		           StickingCoefficientf stickingCoefficientf);
 
-		// Undelete the move constructor
+		/** Undelete the move constructor (needed to be able to put these objects into a
+		    vector std::vector) */
 		Population(Population&&);
 		~Population();
 
+		/** @name Trivial getters. */
+		/**@{*/
+		std::vector<std::valarray<double>> qAbsvv() const { return _qAbsvv; }
+		std::valarray<double> temperaturev() const { return _temperaturev; }
+		std::valarray<double> densityv() const { return _densityv; }
+		std::valarray<double> sizev() const { return _sizev; }
 		const GrainType* type() const { return _type.get(); }
+		/**@}*/
 
-		const std::valarray<double>&_sizev, _densityv, _temperaturev;
-		const std::vector<std::valarray<double>>& _qAbsvv;
+		double numSizes() const { return _sizev.size(); }
+
+		void test() const;
 
 	private:
+		std::valarray<double> _sizev;
+		std::valarray<double> _densityv;
+		std::valarray<double> _temperaturev;
+		std::vector<std::valarray<double>> _qAbsvv;
+
 		/** Properties which should be provided either by calling the big constructor, or by
 		    functions of the builtin grain types. In the latter case, the following pointer
 		    will be initialized, and the correct functions will be called using
@@ -105,21 +119,35 @@ public:
 		std::unique_ptr<GrainType> _type;
 	};
 
-	/** Constructor which takes a vector of predefined populations. */
-	GrainInterface(const std::vector<Population>& populationv);
+	/** Constructor which takes a vector of predefined populations. Please pass the vector using
+	    a unique pointer and std::move. Ownership over the vector of populations will then be
+	    transferred to this class, preventing unnecessary copying (I'm not sure what the
+	    performance impact of copying would be in the future). */
+	GrainInterface(std::unique_ptr<std::vector<Population>> populationvToMove);
 
 	/** Default constructor, equivalent to no grains at all. */
 	GrainInterface();
-
 	~GrainInterface();
 
-	int numPopulations() const;
-	const Population* population(int i) const;
+	/** Undelete the move constructor, return this object from functions etc. This is necessare
+	    because the presence of a unique_ptr. Very annoying if you don't know about this
+	    behaviour, but ultimately it's only one line of code in the header and source files. */
+	GrainInterface(GrainInterface&&);
+
+	/** The number of grain populations. */
+	size_t numPopulations() const;
+
+	/** Get a pointer to the @i 'th population. Throws an error when out of range. */
+	const Population* population(size_t i) const;
+
+	/** Get a pointer to the whole population vector. */
 	const std::vector<Population>* populationv() const;
 
+	/** A quick test to see if all population objects in the vector have reasonable contents. */
+	void test() const;
+
 private:
-	// Default initialization is nullptr
-	const std::vector<Population>& _populationv;
+	std::unique_ptr<std::vector<Population>> _populationv;
 };
 } /* namespace GasModule */
 

@@ -82,6 +82,6 @@ void GasInterface::zeroOpticalProperties(GasState& gs) const
 	gs._opacityv = zerov;
 	gs._scatteringOpacityv = zerov;
 	gs._temperature = 0;
-	gs._densityv = Array{0,0,0,0};
+	gs._densityv = Array{0, 0, 0, 0};
 }
 } /* namespace GasModule */

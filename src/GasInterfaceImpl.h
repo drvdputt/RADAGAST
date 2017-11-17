@@ -104,7 +104,7 @@ public:
 	    These function calculate the properties which depend on the state of the gas. They all
 	    take a \c Solution object as an argument, which can be obtained by calling \c
 	    calculateDensities(). */
-
+	/**@{*/
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
 	Array emissivityv(const Solution&) const;
 
@@ -154,7 +154,7 @@ public:
 	}
 
 	inline double nAtomic(const Solution& s) const { return s.speciesNv[inH]; }
-
+	/**@}*/
 private:
 	/* To be set in constructor */
 	const Array& _frequencyv;

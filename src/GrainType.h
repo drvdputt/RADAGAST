@@ -11,7 +11,7 @@ protected:
 	/** Member values to be provided by the subclass constructor. */
 	GrainType(const GasModule::SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
 	          double workFunction);
-	
+
 public:
 	~GrainType();
 
@@ -44,9 +44,11 @@ public:
 	static std::unique_ptr<GrainType> makeBuiltin(GasModule::GrainTypeLabel t);
 
 	static std::unique_ptr<GrainType>
-	makeCustom(const GasModule::SfcInteractionPar&, bool heatingAvailable, double workFunction,
-	           GasModule::IonizationPotentialf, GasModule::PhotoelectricYieldf,
-	           GasModule::AutoIonizationThresholdf, GasModule::StickingCoefficientf);
+	makeCustom(const GasModule::SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
+	           double workFunction, GasModule::IonizationPotentialf ionizationPotentialf,
+	           GasModule::PhotoelectricYieldf photoelectricYieldf,
+	           GasModule::AutoIonizationThresholdf autoIonizationThresholdf,
+	           GasModule::StickingCoefficientf stickingCoefficientf);
 };
 
 #endif /* GASMODULE_GIT_SRC_BUILTINGRAINTYPE_H_ */

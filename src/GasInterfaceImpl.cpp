@@ -147,6 +147,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		s.speciesNv = EVector(4);
 		s.speciesNv << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
 		                (1 - guessF) * iniAtomAndIon, iniNH2;
+
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
 
@@ -163,7 +164,9 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 				s.H2Solution = _molecular->solveBalance(nH2, ne, np, T,
 				                                        specificIntensityv);
 		};
-		// Solve the levels for the first time using the initial guess
+
+		/* Use the initial guess for the chemical abundances to calculate our first set of
+		   level populations. */
 		solveLevelBalances();
 
 		int counter = 0;
