@@ -79,4 +79,22 @@ GasModule::GrainInterface makeGrainInterface(cell) {
 }
 @endcode
 
+@subsection retrieve_example_subsec Retrieving gas properties.
+
+The gas properties are all stored in (or can be calculated from) the contents of the @c GasState
+objects. Here a couple of examples for retrieving gas properties of a certain cell. Of course, all
+of these will only work when the gas state object have been properly filled in, i.e. they have been
+processed by @c updateGasStates().
+
+@code
+void print_some_properties_forexample(int cell, int freq) {
+  // Choose a gas state (not a freshly created one! Valid contents are crucial here).
+  GasModule::GasState& gs = gasStatev[cell]
+
+  // There will be CGS variants in the future. But SKIRT likes them in SI.
+  std::cout << "Emissivity: " << gasInterface.emissivity_SI(gs, freq) << " W m-2 sr-1 Hz-1\n";
+  std::cout << "Opacity: " << gasInterface.opacity_SI(gs, freq) << " m-1" << std::endl;
+}
+@endcode
+
 */
