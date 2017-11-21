@@ -32,7 +32,7 @@ HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedU
 
 void HydrogenFromFiles::readData()
 {
-	const string basename(REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1");
+	const string basename{REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1"};
 
 	//-----------------//
 	// READ LEVEL DATA //
