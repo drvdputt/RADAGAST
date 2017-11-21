@@ -26,6 +26,9 @@ std::ofstream ofstreamFile(const std::string& file);
 /** Reads in a line from a certain ifstream, and immediately creates an istringstream object so that
     it can be parsed. This function moves the ifstream forward one line. */
 std::istringstream istringstreamNextLine(std::ifstream& ifs);
+
+/** Skip the next n lines. */
+void skipLines(std::ifstream& ifs, int n);
 }
 
 #endif /* _IOTOOLS_H_ */

@@ -93,7 +93,7 @@ public:
 	    TODO: Reconsider how we can prevent breaking abstraction here. Ideally, we'd want a
 	    mechanism so that Solutions can only be used with the object that created them.
 	    Store pointer to parent? */
-	typedef struct
+	typedef struct Solution
 	{
 		/* The total density and temperature of the ensemble of atoms/molecules for which
 		   the solution was calculated */
