@@ -101,7 +101,7 @@ public:
 		const GrainType* type() const { return _type.get(); }
 		/**@}*/
 
-		double numSizes() const { return _sizev.size(); }
+		size_t numSizes() const { return _sizev.size(); }
 
 		void test() const;
 

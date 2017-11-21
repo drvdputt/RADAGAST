@@ -11,14 +11,14 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 
 	double thermalVelocityH{sqrt(Constant::BOLTZMAN * Tgas / Constant::HMASS_CGS)};
 
-	int numPop = gInterface.numPopulations();
-	for (int i = 0; i < numPop; i++)
+	size_t numPop = gInterface.numPopulations();
+	for (size_t i = 0; i < numPop; i++)
 	{
 		const GasModule::GrainInterface::Population* pop = gInterface.population(i);
 		const GrainType* grainType = pop->type();
 		const GasModule::SfcInteractionPar& surfaceParams = grainType->sfcInteractionPar();
-		int numSizes = pop->numSizes();
-		for (int iSize = 0; iSize < numSizes; iSize++)
+		size_t numSizes = pop->numSizes();
+		for (size_t iSize = 0; iSize < numSizes; iSize++)
 		{
 			// Number density
 			double nd{pop->densityv()[iSize]};

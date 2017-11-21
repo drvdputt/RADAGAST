@@ -13,7 +13,7 @@ endif
 
 # Options, to be customized by user.
 # Debug build
-OPTFLAGS=-O0 -g -Wall -Wextra -Werror=return-type -pedantic
+OPTFLAGS=-O0 -g -Wall -Wextra -Werror=return-type -pedantic -Wconversion
 # Release build
 # OPTFLAGS=-O3 -Wall -Wextra -Werror=return-type -pedantic -DSILENT
 

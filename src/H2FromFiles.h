@@ -36,7 +36,7 @@ public:
 		ElectronicState eState() const { return _eState; }
 		int j() const { return _j; }
 		int v() const { return _v; }
-		int e() const { return _e; }
+		double e() const { return _e; }
 	private:
 		ElectronicState _eState;
 		int _j, _v;
