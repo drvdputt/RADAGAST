@@ -90,13 +90,13 @@ public:
 	    run. */
 
 	/* Returns the number of levels */
-	int numLv() const override;
+	size_t numLv() const override;
 
 	/* Gives the index of the (n, l) energy level which is used in the output functions. To get
 	   the energy of the n=5, l=2 level for example, one can call i = indexOutput(5, 2). The
 	   energy you need will be the i'th element of the output vector produced by the
 	   ev()-function (which the client should have cached, since this function is "slow"). */
-	int indexOutput(int n, int l) const;
+	size_t indexOutput(int n, int l) const;
 
 	/** Returns a vector containing the energy of each level. [erg] */
 	EVector ev() const override;
@@ -202,7 +202,7 @@ private:
 	std::vector<HydrogenLevel> _chiantiLevelv;
 
 	/* The total number of levels listed in the elvlc file from CHIANTI */
-	int _chiantiNumLvl{0};
+	size_t _chiantiNumLvl{0};
 
 	/* The Einstein A coefficientes read in from the wgfa file from CHIANTI */
 	EMatrix _chiantiAvv;
@@ -248,7 +248,7 @@ private:
 	int _resolvedUpTo{5};
 
 	/* Number of levels outputted by this LevelDataProvider */
-	int _numL{0};
+	size_t _numL{0};
 
 	/* Contains the quantum numbers of the levels actually used for the output. l = -1 means
 	   that the level is collapsed. The energy levels, A-coefficients, ... outputted will be

@@ -10,6 +10,8 @@
 #include "GrainInterface.h"
 #include "GrainPhotoelectricEffect.h"
 #include "GrainType.h"
+#include "H2FromFiles.h"
+#include "H2Levels.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
 #include "HydrogenLevels.h"
@@ -628,7 +630,7 @@ void Testing::testChemistry()
 	assert(abs(nv(ip) / (nv(ip) + nv(iH)) - ionizedFraction) < 0.01);
 }
 
-void Testing::compareFromFilesvsHardCoded()
+void Testing::testFromFilesvsHardCoded()
 {
 	HydrogenHardcoded hhc;
 	HydrogenFromFiles hff(2);
@@ -672,6 +674,13 @@ void Testing::compareFromFilesvsHardCoded()
 	EVector alphavhc = hhc.sourcev(T, ne, np) / ne / np;
 	EVector alphavff = hff.sourcev(T, ne, np) / ne / np;
 	hc_vs_ff(alphavhc, alphavff);
+}
+
+void Testing::testH2()
+{
+	Array frequencyv;
+	auto h2Data{make_shared<H2FromFiles>()};
+	H2Levels h2Levels{h2Data, frequencyv};
 }
 
 void Testing::runFromFilesvsHardCoded()

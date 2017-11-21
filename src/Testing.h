@@ -14,21 +14,29 @@ class FreeBound;
 namespace Testing
 {
 // ABSORPTION EFFICIENCY FROM FILE //
-	/* Some static hacks. The first one reads some data ripped from SKIRT into variables
+/* Some static hacks. The first one reads some data ripped from SKIRT into variables
 	   declared in the cpp file. Then, a Qabsv for a single size can be generated using
 	   generateQabsv. The third function, qAbsvvForTesting does the read step, and then calls
 	   the second function for every size of the list. */
-	void readQabs(bool car);
+void readQabs(bool car);
+
 Array generateQabsv(double a, const Array& frequencyv);
+
 std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
 
 // UTILITY FUNCTIONS //
+
 std::vector<double> generateGeometricGridv(size_t nPoints, double min, double max);
+
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
+
 Array freqToWavGrid(const Array& frequencyv);
+
 void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower,
                          Array lineFreqv, Array freqWidthv);
+
 Array generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0);
+
 Array freqToWavSpecificIntensity(const Array& frequencyv, const Array& specificIntensity_nu);
 
 /** This clumsy thing should give us a grid with some extra points in the correct locations. */
@@ -68,7 +76,10 @@ void testChemistry();
 
 /** Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
     HydrogenFromFiles. */
-void compareFromFilesvsHardCoded();
+void testFromFilesvsHardCoded();
+
+/** Test the H2 implementation. */
+void testH2();
 
 /** Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will be
     written out to separate files. */

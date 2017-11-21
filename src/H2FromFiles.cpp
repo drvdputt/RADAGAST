@@ -1,4 +1,5 @@
 #include "H2FromFiles.h"
+#include "Constants.h"
 #include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
@@ -9,7 +10,13 @@ using namespace std;
 
 H2FromFiles::H2FromFiles() { readData(); }
 
-int H2FromFiles::numLv() const { return 1; }
+size_t H2FromFiles::numLv() const { return 1; }
+
+size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
+{
+	// This cast is safe, as the default underlying type of an enum is int.
+	return _evjToIndex.at({static_cast<int>(eState), j, v});
+}
 
 void H2FromFiles::readData()
 {
@@ -32,6 +39,8 @@ void H2FromFiles::readData()
 	// Skip the next two lines
 	IOTools::skipLines(energyX, 2);
 
+	// The eState will be fixed to X here
+	ElectronicState eState{ElectronicState::X};
 	// Start reading in the V, J and E (cm-1) of the levels
 	_levelv.reserve(301);
 	while (getline(energyX, line))
@@ -43,23 +52,55 @@ void H2FromFiles::readData()
 		{
 			string word1, word2;
 			iss >> word1 >> word2;
-			/* Include only the levels with the "data missing" comment, not those that
-			   are "#extra data". */
-			// if (comment != "#data missing")
-			// continue;
-			DEBUG(word1 + word2);
+			DEBUG(word1 + word2 << endl);
 		}
 
 		// Get the numbers
 		int v, j;
 		iss >> v >> j;
-		double e;
-		iss >> e;
+		// Wave number
+		double k;
+		iss >> k;
 
-		// Create a new level object
-		_levelv.emplace_back(H2FromFiles::ElectronicState::X, j, v, e);
+		addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
+		DEBUG(_levelv.size() << " " << j << " " << v << " "
+		                     << _levelv.back().e() * Constant::ERG_EV << " eV" << endl);
 	}
 	DEBUG("Read in " << _levelv.size() << " H2 levels" << endl);
+	energyX.close();
+
+	//-----------------//
+	// READ EINSTEIN A //
+	//-----------------//
+	_avv = EMatrix::Zero(_levelv.size(), _levelv.size());
+
+	ifstream transprobX = IOTools::ifstreamFile(location + "/transprob_X.dat");
+	getline(transprobX, line);
+	istringstream(line) >> y >> m >> d;
+
+	// Transition for eState X (ground state) (Data from Wolniewicz (1998))
+	eState = ElectronicState::X;
+	while (getline(transprobX, line))
+	{
+		// Skip comments or empty lines
+		if (line.empty() || line.at(0) == '#')
+			continue;
+
+		int EU, VU, JU, EL, VL, JL;
+		double A; // Unit s-1
+		istringstream(line) >> EU >> VU >> JU >> EL >> VL >> JL >> A;
+		/* TODO: check if the energy of level upperIndex is actually higher than energy of
+		   level lowerIndex */
+		// Dont use EU and EL here, as we already know that it's all for X
+		size_t upperIndex = indexOutput(eState, JU, VU);
+		size_t lowerIndex = indexOutput(eState, JL, VL);
+		_avv(upperIndex, lowerIndex) = A;
+	}
+	transprobX.close();
+#ifdef PRINT_LEVEL_MATRICES
+	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
+	avvOut << _avv << endl;
+#endif
 }
 
 EVector H2FromFiles::ev() const { return EVector::Zero(1); }

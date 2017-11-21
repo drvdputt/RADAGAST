@@ -18,7 +18,7 @@ HydrogenHardcoded::HydrogenHardcoded()
 	the_gv << 2, 2, 6, 18, 32, 50;
 }
 
-int HydrogenHardcoded::numLv() const { return NLV; }
+size_t HydrogenHardcoded::numLv() const { return NLV; }
 
 EVector HydrogenHardcoded::ev() const { return the_ev; }
 

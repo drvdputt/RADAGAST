@@ -15,7 +15,7 @@ TwoLevelHardcoded::TwoLevelHardcoded()
 	the_gv << 1, 1;
 }
 
-int TwoLevelHardcoded::numLv() const { return 2; }
+size_t TwoLevelHardcoded::numLv() const { return 2; }
 
 EVector TwoLevelHardcoded::ev() const { return the_ev; }
 

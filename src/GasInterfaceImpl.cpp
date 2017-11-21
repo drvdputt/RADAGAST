@@ -329,8 +329,8 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 	GrainPhotoelectricEffect::Environment env(_frequencyv, s.specificIntensityv, s.T, ne, np,
 	                                          {-1, 1}, {ne, np},
 	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
-	int numPop = g.numPopulations();
-	for (int i = 0; i < numPop; i++)
+	size_t numPop = g.numPopulations();
+	for (size_t i = 0; i < numPop; i++)
 	{
 		const GasModule::GrainInterface::Population* pop = g.population(i);
 		const GrainType* type = pop->type();

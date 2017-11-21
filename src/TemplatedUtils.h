@@ -172,15 +172,15 @@ T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints,
 	T r(newPoints.size());
 	double slp, extrslp1 = 0;
 	double intcpt, extrint1 = 0;
-	uint j;
-	uint n = knownPoints.size() - 1;
+	size_t j;
+	size_t n = knownPoints.size() - 1;
 	if (HiEx == -99)
 	{
 		extrslp1 = (function[n] - function[n - 1]) / (knownPoints[n] - knownPoints[n - 1]);
 		extrint1 = function[n] - extrslp1 * knownPoints[n];
 	}
 
-	for (uint i = 0; i < newPoints.size(); ++i)
+	for (size_t i = 0; i < newPoints.size(); ++i)
 	{
 		if (newPoints[i] < knownPoints[0])
 		{ // extrapolate to left.

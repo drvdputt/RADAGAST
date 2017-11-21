@@ -182,19 +182,19 @@ void HydrogenFromFiles::prepareForOutput()
 	_numL = _levelOrdering.size();
 
 	_totalAv = EVector::Zero(_numL);
-	for (int i = 0; i < _numL; i++)
-		for (int f = 0; f < _numL; f++)
+	for (size_t i = 0; i < _numL; i++)
+		for (size_t f = 0; f < _numL; f++)
 			_totalAv[i] += einsteinA(_levelOrdering[i], _levelOrdering[f]);
 }
 
-int HydrogenFromFiles::numLv() const { return _numL; }
+size_t HydrogenFromFiles::numLv() const { return _numL; }
 
-int HydrogenFromFiles::indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
+size_t HydrogenFromFiles::indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
 
 EVector HydrogenFromFiles::ev() const
 {
 	EVector the_ev(_numL);
-	for (int i = 0; i < _numL; i++)
+	for (size_t i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& lvInfo = _levelOrdering[i];
 		// l = -1 means collapsed, so:
@@ -208,7 +208,7 @@ EVector HydrogenFromFiles::ev() const
 EVector HydrogenFromFiles::gv() const
 {
 	EVector the_gv(_numL);
-	for (int i = 0; i < _numL; i++)
+	for (size_t i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& lvInfo = _levelOrdering[i];
 		the_gv[i] = lvInfo.g();
@@ -221,12 +221,12 @@ EVector HydrogenFromFiles::gv() const
 EMatrix HydrogenFromFiles::avv() const
 {
 	EMatrix the_avv(_numL, _numL);
-	for (int i = 0; i < _numL; i++)
+	for (size_t i = 0; i < _numL; i++)
 	{
 		const HydrogenLevel& initial = _levelOrdering[i];
 		int ni = initial.n();
 		int li = initial.l();
-		for (int f = 0; f < _numL; f++)
+		for (size_t f = 0; f < _numL; f++)
 		{
 			const HydrogenLevel& final = _levelOrdering[f];
 			int nf = final.n();
@@ -310,7 +310,7 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 	// Electron contributions (n-changing)
 	if (ne > 0)
 	{
-		for (int i = 0; i < _numL; i++)
+		for (size_t i = 0; i < _numL; i++)
 		{
 			const HydrogenLevel& ini = _levelOrdering[i];
 			for (int f = 0; f < _numL; f++)
@@ -455,7 +455,7 @@ EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
 	EVector alphav = EVector::Zero(_numL);
 
 	// Now loop over all levels, and add the correct recombination coefficient
-	for (int f = 0; f < _numL; f++)
+	for (size_t f = 0; f < _numL; f++)
 	{
 		const HydrogenLevel& final = _levelOrdering[f];
 		int n = final.n();

@@ -13,7 +13,7 @@ public:
 	TwoLevelHardcoded();
 
 	/** Returns 2. */
-	int numLv() const override;
+	size_t numLv() const override;
 	EVector ev() const override;
 	EVector gv() const override;
 	EMatrix avv() const override;

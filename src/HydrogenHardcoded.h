@@ -12,7 +12,7 @@ public:
 	HydrogenHardcoded();
 
 	/** Returns the number of levels */
-	int numLv() const override;
+	size_t numLv() const override;
 
 	/** Returns a vector containing the energy of each level */
 	EVector ev() const override;

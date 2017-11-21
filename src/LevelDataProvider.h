@@ -32,7 +32,7 @@ public:
 	   typical run. */
 
 	/** Returns the number of levels. */
-	virtual int numLv() const = 0;
+	virtual size_t numLv() const = 0;
 
 	/** Returns a vector containing the energy of each level. [erg]*/
 	virtual EVector ev() const = 0;

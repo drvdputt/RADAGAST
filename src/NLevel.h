@@ -58,7 +58,7 @@ public:
 	virtual ~NLevel();
 
 	/** Return the number of levels in the solution */
-	int numLv() const { return _numLv; }
+	size_t numLv() const { return _numLv; }
 
 protected:
 	/** A number of protected getters are provided, so the subclasses can make use of these

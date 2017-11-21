@@ -14,22 +14,35 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const string& ato
                            bool moleculeChoice)
                 : _frequencyv(frequencyv)
 {
-	unique_ptr<NLevel> boundBound;
-	if (!atomChoice.compare("twolevel"))
-		boundBound = make_unique<NLevel>(make_shared<TwoLevelHardcoded>(), _frequencyv);
-	else if (!atomChoice.compare("hhc"))
-		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenHardcoded>(),
-		                                         _frequencyv);
-	else if (!atomChoice.compare("hff2"))
-		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(2),
-		                                         _frequencyv);
-	else if (!atomChoice.compare("hff4"))
-		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(4),
-		                                         _frequencyv);
+	// Choose a level model
+	unique_ptr<NLevel> atomicLevels;
+
+	if (atomChoice == "twolevel")
+	{
+		// Generic level model with hardcoded 2-level data
+		auto twoLevelData{make_shared<TwoLevelHardcoded>()};
+		atomicLevels = make_unique<NLevel>(twoLevelData, _frequencyv);
+	}
 	else
-		boundBound = make_unique<HydrogenLevels>(make_shared<HydrogenFromFiles>(),
-		                                         _frequencyv);
-	_pimpl = make_unique<GasInterfaceImpl>(move(boundBound), moleculeChoice, _frequencyv);
+	{
+		shared_ptr<HydrogenDataProvider> levelData;
+
+		// Choose a level data provider
+		if (atomChoice == "hhc")
+			levelData = make_shared<HydrogenHardcoded>();
+		else if (atomChoice == "hff2")
+			levelData = make_shared<HydrogenFromFiles>(2);
+		else if (atomChoice == "hff4")
+			levelData = make_shared<HydrogenFromFiles>(4);
+		else
+			levelData = make_shared<HydrogenFromFiles>();
+
+		// Specialized hydrogen level model with the chosen set of level data
+		atomicLevels = make_unique<HydrogenLevels>(levelData, _frequencyv);
+	}
+
+	// Give this level model to the main implementation.
+	_pimpl = make_unique<GasInterfaceImpl>(move(atomicLevels), moleculeChoice, _frequencyv);
 }
 
 GasInterface::~GasInterface() = default;
