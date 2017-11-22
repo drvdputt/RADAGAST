@@ -685,7 +685,7 @@ void Testing::runH2()
 	double np = 100;
 	double T = 500;
 	double Tc = 10000;
-	double G0 = 1;
+	double G0 = 100;
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
 
 	auto h2Data{make_shared<H2FromFiles>()};
@@ -700,7 +700,8 @@ void Testing::runH2()
 	const string tab{"\t"};
 	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
 	{
-		h2optical << frequencyv[iFreq] << tab << emissivityv[iFreq] << tab << opacityv[iFreq] << endl;
+		h2optical << frequencyv[iFreq] << tab << emissivityv[iFreq] << tab
+		          << opacityv[iFreq] << endl;
 	}
 }
 

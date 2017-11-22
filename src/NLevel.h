@@ -185,7 +185,7 @@ private:
 	const Array& _frequencyv;
 
 	/* Energy levels (constant) */
-	int _numLv{0};
+	size_t _numLv{0};
 	EVector _ev;
 
 	/* Level degeneracy (constant) */

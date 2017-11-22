@@ -110,9 +110,9 @@ Array NLevel::opacityv(const Solution& s) const
 double NLevel::heating(const Solution& s) const
 {
 	double powerDensityIn = 0;
-	for (int initial = 0; initial < _numLv; initial++)
+	for (size_t initial = 0; initial < _numLv; initial++)
 	{
-		for (int final = 0; final < _numLv; final++)
+		for (size_t final = 0; final < _numLv; final++)
 		{
 			// Downward transitions inject kinetic energy into the medium
 			if (_ev(initial) > _ev(final))
@@ -130,9 +130,9 @@ double NLevel::heating(const Solution& s) const
 double NLevel::cooling(const Solution& s) const
 {
 	double powerDensityOut = 0;
-	for (int initial = 0; initial < _numLv; initial++)
+	for (size_t initial = 0; initial < _numLv; initial++)
 	{
-		for (int final = 0; final < _numLv; final++)
+		for (size_t final = 0; final < _numLv; final++)
 		{
 			// Upward transitions absorb kinetic energy from the medium
 			if (_ev(initial) < _ev(final))
@@ -209,8 +209,8 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thing) const
 {
 	// Execute the same function for all transitions that are optically active.
-	for (int final = 0; final < _numLv; final++)
-		for (int initial = 0; initial < _numLv; initial++)
+	for (size_t final = 0; final < _numLv; final++)
+		for (size_t initial = 0; initial < _numLv; initial++)
 			if (_avv(initial, final))
 				thing(initial, final);
 }

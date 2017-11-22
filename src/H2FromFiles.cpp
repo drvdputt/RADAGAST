@@ -101,6 +101,16 @@ void H2FromFiles::readData()
 #ifdef PRINT_LEVEL_MATRICES
 	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
 	avvOut << _avv << endl;
+	avvOut.close();
+#endif
+#define PLOT_ENERGIES
+#ifdef PLOT_ENERGIES
+	ofstream lvlOut = IOTools::ofstreamFile("h2/levels.dat");
+	lvlOut << "# eState\tv\tJ\tE\n";
+	for (const auto& l : _levelv)
+		lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j() << "\t"
+		       << l.e() << endl;
+	lvlOut.close();
 #endif
 }
 
@@ -112,7 +122,13 @@ EVector H2FromFiles::ev() const
 	return the_ev;
 }
 
-EVector H2FromFiles::gv() const { return EVector::Constant(_numL, 1); }
+EVector H2FromFiles::gv() const
+{
+	EVector the_gv(_numL);
+	for (size_t i = 0; i < _numL; i++)
+		the_gv(i) = _levelv[i].g();
+	return the_gv;
+}
 
 EMatrix H2FromFiles::avv() const { return _avv; }
 

@@ -3,8 +3,6 @@
 
 #include "LevelDataProvider.h"
 
-
-
 #include <map>
 #include <vector>
 
@@ -22,11 +20,16 @@ public:
 	/** A clear way to index the electronic states of molecular hydrogen */
 	enum class ElectronicState
 	{
+		// 1s 1Sigma+u
 		X = 0,
+		// 2p 1Sigma+u (Lyman)
 		B,
-		Bprime,
+		// 2p 1Pi+-u (C+ is Werner)
 		Cplus,
 		Cminus,
+		// 3p 1Sigma+u
+		Bprime,
+		// 3p 1Pi+-u
 		Dplus,
 		Dminus
 	};
@@ -46,6 +49,22 @@ private:
 		int j() const { return _j; }
 		int v() const { return _v; }
 		double e() const { return _e; }
+		int g() const
+		{
+			// ortho = nuclear spin triplet / para = nuclear sping singlet
+			bool ortho;
+			bool oddJ = _j % 2;
+
+			/* For these states, odd J -> ortho; even J -> para. */
+			if (_eState == ElectronicState::X || _eState == ElectronicState::Cminus ||
+			    _eState == ElectronicState::Dminus)
+				ortho = oddJ;
+			/* For the other states, it's the other way round. */
+			else
+				ortho = !oddJ;
+
+			return ortho ? 3 * (2 * _j + 1) : 2 * _j + 1;
+		}
 
 	private:
 		ElectronicState _eState;
@@ -60,7 +79,8 @@ public:
 	size_t numLv() const override;
 
 	/** Retrieve the index of a level with these quantum numbers. */
-	size_t indexOutput(ElectronicState eState, int j, int v) const;	EVector ev() const override;
+	size_t indexOutput(ElectronicState eState, int j, int v) const;
+	EVector ev() const override;
 
 	EVector gv() const override;
 	EMatrix avv() const override;
