@@ -108,7 +108,7 @@ EMatrix HydrogenHardcoded::extraAvv() const
 	return the_extraAvv;
 }
 
-array<int, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
+array<size_t, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
 
 EMatrix HydrogenHardcoded::cvv(double T, double electronDensity, double protonDensity) const
 {

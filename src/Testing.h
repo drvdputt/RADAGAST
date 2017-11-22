@@ -79,7 +79,7 @@ void testChemistry();
 void testFromFilesvsHardCoded();
 
 /** Test the H2 implementation. */
-void testH2();
+void runH2();
 
 /** Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will be
     written out to separate files. */

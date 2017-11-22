@@ -448,9 +448,9 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::
 
 	cout << "TestHydrogenCalculator done" << endl;
 
-	cout << "----------------------------------" << endl;
-	cout << "plotting heating curve..." << endl;
-	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
+	// cout << "----------------------------------" << endl;
+	// cout << "plotting heating curve..." << endl;
+	// plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
@@ -567,7 +567,7 @@ void Testing::testPS64Collisions()
 		                                     to_string(n) + "l.dat");
 		for (int li = 0; li < n; li++)
 		{
-			int nliIndex = hff.indexOutput(n, li);
+			size_t nliIndex = hff.indexOutput(n, li);
 			// Decay rate to all other levels
 			double anl = anlv(nliIndex);
 			double qnl = 0;
@@ -575,7 +575,7 @@ void Testing::testPS64Collisions()
 			// Get the total decay rate due to l-changing collisions
 			for (int lf = 0; lf < n; lf++)
 			{
-				int nlfIndex = hff.indexOutput(n, lf);
+				size_t nlfIndex = hff.indexOutput(n, lf);
 				qnl += cvv(nliIndex, nlfIndex);
 
 				// l-changing collision rates should be zero except for changes by 1
@@ -676,11 +676,32 @@ void Testing::testFromFilesvsHardCoded()
 	hc_vs_ff(alphavhc, alphavff);
 }
 
-void Testing::testH2()
+void Testing::runH2()
 {
-	Array frequencyv;
+	auto grid = generateGeometricGridv(10000, 1e12, 1e16);
+	Array frequencyv(grid.data(), grid.size());
+	double nH2 = 1000;
+	double ne = 100;
+	double np = 100;
+	double T = 500;
+	double Tc = 10000;
+	double G0 = 1;
+	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
+
 	auto h2Data{make_shared<H2FromFiles>()};
 	H2Levels h2Levels{h2Data, frequencyv};
+	NLevel::Solution s = h2Levels.solveBalance(nH2, ne, np, T, specificIntensityv);
+
+	Array emissivityv = h2Levels.lineEmissivityv(s);
+	Array opacityv = h2Levels.opacityv(s);
+
+	ofstream h2optical = IOTools::ofstreamFile("h2/opticalProperties.dat");
+	h2optical << "# nu (hz)\temissivity\topacity\n";
+	const string tab{"\t"};
+	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
+	{
+		h2optical << frequencyv[iFreq] << tab << emissivityv[iFreq] << tab << opacityv[iFreq] << endl;
+	}
 }
 
 void Testing::runFromFilesvsHardCoded()
@@ -727,20 +748,26 @@ void Testing::runWithDust()
 	const Array& frequencyv{gasInterface.frequencyv()};
 
 	// Radiation field
-	double Tc{4e4};
-	double G0{1e3};
+	double Tc{4e3};
+	double G0{1e-1};
 	Array specificIntensityv{generateSpecificIntensityv(frequencyv, Tc, G0)};
 
 	// Gas density
-	double nHtotal{10};
+	double nHtotal{1000};
 	double Tinit{8000};
 
 	// TODO: need a reasonable grain size distribution and DGR for testing here
 	Array sizev, densityv, temperaturev;
 	// Provide sizes in cm
+	// 10 A, 100A ,1000 A
 	sizev = {1e-7, 1e-6, 1e-5};
-	densityv = {0.1, 0.05, 0.025}; // number of grains per H atom
+	densityv = {1e-5, 1e-8, 1e-11};
+	// number of grains per H atom (this should be very small, as grains are much heavier than a
+	// hydrogen atom AND their total mass is only about 1% of the hydrogen mass
+
 	densityv *= nHtotal; // density in cm-3
+	// densityv *= 0;
+
 	// Actually, a temperature distribution per grain size is the most detailed form we'll be
 	// using. Maybe we need multiple versions of the grain interface with regards to storing the
 	// grain temperatures.

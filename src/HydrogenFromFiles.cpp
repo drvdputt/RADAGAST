@@ -195,11 +195,7 @@ EVector HydrogenFromFiles::ev() const
 {
 	EVector the_ev(_numL);
 	for (size_t i = 0; i < _numL; i++)
-	{
-		const HydrogenLevel& lvInfo = _levelOrdering[i];
-		// l = -1 means collapsed, so:
-		the_ev[i] = lvInfo.e();
-	}
+		the_ev(i) = _levelOrdering[i].e();
 	DEBUG("energy vector" << endl);
 	DEBUG(the_ev << endl);
 	return the_ev;
@@ -209,10 +205,7 @@ EVector HydrogenFromFiles::gv() const
 {
 	EVector the_gv(_numL);
 	for (size_t i = 0; i < _numL; i++)
-	{
-		const HydrogenLevel& lvInfo = _levelOrdering[i];
-		the_gv[i] = lvInfo.g();
-	}
+		the_gv(i) = _levelOrdering[i].g();
 	DEBUG("degeneracy vector" << endl);
 	DEBUG(the_gv << endl);
 	return the_gv;
@@ -261,7 +254,7 @@ EMatrix HydrogenFromFiles::extraAvv() const
 {
 	EMatrix the_extra = EMatrix::Zero(_numL, _numL);
 
-	int index1s = indexOutput(1, 0);
+	size_t index1s = indexOutput(1, 0);
 
 	// Check if the n2 level is resolved, and retrieve the Key, Value pair
 	auto index2sIt = _nlToOutputIndexm.find({2, 0});
@@ -275,14 +268,14 @@ EMatrix HydrogenFromFiles::extraAvv() const
 	// If 2nd level is resolved, just put the value in the right place
 	if (n2Resolved)
 	{
-		int index2s = index2sIt->second;
+		size_t index2s = index2sIt->second;
 		the_extra(index2s, index1s) = rate;
 	}
 	/* If it is collapsed, assume it is well mixed. So we take the average of the two-photon
 	   rates from 2s (8.229) and 2p (0). */
 	else
 	{
-		int index2 = indexOutput(2, -1);
+		size_t index2 = indexOutput(2, -1);
 		the_extra(index2, index1s) = rate / 4.; // + 0 * 3 / 4.
 	}
 #ifdef PRINT_LEVEL_MATRICES
@@ -292,11 +285,11 @@ EMatrix HydrogenFromFiles::extraAvv() const
 	return the_extra;
 }
 
-array<int, 2> HydrogenFromFiles::twoPhotonIndices() const
+array<size_t, 2> HydrogenFromFiles::twoPhotonIndices() const
 {
 	// If any of the levels is not resolved on l, just return the index of the collapsed level.
-	int upper = _resolvedUpTo >= 2 ? indexOutput(2, 0) : indexOutput(2, -1);
-	int lower = _resolvedUpTo >= 1 ? indexOutput(1, 0) : indexOutput(1, -1);
+	size_t upper = _resolvedUpTo >= 2 ? indexOutput(2, 0) : indexOutput(2, -1);
+	size_t lower = _resolvedUpTo >= 1 ? indexOutput(1, 0) : indexOutput(1, -1);
 	return {upper, lower};
 }
 
@@ -313,7 +306,7 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 		for (size_t i = 0; i < _numL; i++)
 		{
 			const HydrogenLevel& ini = _levelOrdering[i];
-			for (int f = 0; f < _numL; f++)
+			for (size_t f = 0; f < _numL; f++)
 			{
 				const HydrogenLevel& fin = _levelOrdering[f];
 				/* For downward transitions, calculate the collision rate, and
@@ -345,10 +338,10 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 			// Fill in the collision rates for all combinations of li lf
 			for (int li = 0; li < n; li++)
 			{
-				int i = indexOutput(n, li);
+				size_t i = indexOutput(n, li);
 				for (int lf = 0; lf < n; lf++)
 				{
-					int f = indexOutput(n, lf);
+					size_t f = indexOutput(n, lf);
 					/* None of the previous contributions should have been
 					   l-changing */
 					assert(the_cvv(i, f) == 0);
@@ -389,7 +382,7 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 
 		/* eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
 		   prevented divergence in the calculations of PS64 */
-		int index = indexOutput(n, l);
+		size_t index = indexOutput(n, l);
 		double tau2 = 1. / _totalAv(index) / _totalAv(index);
 		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
 

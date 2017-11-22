@@ -121,7 +121,7 @@ public:
 	    level is collapsed, the two photon continuum emission should be rescaled with the same
 	    factor. This will probably give very inaccurate results, but its the best you can do
 	    with a collapsed n=2 level. */
-	std::array<int, 2> twoPhotonIndices() const override;
+	std::array<size_t, 2> twoPhotonIndices() const override;
 
 	// FUNCTIONS RETURNING VARIABLE DATA //
 	/** These functions provide coefficients that depend on external variables such as the
@@ -258,7 +258,7 @@ private:
 
 	/* Another map, this time one that inverts _levelOrdering above. This way, one can easily
 	   find the index of a level with a specific {n, l}. */
-	std::map<std::array<int, 2>, int> _nlToOutputIndexm;
+	std::map<std::array<int, 2>, size_t> _nlToOutputIndexm;
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */

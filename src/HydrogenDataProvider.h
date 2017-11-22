@@ -20,7 +20,7 @@ public:
 	    indexing scheme used, which depends on the specific implementation of how the hydrogen
 	    data is loaded. Therefore, subclasses which use different data will have different
 	    implementations for this. */
-	virtual std::array<int, 2> twoPhotonIndices() const = 0;
+	virtual std::array<size_t, 2> twoPhotonIndices() const = 0;
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_ */

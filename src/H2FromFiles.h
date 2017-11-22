@@ -73,6 +73,7 @@ private:
 	/* Contains the quantum numbers and energies of the levels. The output will be indexed in
 	   the same way. */
 	std::vector<H2Level> _levelv;
+	size_t _numL{0};
 
 	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
 	   vector above. Function below shows how to add level. */

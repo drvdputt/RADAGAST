@@ -17,11 +17,11 @@ Array HydrogenLevels::emissivityv(const Solution& s) const
 
 Array HydrogenLevels::twoPhotonEmissivityv(const Solution& s) const
 {
-	std::array<int, 2> upper_lower = _hdp->twoPhotonIndices();
+	std::array<size_t, 2> upper_lower = _hdp->twoPhotonIndices();
 
 	// This index can mean either the resolved level 2s, or the collapsed level 2
-	int index2sOr2 = upper_lower[0];
-	int index1s = upper_lower[1];
+	size_t index2sOr2 = upper_lower[0];
+	size_t index1s = upper_lower[1];
 
 	/* The population of the 2s level needs to be guessed when n=2. We can check this by looking
 	   at the multiplicity of the level. Since 2s and 1s should both have the the same

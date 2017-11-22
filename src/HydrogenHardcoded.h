@@ -29,7 +29,7 @@ public:
 	    two-photon processes, which generate a continuum instead). */
 	EMatrix extraAvv() const override;
 
-	std::array<int, 2> twoPhotonIndices() const override;
+	std::array<size_t, 2> twoPhotonIndices() const override;
 
 	//-----------------------------------//
 	// FUNCTIONS RETURNING VARIABLE DATA //

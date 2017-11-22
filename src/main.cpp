@@ -24,15 +24,16 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-		Testing::testPhotoelectricHeating();
-		Testing::testIonizationStuff();
-		Testing::testPS64Collisions();
-		Testing::testChemistry();
-		Testing::testACollapse();
-		Testing::compareFromFilesvsHardCoded();
-		Testing::runFromFilesvsHardCoded();
-		Testing::runFullModel();
-		Testing::runWithDust();
+		// Testing::testPhotoelectricHeating();
+		// Testing::testIonizationStuff();
+		// Testing::testPS64Collisions();
+		// Testing::testChemistry();
+		// Testing::testACollapse();
+		// Testing::compareFromFilesvsHardCoded();
+		// Testing::runFromFilesvsHardCoded();
+		// Testing::runFullModel();
+		// Testing::runWithDust();
+		Testing::runH2();
 	}
 	catch (const std::exception& ex)
 	{

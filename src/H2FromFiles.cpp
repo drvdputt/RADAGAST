@@ -8,9 +8,11 @@
 
 using namespace std;
 
+const string dataLocation{REPOROOT "/dat/h2"};
+
 H2FromFiles::H2FromFiles() { readData(); }
 
-size_t H2FromFiles::numLv() const { return 1; }
+size_t H2FromFiles::numLv() const { return _numL; }
 
 size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
 {
@@ -20,12 +22,10 @@ size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
 
 void H2FromFiles::readData()
 {
-	const string location{REPOROOT "/dat/h2"};
-
 	//-----------------//
 	// READ LEVEL DATA //
 	//-----------------//
-	ifstream energyX = IOTools::ifstreamFile(location + "/energy_X.dat");
+	ifstream energyX = IOTools::ifstreamFile(dataLocation + "/energy_X.dat");
 	string line;
 
 	// Get the date / magic number
@@ -66,15 +66,16 @@ void H2FromFiles::readData()
 		DEBUG(_levelv.size() << " " << j << " " << v << " "
 		                     << _levelv.back().e() * Constant::ERG_EV << " eV" << endl);
 	}
-	DEBUG("Read in " << _levelv.size() << " H2 levels" << endl);
+	_numL = _levelv.size();
+	DEBUG("Read in " << _numL << " H2 levels" << endl);
 	energyX.close();
 
 	//-----------------//
 	// READ EINSTEIN A //
 	//-----------------//
-	_avv = EMatrix::Zero(_levelv.size(), _levelv.size());
+	_avv = EMatrix::Zero(_numL, _numL);
 
-	ifstream transprobX = IOTools::ifstreamFile(location + "/transprob_X.dat");
+	ifstream transprobX = IOTools::ifstreamFile(dataLocation + "/transprob_X.dat");
 	getline(transprobX, line);
 	istringstream(line) >> y >> m >> d;
 
@@ -103,19 +104,28 @@ void H2FromFiles::readData()
 #endif
 }
 
-EVector H2FromFiles::ev() const { return EVector::Zero(1); }
+EVector H2FromFiles::ev() const
+{
+	EVector the_ev(_numL);
+	for (size_t i = 0; i < _numL; i++)
+		the_ev(i) = _levelv[i].e();
+	return the_ev;
+}
 
-EVector H2FromFiles::gv() const { return EVector::Constant(1, 1); }
+EVector H2FromFiles::gv() const { return EVector::Constant(_numL, 1); }
 
-EMatrix H2FromFiles::avv() const { return EMatrix::Zero(1, 1); }
+EMatrix H2FromFiles::avv() const { return _avv; }
 
-EMatrix H2FromFiles::extraAvv() const { return EMatrix::Zero(1, 1); }
+EMatrix H2FromFiles::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
 
-EMatrix H2FromFiles::cvv(double T, double ne, double np) const { return EMatrix::Zero(1, 1); }
+EMatrix H2FromFiles::cvv(double T, double ne, double np) const
+{
+	return EMatrix::Zero(_numL, _numL);
+}
 
-EVector H2FromFiles::sourcev(double T, double ne, double np) const { return EVector::Zero(1); }
+EVector H2FromFiles::sourcev(double T, double ne, double np) const { return EVector::Zero(_numL); }
 
 EVector H2FromFiles::sinkv(double T, double n, double ne, double np) const
 {
-	return EVector::Zero(1);
+	return EVector::Zero(_numL);
 }
