@@ -146,21 +146,21 @@ public:
 	/** The product of the proton and electron density. By putting this in a function,
 	    refactoring the way the densities are stored will be easier, should it happen in the
 	    future. */
-	inline double np_ne(const Solution& s) const { return s.speciesNv(ine) * s.speciesNv(inp); }
+	inline double np_ne(const Solution& s) const { return s.speciesNv(_ine) * s.speciesNv(_inp); }
 
 	inline double f(const Solution& s) const
 	{
-		return s.speciesNv(inp) / (s.speciesNv(inH) + 2 * s.speciesNv(inH2));
+		return s.speciesNv(_inp) / (s.speciesNv(_inH) + 2 * s.speciesNv(_inH2));
 	}
 
-	inline double nAtomic(const Solution& s) const { return s.speciesNv[inH]; }
+	inline double nAtomic(const Solution& s) const { return s.speciesNv[_inH]; }
 	/**@}*/
 private:
 	/* To be set in constructor */
 	const Array& _frequencyv;
 
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]
-	int ine, inp, inH, inH2;
+	int _ine, _inp, _inH, _inH2;
 	std::unique_ptr<ChemistrySolver> _chemSolver;
 
 	/* Pointers to other parts of the implementation, to make late initialization possible */

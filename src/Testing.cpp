@@ -19,6 +19,7 @@
 #include "IonizationBalance.h"
 #include "NLevel.h"
 #include "SpecialFunctions.h"
+#include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 
 #include <iomanip>
@@ -556,7 +557,10 @@ void Testing::testPS64Collisions()
 
 	HydrogenFromFiles hff(5);
 	EMatrix avv = hff.avv();
-	EMatrix cvv = hff.cvv(T, ne, np);
+	EVector speciesNv = EVector::Zero(SpeciesIndex::size());
+	speciesNv(SpeciesIndex::ine()) = ne;
+	speciesNv(SpeciesIndex::inp()) = np;
+	EMatrix cvv = hff.cvv(T, speciesNv);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards
 	 rate from level nl. */
@@ -610,10 +614,10 @@ void Testing::testChemistry()
 	                                              kform);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
-	int ie = ChemicalNetwork::speciesIndexm.at("e-");
-	int ip = ChemicalNetwork::speciesIndexm.at("H+");
-	int iH = ChemicalNetwork::speciesIndexm.at("H");
-	int iH2 = ChemicalNetwork::speciesIndexm.at("H2");
+	int ie = SpeciesIndex::index("e-");
+	int ip = SpeciesIndex::index("H+");
+	int iH = SpeciesIndex::index("H");
+	int iH2 = SpeciesIndex::index("H2");
 
 	EVector n0v(4);
 	n0v(ie) = 0;
@@ -664,15 +668,18 @@ void Testing::testFromFilesvsHardCoded()
 	double T = 1e4;
 	double ne = 1e4;
 	double np = 1e4;
+	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
+	speciesNv(SpeciesIndex::inp()) = np;
+	speciesNv(SpeciesIndex::ine()) = ne;
 
 	cout << "Collisions:" << endl;
-	EMatrix cvvhc = hhc.cvv(T, ne, np);
-	EMatrix cvvff = hff.cvv(T, ne, np);
+	EMatrix cvvhc = hhc.cvv(T, speciesNv);
+	EMatrix cvvff = hff.cvv(T, speciesNv);
 	hc_vs_ff(cvvhc, cvvff);
 
 	cout << "Recombinations:" << endl;
-	EVector alphavhc = hhc.sourcev(T, ne, np) / ne / np;
-	EVector alphavff = hff.sourcev(T, ne, np) / ne / np;
+	EVector alphavhc = hhc.sourcev(T, speciesNv) / ne / np;
+	EVector alphavff = hff.sourcev(T, speciesNv) / ne / np;
 	hc_vs_ff(alphavhc, alphavff);
 }
 
@@ -683,6 +690,10 @@ void Testing::runH2()
 	double nH2 = 1000;
 	double ne = 100;
 	double np = 100;
+	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
+	speciesNv(SpeciesIndex::index("H2")) = nH2;
+	speciesNv(SpeciesIndex::ine()) = ne;
+	speciesNv(SpeciesIndex::inp()) = np;
 	double T = 500;
 	double Tc = 10000;
 	double G0 = 100;
@@ -690,7 +701,7 @@ void Testing::runH2()
 
 	auto h2Data{make_shared<H2FromFiles>()};
 	H2Levels h2Levels{h2Data, frequencyv};
-	NLevel::Solution s = h2Levels.solveBalance(nH2, ne, np, T, specificIntensityv);
+	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv);
 
 	Array emissivityv = h2Levels.lineEmissivityv(s);
 	Array opacityv = h2Levels.opacityv(s);

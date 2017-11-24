@@ -40,8 +40,8 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double density, double electronDensity, double protonDensity,
-                                      double temperature, const Array& specificIntensityv) const
+NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv, double temperature,
+                                      const Array& specificIntensityv) const
 {
 	Solution s;
 	s.n = density;
@@ -57,7 +57,7 @@ NLevel::Solution NLevel::solveBalance(double density, double electronDensity, do
 
 	if (density > 0)
 	{
-		s.cvv = _ldp->cvv(temperature, electronDensity, protonDensity);
+		s.cvv = _ldp->cvv(temperature, speciesNv);
 		/* Calculate BijPij (needs to be redone at each temperature because the line profile
 		   can change) Also needs the Cij to calculate collisional broadening */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
@@ -79,8 +79,8 @@ NLevel::Solution NLevel::solveBalance(double density, double electronDensity, do
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
-		EVector sourcev = _ldp->sourcev(temperature, electronDensity, protonDensity);
-		EVector sinkv = _ldp->sinkv(temperature, s.n, electronDensity, protonDensity);
+		EVector sourcev = _ldp->sourcev(temperature, speciesNv);
+		EVector sinkv = _ldp->sinkv(temperature, s.n, speciesNv);
 		// Calculate Fij and bi and solve F.n = b
 		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
 	}

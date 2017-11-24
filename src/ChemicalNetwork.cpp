@@ -1,32 +1,16 @@
 #include "ChemicalNetwork.h"
 #include "Error.h"
 #include "IonizationBalance.h"
+#include "SpeciesIndex.h"
 
 #include <iostream>
 
 namespace
 {
-const int NUMSPECIES = 4;
 const int NUMCONSERVED = 2;
 }
 
-const std::map<std::string, int> ChemicalNetwork::speciesIndexm =
-                createSpeciesIndexm({"e-", "H+", "H", "H2"});
-
-std::map<std::string, int>
-ChemicalNetwork::createSpeciesIndexm(const std::vector<std::string>& namev)
-{
-	std::map<std::string, int> speciesIndex;
-	int index{0};
-	for (const auto& name : namev)
-	{
-		speciesIndex.insert({name, index});
-		index++;
-	}
-	return speciesIndex;
-}
-
-ChemicalNetwork::ChemicalNetwork()
+ChemicalNetwork::ChemicalNetwork() : _numSpecies{SpeciesIndex::size()}
 {
 	// Photoionization
 	// H + gamma -> e- + H+
@@ -84,13 +68,13 @@ void ChemicalNetwork::addReaction(const std::string& reactionName,
 
 	_reactionIndexm.emplace(reactionName, _reactionIndexm.size());
 
-	EVector leftSidev = EVector::Zero(NUMSPECIES);
+	EVector leftSidev = EVector::Zero(_numSpecies);
 	for (size_t r = 0; r < reactantNamev.size(); r++)
-		leftSidev(speciesIndexm.at(reactantNamev[r])) += reactantStoichv[r];
+		leftSidev(SpeciesIndex::index(reactantNamev[r])) += reactantStoichv[r];
 
-	EVector rightSidev = EVector::Zero(NUMSPECIES);
+	EVector rightSidev = EVector::Zero(_numSpecies);
 	for (size_t p = 0; p < productNamev.size(); p++)
-		rightSidev(speciesIndexm.at(productNamev[p])) += productStoichv[p];
+		rightSidev(SpeciesIndex::index(productNamev[p])) += productStoichv[p];
 
 	_reactionv.emplace_back(leftSidev, rightSidev);
 }
@@ -102,7 +86,7 @@ int ChemicalNetwork::reactionIndex(const std::string& reactionName) const
 
 EMatrix ChemicalNetwork::reactantStoichvv() const
 {
-	EMatrix r(NUMSPECIES, _numReactions);
+	EMatrix r(_numSpecies, _numReactions);
 	for (int j = 0; j < _numReactions; j++)
 		r.col(j) = _reactionv[j]._rv;
 	return r;
@@ -110,7 +94,7 @@ EMatrix ChemicalNetwork::reactantStoichvv() const
 
 EMatrix ChemicalNetwork::productStoichvv() const
 {
-	EMatrix p(NUMSPECIES, _numReactions);
+	EMatrix p(_numSpecies, _numReactions);
 	for (int j = 0; j < _numReactions; j++)
 		p.col(j) = _reactionv[j]._pv;
 	return p;
@@ -118,26 +102,26 @@ EMatrix ChemicalNetwork::productStoichvv() const
 
 EMatrix ChemicalNetwork::conservationCoeffvv() const
 {
-	EMatrix c(NUMCONSERVED, NUMSPECIES);
+	EMatrix c(NUMCONSERVED, _numSpecies);
 
 	// Some index which should just go from 0 to NUMCONSERVED - 1
 	int index{0};
 
 	// Commonly used
-	int iH = speciesIndexm.at("H");
-	int iH2 = speciesIndexm.at("H2");
+	int iH = SpeciesIndex::index("H");
+	int iH2 = SpeciesIndex::index("H2");
 
 	// Conservation of H nuclei (single protons)
-	EVector protonEq{EVector::Zero(NUMSPECIES)};
-	protonEq(speciesIndexm.at("H+")) = 1;
+	EVector protonEq{EVector::Zero(_numSpecies)};
+	protonEq(SpeciesIndex::index("H+")) = 1;
 	protonEq(iH) = 1;
 	protonEq(iH2) = 2;
 	c.row(index) = protonEq;
 	index++;
 
 	// Conservation of electrons
-	EVector electronEq{EVector::Zero(NUMSPECIES)};
-	electronEq(speciesIndexm.at("e-")) = 1;
+	EVector electronEq{EVector::Zero(_numSpecies)};
+	electronEq(SpeciesIndex::index("e-")) = 1;
 	electronEq(iH) = 1;
 	electronEq(iH2) = 2;
 	c.row(index) = electronEq;

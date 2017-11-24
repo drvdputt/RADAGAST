@@ -108,14 +108,13 @@ public:
 	} Solution;
 
 	/** Calculates the level populations for a certain electron temperature and isrf. The
-	    temperature, and the electron and proton density are needed to determine the collisional
-	    transition rates and recombination rates (this format will probably change when we want
-	    to use the same class for other atoms or by extension molecules). A struct of the type
-	    Solution is returned, with all of its members correctly filled in. The collision and
-	    recombination data to perform the calculation are obtained from the LevelDataProvider,
-	    while the induced transitions rates (B coefficients * line power) are derived from the
-	    given specific intensity. */
-	Solution solveBalance(double density, double electronDensity, double protonDensity,
+	    temperature, and the densities of the gas species are needed to determine the
+	    collisional transition rates and recombination rates. A struct of the type Solution is
+	    returned, with all of its members correctly filled in. The collision and recombination
+	    data to perform the calculation are obtained from the LevelDataProvider, while the
+	    induced transitions rates (B coefficients * line power) are derived from the given
+	    specific intensity. */
+	Solution solveBalance(double density, const EVector& speciesNv,
 	                      double T, const Array& specificIntensityv) const;
 	// TODO: add in source and sink terms here, so that formation rates derived from the the chemical network
 	// can be factored in. At the same time, there should be some mechanism for spontaneous decay of

@@ -1,8 +1,7 @@
 #include "GasInterfaceImpl.h"
-#include "Constants.h"
-
 #include "ChemicalNetwork.h"
 #include "ChemistrySolver.h"
+#include "Constants.h"
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
@@ -15,6 +14,7 @@
 #include "IOTools.h"
 #include "IonizationBalance.h"
 #include "SpecialFunctions.h"
+#include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
 
@@ -34,10 +34,10 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
 		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
 	}
 
-	ine = ChemicalNetwork::speciesIndexm.at("e-");
-	inp = ChemicalNetwork::speciesIndexm.at("H+");
-	inH = ChemicalNetwork::speciesIndexm.at("H");
-	inH2 = ChemicalNetwork::speciesIndexm.at("H2");
+	_ine = SpeciesIndex::index("e-");
+	_inp = SpeciesIndex::index("H+");
+	_inH = SpeciesIndex::index("H");
+	_inH2 = SpeciesIndex::index("H2");
 }
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
@@ -121,7 +121,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 	// Put the relevant data into the gas state
 	Array densityv(s.speciesNv.data(), s.speciesNv.size());
 	// Derive this again, just for diagnostics
-	double h2form = GasGrain::surfaceH2FormationRateCoeff(gi, s.T) * s.speciesNv[inH];
+	double h2form = GasGrain::surfaceH2FormationRateCoeff(gi, s.T) * s.speciesNv[_inH];
 	double grainHeat = grainHeating(s, gi);
 	gs = GasModule::GasState(specificIntensityv, emv, opv, scv, s.T, densityv, h2form,
 	                         grainHeat);
@@ -150,18 +150,16 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
+		double nH = s.speciesNv(_inH);
+		double nH2 = s.speciesNv(_inH2);
 
 		/* Lambda function, because it is only needed in this scope. The [&] passes the current
 		   scope by reference, so the lambda function can modify s. */
 		auto solveLevelBalances = [&]() {
-			double nH = s.speciesNv[inH];
-			double ne = s.speciesNv[ine];
-			double np = s.speciesNv[inp];
-			double nH2 = s.speciesNv[inH2];
-			s.HSolution = _atomicLevels->solveBalance(nH, ne, np, T,
+			s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
 			                                          specificIntensityv);
 			if (_molecular)
-				s.H2Solution = _molecular->solveBalance(nH2, ne, np, T,
+				s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
 				                                        specificIntensityv);
 		};
 
@@ -218,12 +216,12 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 				DEBUG("Ionized fraction = " << f << endl);
 
 				// Neutral fraction
-				s.speciesNv[inH] = nHtotal * (1 - f);
+				s.speciesNv[_inH] = nHtotal * (1 - f);
 				// Ionized fraction
-				s.speciesNv[inp] = nHtotal * f;
+				s.speciesNv[_inp] = nHtotal * f;
 				// Electron density is simply equal to proton density
-				s.speciesNv[ine] = s.speciesNv[inp];
-				s.speciesNv[inH2] = 0;
+				s.speciesNv[_ine] = s.speciesNv[_inp];
+				s.speciesNv[_inH2] = 0;
 			}
 			solveLevelBalances();
 
@@ -247,10 +245,11 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	}
 	else
 	{
-		s.HSolution = _atomicLevels->solveBalance(0, 0, 0, T, specificIntensityv);
+		s.speciesNv = EVector::Zero(SpeciesIndex::size());
+		s.HSolution = _atomicLevels->solveBalance(0, s.speciesNv, T, specificIntensityv);
 		if (_molecular)
-			s.H2Solution = _molecular->solveBalance(0, 0, 0, T, specificIntensityv);
-		s.speciesNv = EVector::Zero(ChemicalNetwork::speciesIndexm.size());
+			s.H2Solution = _molecular->solveBalance(0, s.speciesNv, T, specificIntensityv);
+
 	}
 	return s;
 }
@@ -324,8 +323,8 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 {
 	double grainPhotoelectricHeating{0};
 	// Specify the environment parameters
-	double ne = s.speciesNv[ine];
-	double np = s.speciesNv[inp];
+	double ne = s.speciesNv[_ine];
+	double np = s.speciesNv[_inp];
 	GrainPhotoelectricEffect::Environment env(_frequencyv, s.specificIntensityv, s.T, ne, np,
 	                                          {-1, 1}, {ne, np},
 	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
@@ -364,13 +363,13 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
 	return _freeFree->cooling(np_ne(s), s.T) +
-	       Ionization::cooling(s.speciesNv(inH), s.speciesNv(inp), s.speciesNv(ine), s.T);
+	       Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp), s.speciesNv(_ine), s.T);
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
 	double result = _freeFree->heating(np_ne(s), s.T, s.specificIntensityv);
-	result += Ionization::heating(s.speciesNv(inp), s.speciesNv(ine), s.T, _frequencyv,
+	result += Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T, _frequencyv,
 	                              s.specificIntensityv);
 	if (_molecular)
 		result += _molecular->dissociationHeating(s.H2Solution);

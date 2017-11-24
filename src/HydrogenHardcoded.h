@@ -39,12 +39,12 @@ public:
 
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
 	    the partner density), for a given temperature and proton and electron densities. */
-	EMatrix cvv(double T, double ne, double np) const override;
+	EMatrix cvv(double T, const EVector& speciesNv) const override;
 
 	/** Returns a vector containing partial recombination rates based on fits I found somewhere
 	    (see source code for origin). */
-	EVector sourcev(double T, double ne, double np) const override;
-	EVector sinkv(double T, double n, double ne, double np) const override;
+	EVector sourcev(double T, const EVector& speciesNv) const override;
+	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
 	EVector the_ev;

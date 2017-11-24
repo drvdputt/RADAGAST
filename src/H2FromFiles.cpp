@@ -134,14 +134,17 @@ EMatrix H2FromFiles::avv() const { return _avv; }
 
 EMatrix H2FromFiles::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
 
-EMatrix H2FromFiles::cvv(double T, double ne, double np) const
+EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 {
 	return EMatrix::Zero(_numL, _numL);
 }
 
-EVector H2FromFiles::sourcev(double T, double ne, double np) const { return EVector::Zero(_numL); }
+EVector H2FromFiles::sourcev(double T, const EVector& speciesNv) const
+{
+	return EVector::Zero(_numL);
+}
 
-EVector H2FromFiles::sinkv(double T, double n, double ne, double np) const
+EVector H2FromFiles::sinkv(double T, double n, const EVector& speciesNv) const
 {
 	return EVector::Zero(_numL);
 }

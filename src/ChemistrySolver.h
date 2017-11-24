@@ -109,7 +109,8 @@ private:
 	    extra object. */
 	std::unique_ptr<const ChemicalNetwork> _cn;
 	EMatrix _rStoichvv, _netStoichvv, _conservEqvv;
-	int _numSpecies, _numReactions, _numConserved;
+	size_t _numSpecies;
+	int _numReactions, _numConserved;
 };
 
 #endif /* GASMODULE_GIT_SRC_CHEMISTRYSOLVER_H_ */

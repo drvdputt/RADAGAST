@@ -1,6 +1,7 @@
 #include "HydrogenHardcoded.h"
 #include "Constants.h"
 #include "IonizationBalance.h"
+#include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 
 #define NLV 6
@@ -110,12 +111,13 @@ EMatrix HydrogenHardcoded::extraAvv() const
 
 array<size_t, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
 
-EMatrix HydrogenHardcoded::cvv(double T, double electronDensity, double protonDensity) const
+EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
 {
 	const int index2p = 2;
 	const int index2s = 1;
 	EMatrix Cvv = EMatrix::Zero(NLV, NLV);
 
+	double electronDensity = speciesNv(SpeciesIndex::ine());
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
 		// Equation 6.17 of Hazy II (6.6 Collision strengths)
@@ -178,13 +180,14 @@ EMatrix HydrogenHardcoded::cvv(double T, double electronDensity, double protonDe
 	double qUp = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
 	double qDown_db = qUp / 3.;
 
+	double protonDensity = speciesNv(SpeciesIndex::inp());
 	Cvv(index2p, index2s) = protonDensity * (qDown + qDown_db) / 2.;
 	Cvv(index2s, index2p) = protonDensity * (qUp + qUp_db) / 2.;
 
 	return Cvv;
 }
 
-EVector HydrogenHardcoded::sourcev(double T, double ne, double np) const
+EVector HydrogenHardcoded::sourcev(double T, const EVector& speciesNv) const
 {
 	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
 	// yes, this is natural log
@@ -205,11 +208,15 @@ EVector HydrogenHardcoded::sourcev(double T, double ne, double np) const
 
 	EVector alphav(NLV);
 	alphav << alphaGround, alpha2s, alpha2p, alpha3, alpha4, alpha5;
+	double ne = speciesNv(SpeciesIndex::ine());
+	double np = speciesNv(SpeciesIndex::inp());
 	return alphav * ne * np;
 }
 
-EVector HydrogenHardcoded::sinkv(double T, double n, double ne, double np) const
+EVector HydrogenHardcoded::sinkv(double T, double n, const EVector& speciesNv) const
 {
 	double sink = Ionization::recombinationRateCoeff(T) / NLV;
+	double ne = speciesNv(SpeciesIndex::ine());
+	double np = speciesNv(SpeciesIndex::inp());
 	return EVector::Constant(NLV, sink * ne * np);
 }

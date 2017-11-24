@@ -14,21 +14,9 @@
 class ChemicalNetwork
 {
 public:
-	/** A publicly available map, which maps species names to the indices used in the vector
-	    Currently available names are "e-" for electrons "H+" for protons, "H" for atomic
-	    hydrogen and "H2" for molecular hydrogen. */
-	static const std::map<std::string, int> speciesIndexm;
-
 	/** Sets up a chemical network with a fixed set of reactions, added in the constructor. */
 	ChemicalNetwork();
 
-private:
-	/** Prepare the species index. All the names will be given an arbirary index, which can
-	    later be retrieved using **/
-	static std::map<std::string, int>
-	createSpeciesIndexm(const std::vector<std::string>& namev);
-
-public:
 	/** Calculates the rate coefficients for each reaction. They still have to be multiplied
 	    with the densities of the reaction products, so watch out. The unit varies, but
 	    multiplying with the correct densities (for example *np*ne for radiative recombination)
@@ -74,9 +62,11 @@ public:
 	EMatrix conservationCoeffvv() const;
 
 private:
-	/** Another map, this time to map reaction names to indices. This is handy if one wants to
-	    know what the rate coefficients mean. Reactions can be dynamically added by using the
-	    addReaction function. **/
+	size_t _numSpecies;
+
+	/** Map reaction names to indices. This is handy if one wants to know what the rate
+	    coefficients mean. Reactions can be dynamically added by using the addReaction
+	    function. **/
 	std::map<std::string, int> _reactionIndexm;
 
 	/** Put the reactions in a list for easy processing. The rate coefficients will be

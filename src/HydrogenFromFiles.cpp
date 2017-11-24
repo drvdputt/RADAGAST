@@ -4,6 +4,7 @@
 #include "Error.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
+#include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 
 using namespace std;
@@ -20,7 +21,8 @@ inline vector<int> twoJplus1range(int l)
 }
 } /* namespace */
 
-HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
+HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo)
+                : _resolvedUpTo(resolvedUpTo), _ine{SpeciesIndex::ine()}, _inp{SpeciesIndex::inp()}
 {
 	if (_resolvedUpTo > cNMAX)
 		Error::rangeCheck<int>("Number of resolved levels", _resolvedUpTo, 2, cNMAX);
@@ -293,7 +295,7 @@ array<size_t, 2> HydrogenFromFiles::twoPhotonIndices() const
 	return {upper, lower};
 }
 
-EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
+EMatrix HydrogenFromFiles::cvv(double T, const EVector& speciesNv) const
 {
 	// Calculate the temperature in erg and in electron volt
 	double kT = Constant::BOLTZMAN * T;
@@ -301,6 +303,7 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 
 	EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
 	// Electron contributions (n-changing)
+	double ne = speciesNv(_ine);
 	if (ne > 0)
 	{
 		for (size_t i = 0; i < _numL; i++)
@@ -328,6 +331,7 @@ EMatrix HydrogenFromFiles::cvv(double T, double ne, double np) const
 	}
 
 	// For the l-resolved levels, get l-changing collision rates (through proton collisions)
+	double np = speciesNv(_inp);
 	if (np > 0)
 	{
 		for (int n = 0; n <= _resolvedUpTo; n++)
@@ -421,7 +425,7 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 	return result.array().max(0);
 }
 
-EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
+EVector HydrogenFromFiles::sourcev(double T, const EVector& speciesNv) const
 {
 	/* TODO: find better recombination coefficients. */
 
@@ -475,16 +479,20 @@ EVector HydrogenFromFiles::sourcev(double T, double ne, double np) const
 			alphav[f] = unresolvedAlpha / (2 * n * n) * final.g();
 		}
 	}
+	double ne = speciesNv(SpeciesIndex::ine());
+	double np = speciesNv(SpeciesIndex::inp());
 	return alphav * ne * np;
 }
 
-EVector HydrogenFromFiles::sinkv(double T, double n, double ne, double np) const
+EVector HydrogenFromFiles::sinkv(double T, double n, const EVector& speciesNv) const
 {
 	/* The ionization rate calculation makes no distinction between the levels.  When
 	   the upper level population is small, and its decay rate is large, the second term
 	   doesn't really matter. Therefore, we choose the sink to be the same for each
 	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 	   => sink = totalsource / n because n0/n + n1/n = 1. */
+	double ne = speciesNv(_ine);
+	double np = speciesNv(_inp);
 	double totalSource = ne * np * Ionization::recombinationRateCoeff(T);
 	double sink = totalSource / n; // Sink rate per (atom per cm3)
 	return EVector::Constant(_numL, sink);

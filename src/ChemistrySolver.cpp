@@ -91,7 +91,7 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 	EMatrix jvv(_numSpecies + _numConserved, _numSpecies);
 
 	// For every column (= derivative with respect to a different density)
-	for (int jDeriv = 0; jDeriv < _numSpecies; jDeriv++)
+	for (size_t jDeriv = 0; jDeriv < _numSpecies; jDeriv++)
 	{
 		/* Here we calculate the derivatives of the density products times the reaction
 		   rates and multiply with the rate coefficient. */
@@ -112,7 +112,7 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 double ChemistrySolver::densityProduct(const EVector& nv, size_t r) const
 {
 	double densityProduct = 1;
-	for (int s = 0; s < _numSpecies; s++)
+	for (size_t s = 0; s < _numSpecies; s++)
 	{
 		/* If the species in involved in this reaction (stoich on left side > 0), calculate
 		   the density to the power of its stoichiometry in the reaction. */
@@ -136,7 +136,7 @@ double ChemistrySolver::densityProductDerivative(const EVector& nv, int r, int j
 		double densityProductDerivative = stoichRj * pow(nv(j), stoichRj - 1);
 
 		// The rest of the factors
-		for (int s = 0; s < _numSpecies; s++)
+		for (size_t s = 0; s < _numSpecies; s++)
 		{
 			double stoichRs = _rStoichvv(s, r);
 			if (stoichRs && s != j)
@@ -173,7 +173,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		std::vector<bool> allZeroButDiagonalv(_numSpecies, false);
 		std::vector<bool> isRemovedv(_numSpecies, false);
 		int countToRemove{0};
-		for (int i = 0; i < _numSpecies; i++)
+		for (size_t i = 0; i < _numSpecies; i++)
 		{
 			if ((jvv.row(i).array() == 0).all())
 				// We will set delta to zero for this component; it will stay at its
@@ -182,7 +182,7 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			else
 			{
 				bool restZero{true};
-				for (int j = 0; j < _numSpecies && restZero; j++)
+				for (size_t j = 0; j < _numSpecies && restZero; j++)
 					if (j != i && jvv(i, j))
 						restZero = false;
 				if (restZero && jvv(i, i))
