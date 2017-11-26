@@ -3,6 +3,7 @@
 
 #include "LevelDataProvider.h"
 
+#include <array>
 #include <map>
 #include <vector>
 
@@ -36,6 +37,9 @@ public:
 
 private:
 	void readData();
+	void readLevels();
+	void readTransProb();
+	void readCollisions();
 
 private:
 	class H2Level
@@ -97,11 +101,11 @@ private:
 
 	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
 	   vector above. Function below shows how to add level. */
-	std::map<std::array<int, 3>, int> _evjToIndex;
+	std::map<std::array<int, 3>, int> _ejvToIndexm;
 	inline void addLevel(ElectronicState eState, int j, int v, double e)
 	{
 		_levelv.emplace_back(eState, j, v, e);
-		_evjToIndex.insert({{static_cast<int>(eState), j, v}, _levelv.size() - 1});
+		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, _levelv.size() - 1});
 	}
 
 	/* The transition coefficient matrix, indexed in the same way as _levelv, thanks to our map

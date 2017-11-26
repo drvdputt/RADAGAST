@@ -113,12 +113,17 @@ public:
 	    returned, with all of its members correctly filled in. The collision and recombination
 	    data to perform the calculation are obtained from the LevelDataProvider, while the
 	    induced transitions rates (B coefficients * line power) are derived from the given
-	    specific intensity. */
+	    specific intensity.
+
+	    More specifically, this function calculates all the matrices for the statistical
+	    equilibrium equations, and then calls @c solveRateEquations() do the actual calculation.
+	    This function should be generic, while the latter is allowed to have a specialized
+	    implementation per subclass. */
 	Solution solveBalance(double density, const EVector& speciesNv,
 	                      double T, const Array& specificIntensityv) const;
-	// TODO: add in source and sink terms here, so that formation rates derived from the the chemical network
-	// can be factored in. At the same time, there should be some mechanism for spontaneous decay of
-	// levels into 'nothing', for example dissociation.
+	// TODO: add in source and sink terms here, so that formation rates derived from the
+	// chemical network can be factored in. At the same time, there should be some mechanism for
+	// spontaneous decay of levels into 'nothing', for example dissociation.
 
 	/** The total emitted spectrum by the system of levels. The default implementation gives
 	    just the line emission, but subclasses can override it to add extra contributions, such
@@ -140,15 +145,24 @@ public:
 
 private:
 	/** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
-	    Aij) and Pij is the line power (isrf integrated over the line profile). */
+	    Aij) and Pij is the line power (isrf integrated over the line profile). The units of Bij
+	    and Pij are often different in the literature and other codes, but their product should
+	    always have units [s-1]. */
 	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
 	                                const EMatrix& Cvv) const;
 
 private:
 	/** Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
 	    + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term
-	    ne*np*alpha_i, due to recombination. Returns the solution as a vector. */
-	EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
+	    ne*np*alpha_i, due to recombination. Returns the solution as a vector [cm-3].
+
+	    This is a basic implementation which calls a linear solver from the Eigen library. I
+	    have make this a virtual function, to make it possible for subclasses to have more
+	    specialized algorithm, based on beforehand knowledge about the coefficients. For the H2
+	    model for example, the calculation can be done faster and more precisely by using an
+	    iterative approach based on the fact that there is no transition data between and within
+	    the electronically excited levels. */
+	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
 	                           const EVector& sourceTerm, const EVector& sinkTerm,
 	                           int chooseConsvEq) const;
 
@@ -162,10 +176,10 @@ private:
 	    profile will yield the specific intensity. */
 	double lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const;
 
-	/** Computes the opacity of a line, not yet multiplied with the line profile */
+	/** Computes the opacity of a line, not yet multiplied with the line profile. */
 	double lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const;
 
-	/** Calculates the Voigt profile for a certain line, using the wavelengthgrid supplied at
+	/** Calculates the Voigt profile for a certain line, using the frequency grid supplied at
 	    construction and the temperature and collision rates contained in the Solution
 	    struct. */
 	Array lineProfile(size_t upper, size_t lower, const Solution& s) const;
@@ -174,7 +188,8 @@ private:
 	    available. */
 	Array lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
-	// Variables which are the same for all invocations of solveBalance are stored as members //
+	/** Variables which are the same for all invocations of solveBalance are stored as member.
+	    They are set during construction. */
 
 	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
 	   initialized with depends on the subclass. */
@@ -195,7 +210,8 @@ private:
 
 	/* Spontaneous transitions that do not produce line photons, but do influence the levels. A
 	   prime example is the 2-photon continuum of 2s -> 1s. A2s1 = 2e-6 s-1 for single photon,
-	   but is about 8 s-1 for two photons. */
+	   but is about 8 s-1 for two photons. Maybe this can also be used for some H2
+	   transitions. */
 	EMatrix _extraAvv;
 };
 
