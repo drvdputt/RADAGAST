@@ -20,10 +20,15 @@ double evaluateSinglePopulation(size_t i, const EVector& nv, const EMatrix& Mvv,
 	// ==> ni = creationRate / destructionFraction
 
 	// FIXME: assume that we only have X states (this is the case at the moment (28/11/2017))) for excited states the summation boundaries are different
+
 	// sum_j M_ij n_j + f_i
 	double creationRate = (Mvv.row(i) * nv).sum() + sourcev(i);
+	if (creationRate <= 0)
+		return 0;
+
 	// sum_j M_ji + d_i
 	double destructionFraction = Mvv.col(i).sum() + sinkv(i);
+
 	return creationRate / destructionFraction;
 }
 
@@ -50,13 +55,11 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		EVector deltaNv = (nv - previousNv).array().abs();
 		converged = deltaNv.maxCoeff() < 1e-9 * n;
 		counter++;
-		DEBUG("levels iteration " << counter << " ");
+		DEBUG("levels iteration " << counter << "\n");
+		DEBUG("delta = \n " << deltaNv << std::endl);
 	}
 	DEBUG(std::endl);
-
-	/* TODO: custom implementation that makes use of the fact that there are no transitions
-	   withing and between electronic excited states. */
-	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq);
+	return nv;
 }
 
 double H2Levels::dissociationRate(const NLevel::Solution& s, const Array& specificIntensityv) const

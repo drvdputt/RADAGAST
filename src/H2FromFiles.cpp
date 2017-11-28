@@ -51,8 +51,9 @@ void H2FromFiles::readLevels()
 	Error::equalCheck("m", m, 4);
 	Error::equalCheck("d", d, 29);
 
-	// Skip the next two lines
-	IOTools::skipLines(energyX, 2);
+	// Skip the next two lines;
+	getline(energyX, line);
+	getline(energyX, line);
 
 	// The eState will be fixed to X here
 	auto eState{ElectronicState::X};

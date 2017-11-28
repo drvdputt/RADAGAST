@@ -42,9 +42,3 @@ istringstream IOTools::istringstreamNextLine(ifstream& ifs)
 	getline(ifs, line);
 	return istringstream(line);
 }
-
-void IOTools::skipLines(std::ifstream& ifs, int n)
-{
-	for (int i = 0; i < n; i++)
-		ifs.ignore('\n');
-}
