@@ -87,6 +87,18 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv, 
 	return s;
 }
 
+NLevel::Solution NLevel::solveLTE(double density, const EVector& speciesNv, double T,
+                                  const Array& specificIntensityv)
+{
+	NLevel::Solution s;
+	s.n = density;
+	s.T = T;
+	s.nv = density * solveBoltzmanEquations(T);
+	s.cvv = _ldp->cvv(T, speciesNv);
+	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, T, s.cvv);
+	return s;
+}
+
 Array NLevel::emissivityv(const Solution& s) const { return lineEmissivityv(s); }
 
 Array NLevel::lineEmissivityv(const Solution& s) const
@@ -169,41 +181,62 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double 
 	return BPvv;
 }
 
+EMatrix NLevel::netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const
+{
+	return _avv.transpose() + _extraAvv.transpose() + BPvv.transpose() + Cvv.transpose();
+}
+
 EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-                                   const EVector& sourceTerm, const EVector& sinkTerm,
+                                   const EVector& sourcev, const EVector& sinkv,
                                    int chooseConsvEq) const
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j
-	EMatrix Mvv(_avv.transpose() + _extraAvv.transpose() + BPvv.transpose() + Cvv.transpose());
+	EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
 	// See equation for Fij (37) in document
 	// Subtract departure rate from level i to all other levels
 	EMatrix departureDiagonal = Mvv.colwise().sum().asDiagonal();
-	Mvv -= departureDiagonal;
-	Mvv -= sinkTerm.asDiagonal();
-	EVector b(-sourceTerm);
+	Mvv -= departureDiagonal; // Fij
+	Mvv -= sinkv.asDiagonal(); // Fij - diag[d_i]
+	EVector f(-sourcev); // -f_i
 
 	// Replace row by a conservation equation
 	Mvv.row(chooseConsvEq) = EVector::Ones(Mvv.cols());
-	b(chooseConsvEq) = n;
+	f(chooseConsvEq) = n;
 
 #ifdef PRINT_LEVEL_MATRICES
-	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << b << endl << endl);
+	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << f << endl << endl);
 #endif
-	// Call the linear solver
-	EVector nv = Mvv.colPivHouseholderQr().solve(b);
+	// Call the linear solver for the system sum_j (Fij - diag[d_i]) * n_j = -f_i
+	EVector nv = Mvv.colPivHouseholderQr().solve(f);
 	DEBUG("nv" << endl << nv << endl);
 
 	// Hack: put populations = 0 if they were negative due to precision issues
 	nv = nv.array().max(0);
 
 	// Element wise relative errors
-	EArray diffv = Mvv * nv - b;
-	EArray errv = diffv / EArray(b);
+	EArray diffv = Mvv * nv - f;
+	EArray errv = diffv / EArray(f);
 	DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;
+}
+
+EVector NLevel::solveBoltzmanEquations(double T) const
+{
+	// Degeneracy factor
+	EVector pv{_gv};
+	double pSum{0};
+	double kT = Constant::BOLTZMAN * T;
+	for (int i = 0; i < _ev.size(); i++)
+	{
+		// Exponential factor
+		pv(i) *= exp(-_ev(i) / kT);
+		// Normalization
+		pSum += pv(i);
+	}
+	return pv / pSum;
 }
 
 void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thing) const

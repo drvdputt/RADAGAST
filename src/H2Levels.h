@@ -11,9 +11,11 @@ public:
 	H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequencyv);
 	~H2Levels();
 
-	/** An override which is better suited for H2. */
+	/** An override which is better suited for H2. It scales as a*n^2, where a is the number of
+	    iterations, instead of n^3, apparently. I might be interesting to see this with my own
+	    eyes. */
 	EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-	                           const EVector& sourceTerm, const EVector& sinkTerm,
+	                           const EVector& sourcev, const EVector& sinkv,
 	                           int chooseConsvEq) const override;
 
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon process

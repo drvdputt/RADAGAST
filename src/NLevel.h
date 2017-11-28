@@ -54,30 +54,10 @@ public:
 	    using the data provider referred to by this pointer. */
 	NLevel(std::shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv);
 
-public:
 	virtual ~NLevel();
 
-	/** Return the number of levels in the solution */
-	size_t numLv() const { return _numLv; }
-
-protected:
-	/** A number of protected getters are provided, so the subclasses can make use of these
-	    coefficients. */
-	EVector ev() const { return _ev; }
-	double ev(size_t i) const { return _ev(i); }
-
-	EVector gv() const { return _gv; }
-	double gv(size_t i) const { return _gv(i); }
-
-	EMatrix avv() const { return _avv; }
-	double avv(size_t upper, size_t lower) { return _avv(upper, lower); }
-
-	EMatrix extraAvv() const { return _extraAvv; }
-	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
-
-public:
-	/** Getter for the frequency grid to perform the calculations on. All of the input (ouput)
-	    spectra must have (will have) the same frequency points. */
+	/** Getter for the frequency grid the calculations are performed on. All of the input
+	    (ouput) spectra must have (will have) the same frequency points. */
 	const Array& frequencyv() const { return _frequencyv; }
 
 	/** Ouputs some properties about the different line transitions taken into account by this
@@ -119,8 +99,12 @@ public:
 	    equilibrium equations, and then calls @c solveRateEquations() do the actual calculation.
 	    This function should be generic, while the latter is allowed to have a specialized
 	    implementation per subclass. */
-	Solution solveBalance(double density, const EVector& speciesNv,
-	                      double T, const Array& specificIntensityv) const;
+	Solution solveBalance(double density, const EVector& speciesNv, double T,
+	                      const Array& specificIntensityv) const;
+
+	/** Calculates the level populations using a simple Boltzman LTE equation. */
+	Solution solveLTE(double density, const EVector& speciesNv, double T,
+	                  const Array& specificIntensityv);
 	// TODO: add in source and sink terms here, so that formation rates derived from the
 	// chemical network can be factored in. At the same time, there should be some mechanism for
 	// spontaneous decay of levels into 'nothing', for example dissociation.
@@ -143,15 +127,10 @@ public:
 	/** Cooling rate due to collisional excitation. */
 	double cooling(const Solution& s) const;
 
-private:
-	/** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
-	    Aij) and Pij is the line power (isrf integrated over the line profile). The units of Bij
-	    and Pij are often different in the literature and other codes, but their product should
-	    always have units [s-1]. */
-	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-	                                const EMatrix& Cvv) const;
+	/** Return the number of levels in the solution */
+	size_t numLv() const { return _numLv; }
 
-private:
+protected:
 	/** Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji
 	    + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term
 	    ne*np*alpha_i, due to recombination. Returns the solution as a vector [cm-3].
@@ -163,8 +142,18 @@ private:
 	    iterative approach based on the fact that there is no transition data between and within
 	    the electronically excited levels. */
 	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-	                           const EVector& sourceTerm, const EVector& sinkTerm,
-	                           int chooseConsvEq) const;
+	                                   const EVector& sourcev, const EVector& sinkv,
+	                                   int chooseConsvEq) const;
+
+	EVector solveBoltzmanEquations(double T) const;
+
+private:
+	/** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from the
+	    Aij) and Pij is the line power (isrf integrated over the line profile). The units of Bij
+	    and Pij are often different in the literature and other codes, but their product should
+	    always have units [s-1]. */
+	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
+	                                const EMatrix& Cvv) const;
 
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all
@@ -188,6 +177,26 @@ private:
 	    available. */
 	Array lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
+protected:
+	/** A number of protected getters are provided, so the subclasses can make use of these
+	    coefficients. */
+	EVector ev() const { return _ev; }
+	double ev(size_t i) const { return _ev(i); }
+
+	EVector gv() const { return _gv; }
+	double gv(size_t i) const { return _gv(i); }
+
+	EMatrix avv() const { return _avv; }
+	double avv(size_t upper, size_t lower) { return _avv(upper, lower); }
+
+	EMatrix extraAvv() const { return _extraAvv; }
+	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
+
+	/** Creates the matrix Mij as defined in my notes (basically, Mij = Aji + BPji + Cji). I
+	    reused this formula once, so I in a function it goes. */
+	EMatrix netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const;
+
+private:
 	/** Variables which are the same for all invocations of solveBalance are stored as member.
 	    They are set during construction. */
 
