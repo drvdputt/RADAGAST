@@ -156,12 +156,12 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 	do
 	{
 		iNRIteration++;
-		DEBUG("Newton-Raphson iteration " << iNRIteration << std::endl);
 
 		// Do a first evaluation of jvv and fv to test the waters
 		const EMatrix& jvv = functionJvv(xv);
 		const EVector& fv = functionFv(xv);
 #ifdef PRINT_CHEMISTRY_MATRICES
+		DEBUG("Newton-Raphson iteration " << iNRIteration << std::endl);
 		DEBUG("Jacobian: " << std::endl << jvv << std::endl);
 		DEBUG("Function: " << std::endl << fv << std::endl);
 #endif
@@ -356,16 +356,12 @@ EVector ChemistrySolver::newtonRaphsonStep(const EMatrix& currentJvv, const EMat
                                            std::function<EVector(const EVector& nv)> functionv,
                                            const EVector& currentXv) const
 {
-	DEBUG("Jvv \n" << currentJvv << std::endl);
-	DEBUG("Fv \n" << currentFv << std::endl);
-
 	EVector deltaxv = currentJvv.colPivHouseholderQr().solve(-currentFv);
-
-	DEBUG("raw DeltaXv \n" << deltaxv << std::endl);
-
 	EVector testProduct = currentJvv * deltaxv;
+#ifdef PRINT_CHEMISTRY_MATRICES
+	DEBUG("raw DeltaXv \n" << deltaxv << std::endl);
 	DEBUG("testProduct \n" << testProduct << std::endl);
-
+#endif
 	/* A possible problem is that, when the density of a species i is zero, the > 0 density
 	   criterion prevents steps from being taken whenever delta x_i is negative.
 
