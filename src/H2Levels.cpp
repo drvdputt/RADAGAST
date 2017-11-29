@@ -36,12 +36,14 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
                                      const EVector& sourcev, const EVector& sinkv,
                                      int chooseConsvEq) const
 {
+#define USE_ITERATION_METHOD
+#ifdef USE_ITERATION_METHOD
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
 	// Initial guess (TODO: better initial guess with actual temperature? Maybe we don't even
 	// need this).
-	EVector nv = solveBoltzmanEquations(500);
+	EVector nv = n * solveBoltzmanEquations(100);
 
 	// Iterate until converged
 	bool converged = false;
@@ -52,14 +54,19 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		for (size_t i = 0; i < _hff->numLv(); i++)
 			nv(i) = evaluateSinglePopulation(i, nv, Mvv, sourcev, sinkv);
 
+		/* Renormalize; the algorithm has no sum rule, */
+		nv *= n / nv.sum();
+
 		EVector deltaNv = (nv - previousNv).array().abs();
-		converged = deltaNv.maxCoeff() < 1e-9 * n;
+		converged = deltaNv.maxCoeff() < 1e-6 * n;
 		counter++;
-		DEBUG("levels iteration " << counter << "\n");
-		DEBUG("delta = \n " << deltaNv << std::endl);
+		DEBUG(" lvl it " << counter << " norm " << previousNv.sum());
 	}
-	DEBUG(std::endl);
+	DEBUG("\nnv\n" << nv << std::endl);
 	return nv;
+#else
+	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq);
+#endif
 }
 
 double H2Levels::dissociationRate(const NLevel::Solution& s, const Array& specificIntensityv) const

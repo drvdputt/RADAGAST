@@ -740,7 +740,7 @@ GasModule::GasInterface Testing::genFullModel()
 	bool molecular = true;
 
 	vector<double> tempFrequencyv =
-	                generateGeometricGridv(2000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 	Array unrefined(tempFrequencyv.data(), tempFrequencyv.size());
 
