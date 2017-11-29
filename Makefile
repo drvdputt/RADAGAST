@@ -1,3 +1,4 @@
+.PHONY: release
 # Make should be run with the git repo as the current working directory
 
 # Compiler
@@ -15,7 +16,7 @@ endif
 # Debug build
 OPTFLAGS=-O0 -g -Wall -Wextra -Werror=return-type -pedantic -Wconversion
 # Release build
-# OPTFLAGS=-O3 -Wall -Wextra -Werror=return-type -pedantic -DSILENT
+release: OPTFLAGS=-O3 -Wall -Wextra -Werror=return-type -pedantic -DSILENT
 
 # Target directories (this group of directories might be relocatable, but I have never tested this)
 # ==================
@@ -97,7 +98,9 @@ DEPFLAGS=-MT $@ -MMD -MP -MF $(OBJDIR)/$*.Td
 CXXFLAGS=$(OPTFLAGS) $(INCFLAGS) $(DEPFLAGS) -std=c++14 -DREPOROOT=\""$(shell pwd)"\"
 
 # The final targets
-all: $(PROGRAM) $(LIBFILE) $(INTERFACELINKS)
+all: $(PROGRAM)
+
+release: $(PROGRAM) $(LIBFILE) $(INTERFACELINKS)
 
 # Linking step
 $(PROGRAM): $(OBJECTS)
