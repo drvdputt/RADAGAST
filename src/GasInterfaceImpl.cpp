@@ -22,17 +22,14 @@ using namespace std;
 
 constexpr int MAXCHEMISTRYITERATIONS{100};
 
-GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel, bool molecular,
-                                   const Array& frequencyv)
-                : _frequencyv(frequencyv), _atomicLevels(std::move(atomModel)),
-                  _freeBound(make_unique<FreeBound>(frequencyv)),
+GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel,
+                                   unique_ptr<H2Levels> molecularModel, const Array& frequencyv)
+                : _frequencyv(frequencyv), _atomicLevels(move(atomModel)),
+                  _molecular(move(molecularModel)), _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
-	if (molecular)
-	{
-		_molecular = make_unique<H2Levels>(make_shared<H2FromFiles>(), frequencyv);
+	if (_molecular)
 		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
-	}
 
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
@@ -150,17 +147,23 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
-		double nH = s.speciesNv(_inH);
-		double nH2 = s.speciesNv(_inH2);
+
+
 
 		/* Lambda function, because it is only needed in this scope. The [&] passes the current
 		   scope by reference, so the lambda function can modify s. */
 		auto solveLevelBalances = [&]() {
+			double nH = s.speciesNv(_inH);
+			DEBUG("Solving levels nH = " << nH << endl);
 			s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
 			                                          specificIntensityv);
 			if (_molecular)
+			{
+				double nH2 = s.speciesNv(_inH2);
+				DEBUG("Solving levels nH2 = " << nH2 << endl);
 				s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
 				                                        specificIntensityv);
+			}
 		};
 
 		/* Use the initial guess for the chemical abundances to calculate our first set of
@@ -248,8 +251,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		s.speciesNv = EVector::Zero(SpeciesIndex::size());
 		s.HSolution = _atomicLevels->solveBalance(0, s.speciesNv, T, specificIntensityv);
 		if (_molecular)
-			s.H2Solution = _molecular->solveBalance(0, s.speciesNv, T, specificIntensityv);
-
+			s.H2Solution = _molecular->solveBalance(0, s.speciesNv, T,
+			                                        specificIntensityv);
 	}
 	return s;
 }

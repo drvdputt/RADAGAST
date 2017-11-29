@@ -28,7 +28,7 @@ public:
 	    frequency grid, a sorted list (ascending) of frequencies to perform the calculations on
 	    should be supplied. */
 	GasInterface(const std::valarray<double>& frequencyv, const std::string& atomChoice = "",
-	             bool moleculeChoice = false);
+	             const std::string& moleculeChoice = "");
 
 	GasInterface(GasInterface&&) = default;
 

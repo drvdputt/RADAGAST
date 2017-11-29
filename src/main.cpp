@@ -29,7 +29,7 @@ int main()
 		// Testing::testPS64Collisions();
 		// Testing::testChemistry();
 		// Testing::testACollapse();
-		// Testing::compareFromFilesvsHardCoded();
+		// Testing::runFromFilesvsHardCoded();
 		// Testing::runFromFilesvsHardCoded();
 		// Testing::runFullModel();
 		// Testing::runWithDust();

@@ -4,17 +4,18 @@
 #include <string>
 #include <valarray>
 
+// Forward declarations for friend functions
 namespace GasModule
 {
 class GasInterface;
+class GasState;
 }
 
 class GasInterfaceImpl;
 
 namespace Testing
 {
-void runGasInterfaceImpl(const GasModule::GasInterface&, const std::string&, double, double, double,
-                         double);
+void writeGasState(const std::string&, const GasModule::GasInterface&, const GasModule::GasState&);
 }
 
 namespace GasModule
@@ -33,8 +34,8 @@ class GasState
 {
 	friend class GasInterface;
 	friend class ::GasInterfaceImpl;
-	friend void Testing::runGasInterfaceImpl(const GasModule::GasInterface&, const std::string&,
-	                                         double, double, double, double);
+	friend void Testing::writeGasState(const std::string&, const GasModule::GasInterface&,
+	                                   const GasModule::GasState&);
 
 public:
 	/** Creates an empty GasState object. The resulting object can't be used for anything,
@@ -70,7 +71,8 @@ private:
 	         const std::valarray<double>& densityv, double h2form, double grainHeat)
 	                : _previousISRFv(previousISRFv), _emissivityv(emissivityv),
 	                  _opacityv(opacityv), _scatteringOpacityv(scatteringOpacityv),
-		_temperature(T), _densityv(densityv), _h2form(h2form), _grainHeat(grainHeat)
+	                  _temperature(T), _densityv(densityv), _h2form(h2form),
+	                  _grainHeat(grainHeat)
 	{
 	}
 

@@ -374,10 +374,16 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::
 	GasModule::GasState gs;
 	GasModule::GrainInterface grainInfo{};
 	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, grainInfo);
+	writeGasState(outputPath, gi, gs);
+}
 
+void Testing::writeGasState(const string& outputPath, const GasModule::GasInterface& gi,
+                            const GasModule::GasState& gs)
+{
 	cout << "Equilibrium temperature: " << gs.temperature() << endl;
 	cout << "Ionized fraction: " << gs.ionizedFraction() << endl;
 
+	const Array& frequencyv = gi.frequencyv();
 	const Array& emv = gs._emissivityv;
 	const Array& opv = gs._opacityv;
 	const Array& scav = gs._scatteringOpacityv * gs._previousISRFv;
@@ -685,7 +691,12 @@ void Testing::testFromFilesvsHardCoded()
 
 void Testing::runH2()
 {
-	auto grid = generateGeometricGridv(10000, 1e12, 1e16);
+	auto grid = generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
+
+	int maxJ = 99;
+	int maxV = 3;
+
 	Array frequencyv(grid.data(), grid.size());
 	double nH2 = 1000;
 	double ne = 100;
@@ -699,7 +710,7 @@ void Testing::runH2()
 	double G0 = 100;
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
 
-	auto h2Data{make_shared<H2FromFiles>()};
+	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
 	H2Levels h2Levels{h2Data, frequencyv};
 	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv);
 
@@ -728,17 +739,15 @@ void Testing::runFromFilesvsHardCoded()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	GasModule::GasInterface gihhc(frequencyv, "hhc", false);
+	GasModule::GasInterface gihhc(frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(frequencyv, "hff2", false);
+	GasModule::GasInterface gihff(frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	bool molecular = true;
-
 	vector<double> tempFrequencyv =
 	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
@@ -748,7 +757,8 @@ GasModule::GasInterface Testing::genFullModel()
 	FreeBound fb(unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
 
-	return {frequencyv, "", molecular};
+	// TODO: use a smaller H2 model for testing?
+	return {frequencyv, "", "5 5"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
@@ -801,4 +811,5 @@ void Testing::runWithDust()
 	// Run
 	GasModule::GasState gs{};
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
+	writeGasState("", gasInterface, gs);
 }

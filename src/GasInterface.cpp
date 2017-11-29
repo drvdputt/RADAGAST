@@ -1,22 +1,27 @@
 #include "GasInterface.h"
 #include "Array.h"
+#include "Error.h"
 #include "GasInterfaceImpl.h"
+#include "H2FromFiles.h"
+#include "H2Levels.h"
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
 #include "HydrogenLevels.h"
 #include "TwoLevelHardcoded.h"
+
+#include <sstream>
 
 using namespace std;
 
 namespace GasModule
 {
 GasInterface::GasInterface(const valarray<double>& frequencyv, const string& atomChoice,
-                           bool moleculeChoice)
+                           const string& moleculeChoice)
                 : _frequencyv(frequencyv)
 {
-	// Choose a level model
+	// Level model for the atom.
 	unique_ptr<NLevel> atomicLevels;
-
+	// Choose a data provider and make a level model out of it
 	if (atomChoice == "twolevel")
 	{
 		// Generic level model with hardcoded 2-level data
@@ -25,24 +30,51 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const string& ato
 	}
 	else
 	{
-		shared_ptr<HydrogenDataProvider> levelData;
+		// Specialized level model for atomic hydrogen
+		shared_ptr<HydrogenDataProvider> hLevelData;
 
-		// Choose a level data provider
+		// Choose a hydrogen data provider
 		if (atomChoice == "hhc")
-			levelData = make_shared<HydrogenHardcoded>();
+			hLevelData = make_shared<HydrogenHardcoded>();
 		else if (atomChoice == "hff2")
-			levelData = make_shared<HydrogenFromFiles>(2);
+			hLevelData = make_shared<HydrogenFromFiles>(2);
 		else if (atomChoice == "hff4")
-			levelData = make_shared<HydrogenFromFiles>(4);
+			hLevelData = make_shared<HydrogenFromFiles>(4);
 		else
-			levelData = make_shared<HydrogenFromFiles>();
+			hLevelData = make_shared<HydrogenFromFiles>();
 
-		// Specialized hydrogen level model with the chosen set of level data
-		atomicLevels = make_unique<HydrogenLevels>(levelData, _frequencyv);
+		atomicLevels = make_unique<HydrogenLevels>(hLevelData, _frequencyv);
 	}
 
-	// Give this level model to the main implementation.
-	_pimpl = make_unique<GasInterfaceImpl>(move(atomicLevels), moleculeChoice, _frequencyv);
+	// Level model for the molecule.
+	unique_ptr<H2Levels> molecularLevels;
+	if (moleculeChoice == "none")
+		molecularLevels = nullptr;
+	else
+	{
+		// Create a data provider.
+		shared_ptr<H2FromFiles> h2LevelData;
+
+		if (moleculeChoice.empty())
+			h2LevelData = make_shared<H2FromFiles>();
+		else
+		{
+			int maxJ, maxV;
+			istringstream(moleculeChoice) >> maxJ >> maxV;
+			if (maxJ < 0 || maxV < 0)
+				Error::runtime("moleculeChoice is not of a correct format. It "
+				               "should be "
+				               "\"maxJ maxV\"");
+			h2LevelData = make_shared<H2FromFiles>(maxJ, maxV);
+		}
+		// Make a level model out of it.
+		molecularLevels = make_unique<H2Levels>(h2LevelData, _frequencyv);
+	}
+
+	// Give these level models to the main implementation (TODO: check if giving a nullptr works
+	// correctly)
+	_pimpl = make_unique<GasInterfaceImpl>(move(atomicLevels), move(molecularLevels),
+	                                       _frequencyv);
 }
 
 GasInterface::~GasInterface() = default;

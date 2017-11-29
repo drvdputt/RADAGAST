@@ -10,17 +10,7 @@ using namespace std;
 
 const string dataLocation{REPOROOT "/dat/h2"};
 
-H2FromFiles::H2FromFiles() { readData(); }
-
-size_t H2FromFiles::numLv() const { return _numL; }
-
-size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
-{
-	// This cast is safe, as the default underlying type of an enum is int.
-	return _ejvToIndexm.at({static_cast<int>(eState), j, v});
-}
-
-void H2FromFiles::readData()
+H2FromFiles::H2FromFiles(int maxJ, int maxV) : _maxJ{maxJ}, _maxV{maxV}
 {
 	readLevels();
 	readTransProb();
@@ -36,6 +26,14 @@ void H2FromFiles::readData()
 		       << l.e() << endl;
 	lvlOut.close();
 #endif
+}
+
+size_t H2FromFiles::numLv() const { return _numL; }
+
+size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
+{
+	// This cast is safe, as the default underlying type of an enum is int.
+	return _ejvToIndexm.at({static_cast<int>(eState), j, v});
 }
 
 void H2FromFiles::readLevels()
@@ -74,13 +72,18 @@ void H2FromFiles::readLevels()
 		// Get the numbers
 		int v, j;
 		iss >> v >> j;
-		// Wave number
+		// Wave number (in cm-1)
 		double k;
 		iss >> k;
 
-		addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
-		DEBUG(_levelv.size() << " " << j << " " << v << " "
-		                     << _levelv.back().e() * Constant::ERG_EV << " eV" << endl);
+		// Add the level if within the given limits.
+		if (j <= _maxJ && v <= _maxV)
+		{
+			addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
+			DEBUG(_levelv.size()
+			      << " " << j << " " << v << " "
+			      << _levelv.back().e() * Constant::ERG_EV << " eV" << endl);
+		}
 	}
 	_numL = _levelv.size();
 	DEBUG("Read in " << _numL << " H2 levels" << endl);
@@ -100,7 +103,6 @@ void H2FromFiles::readTransProb()
 	auto eState{ElectronicState::X};
 	while (getline(transprobX, line))
 	{
-		// Skip comments or empty lines
 		if (line.empty() || line.at(0) == '#')
 			continue;
 
@@ -110,9 +112,15 @@ void H2FromFiles::readTransProb()
 		/* TODO: check if the energy of level upperIndex is actually higher than energy of
 		   level lowerIndex */
 		// Dont use EU and EL here, as we already know that it's all for X
-		size_t upperIndex = indexOutput(eState, JU, VU);
-		size_t lowerIndex = indexOutput(eState, JL, VL);
-		_avv(upperIndex, lowerIndex) = A;
+
+		// If within the limits, fill in the coefficient.
+		if (JU <= _maxJ && JL <= _maxJ && VU <= _maxV && VL <= _maxV)
+		{
+			// An error will be thrown if the level is still not in the list.
+			size_t upperIndex = indexOutput(eState, JU, VU);
+			size_t lowerIndex = indexOutput(eState, JL, VL);
+			_avv(upperIndex, lowerIndex) = A;
+		}
 	}
 }
 

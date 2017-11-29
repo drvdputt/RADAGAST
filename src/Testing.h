@@ -53,6 +53,9 @@ void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& o
                          double Tc = 20000, double G0 = 2, double n = 10,
                          double expectedTemperature = 8000);
 
+void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi,
+                   const GasModule::GasState& gs);
+
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
                       const Array& specificIntensityv, double n);
 

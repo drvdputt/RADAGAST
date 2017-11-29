@@ -74,7 +74,8 @@ public:
 	    constructor for manual setup (an argument for each subprocess of which more than 1
 	    usable subclass/configuration exists). The components can be set up outside of this
 	    constructor, and ownership is then transferred using a unique pointer. */
-	GasInterfaceImpl(std::unique_ptr<NLevel> hmodel, bool molecular, const Array& frequencyv);
+	GasInterfaceImpl(std::unique_ptr<NLevel> atomModel, std::unique_ptr<H2Levels> molecularModel,
+	                 const Array& frequencyv);
 
 	Array frequencyv() const { return _frequencyv; }
 
@@ -85,18 +86,18 @@ public:
 	    temperature. Can be used by the client to manually set the temperature and calculate
 	    some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasModule::GasState&, double n, double T,
-			       const GasModule::GrainInterface&) const;
+	                       const GasModule::GrainInterface&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
 	    guess, and a vector containing the radiation field in specific intensity per frequency
 	    units (on the same frequency grid as the one provided at construction). */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
-			  const Array& specificIntensity, const GasModule::GrainInterface&) const;
+	                  const Array& specificIntensity, const GasModule::GrainInterface&) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
 	    until equilibrium is found. */
 	Solution calculateDensities(double n, double T, const Array& specificIntensityv,
-				    const GasModule::GrainInterface&) const;
+	                            const GasModule::GrainInterface&) const;
 
 public:
 	/** @name Properties of final state
@@ -146,7 +147,10 @@ public:
 	/** The product of the proton and electron density. By putting this in a function,
 	    refactoring the way the densities are stored will be easier, should it happen in the
 	    future. */
-	inline double np_ne(const Solution& s) const { return s.speciesNv(_ine) * s.speciesNv(_inp); }
+	inline double np_ne(const Solution& s) const
+	{
+		return s.speciesNv(_ine) * s.speciesNv(_inp);
+	}
 
 	inline double f(const Solution& s) const
 	{

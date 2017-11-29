@@ -4,6 +4,7 @@
 #include "LevelDataProvider.h"
 
 #include <array>
+#include <limits>
 #include <map>
 #include <vector>
 
@@ -15,8 +16,10 @@ class H2FromFiles : public LevelDataProvider
 	// CONSTRUCTION, READ-IN, SETUP //
 	//------------------------------//
 public:
-	/** Creates a new \c H2FromFiles object, reads in all the data. */
-	H2FromFiles();
+	/** Creates a new \c H2FromFiles object, reads in all the data. Optional arguments: upper
+	    limits for vibrational and rotational numbers. The data goes to 31 for J, and to 14 for
+	    v. */
+	H2FromFiles(int maxJ = 99, int maxV = 99);
 
 	/** A clear way to index the electronic states of molecular hydrogen */
 	enum class ElectronicState
@@ -36,7 +39,6 @@ public:
 	};
 
 private:
-	void readData();
 	void readLevels();
 	void readTransProb();
 	void readCollisions();
@@ -94,6 +96,8 @@ public:
 	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
+	int _maxJ, _maxV;
+
 	/* Contains the quantum numbers and energies of the levels. The output will be indexed in
 	   the same way. */
 	std::vector<H2Level> _levelv;
