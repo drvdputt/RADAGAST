@@ -8,12 +8,11 @@
 
 using namespace std;
 
-const string dataLocation{REPOROOT "/dat/h2"};
-
 H2FromFiles::H2FromFiles(int maxJ, int maxV) : _maxJ{maxJ}, _maxV{maxV}
 {
 	readLevels();
 	readTransProb();
+	readCollisions();
 #ifdef PRINT_LEVEL_MATRICES
 	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
 	avvOut << _avv << endl;
@@ -38,7 +37,7 @@ size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
 
 void H2FromFiles::readLevels()
 {
-	ifstream energyX = IOTools::ifstreamFile(dataLocation + "/energy_X.dat");
+	ifstream energyX = IOTools::ifstreamRepoFile("dat/h2/energy_X.dat");
 	string line;
 
 	// Get the date / magic number
@@ -93,7 +92,7 @@ void H2FromFiles::readTransProb()
 {
 	_avv = EMatrix::Zero(_numL, _numL);
 
-	ifstream transprobX = IOTools::ifstreamFile(dataLocation + "/transprob_X.dat");
+	ifstream transprobX = IOTools::ifstreamRepoFile("dat/h2/transprob_X.dat");
 	string line;
 	getline(transprobX, line);
 	int y, m, d;
@@ -122,6 +121,53 @@ void H2FromFiles::readTransProb()
 			_avv(upperIndex, lowerIndex) = A;
 		}
 	}
+}
+
+void H2FromFiles::readCollisions()
+{
+	ifstream coll_rates_H_15 = IOTools::ifstreamRepoFile("dat/h2/coll_rates_H_15.dat");
+
+	int m;
+	IOTools::istringstreamNextLine(coll_rates_H_15) >> m;
+	Error::equalCheck("coll_rates_H_15 magic numbers", m, 110416);
+
+	// Read until the temperature line
+	string line;
+	while (getline(coll_rates_H_15, line))
+		if (line.at(0) != '#')
+			break;
+
+	// Hardcode this
+	const size_t numTemperatures{50};
+	Array temperaturev(numTemperatures);
+	istringstream tempLine(line);
+	for (size_t i = 0; i < numTemperatures; i++)
+		tempLine >> temperaturev[i];
+
+	// Do not care about efficiency for now.
+	// For each line, get the initial level index, final level index, and the data.
+	vector<int> iv, fv;
+	vector<Array> qvv; // indexed on [transition][temperature]
+	while (getline(coll_rates_H_15, line))
+	{
+		int VU, JU, VL, JL;
+		Array qForEachTv(numTemperatures);
+		istringstream transitionLine(line);
+
+		transitionLine >> VU >> JU >> VL >> JL;
+		iv.emplace_back(indexOutput(ElectronicState::X, JU, VU));
+		fv.emplace_back(indexOutput(ElectronicState::X, JL, VL));
+
+		for (size_t i = 0; i < numTemperatures; i++)
+			transitionLine >> qForEachTv[i];
+		qvv.emplace_back(qForEachTv);
+	}
+	size_t numTransitions = qvv.size();
+
+	// Now put this information into the CollisionData object
+	_qH.prepare(temperaturev, numTransitions);
+	for (size_t t = 0; t < numTransitions; t++)
+		_qH.insertDataForTransition(qvv[t], iv[t], fv[t]);
 }
 
 EVector H2FromFiles::ev() const

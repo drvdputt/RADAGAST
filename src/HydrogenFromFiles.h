@@ -157,6 +157,7 @@ public:
 	    add the effects of H2 formation in here?. Take care of this using actual ionization
 	    cross sections? [s-1] */
 	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
+
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
 	//-----------------------------------------//

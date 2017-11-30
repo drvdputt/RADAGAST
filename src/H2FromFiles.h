@@ -1,6 +1,7 @@
-#ifndef H2FROMFILES_H_
-#define H2FROMFILES_H_
+#ifndef GASMODULE_GIT_SRC_H2FROMFILES_H_
+#define GASMODULE_GIT_SRC_H2FROMFILES_H_
 
+#include "CollisionData.h"
 #include "LevelDataProvider.h"
 
 #include <array>
@@ -112,9 +113,12 @@ private:
 		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, _levelv.size() - 1});
 	}
 
-	/* The transition coefficient matrix, indexed in the same way as _levelv, thanks to our map
-	   approach. */
+	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our map
+	    approach. */
 	EMatrix _avv;
+
+	/** Collisions between H and H2. */
+	CollisionData _qH;
 };
 
-#endif /* H2FROMFILES_H_ */
+#endif /* GASMODULE_GIT_SRC_H2FROMFILES_H_ */
