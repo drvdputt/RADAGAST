@@ -695,16 +695,18 @@ void Testing::runH2()
 	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	int maxJ = 99;
-	int maxV = 3;
+	int maxV = 99;
 
 	Array frequencyv(grid.data(), grid.size());
 	double nH2 = 1000;
 	double ne = 100;
 	double np = 100;
+	double nH = 100;
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
-	speciesNv(SpeciesIndex::index("H2")) = nH2;
+	speciesNv(SpeciesIndex::inH2()) = nH2;
 	speciesNv(SpeciesIndex::ine()) = ne;
 	speciesNv(SpeciesIndex::inp()) = np;
+	speciesNv(SpeciesIndex::inH()) = nH;
 	double T = 500;
 	double Tc = 10000;
 	double G0 = 100;

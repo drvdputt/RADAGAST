@@ -62,12 +62,15 @@ void H2FromFiles::readLevels()
 	{
 		auto iss = istringstream(line);
 
-		// If there is a comment in front of the entry, extract it as a string
+		// If there is a comment in front of the entry, extract it as a string.
 		if (line.front() == '#')
 		{
 			string word1, word2;
 			iss >> word1 >> word2;
-			DEBUG(word1 + word2 << endl);
+			// If the comment is anything else than "#extra data", we will skip this
+			// line
+			if (word1 != "#extra" || word2 != "data")
+				continue;
 		}
 
 		// Get the numbers
@@ -78,13 +81,8 @@ void H2FromFiles::readLevels()
 		iss >> k;
 
 		// Add the level if within the given limits.
-		if (j <= _maxJ && v <= _maxV)
-		{
+		if (validJV(j, v))
 			addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
-			DEBUG(_levelv.size()
-			      << " " << j << " " << v << " "
-			      << _levelv.back().e() * Constant::ERG_EV << " eV" << endl);
-		}
 	}
 	_numL = _levelv.size();
 	DEBUG("Read in " << _numL << " H2 levels" << endl);
@@ -102,6 +100,7 @@ void H2FromFiles::readTransProb()
 
 	// Transition for eState X (ground state) (Data from Wolniewicz (1998))
 	auto eState{ElectronicState::X};
+	size_t counter{0};
 	while (getline(transprobX, line))
 	{
 		if (line.empty() || line.at(0) == '#')
@@ -115,14 +114,16 @@ void H2FromFiles::readTransProb()
 		// Dont use EU and EL here, as we already know that it's all for X
 
 		// If within the limits, fill in the coefficient.
-		if (JU <= _maxJ && JL <= _maxJ && VU <= _maxV && VL <= _maxV)
+		if (validJV(JU, VU) && validJV(JL, VL))
 		{
 			// An error will be thrown if the level is still not in the list.
 			size_t upperIndex = indexOutput(eState, JU, VU);
 			size_t lowerIndex = indexOutput(eState, JL, VL);
 			_avv(upperIndex, lowerIndex) = A;
+			counter++;
 		}
 	}
+	DEBUG("Read in " << counter << " Einstein A coefficients." << endl);
 }
 
 void H2FromFiles::readCollisions()
@@ -152,24 +153,30 @@ void H2FromFiles::readCollisions()
 	vector<Array> qvv; // indexed on [transition][temperature]
 	while (getline(coll_rates_H_15, line))
 	{
-		int VU, JU, VL, JL;
-		Array qForEachTv(numTemperatures);
 		istringstream transitionLine(line);
-
+		int VU, JU, VL, JL;
 		transitionLine >> VU >> JU >> VL >> JL;
+
+		// If we are not treating one of these (J,v)'s, skip to the next line
+		if (!validJV(JU, VU) || !validJV(JL, VL))
+			continue;
+
+		// Else, add the level indices and data.
 		iv.emplace_back(indexOutput(ElectronicState::X, JU, VU));
 		fv.emplace_back(indexOutput(ElectronicState::X, JL, VL));
-
+		Array qForEachTv(numTemperatures);
 		for (size_t i = 0; i < numTemperatures; i++)
 			transitionLine >> qForEachTv[i];
 		qvv.emplace_back(qForEachTv);
 	}
-	size_t numTransitions = qvv.size();
 
 	// Now put this information into the CollisionData object
+	size_t numTransitions = qvv.size();
 	_qH.prepare(temperaturev, numTransitions);
 	for (size_t t = 0; t < numTransitions; t++)
 		_qH.insertDataForTransition(qvv[t], iv[t], fv[t]);
+	_qH.check();
+	DEBUG("Read in " << _qH.transitionv().size() << " collision coefficients." << endl);
 }
 
 EVector H2FromFiles::ev() const
@@ -213,9 +220,14 @@ EVector H2FromFiles::sinkv(double T, double n, const EVector& speciesNv) const
 	return EVector::Zero(_numL);
 }
 
+bool H2FromFiles::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }
+
 void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,
                            double nPartner) const
 {
+	if (nPartner <= 0)
+		return;
+
 	/* Find the grid point to the right of (>=) the requested log-temperature. (Returns last
 	   point if T > Tmax). We will naively extrapolate for points outside the range, and cut off
 	   the result at 0 if it becomes negative. */
@@ -227,7 +239,7 @@ void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double 
 	double tLeft = temperaturev[iLeft];
 
 	double kT = T * Constant::BOLTZMAN;
-	std::vector<std::array<int, 2>> transitionv = qdata.transitionv();
+	vector<array<int, 2>> transitionv = qdata.transitionv();
 	for (int transitionIndex = 0; transitionIndex < transitionv.size(); transitionIndex++)
 	{
 		// Interpolate data points naively for temperatures left and right of T
