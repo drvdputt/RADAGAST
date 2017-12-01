@@ -1,6 +1,6 @@
 #include "SpeciesIndex.h"
 
-const std::map<std::string, int> SpeciesIndex::indexMap =
+const std::map<std::string, int> SpeciesIndex::_indexMap =
                 createSpeciesIndexm({"e-", "H+", "H", "H2"});
 
 std::map<std::string, int> SpeciesIndex::createSpeciesIndexm(const std::vector<std::string>& namev)
@@ -15,10 +15,14 @@ std::map<std::string, int> SpeciesIndex::createSpeciesIndexm(const std::vector<s
 	return speciesIndex;
 }
 
-int SpeciesIndex::index(const std::string& s) { return indexMap.at(s); }
+int SpeciesIndex::index(const std::string& s) { return _indexMap.at(s); }
 
-int SpeciesIndex::ine() { return indexMap.at("e-"); }
+int SpeciesIndex::ine() { return _indexMap.at("e-"); }
 
-int SpeciesIndex::inp() { return indexMap.at("H+"); }
+int SpeciesIndex::inp() { return _indexMap.at("H+"); }
 
-size_t SpeciesIndex::size() { return indexMap.size(); }
+int SpeciesIndex::inH() { return _indexMap.at("H"); }
+
+int SpeciesIndex::inH2() { return _indexMap.at("H2"); }
+
+size_t SpeciesIndex::size() { return _indexMap.size(); }

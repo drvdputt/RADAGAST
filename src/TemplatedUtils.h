@@ -134,7 +134,9 @@ T integrate(const T1& xContainer, const T2& yContainer)
 	                            size_t{xContainer.size() - 1});
 }
 
-/** Finds the index of the first element >= val, in the iterable container `container'. */
+/** Finds the index of the first element >= val, in the iterable container `container'. If val < all
+    the elements, 0 is returned. If val > all the elements, then the index to the last element is
+    returned. */
 template <typename T, typename T1> inline size_t index(T val, const T1& container)
 {
 	auto idx = std::lower_bound(std::begin(container), std::end(container), val);

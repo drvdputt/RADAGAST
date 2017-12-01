@@ -97,6 +97,14 @@ public:
 	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
+	/** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i, f)
+	    and the_cvv(f, i) respectively. For each transition in the CollisionData object, q_if
+	    [cm3 s-1] is interpolated for the given temperature, and multiplied by the given partner
+	    density to obtain the Cif [s-1]. Cfi is calculated using @f$ C_{fi} =
+	    C_{if}\frac{g_i}{g_f}\exp(-h \nu_{if} / kT) @f$. */
+	void addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,
+	              double nPartner) const;
+
 	int _maxJ, _maxV;
 
 	/* Contains the quantum numbers and energies of the levels. The output will be indexed in
@@ -118,6 +126,8 @@ private:
 	EMatrix _avv;
 
 	/** Collisions between H and H2. */
+	// Cache species index of the collision partner
+	int _inH;
 	CollisionData _qH;
 };
 

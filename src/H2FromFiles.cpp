@@ -3,12 +3,14 @@
 #include "DebugMacros.h"
 #include "Error.h"
 #include "IOTools.h"
+#include "SpeciesIndex.h"
+#include "TemplatedUtils.h"
 
 // TODO: make model
 
 using namespace std;
 
-H2FromFiles::H2FromFiles(int maxJ, int maxV) : _maxJ{maxJ}, _maxV{maxV}
+H2FromFiles::H2FromFiles(int maxJ, int maxV) : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()}
 {
 	readLevels();
 	readTransProb();
@@ -192,7 +194,13 @@ EMatrix H2FromFiles::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
 
 EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 {
-	return EMatrix::Zero(_numL, _numL);
+	EMatrix the_cvv{EMatrix::Zero(_numL, _numL)};
+
+	// H-H2 collisions
+	double nH = speciesNv(_inH);
+	addToCvv(the_cvv, _qH, T, nH);
+
+	return the_cvv;
 }
 
 EVector H2FromFiles::sourcev(double T, const EVector& speciesNv) const
@@ -203,4 +211,40 @@ EVector H2FromFiles::sourcev(double T, const EVector& speciesNv) const
 EVector H2FromFiles::sinkv(double T, double n, const EVector& speciesNv) const
 {
 	return EVector::Zero(_numL);
+}
+
+void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,
+                           double nPartner) const
+{
+	/* Find the grid point to the right of (>=) the requested log-temperature. (Returns last
+	   point if T > Tmax). We will naively extrapolate for points outside the range, and cut off
+	   the result at 0 if it becomes negative. */
+	const Array& temperaturev = qdata.temperaturev();
+	int iRight = TemplatedUtils::index(T, temperaturev);
+	iRight = max(iRight, 1);
+	int iLeft = iRight - 1;
+	double tRight = temperaturev[iRight];
+	double tLeft = temperaturev[iLeft];
+
+	double kT = T * Constant::BOLTZMAN;
+	std::vector<std::array<int, 2>> transitionv = qdata.transitionv();
+	for (int transitionIndex = 0; transitionIndex < transitionv.size(); transitionIndex++)
+	{
+		// Interpolate data points naively for temperatures left and right of T
+		double qLeft = qdata.q(iLeft, transitionIndex);
+		double qRight = qdata.q(iRight, transitionIndex);
+		double q = TemplatedUtils::interpolateLinear(T, tLeft, tRight, qLeft, qRight);
+		// Make zero if interpolation makes this negative
+		q = max(0., q);
+
+		// The levels involved in this transition
+		int i = transitionv[transitionIndex][0];
+		int f = transitionv[transitionIndex][1];
+		const H2Level& ini = _levelv[i];
+		const H2Level& fin = _levelv[f];
+		double Cif = q * nPartner;
+		double Cfi = Cif * ini.g() / fin.g() * exp((fin.e() - ini.e()) / kT);
+		the_cvv(i, f) += Cif;
+		the_cvv(f, i) += Cfi;
+	}
 }

@@ -11,11 +11,11 @@ private:
 	/** This is a class with only static members. Constructor is private, so no instances can be
 	    created. */
 	SpeciesIndex();
-	
+
 	/** A map which maps species names to the indices used in the vector Currently available
 	    names are "e-" for electrons "H+" for protons, "H" for atomic hydrogen and "H2" for
 	    molecular hydrogen. */
-	static const std::map<std::string, int> indexMap;
+	static const std::map<std::string, int> _indexMap;
 
 	/** A function which generates the speciesIndex. */
 	static std::map<std::string, int>
@@ -29,7 +29,8 @@ public:
 	/** Often used indices. */
 	static int ine();
 	static int inp();
-	
+	static int inH();
+	static int inH2();
 
 	/** The number of species. */
 	static size_t size();
