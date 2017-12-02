@@ -31,20 +31,22 @@ constexpr double AU_CM = 1.49597871e+13;             // AU --> cm
 constexpr double PC_CM = 3.08567758e+18;             // Parsec --> cm
 constexpr double JY_CGS = 1.0e-23;                   // Constants without wave conversion.
 constexpr double MKS_CGS = 10.0;
-constexpr double U_J = (FPI) / (LIGHT);  // Convert Energy Density to Field
-constexpr double VFAC = (FPI) / 3.0;     // Volume factor (4/3)*pi
-constexpr double ERG_EV = 6.24150974e11; // Ergs -> electron volts
+constexpr double U_J = (FPI) / (LIGHT);              // Convert Energy Density to Field
+constexpr double VFAC = (FPI) / 3.0;                 // Volume factor (4/3)*pi
+constexpr double ERG_EV = 6.24150974e11;             // Ergs -> electron volts
 
 // New constants
-constexpr double HABING = 5.33e-14; // 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
-constexpr double ELECTRONMASS = 9.1094e-28;  // electron mass in grams
-constexpr double PROTONMASS = 1.6726219e-24; // proton mass in grams
-constexpr double FINESTRUCTURE = .0072973525664;
-constexpr double RYDBERG = 13.605693009 / ERG_EV;
+// 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
+constexpr double HABING = 5.33e-14;
+constexpr double ELECTRONMASS = 9.1094e-28;        // electron mass in grams
+constexpr double PROTONMASS = 1.6726219e-24;       // proton mass in grams
+constexpr double FINESTRUCTURE = .0072973525664;   // Fine structure constant
+constexpr double RYDBERG = 13.605693009 / ERG_EV;  // Rydberg constant in ergs
+// electron charge square in cgs (I think cgs uses Gaussian // units or something)
 constexpr double ESQUARE = Constant::FINESTRUCTURE * Constant::PLANCKLIGHT / 2. /
-                           Constant::PI; // electron charge square in cgs (I think cgs uses Gaussian
-                                         // units or something)
-constexpr double SQRT2PI = 2.50662827463;
+			   Constant::PI;
+
+constexpr double SQRT2PI = 2.50662827463; // sqrt(2*pi)
 constexpr double CSQUARE_TWOPLANCK = Constant::LIGHT * Constant::LIGHT / 2. / Constant::PLANCK;
 }
 

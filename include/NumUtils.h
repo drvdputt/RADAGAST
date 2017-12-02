@@ -131,10 +131,11 @@ void sortIndexOnvector(std::vector<T>& vect, std::vector<int>& index, int beg, i
 template <typename T, typename T1, typename T2>
 T integrate(const std::vector<T1>& x, const std::vector<T2>& y);
 template <typename T>
-std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const std::vector<T>& u,
-                        int LoEx = 2, int HiEx = 2);
+std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x,
+                        const std::vector<T>& u, int LoEx = 2, int HiEx = 2);
 template <typename T>
-void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx = 2, int HiEx = 2);
+void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx = 2,
+               int HiEx = 2);
 template <typename T, typename T1, typename T2>
 std::vector<T> bbodyCGS(T1 wave, std::vector<T2>& Temperature);
 template <typename T, typename T1, typename T2>
@@ -353,12 +354,13 @@ T integrate(const std::vector<T1>& x, const std::vector<T2>& y)
 // ****************************************************************************
 // Interpolate - should be fast enough for small vectors.
 template <typename T>
-std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const std::vector<T>& u,
-                        int LoEx, int HiEx)
+std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x,
+                        const std::vector<T>& u, int LoEx, int HiEx)
 {
 	if (v.size() != x.size())
 	{
-		std::cout << "Abscissa and ordinate lengths do not match in interpol" << std::endl;
+		std::cout << "Abscissa and ordinate lengths do not match in interpol"
+		          << std::endl;
 		throw "size mismatch";
 	}
 	// std::std::cout << "usize " << u.size() << " " << x.size() <<  std::endl;
@@ -379,7 +381,7 @@ std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const 
 		/* 	std::cout << i <<  std::endl; */
 		if (u[i] < x[0])
 		{ // extrapolate to left.
-		  // 	  std::cout << "left" <<  std::endl;
+			// 	  std::cout << "left" <<  std::endl;
 			switch (LoEx)
 			{
 			case -1:
@@ -396,7 +398,7 @@ std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const 
 		{
 			if (u[i] > x[x.size() - 1])
 			{ // extrapolate right.
-			  // 	    std::cout << "right" <<  std::endl;
+				// 	    std::cout << "right" <<  std::endl;
 				switch (HiEx)
 				{
 				case -1:
@@ -409,7 +411,8 @@ std::vector<T> interpol(const std::vector<T>& v, const std::vector<T>& x, const 
 					r[i] = extrint1 + extrslp1 * u[i];
 					break;
 				default:
-					r[i] = v[v.size() - 1] * pow(u[i] / x[x.size() - 1], HiEx);
+					r[i] = v[v.size() - 1] *
+					       pow(u[i] / x[x.size() - 1], HiEx);
 					break;
 				}
 			}
@@ -521,7 +524,8 @@ void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx
 
 	if (v.size() != x.size())
 	{
-		std::cout << "Abscissa and ordinate lengths do not match in interpol" << std::endl;
+		std::cout << "Abscissa and ordinate lengths do not match in interpol"
+		          << std::endl;
 		throw "size mismatch";
 	}
 
@@ -542,7 +546,7 @@ void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx
 
 	while (*iul < *ix)
 	{ // Extrapolate to the left.
-	  // std::cout << "EXTRAPOLATING LOW" <<  std::endl;
+		// std::cout << "EXTRAPOLATING LOW" <<  std::endl;
 		switch (LoEx)
 		{
 		case -1: // set to 0
@@ -594,7 +598,8 @@ void interpolr(std::vector<T>& v, std::vector<T>& x, std::vector<T>& u, int LoEx
 			ix++;
 			iv++;
 		}
-		*ir = ((*iu) - (*(ix))) * ((*(iv)) - (*(iv - 1))) / ((*(ix)) - (*(ix - 1))) + (*iv);
+		*ir = ((*iu) - (*(ix))) * ((*(iv)) - (*(iv - 1))) / ((*(ix)) - (*(ix - 1))) +
+		      (*iv);
 		ir++;
 	}
 }
@@ -827,7 +832,8 @@ std::vector<T> poly_fit(std::vector<T> x, std::vector<T> y, int ndegree, std::ve
 	// for (int i=0;i<n;i++) yfit.push_back(param[ndegree]);
 	for (int k = ndegree - 1; k >= 0; k--)
 	{
-		transform(yfit.begin(), yfit.end(), x.begin(), yfit.begin(), std::multiplies<T>());
+		transform(yfit.begin(), yfit.end(), x.begin(), yfit.begin(),
+		          std::multiplies<T>());
 		transform(yfit.begin(), yfit.end(), yfit.begin(),
 		          bind2nd(std::plus<T>(), param[k]));
 	}
@@ -921,7 +927,9 @@ template <typename T> class Matrix : public std::vector<T>
 public:
 	// Constructors/destructors.
 	Matrix() : std::vector<T>() {}
-	Matrix(int n1, int n2, const T& ival) : std::vector<T>(n1 * n2, ival), _n1(n1), _n2(n2) {}
+	Matrix(int n1, int n2, const T& ival) : std::vector<T>(n1 * n2, ival), _n1(n1), _n2(n2)
+	{
+	}
 	explicit Matrix(int n1, int n2) : std::vector<T>(n1 * n2), _n1(n1), _n2(n2) {}
 	~Matrix() {}
 	// Return reference to correct element in vector; All vector type assignments
@@ -1005,22 +1013,22 @@ template <typename T> inline T& Cube<T>::operator()(int n1_id, int n2_id, int n3
 {
 	if (n1_id < 0 || n1_id >= _n1)
 	{
-		std::cout << "out_of_range Cube::operator(), element 1 " << n1_id << "," << n2_id
-		          << "," << n3_id << " " << _n1 << std::endl;
+		std::cout << "out_of_range Cube::operator(), element 1 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << _n1 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 1";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n2_id < 0 || n2_id >= _n2)
 	{
-		std::cout << "out_of_range Cube::operator(), element 2 " << n1_id << "," << n2_id
-		          << "," << n3_id << " " << _n2 << std::endl;
+		std::cout << "out_of_range Cube::operator(), element 2 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << _n2 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 2";
 		throw std::out_of_range(ExceptionObject);
 	}
 	if (n3_id < 0 || n3_id >= _n3)
 	{
-		std::cout << "out_of_range Cube::operator(), element 3 " << n1_id << "," << n2_id
-		          << "," << n3_id << " " << _n3 << std::endl;
+		std::cout << "out_of_range Cube::operator(), element 3 " << n1_id << ","
+		          << n2_id << "," << n3_id << " " << _n3 << std::endl;
 		std::string ExceptionObject = "out_of_range Cube::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
@@ -1044,7 +1052,8 @@ template <typename T> int Cube<T>::n3rd() { return _n3; }
 // ****************************************************************************
 
 // given the index of the cell, return the x, y and z indices
-template <typename T> inline void Cube<T>::get_xyz(int cell_num, int& n1_id, int& n2_id, int& n3_id)
+template <typename T>
+inline void Cube<T>::get_xyz(int cell_num, int& n1_id, int& n2_id, int& n3_id)
 {
 	div_t div_result;
 	if (cell_num < 0 || cell_num > (int) this->size())
@@ -1127,7 +1136,8 @@ inline T& FourVector<T>::operator()(int n1_id, int n2_id, int n3_id, int n4_id)
 		std::string ExceptionObject = "out_of_range FourVector::operator(), element 3";
 		throw std::out_of_range(ExceptionObject);
 	}
-	return *(this->begin() + n4_id * _n1 * _n2 * _n3 + n3_id * _n1 * _n2 + n2_id * _n1 + n1_id);
+	return *(this->begin() + n4_id * _n1 * _n2 * _n3 + n3_id * _n1 * _n2 + n2_id * _n1 +
+	         n1_id);
 }
 
 // Size the FourVector after instatiation.
@@ -1150,7 +1160,8 @@ template <typename T> int FourVector<T>::n4th() { return _n4; }
 
 // given the index of the cell, return the x, y and z indices
 template <typename T>
-inline void FourVector<T>::get_xyzz(int cell_num, int& n1_id, int& n2_id, int& n3_id, int& n4_id)
+inline void FourVector<T>::get_xyzz(int cell_num, int& n1_id, int& n2_id, int& n3_id,
+                                    int& n4_id)
 {
 	div_t div_result;
 	if (cell_num < 0 || cell_num > (int) this->size())
