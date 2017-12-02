@@ -98,6 +98,9 @@ public:
 	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
+	/** Returns true if the given J and V are within the boundaries specified by the user. */
+	bool validJV(int J, int v) const;
+
 	/** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i, f)
 	    and the_cvv(f, i) respectively. For each transition in the CollisionData object, q_if
 	    [cm3 s-1] is interpolated for the given temperature, and multiplied by the given partner

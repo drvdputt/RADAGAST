@@ -37,6 +37,16 @@ public:
 	    construction. */
 	void insertDataForTransition(const Array& qForEachTv, int i, int f);
 
+	/** Performs a couple of checks on the data. To be called when the user is done putting
+	    in the data using the insert function. Will throw an error if there is still a
+	    column of zeros, or if there is a negative value in the table. Will also throw an
+	    error if something's off with the map or the transition list. */
+	void check() const;
+
+	/* GETTERS. Pick whichever you find most useful. Seems like a have a little
+	   bi-directional map thing going on. Having this generalized might be handy in the
+	   future. */
+
 	/** Get the temperature vector */
 	Array temperaturev() const { return _temperaturev; }
 
