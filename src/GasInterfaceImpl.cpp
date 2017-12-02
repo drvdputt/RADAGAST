@@ -30,8 +30,7 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel,
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
 	if (_molecular)
-		_chemSolver = make_unique<ChemistrySolver>(
-		                move(make_unique<ChemicalNetwork>()));
+		_chemSolver = make_unique<ChemistrySolver>(make_unique<ChemicalNetwork>());
 
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
@@ -76,10 +75,11 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		double logTinit = log10(Tinit);
 
 		/* Lambda function that will be used by the search algorithm. The state of the
-		   system will be updated every time the algorithm calls this function. The return
-		   value indicates whether the temperature should increase (there is net heating so
-		   we need a higher temperature leading to more cooling) or decrease (there is net
-		   cooling so we need a lower temperature leading to less cooling). */
+		   system will be updated every time the algorithm calls this function. The
+		   return value indicates whether the temperature should increase (there is net
+		   heating so we need a higher temperature leading to more cooling) or decrease
+		   (there is net cooling so we need a lower temperature leading to less
+		   cooling). */
 		int counter = 0;
 		function<int(double)> evaluateThermalBalance = [&](double logT) -> int {
 			counter++;
@@ -139,7 +139,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	{
 		DEBUG("Calculating state for T = " << T << "K" << endl);
 
-		// Initial guess for the chemistry. Rather important for getting good convergence.
+		/* Initial guess for the chemistry. Rather important for getting good
+		   convergence. */
 		double iniNH2 = nHtotal / 4;
 		double iniAtomAndIon = nHtotal / 2;
 		double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
@@ -148,11 +149,11 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		s.speciesNv << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
 		                (1 - guessF) * iniAtomAndIon, iniNH2;
 
-		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
-		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
+		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 *
+		   nH2 / 4 = 0 + n / 2 + 2n / 2 = ntotal */
 
-		/* Lambda function, because it is only needed in this scope. The [&] passes the current
-		   scope by reference, so the lambda function can modify s. */
+		/* Lambda function, because it is only needed in this scope. The [&] passes the
+		   current scope by reference, so the lambda function can modify s. */
 		auto solveLevelBalances = [&]() {
 			double nH = s.speciesNv(_inH);
 			DEBUG("Solving levels nH = " << nH << endl);
@@ -167,8 +168,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			}
 		};
 
-		/* Use the initial guess for the chemical abundances to calculate our first set of
-		   level populations. */
+		/* Use the initial guess for the chemical abundances to calculate our first set
+		   of level populations. */
 		solveLevelBalances();
 
 		int counter = 0;
@@ -201,23 +202,25 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 				s.speciesNv = _chemSolver->solveBalance(reactionRates,
 				                                        s.speciesNv);
 
-				/* TODO: Add effect of grain charging to chemical network. I think
-				   it might be possible to do this by imposing a conservation
-				   equation for the number of electrons: ne + nH + nH2 = (ne + nH +
-				   nH2)_0 + <Cg>*ng The average grain charge <Gg> should be updated
-				   together with the rates I guess?  Another option would be to
-				   include the grain charge rates into the network as extra
-				   reactions. The production vector would be (1 0 0 0) while the
-				   reactant vector would be zero (the grains don't disappear when
-				   they lose an electron) Grain recombination / charge exchange
-				   reaction could also be added. I need to think about whether the
-				   'disappearing' particles will cause problems when couples with
-				   conservation equations. */
+				/* TODO: Add effect of grain charging to chemical network. I
+				   think it might be possible to do this by imposing a
+				   conservation equation for the number of electrons: ne + nH +
+				   nH2 = (ne + nH + nH2)_0 + <Cg>*ng. The average grain charge
+				   <Gg> should be updated together with the rates I guess?
+				   Another option would be to include the grain charge rates
+				   into the network as extra reactions. The production vector
+				   would be (1 0 0 0) while the reactant vector would be zero
+				   (the grains don't disappear when they lose an electron) Grain
+				   recombination / charge exchange reaction could also be added.
+				   I need to think about whether the 'disappearing' particles
+				   will cause problems when couples with conservation
+				   equations. */
 			}
 			// When ignoring H2
 			else
 			{
-				// Just solve the ionization balance in the nebular approximation
+				/* Just solve the ionization balance in the nebular
+				   approximation. */
 				double f = Ionization::solveBalance(nHtotal, T, _frequencyv,
 				                                    specificIntensityv);
 				DEBUG("Ionized fraction = " << f << endl);
@@ -245,7 +248,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			                    << "convergence: \n"
 			                    << convergedv << endl);
 
-			// Currently, the implementation without molecules does not need iteration.
+			/* Currently, the implementation without molecules does not need
+			   iteration. */
 			stopCriterion = !_molecular || convergedv.all() ||
 			                counter > MAXCHEMISTRYITERATIONS;
 		}
@@ -293,9 +297,7 @@ Array GasInterfaceImpl::opacityv(const Solution& s) const
 		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
 #ifdef SANITY
 		if (totalOp[iFreq] < 0)
-		{
 			cout << "Negative opacity!";
-		}
 #endif
 	}
 	return totalOp;
@@ -344,8 +346,9 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 		const GrainType* type = pop->type();
 		if (type->heatingAvailable())
 		{
-			/* Choose the correct parameters for the photoelectric heating calculation
-			   based on the type (a.k.a. composition) of the population. */
+			/* Choose the correct parameters for the photoelectric heating
+			   calculation based on the type (a.k.a. composition) of the
+			   population. */
 			GrainPhotoelectricEffect gpe(*type);
 			grainPhotoelectricHeating += gpe.heatingRate(env, *pop);
 		}

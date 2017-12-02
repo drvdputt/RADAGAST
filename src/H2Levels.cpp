@@ -12,14 +12,15 @@ H2Levels::H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequenc
 H2Levels::~H2Levels() = default;
 
 /** Mvv is Mij in my notes. */
-double evaluateSinglePopulation(size_t i, const EVector& nv, const EMatrix& Mvv,
-                                const EVector& sourcev, const EVector& sinkv)
+double H2Levels::evaluateSinglePopulation(size_t i, const EVector& nv, const EMatrix& Mvv,
+                                          const EVector& sourcev, const EVector& sinkv) const
 {
 	// TODO: different implementation for X vs excited levels
 	// creationRate - ni * destructionFraction = 0
 	// ==> ni = creationRate / destructionFraction
 
-	// FIXME: assume that we only have X states (this is the case at the moment (28/11/2017))) for excited states the summation boundaries are different
+	// FIXME: assume that we only have X states (this is the case at the moment
+	// (28/11/2017))) for excited states the summation boundaries are different
 
 	// sum_j M_ij n_j + f_i
 	double creationRate = (Mvv.row(i) * nv).sum() + sourcev(i);

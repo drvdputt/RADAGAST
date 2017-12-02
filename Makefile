@@ -14,11 +14,12 @@ endif
 
 # Options, to be customized by user.
 # Debug build
-OPTFLAGS=-O0 -g -Wall -Wextra -Werror=return-type -pedantic -Wconversion
+OPTFLAGS=-O0 -g -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -Wconversion
 # Release build
-release: OPTFLAGS=-O3 -Wall -Wextra -Werror=return-type -pedantic -DSILENT
+release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT
 
-# Target directories (this group of directories might be relocatable, but I have never tested this)
+# Target directories (this group of directories might be relocatable, but I have never tested
+# this)
 # ==================
 
 TARGETDIR=$(shell pwd)/..
@@ -32,8 +33,8 @@ OBJDIR=$(TARGETDIR)/obj
 # Archive the objects that will be created into a library, for easy linking by the client code.
 LIBDIR=$(TARGETDIR)/lib
 
-# Symlink the headers describing the public interface, to have a clear and minimal include path for
-# the client code.
+# Symlink the headers describing the public interface, to have a clear and minimal include path
+# for the client code.
 PUBLIC_INCLUDEDIR=$(TARGETDIR)/include
 
 # Source directories
@@ -76,8 +77,8 @@ LIBFILE=$(LIBDIR)/libgasmodule.a
 # The archiver used
 AR=ar
 
-# We also make an include directory with symlinks to some headers in the repo. These should be the
-# only headers that a client will ever need to include.
+# We also make an include directory with symlinks to some headers in the repo. These should be
+# the only headers that a client will ever need to include.
 $(shell mkdir -p $(PUBLIC_INCLUDEDIR) >/dev/null)
 INTERFACEHEADERS=GasInterface.h GasState.h GrainInterface.h
 INTERFACELINKS=$(patsubst %, $(PUBLIC_INCLUDEDIR)/%, $(INTERFACEHEADERS))
@@ -87,8 +88,8 @@ DEPENDS=$(OBJECTS:.o=.d)
 
 # Flags that tell to compiler to create dependency files. Each dependencency file is actually
 # contains instructions which fit in a makefile, and they will be included later. We create them
-# here with a different name to prevent some weird conditions from occuring. They are renamed after
-# generation.
+# here with a different name to prevent some weird conditions from occuring. They are renamed
+# after generation.
 DEPFLAGS=-MT $@ -MMD -MP -MF $(OBJDIR)/$*.Td
 
 # Build commands
@@ -119,8 +120,8 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJDIR)/%.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $<
 	@mv -f $(OBJDIR)/$*.Td $(OBJDIR)/$*.d
 
-# Include the extra rules for all the objects files provided in the .d files.
-# They will now depend on the correct headers.
+# Include the extra rules for all the objects files provided in the .d files. They will now
+# depend on the correct headers.
 include $(DEPENDS)
 
 # Do nothing if the .d files don't exist yet
