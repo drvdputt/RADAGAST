@@ -63,7 +63,8 @@ private:
 			bool oddJ = _j % 2;
 
 			/* For these states, odd J -> ortho; even J -> para. */
-			if (_eState == ElectronicState::X || _eState == ElectronicState::Cminus ||
+			if (_eState == ElectronicState::X ||
+			    _eState == ElectronicState::Cminus ||
 			    _eState == ElectronicState::Dminus)
 				ortho = oddJ;
 			/* For the other states, it's the other way round. */

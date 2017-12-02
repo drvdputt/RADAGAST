@@ -65,8 +65,9 @@ public:
 		Environment(const Array& frequencyv, const Array& specificIntensityv, double T,
 		            double ne, double np, const std::vector<int>& chargev,
 		            const Array& densityv, const Array& massv)
-		                : _frequencyv(frequencyv), specificIntensityv(specificIntensityv),
-		                  _T(T), _ne(ne), _np(np), _chargev(chargev), _densityv(densityv),
+		                : _frequencyv(frequencyv),
+		                  specificIntensityv(specificIntensityv), _T(T), _ne(ne),
+		                  _np(np), _chargev(chargev), _densityv(densityv),
 		                  _massv(massv){};
 		// Radiation field
 		Array _frequencyv, specificIntensityv;

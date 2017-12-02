@@ -16,9 +16,10 @@ NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
 		if (_ev(upper) - _ev(lower) < 0)
 		{
 			cout << "Eu - El = " << _ev(upper) - _ev(lower) << endl;
-			cout << "u l = " << upper << " " << lower << " Aul = " << _avv(upper, lower)
-			     << endl;
-			Error::runtime("There is an upward A-coefficient. This can't be correct");
+			cout << "u l = " << upper << " " << lower
+			     << " Aul = " << _avv(upper, lower) << endl;
+			Error::runtime("There is an upward A-coefficient. This can't be "
+			               "correct");
 		}
 	});
 }
@@ -40,8 +41,8 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv, double temperature,
-                                      const Array& specificIntensityv) const
+NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
+                                      double temperature, const Array& specificIntensityv) const
 {
 	Solution s;
 	s.n = density;
@@ -67,7 +68,8 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv, 
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
 			                _frequencyv, lineProfile(upper, lower, s));
-			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm << endl);
+			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm
+			              << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
 		});

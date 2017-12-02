@@ -25,11 +25,13 @@ constexpr int MAXCHEMISTRYITERATIONS{100};
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel,
                                    unique_ptr<H2Levels> molecularModel, const Array& frequencyv)
                 : _frequencyv(frequencyv), _atomicLevels(move(atomModel)),
-                  _molecular(move(molecularModel)), _freeBound(make_unique<FreeBound>(frequencyv)),
+                  _molecular(move(molecularModel)),
+                  _freeBound(make_unique<FreeBound>(frequencyv)),
                   _freeFree(make_unique<FreeFree>(frequencyv))
 {
 	if (_molecular)
-		_chemSolver = make_unique<ChemistrySolver>(move(make_unique<ChemicalNetwork>()));
+		_chemSolver = make_unique<ChemistrySolver>(
+		                move(make_unique<ChemicalNetwork>()));
 
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
@@ -90,7 +92,8 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		};
 
 		double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(
-		                evaluateThermalBalance, logTinit, logTtolerance, logTmax, logTmin);
+		                evaluateThermalBalance, logTinit, logTtolerance, logTmax,
+		                logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
 		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi);
@@ -148,8 +151,6 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2
 		   / 4 = 0 + n / 2 + 2n / 2 = ntotal */
 
-
-
 		/* Lambda function, because it is only needed in this scope. The [&] passes the current
 		   scope by reference, so the lambda function can modify s. */
 		auto solveLevelBalances = [&]() {
@@ -192,10 +193,13 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 				DEBUG("Dissociation rate " << kDissH2Levels << endl);
 
 				// Solve chemistry network
-				EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
-				                T, _frequencyv, specificIntensityv, kDissH2Levels,
-				                kFormH2);
-				s.speciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv);
+				EVector reactionRates =
+				                _chemSolver->chemicalNetwork()->rateCoeffv(
+				                                T, _frequencyv,
+				                                specificIntensityv,
+				                                kDissH2Levels, kFormH2);
+				s.speciesNv = _chemSolver->solveBalance(reactionRates,
+				                                        s.speciesNv);
 
 				/* TODO: Add effect of grain charging to chemical network. I think
 				   it might be possible to do this by imposing a conservation
@@ -249,7 +253,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	else
 	{
 		s.speciesNv = EVector::Zero(SpeciesIndex::size());
-		s.HSolution = _atomicLevels->solveBalance(0, s.speciesNv, T, specificIntensityv);
+		s.HSolution = _atomicLevels->solveBalance(0, s.speciesNv, T,
+		                                          specificIntensityv);
 		if (_molecular)
 			s.H2Solution = _molecular->solveBalance(0, s.speciesNv, T,
 			                                        specificIntensityv);
@@ -322,15 +327,16 @@ double GasInterfaceImpl::heating(const Solution& s) const
 	return lineHeat + contHeat;
 }
 
-double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainInterface& g) const
+double GasInterfaceImpl::grainHeating(const Solution& s,
+                                      const GasModule::GrainInterface& g) const
 {
 	double grainPhotoelectricHeating{0};
 	// Specify the environment parameters
 	double ne = s.speciesNv[_ine];
 	double np = s.speciesNv[_inp];
-	GrainPhotoelectricEffect::Environment env(_frequencyv, s.specificIntensityv, s.T, ne, np,
-	                                          {-1, 1}, {ne, np},
-	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
+	GrainPhotoelectricEffect::Environment env(
+	                _frequencyv, s.specificIntensityv, s.T, ne, np, {-1, 1}, {ne, np},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS});
 	size_t numPop = g.numPopulations();
 	for (size_t i = 0; i < numPop; i++)
 	{
@@ -365,8 +371,9 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
-	return _freeFree->cooling(np_ne(s), s.T) +
-	       Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp), s.speciesNv(_ine), s.T);
+	return _freeFree->cooling(np_ne(s), s.T) + Ionization::cooling(s.speciesNv(_inH),
+	                                                               s.speciesNv(_inp),
+	                                                               s.speciesNv(_ine), s.T);
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const

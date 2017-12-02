@@ -27,7 +27,8 @@ double WD01::eMin(double a, int Z)
 #else
 	// WD01 eq 7
 	double e2_a{Constant::ESQUARE / a};
-	double Emin = Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
+	double Emin = Z >= 0 ? 0
+	                     : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
 	return Emin;
 #endif
 }
@@ -66,9 +67,10 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
 	   -min2). */
 	double Emax2 = Emax * Emax;
 	double Emin2 = Emin * Emin;
-	return 6 / Ediff3 * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	                     (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	                     Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	return 6 / Ediff3 *
+	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
+	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
@@ -95,7 +97,8 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	// Calculate y1 from grain properties and eq 13, 14
 	// double imaginaryRefIndex = 1; // should be wavelength-dependent
 	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
-	const double la = 100 * Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
+	const double la = 100 *
+	                  Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
 	double beta = a / la;
 	const double le = 10 * Constant::ANG_CM;
 	double alpha = beta + a / le;

@@ -45,7 +45,8 @@ double Ionization::photoRateCoeff(const Array& frequencyv, const Array& specific
 	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
 	Array integrand(nFreq);
 	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
+		integrand[n] = specificIntensityv[n] / frequencyv[n] *
+		               crossSection(frequencyv[n]);
 	double integral = Constant::FPI / Constant::PLANCK *
 	                  TemplatedUtils::integrate<double>(frequencyv, integrand);
 	return integral;
@@ -67,7 +68,8 @@ double Ionization::crossSection(double frequency)
 		double x = Constant::PLANCK * frequency * Constant::ERG_EV / E0;
 		double y = x;
 
-		double Fy = (x - 1) * (x - 1) * pow(y, 0.5 * P - 5.5) * pow(1 + sqrt(y / ya), -P);
+		double Fy = (x - 1) * (x - 1) * pow(y, 0.5 * P - 5.5) *
+		            pow(1 + sqrt(y / ya), -P);
 
 		return sigma0 * Fy * 1e-18;
 	}
@@ -103,13 +105,14 @@ double Ionization::heating(double np, double ne, double T, const Array& frequenc
 	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
 
 	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] * (frequencyv[n] - THRESHOLD) *
-		               crossSection(frequencyv[n]);
-	double topIntegral =
-	                Constant::PLANCK * TemplatedUtils::integrate<double>(frequencyv, integrand);
+		integrand[n] = specificIntensityv[n] / frequencyv[n] *
+		               (frequencyv[n] - THRESHOLD) * crossSection(frequencyv[n]);
+	double topIntegral = Constant::PLANCK *
+	                     TemplatedUtils::integrate<double>(frequencyv, integrand);
 
 	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] * crossSection(frequencyv[n]);
+		integrand[n] = specificIntensityv[n] / frequencyv[n] *
+		               crossSection(frequencyv[n]);
 
 	// The denominator comes from isolating n_0 from the balance equation, and now also includes
 	// the collisional term (top and bottom have been multiplied with h / 4pi, see 3.1, hence

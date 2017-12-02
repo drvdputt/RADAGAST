@@ -18,7 +18,8 @@ class HydrogenLevels : public NLevel
 public:
 	/** Work with a shared pointer here, so that a pointer can be given both to the derived
 	    class and the base class. */
-	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp, const Array& frequencyv);
+	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp,
+	               const Array& frequencyv);
 	~HydrogenLevels();
 
 	/** This function returns the line emission spectrum + the continuum emitted by the 2s-1s

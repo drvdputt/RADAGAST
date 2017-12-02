@@ -69,16 +69,19 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 #endif
 }
 
-double H2Levels::dissociationRate(const NLevel::Solution& s, const Array& specificIntensityv) const
+double H2Levels::dissociationRate(const NLevel::Solution& s,
+                                  const Array& specificIntensityv) const
 {
 	// See 2014-Sternberg eq 3
 	// F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
-	Array photonFluxv = Constant::FPI * specificIntensityv / frequencyv() / Constant::PLANCK;
+	Array photonFluxv =
+	                Constant::FPI * specificIntensityv / frequencyv() / Constant::PLANCK;
 	constexpr double freqLWmin{Constant::LIGHT / 1108 / Constant::ANG_CM};
 	constexpr double freqLWmax{Constant::LIGHT / 912 / Constant::ANG_CM};
 	size_t iLWmin{TemplatedUtils::index(freqLWmin, frequencyv())};
 	size_t iLWmax{TemplatedUtils::index(freqLWmax, frequencyv())};
-	double F0 = TemplatedUtils::integrate<double>(frequencyv(), photonFluxv, iLWmin, iLWmax);
+	double F0 = TemplatedUtils::integrate<double>(frequencyv(), photonFluxv, iLWmin,
+	                                              iLWmax);
 
 	// eq 4 and 5
 	double Iuv{F0 / 2.07e7};

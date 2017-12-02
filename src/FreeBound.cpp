@@ -30,11 +30,11 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	size_t numFreq = _frequencyv.size();
 	_gammaDaggervv.resize(numFreq, numcol);
 
-	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to " << fileFrequencyv.back()
-	                                    << endl);
+	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to "
+	                                    << fileFrequencyv.back() << endl);
 
-	DEBUG("frequency range: " << _frequencyv[0] << " to " << _frequencyv[_frequencyv.size() - 1]
-	                          << endl);
+	DEBUG("frequency range: " << _frequencyv[0] << " to "
+	                          << _frequencyv[_frequencyv.size() - 1] << endl);
 
 	/* Then, apply a linear interpolation across the frequencies (rows) for every temperature
 	   (column) */
@@ -88,7 +88,8 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 			/* The weight of the point to the right (= 1 if T is Tright, = 0 if T is
 			   Tleft). */
 			double wRight = (logT - _logTemperaturev[iRight - 1]) /
-			                (_logTemperaturev[iRight] - _logTemperaturev[iRight - 1]);
+			                (_logTemperaturev[iRight] -
+			                 _logTemperaturev[iRight - 1]);
 
 			// Interpolate gamma^dagger linearly in log T space
 			double gammaDagger = (_gammaDaggervv(iNu, iRight - 1) * (1 - wRight) +
@@ -130,7 +131,8 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv,
 			if (lineNr == 0)
 			{
 				iss >> numcol >> numrow;
-				fileGammaDaggervv.resize(numrow, std::vector<double>(numcol, 0.));
+				fileGammaDaggervv.resize(numrow,
+				                         std::vector<double>(numcol, 0.));
 			}
 			if (lineNr == 1)
 			{
@@ -144,7 +146,8 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv,
 				double energy;
 				iss >> flag >> energy;
 
-				double frequency = energy * Constant::RYDBERG / Constant::PLANCK;
+				double frequency =
+				                energy * Constant::RYDBERG / Constant::PLANCK;
 				fileFrequencyv.push_back(frequency);
 				if (flag)
 					fileThresholdv.push_back(frequency);
@@ -215,7 +218,8 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 					// find the next threshold of lower frequency
 					// (don't just pick the next one, as this wouldn't work with
 					// very coarse grids)
-					iThreshold = TemplatedUtils::index(freq, _thresholdv) - 1;
+					iThreshold = TemplatedUtils::index(freq, _thresholdv) -
+					             1;
 					tE = Constant::PLANCK * _thresholdv[iThreshold];
 				}
 			}
@@ -247,8 +251,8 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 			                   (freq - Ionization::THRESHOLD));
 			double u2 = u_nu * u_nu;
 			double a_nu = Ionization::crossSection(freq);
-			double f_u_nu = SpecialFunctions::maxwellBoltzman(u_nu, T,
-			                                                  Constant::ELECTRONMASS);
+			double f_u_nu = SpecialFunctions::maxwellBoltzman(
+			                u_nu, T, Constant::ELECTRONMASS);
 			double ionizingContinuum = h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
 			gamma_nuv[iFreq] += ionizingContinuum;
 		}

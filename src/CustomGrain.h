@@ -6,8 +6,9 @@
 class CustomGrain : public GrainType
 {
 public:
-	CustomGrain(const GasModule::SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
-	            double workFunction, GasModule::IonizationPotentialf ionizationpotentialf,
+	CustomGrain(const GasModule::SfcInteractionPar& sfcInteractionPar,
+	            bool heatingAvailable, double workFunction,
+	            GasModule::IonizationPotentialf ionizationpotentialf,
 	            GasModule::PhotoelectricYieldf photoElectricYieldf,
 	            GasModule::AutoIonizationThresholdf autoIonizationThresholdf,
 	            GasModule::StickingCoefficientf stickingCoefficientf);

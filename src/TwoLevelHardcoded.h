@@ -7,9 +7,9 @@
 class TwoLevelHardcoded : public LevelDataProvider
 {
 public:
-	/** Constructs a \c LevelDataProvider object which will return the data to simulate a toy
-	    model of CII 158 um. The data comes from https://www.astro.umd.edu/~jph/N-level.pdf,
-	    bottom of page 4. */
+	/** Constructs a \c LevelDataProvider object which will return the data to simulate a
+	    toy model of CII 158 um. The data comes from
+	    https://www.astro.umd.edu/~jph/N-level.pdf, bottom of page 4. */
 	TwoLevelHardcoded();
 
 	/** Returns 2. */

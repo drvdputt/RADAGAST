@@ -17,8 +17,8 @@ namespace GasModule
 typedef struct SfcInteractionPar
 {
 	SfcInteractionPar() = default;
-	SfcInteractionPar(double EH2, double Es, double EHp, double EHc, double aSqrt, double nuH2,
-	                  double nuHc, double F);
+	SfcInteractionPar(double EH2, double Es, double EHp, double EHc, double aSqrt,
+	                  double nuH2, double nuHc, double F);
 	/* This boolean is set to false when the default constructor is called, signifiying that the
 	   created object does not contain any useful information (meaning that the graintype for
 	   which it was contructed is not supported, and that the graintype given in the

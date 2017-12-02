@@ -16,7 +16,8 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 	{
 		const GasModule::GrainInterface::Population* pop = gInterface.population(i);
 		const GrainType* grainType = pop->type();
-		const GasModule::SfcInteractionPar& surfaceParams = grainType->sfcInteractionPar();
+		const GasModule::SfcInteractionPar& surfaceParams =
+		                grainType->sfcInteractionPar();
 		size_t numSizes = pop->numSizes();
 		for (size_t iSize = 0; iSize < numSizes; iSize++)
 		{
@@ -40,12 +41,13 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 
 			// 1 / B
 			double oneOverB{4. * exp(Es / Td) * sqrtEHp_Es / sqrtEHc_Es +
-			                8 * sqrt(Constant::PI * Td) / (EHc - Es) * exp(-2 * aSqrt) *
-			                                exp(EHp / Td) * sqrtEHc_Es};
+			                8 * sqrt(Constant::PI * Td) / (EHc - Es) *
+			                                exp(-2 * aSqrt) * exp(EHp / Td) *
+			                                sqrtEHc_Es};
 			double onePlusSqrtFrac{1 * sqrtEHc_Es / sqrtEHp_Es};
-			double oneOverKsi{1 +
-			                  nu_Hc / 2. / F * exp(-1.5 * EHc / Td) * onePlusSqrtFrac *
-			                                  onePlusSqrtFrac};
+			double oneOverKsi{1 + nu_Hc / 2. / F * exp(-1.5 * EHc / Td) *
+			                                      onePlusSqrtFrac *
+			                                      onePlusSqrtFrac};
 			// eps = (1 + B)^-1 * ksi
 			double epsilon{1 / (1 + 1 / oneOverB) / oneOverKsi};
 

@@ -129,8 +129,8 @@ Array Testing::generateQabsv(double a, const Array& frequencyv)
 	else // interpolated from data
 	{
 		size_t a_index = TemplatedUtils::index(a, FILEAV);
-		double normalDistance =
-		                (a - FILEAV[a_index - 1]) / (FILEAV[a_index] - FILEAV[a_index - 1]);
+		double normalDistance = (a - FILEAV[a_index - 1]) /
+		                        (FILEAV[a_index] - FILEAV[a_index - 1]);
 		// interpolate the values from the file for a specific grain size
 		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
 			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
@@ -139,13 +139,13 @@ Array Testing::generateQabsv(double a, const Array& frequencyv)
 #ifdef EXACTGRID
 	return QabsWavFromFileForA;
 #endif
-	QabsWav = TemplatedUtils::linearResample<vector<double>>(QabsWavFromFileForA, FILELAMBDAV,
-	                                                         wavelengthv, -1, -1);
+	QabsWav = TemplatedUtils::linearResample<vector<double>>(
+	                QabsWavFromFileForA, FILELAMBDAV, wavelengthv, -1, -1);
 // #define PLOT_QABS
 #ifdef PLOT_QABS
 	stringstream filename;
-	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2)
-	         << fixed << a / Constant::ANG_CM << ".txt";
+	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
+	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream qabsfile = IOTools::ofstreamFile(filename.str());
 	for (size_t i = 0; i < frequencyv.size(); i++)
 		qabsfile << frequencyv[i] * Constant::CM_UM << '\t' << QabsWav[i] << endl;
@@ -175,8 +175,8 @@ Array Testing::improveFrequencyGrid(const NLevel& boundBound, const FreeBound& f
 	boundBound.lineInfo(numLines, lineFreqv, lineWidthv);
 
 	double lineWindowFactor = 1.;
-	double thermalFactor =
-	                sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) / Constant::LIGHT;
+	double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
+	                       Constant::LIGHT;
 	lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
 
 	vector<double> gridVector(begin(oldPoints), end(oldPoints));
@@ -277,10 +277,12 @@ Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, do
 	// Cut out the UV part
 	size_t i = 0;
 	size_t startUV, endUV;
-	while (frequencyv[i] < Constant::LIGHT / (2400 * Constant::ANG_CM) && i < frequencyv.size())
+	while (frequencyv[i] < Constant::LIGHT / (2400 * Constant::ANG_CM) &&
+	       i < frequencyv.size())
 		i++;
 	startUV = i > 0 ? i - 1 : 0;
-	while (frequencyv[i] < Constant::LIGHT / (912 * Constant::ANG_CM) && i < frequencyv.size())
+	while (frequencyv[i] < Constant::LIGHT / (912 * Constant::ANG_CM) &&
+	       i < frequencyv.size())
 		i++;
 	endUV = i + 1;
 	cout << "UV goes from " << startUV << " to " << endUV << endl;
@@ -342,7 +344,8 @@ void Testing::testIonizationStuff()
 		                freq > Ionization::THRESHOLD
 		                                ? A0 * pow(Ionization::THRESHOLD / freq, 4.) *
 		                                                  exp(4 - 4 * atan(eps) / eps) /
-		                                                  (1 - exp(-2 * Constant::PI / eps))
+		                                                  (1 -
+		                                                   exp(-2 * Constant::PI / eps))
 		                                : 0;
 		out << freq << "\t" << sigma << "\t" << sigmaTheoretical << "\t"
 		    << (sigma - sigmaTheoretical) / sigma << endl;
@@ -358,14 +361,16 @@ void Testing::testIonizationStuff()
 	for (double kT_eV : kT_eVv)
 	{
 		double T = kT_eV / Constant::BOLTZMAN / Constant::ERG_EV;
-		double cool = Ionization::cooling(n * (1 - f), f * n, f * n, T) / Constant::RYDBERG;
+		double cool = Ionization::cooling(n * (1 - f), f * n, f * n, T) /
+		              Constant::RYDBERG;
 		out << kT_eV << "\t" << cool << endl;
 	}
 	out.close();
 }
 
-void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath,
-                                  double Tc, double G0, double n, double expectedTemperature)
+void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
+                                  const std::string& outputPath, double Tc, double G0, double n,
+                                  double expectedTemperature)
 {
 	const Array& frequencyv = gi.frequencyv();
 
@@ -417,8 +422,9 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		out.precision(9);
 		double effective = emv[iFreq] - scav[iFreq];
 		effective = effective > 0 ? effective : 0;
-		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab << opv[iFreq]
-		    << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq] << tab << endl;
+		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
+		    << opv[iFreq] << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq]
+		    << tab << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}
@@ -477,7 +483,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	for (int N = 0; N < samples; N++, T *= factor)
 	{
 		GasModule::GrainInterface gri{};
-		GasInterfaceImpl::Solution s = gi.calculateDensities(n, T, specificIntensityv, gri);
+		GasInterfaceImpl::Solution s =
+		                gi.calculateDensities(n, T, specificIntensityv, gri);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -593,8 +600,9 @@ void Testing::testPS64Collisions()
 				if (cvv(nliIndex, nlfIndex) > 0 && abs(deltal) != 1)
 				{
 					stringstream ss;
-					ss << "The l-changing coefficient from " << n << "," << li
-					   << " to " << n << "," << lf << " should be zero.";
+					ss << "The l-changing coefficient from " << n << ","
+					   << li << " to " << n << "," << lf
+					   << " should be zero.";
 					Error::runtime(ss.str());
 				}
 			}

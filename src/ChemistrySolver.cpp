@@ -9,9 +9,11 @@
 
 constexpr int MAXNEWTONRAPHSONITERATIONS{100};
 
-ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv, const EMatrix& productStoichvv,
+ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv,
+                                 const EMatrix& productStoichvv,
                                  const EMatrix& conservationCoeffvv)
-                : _rStoichvv(reactantStoichvv), _netStoichvv(productStoichvv - reactantStoichvv),
+                : _rStoichvv(reactantStoichvv),
+                  _netStoichvv(productStoichvv - reactantStoichvv),
                   _conservEqvv(conservationCoeffvv)
 {
 	_numSpecies = _rStoichvv.rows();
@@ -38,7 +40,7 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	                [&](const EVector& nv) { return evaluateJvv(nv, rateCoeffv); },
 	                [&](const EVector& nv) {
 		                return evaluateFv(nv, rateCoeffv, conservedQuantityv);
-		        },
+	                },
 	                n0v);
 	return result;
 
@@ -97,7 +99,8 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 		   rates and multiply with the rate coefficient. */
 		EVector kDerivativev(_numReactions);
 		for (int r = 0; r < _numReactions; r++)
-			kDerivativev(r) = rateCoeffv(r) * densityProductDerivative(nv, r, jDeriv);
+			kDerivativev(r) =
+			                rateCoeffv(r) * densityProductDerivative(nv, r, jDeriv);
 
 		// Fill in the top part of the column (= equilibrium part)
 		jvv.col(jDeriv).head(_numSpecies) = _netStoichvv * kDerivativev;
@@ -269,7 +272,8 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 							if (!(allZerov[j] ||
 							      allZeroButDiagonalv[j]))
 							{
-								result(row, col) = wholeJfvv(i, j);
+								result(row, col) =
+								                wholeJfvv(i, j);
 								col++;
 							}
 						row++;
@@ -309,8 +313,8 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			// Do a newton raphson step for the reduced density vector
 			const EMatrix& reducedJvv = funcReducedJvv(currentReducedXv);
 			const EVector& reducedFv = funcReducedFv(currentReducedXv);
-			EVector reducedDeltaxv = newtonRaphsonStep(reducedJvv, reducedFv,
-			                                           funcReducedFv, currentReducedXv);
+			EVector reducedDeltaxv = newtonRaphsonStep(
+			                reducedJvv, reducedFv, funcReducedFv, currentReducedXv);
 
 			// Fill in the full deltaxv (zeros for species not included)
 			deltaxv = EVector::Zero(xv.size());

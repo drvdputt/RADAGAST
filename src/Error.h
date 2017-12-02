@@ -18,8 +18,8 @@ template <typename T> void equalCheck(std::string variable_names, T value1, T va
 	if (value1 != value2)
 	{
 		std::cerr << "Equality error: " << variable_names
-		          << " should be equal. Their values are " << value1 << " and " << value2
-		          << std::endl;
+		          << " should be equal. Their values are " << value1 << " and "
+		          << value2 << std::endl;
 		abort();
 	}
 }
@@ -29,8 +29,8 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 {
 	if (value <= min || value >= max)
 	{
-		std::cerr << "Range error: " << variable << " = " << value << ". Should be between "
-		          << min << " and " << max << std::endl;
+		std::cerr << "Range error: " << variable << " = " << value
+		          << ". Should be between " << min << " and " << max << std::endl;
 		abort();
 	}
 }
@@ -39,8 +39,8 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 template <typename T>
 void reportOverridden(std::string name, T original, T replacement, std::string reason)
 {
-	std::cout << std::scientific << name << "has been overridden from " << original << " to "
-	          << replacement << " because " << reason << std::endl;
+	std::cout << std::scientific << name << "has been overridden from " << original
+	          << " to " << replacement << " because " << reason << std::endl;
 }
 } /* namespace Error */
 #endif /* GASMODULE_GIT_SRC_ERROR_H_ */

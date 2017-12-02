@@ -10,7 +10,8 @@
 
 using namespace std;
 
-H2FromFiles::H2FromFiles(int maxJ, int maxV) : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()}
+H2FromFiles::H2FromFiles(int maxJ, int maxV)
+                : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()}
 {
 	readLevels();
 	readTransProb();

@@ -23,8 +23,8 @@ T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer);
 template <typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRight);
 
 template <typename T>
-T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight,
-                         T fUpperLeft, T fUpperRight);
+T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft,
+                         T fLowerRight, T fUpperLeft, T fUpperRight);
 
 template <typename T, typename T1, typename T2>
 T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax);
@@ -42,7 +42,8 @@ template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv);
     xInit, and continues until the final value of x is constrained to an interval of width
     xTolerance. */
 template <typename T>
-T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax, T xMin)
+T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax,
+                       T xMin)
 {
 	if (xInit > xMax || xInit < xMin)
 		throw "xInit is out of given range for binary search";
@@ -71,7 +72,8 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 /** Only works with containers which support the insert function */
 template <typename T, typename T1> void inline sortedInsert(T elem, T1& container)
 {
-	container.insert(std::upper_bound(std::begin(container), std::end(container), elem), elem);
+	container.insert(std::upper_bound(std::begin(container), std::end(container), elem),
+	                 elem);
 }
 
 /** Evaluate the linear interpolation f(x) of a function f represented by fContainer =
@@ -96,8 +98,8 @@ template <typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRi
 }
 
 template <typename T>
-T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight,
-                         T fUpperLeft, T fUpperRight)
+T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft,
+                         T fLowerRight, T fUpperLeft, T fUpperRight)
 {
 	T weightRight = (x - xLeft) / (xRight - xLeft);
 	T fLowerI = fLowerLeft + weightRight * (fLowerRight - fLowerLeft);
@@ -118,7 +120,8 @@ T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax
 	{
 		auto ix = std::begin(xContainer) + iMin;
 		auto iy = std::begin(yContainer) + iMin;
-		auto ixEnd = std::begin(xContainer) + iMax + 1; // TODO make sure this is correct
+		auto ixEnd = std::begin(xContainer) + iMax +
+		             1; // TODO make sure this is correct
 		for (; ix != ixEnd; ix++, iy++)
 			answer += 0.5 * (*ix - *(ix - 1)) * (*iy + *(iy - 1));
 	}
@@ -166,7 +169,8 @@ template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv)
     number means a power law lastvalue * (newpoint / lastpoint), with the argument used as an
     exponent. Stolen from DIRTY/NumUtils.h */
 template <typename T, typename T1, typename T2, typename T3>
-T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints, int LoEx, int HiEx)
+T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints, int LoEx,
+                 int HiEx)
 {
 	if (function.size() != knownPoints.size())
 		Error::runtime("Abscissa and ordinate lengths do not match in interpol");
@@ -178,7 +182,8 @@ T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints,
 	size_t n = knownPoints.size() - 1;
 	if (HiEx == -99)
 	{
-		extrslp1 = (function[n] - function[n - 1]) / (knownPoints[n] - knownPoints[n - 1]);
+		extrslp1 = (function[n] - function[n - 1]) /
+		           (knownPoints[n] - knownPoints[n - 1]);
 		extrint1 = function[n] - extrslp1 * knownPoints[n];
 	}
 

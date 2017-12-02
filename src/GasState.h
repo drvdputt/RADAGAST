@@ -15,7 +15,8 @@ class GasInterfaceImpl;
 
 namespace Testing
 {
-void writeGasState(const std::string&, const GasModule::GasInterface&, const GasModule::GasState&);
+void writeGasState(const std::string&, const GasModule::GasInterface&,
+                   const GasModule::GasState&);
 }
 
 namespace GasModule
@@ -66,7 +67,8 @@ private:
 	/** Private constructor, only to be used by friended class which acts as a factory and can
 	    fill in all the members. */
 	GasState(const std::valarray<double>& previousISRFv,
-	         const std::valarray<double>& emissivityv, const std::valarray<double>& opacityv,
+	         const std::valarray<double>& emissivityv,
+	         const std::valarray<double>& opacityv,
 	         const std::valarray<double>& scatteringOpacityv, double T,
 	         const std::valarray<double>& densityv, double h2form, double grainHeat)
 	                : _previousISRFv(previousISRFv), _emissivityv(emissivityv),

@@ -37,13 +37,13 @@ EMatrix TwoLevelHardcoded::cvv(double T, const EVector& speciesNv) const
 {
 	EMatrix Cvv = EMatrix::Zero(2, 2);
 
-	/* Need separate contributions for number of protons and electrons. Toy implementation below,
-	   inspired by https://www.astro.umd.edu/~jph/N-level.pdf is actually for electron
-	   collisions only, but let's treat all collision partners this way for now. */
+	/* Need separate contributions for number of protons and electrons. Toy implementation
+	   below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf is actually for
+	   electron collisions only, but let's treat all collision partners this way for now. */
 	double beta = 8.629e-6;
 
-	/* Also take some values from the bottom of page 4. Gamma = 2.15 at 10000 K and 1.58 at 1000
-	   K. Do a linear interpolation. */
+	/* Also take some values from the bottom of page 4. Gamma = 2.15 at 10000 K and 1.58 at
+	   1000 K. Do a linear interpolation. */
 	double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
 
 	Cvv(1, 0) = beta / sqrt(T) * bigUpsilon10 / the_gv(1);

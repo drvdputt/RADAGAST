@@ -3,7 +3,8 @@
 const std::map<std::string, int> SpeciesIndex::_indexMap =
                 createSpeciesIndexm({"e-", "H+", "H", "H2"});
 
-std::map<std::string, int> SpeciesIndex::createSpeciesIndexm(const std::vector<std::string>& namev)
+std::map<std::string, int>
+SpeciesIndex::createSpeciesIndexm(const std::vector<std::string>& namev)
 {
 	std::map<std::string, int> speciesIndex;
 	int index{0};

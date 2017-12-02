@@ -7,7 +7,8 @@ namespace Ionization
 {
 /** Solves the ionization balance (in the nebular approximation, i.e. this function assumes that all
     hydrogen is in the ground state). */
-double solveBalance(double nH, double T, const Array& frequencyv, const Array& specificIntensityv);
+double solveBalance(double nH, double T, const Array& frequencyv,
+                    const Array& specificIntensityv);
 
 /** Photoionization rate coefficient. Integrates over the spectrum. Multiply with neutral density
     to get total rate. */

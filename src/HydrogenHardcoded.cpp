@@ -121,8 +121,8 @@ EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
 		// Equation 6.17 of Hazy II (6.6 Collision strengths)
-		Cvv(upper, lower) =
-		                bigUpsilon * 8.6291e-6 / the_gv(upper) / sqrt(T) * electronDensity;
+		Cvv(upper, lower) = bigUpsilon * 8.6291e-6 / the_gv(upper) / sqrt(T) *
+		                    electronDensity;
 		Cvv(lower, upper) = Cvv(upper, lower) * the_gv(upper) / the_gv(lower) *
 		                    exp((the_ev(lower) - the_ev(upper)) / kT);
 	};
@@ -168,15 +168,17 @@ EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
 	// even though the second term is zero
 	double A2p = avv().row(index2p).sum() + extraAvv().row(index2p).sum();
 	// double twolog10Rc = 10.95 + log10(T / A2p / A2p / mu_m);
-	double twoLog10Rc =
-	                min(10.95 + log10(T / A2p / A2p / mu_m), 1.68 + log10(T / electronDensity));
-	double qDown = constfactor * D2p / sqrt(T) * (11.54 + log10(T / D2p / mu_m) + twoLog10Rc);
+	double twoLog10Rc = min(10.95 + log10(T / A2p / A2p / mu_m),
+	                        1.68 + log10(T / electronDensity));
+	double qDown = constfactor * D2p / sqrt(T) *
+	               (11.54 + log10(T / D2p / mu_m) + twoLog10Rc);
 	// detailed balance result for opposite direction
 	double qUp_db = 3. * qDown;
 
 	double D2s = 24 * 3;
 	double A2s = avv().row(index2s).sum() + extraAvv().row(index2s).sum();
-	twoLog10Rc = min(10.95 + log10(T / A2s / A2s / mu_m), 1.68 + log10(T / electronDensity));
+	twoLog10Rc = min(10.95 + log10(T / A2s / A2s / mu_m),
+	                 1.68 + log10(T / electronDensity));
 	double qUp = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
 	double qDown_db = qUp / 3.;
 

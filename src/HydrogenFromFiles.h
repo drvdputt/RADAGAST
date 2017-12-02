@@ -52,9 +52,9 @@ private:
 
 		HydrogenLevel(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
 
-		bool nljResolved() const {return _twoJplus1 >= 0;}
-		bool nlResolved() const {return _l >= 0 && _twoJplus1 < 0;}
-		bool nCollapsed() const {return _l < 0;}
+		bool nljResolved() const { return _twoJplus1 >= 0; }
+		bool nlResolved() const { return _l >= 0 && _twoJplus1 < 0; }
+		bool nCollapsed() const { return _l < 0; }
 		int n() const { return _n; }
 		int l() const { return _l; }
 		int twoJplus1() const { return _twoJplus1; }
@@ -224,7 +224,8 @@ private:
 	// SOME MAPS TO HELP WITH DIFFERENT KINDS OF INDEXING //
 
 	/* A simple map for translating orbital letters into numbers */
-	const std::map<char, int> _lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
+	const std::map<char, int> _lNumberm = {
+	                {'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
 
 	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
 	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1}. */

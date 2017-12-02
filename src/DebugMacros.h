@@ -4,9 +4,9 @@
 /* #define SANITY */
 
 #ifdef SILENT
-#define DEBUG(x)                                                                                   \
-	do                                                                                         \
-	{                                                                                          \
+#define DEBUG(x)                                                                               \
+	do                                                                                     \
+	{                                                                                      \
 	} while (0)
 #else
 
@@ -16,10 +16,10 @@
 /* #define DEBUG_CONTINUUM_DATA */
 /* #define ECHO_READIN */
 
-#define DEBUG(x)                                                                                   \
-	do                                                                                         \
-	{                                                                                          \
-		std::cout << x;                                                                    \
+#define DEBUG(x)                                                                               \
+	do                                                                                     \
+	{                                                                                      \
+		std::cout << x;                                                                \
 	} while (0)
 #endif
 

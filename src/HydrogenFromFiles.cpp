@@ -22,7 +22,8 @@ inline vector<int> twoJplus1range(int l)
 } /* namespace */
 
 HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo)
-                : _resolvedUpTo(resolvedUpTo), _ine{SpeciesIndex::ine()}, _inp{SpeciesIndex::inp()}
+                : _resolvedUpTo(resolvedUpTo), _ine{SpeciesIndex::ine()},
+                  _inp{SpeciesIndex::inp()}
 {
 	if (_resolvedUpTo > cNMAX)
 		Error::rangeCheck<int>("Number of resolved levels", _resolvedUpTo, 2, cNMAX);
@@ -55,7 +56,8 @@ void HydrogenFromFiles::readData()
 		                observedEnergy >> theoreticalEnergy;
 #ifdef ECHO_READIN
 		DEBUG(lvIndex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
-		              << " " << observedEnergy << " " << theoreticalEnergy << " " << endl);
+		              << " " << observedEnergy << " " << theoreticalEnergy << " "
+		              << endl);
 #endif
 
 		// Get the first number from the config string
@@ -107,8 +109,8 @@ void HydrogenFromFiles::readData()
 		int upperIndex = max(leftIndex, rightIndex);
 		int lowerIndex = min(leftIndex, rightIndex);
 #ifdef ECHO_READIN
-		DEBUG(lowerIndex << " " << upperIndex << " " << wavAngstrom << " " << gf << " " << A
-		                 << endl);
+		DEBUG(lowerIndex << " " << upperIndex << " " << wavAngstrom << " " << gf << " "
+		                 << A << endl);
 #endif
 		// Zero means two-photon transition, see CHIANTI user guide.
 		_chiantiAvv(upperIndex - 1, lowerIndex - 1) = wavAngstrom > 0 ? A : 0;
@@ -191,7 +193,10 @@ void HydrogenFromFiles::prepareForOutput()
 
 size_t HydrogenFromFiles::numLv() const { return _numL; }
 
-size_t HydrogenFromFiles::indexOutput(int n, int l) const { return _nlToOutputIndexm.at({n, l}); }
+size_t HydrogenFromFiles::indexOutput(int n, int l) const
+{
+	return _nlToOutputIndexm.at({n, l});
+}
 
 EVector HydrogenFromFiles::ev() const
 {
@@ -317,8 +322,8 @@ EMatrix HydrogenFromFiles::cvv(double T, const EVector& speciesNv) const
 				if (ini.e() > fin.e())
 				{
 					double UpsilonDown = eCollisionStrength(ini, fin, T_eV);
-					double Cif = UpsilonDown * 8.6291e-6 / ini.g() / sqrt(T) *
-					             ne;
+					double Cif = UpsilonDown * 8.6291e-6 / ini.g() /
+					             sqrt(T) * ne;
 					double Cfi = Cif * ini.g() / fin.g() *
 					             exp((fin.e() - ini.e()) / kT);
 					the_cvv(i, f) += Cif;
@@ -388,10 +393,12 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 		   prevented divergence in the calculations of PS64 */
 		size_t index = indexOutput(n, l);
 		double tau2 = 1. / _totalAv(index) / _totalAv(index);
-		double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
+		double twoLog10Rc =
+		                min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
 
 		// eq 43
-		double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
+		double q_nl = qnlFactor * D_nl *
+		              (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
 		return max(0., q_nl);
 	};
 
@@ -558,7 +565,8 @@ double HydrogenFromFiles::einsteinA(int ni, int nf) const
 	return Asum;
 }
 
-double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const
+double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial,
+                                    const HydrogenLevel& final) const
 {
 	// No output for upward transitions
 	if (initial.e() < final.e())
@@ -644,8 +652,8 @@ double HydrogenFromFiles::eCollisionStrength(const HydrogenLevel& initial,
 	{
 		// Resolved-resolved
 		if (initial.nlResolved() && final.nlResolved())
-			return eCollisionStrength(initial.n(), initial.l(), final.n(), final.l(),
-			                          T_eV);
+			return eCollisionStrength(initial.n(), initial.l(), final.n(),
+			                          final.l(), T_eV);
 		// Collapsed-resolved
 		else if (initial.nCollapsed() && final.nlResolved())
 			return eCollisionStrength(initial.n(), final.n(), final.l(), T_eV);

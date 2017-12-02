@@ -14,6 +14,7 @@ class HydrogenDataProvider : public LevelDataProvider
 protected:
 	HydrogenDataProvider() = default;
 	virtual ~HydrogenDataProvider() = default;
+
 public:
 	/** Returns the upper and lower index (in that order) of the two photon transition as an
 	    array of size 2. This is a pure virtual function, as the indices returned depend on the

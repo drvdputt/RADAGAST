@@ -25,9 +25,9 @@ int GrainPhotoelectricEffect::minimumCharge(double a) const
 	return WD01::minimumCharge(a, Uait);
 }
 
-void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, const Array& Qabs,
-                                             int& resultZmax, int& resultZmin,
-                                             vector<double>& resultfZ) const
+void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
+                                             const Array& Qabs, int& resultZmax,
+                                             int& resultZmin, vector<double>& resultfZ) const
 {
 	// Express a in angstroms
 	double aA = a / Constant::ANG_CM;
@@ -37,15 +37,17 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 
 	/* The maximum charge is one more than the highest charge which still allows ionization by
 	   photons of hnumax. */
-	resultZmax = floor(((hnumax - _grainType.workFunction()) * Constant::ERG_EV / 14.4 * aA +
-	                    .5 - .3 / aA) /
-	                   (1 + .3 / aA));
+	resultZmax = floor(
+	                ((hnumax - _grainType.workFunction()) * Constant::ERG_EV / 14.4 * aA +
+	                 .5 - .3 / aA) /
+	                (1 + .3 / aA));
 
 	// The minimum charge is the most negative charge for which autoionization does not occur
 	resultZmin = minimumCharge(a);
 
 	if (resultZmax < resultZmin)
-		Error::runtime("Zmax is smaller than Zmin. This can happen when the grains are too"
+		Error::runtime("Zmax is smaller than Zmin. This can happen when the grains are "
+		               "too"
 		               "small for the recipe used.");
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
@@ -63,7 +65,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 		for (size_t i = 0; i < env._chargev.size(); i++)
 			if (env._chargev[i] > 0)
 				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[i],
-				                                  env._massv[i], env._densityv[i]);
+				                                  env._massv[i],
+				                                  env._densityv[i]);
 		return Jtotal;
 	};
 
@@ -74,7 +77,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 		for (size_t i = 0; i < env._chargev.size(); i++)
 			if (env._chargev[i] < 0)
 				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[i],
-				                                  env._massv[i], env._densityv[i]);
+				                                  env._massv[i],
+				                                  env._densityv[i]);
 		return Jtotal;
 	};
 
@@ -149,7 +153,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 		int index = z - resultZmin;
 		// f(z) = f(z+1) * down(z+1) / up(z)
 		double up = chargeUpRate(z);
-		double down = chargeDownRate(z+1);
+		double down = chargeDownRate(z + 1);
 		resultfZ[index] = resultfZ[index + 1] * down / up;
 
 		// Similar detection for cutoff
@@ -203,11 +207,11 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env, c
 	//    }
 }
 
-double
-GrainPhotoelectricEffect::rateIntegral(double a, int Z, double Emin, const Array& frequencyv,
-                                       const Array& Qabs, const Array& specificIntensityv,
-                                       function<double(double hnuDiffpet, double Elow)> peFunction,
-                                       function<double(double hnuDiffpdt)> pdFunction) const
+double GrainPhotoelectricEffect::rateIntegral(
+                double a, int Z, double Emin, const Array& frequencyv, const Array& Qabs,
+                const Array& specificIntensityv,
+                function<double(double hnuDiffpet, double Elow)> peFunction,
+                function<double(double hnuDiffpdt)> pdFunction) const
 {
 	const double e2_a = Constant::ESQUARE / a;
 
@@ -243,8 +247,8 @@ GrainPhotoelectricEffect::rateIntegral(double a, int Z, double Emin, const Array
 
 			// dimensionless * dimensionless * (energy / time / freq / area / angle) / energy
 			// * <function unit> * dFreq =  <function unit> / time / area / angle
-			peIntegrandv[iFreq] = Y * Qabs[iFreq] * specificIntensityv[iFreq] / hnu *
-			                      peFunction(hnuDiff, Elow);
+			peIntegrandv[iFreq] = Y * Qabs[iFreq] * specificIntensityv[iFreq] /
+			                      hnu * peFunction(hnuDiff, Elow);
 		}
 
 		// If applicable, also calculate integrand for photodetachment
@@ -291,7 +295,8 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 
 		// Calculate y2 from eq 11
 		double Ediff = Ehigh - Elow;
-		double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff / Ediff : 1;
+		double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff / Ediff
+		                   : 1;
 
 		// The integral over the electron energy distribution (integral E f(E) dE)
 		double IntE = WD01::energyIntegral(Elow, Ehigh, Emin, Emax);
@@ -318,8 +323,10 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	for (int Z = Zmin; Z <= Zmax; Z++)
 	{
 		double fZz = fZ[Z - Zmin];
-		if (isnan(fZz)) Error::runtime("nan in fz");
-		double heatAZ = heatingRateAZ(a, Z, env._frequencyv, Qabs, env.specificIntensityv);
+		if (isnan(fZz))
+			Error::runtime("nan in fz");
+		double heatAZ = heatingRateAZ(a, Z, env._frequencyv, Qabs,
+		                              env.specificIntensityv);
 
 		/* Fraction of grains in this charge state * heating by a single particle of charge
 		   Z. */
@@ -352,9 +359,9 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	return netHeatingForGrainSize;
 }
 
-double
-GrainPhotoelectricEffect::heatingRate(const Environment& env,
-                                      const GasModule::GrainInterface::Population& grainPop) const
+double GrainPhotoelectricEffect::heatingRate(
+                const Environment& env,
+                const GasModule::GrainInterface::Population& grainPop) const
 {
 	double total{0.};
 	for (size_t m = 0; m < grainPop.numSizes(); m++)
@@ -363,7 +370,8 @@ GrainPhotoelectricEffect::heatingRate(const Environment& env,
 		   calculation */
 		double a{grainPop.sizev()[m]};
 		if (a < 500 * Constant::ANG_CM)
-			total += grainPop.densityv()[m] * heatingRateA(a, env, grainPop.qAbsvv()[m]);
+			total += grainPop.densityv()[m] *
+			         heatingRateA(a, env, grainPop.qAbsvv()[m]);
 	}
 	return total;
 }
@@ -378,7 +386,8 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& freq
 }
 
 double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
-                                                         int particleCharge, double particleMass,
+                                                         int particleCharge,
+                                                         double particleMass,
                                                          double particleDensity) const
 {
 	double kT = Constant::BOLTZMAN * gasT;
@@ -407,7 +416,8 @@ double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, 
 }
 
 double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
-                                                          const vector<double>& fZ, int Zmin) const
+                                                          const vector<double>& fZ,
+                                                          int Zmin) const
 {
 	// Calculates WD01 equation 42
 	double kT = Constant::BOLTZMAN * env._T;
@@ -442,8 +452,9 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
 	   minimumCharge, (and Zmin > minimumCharge). */
 	if (Zmin == minimumCharge(a))
-		secondTerm = fZ[0] * collisionalChargingRate(a, env._T, Zmin, -1,
-		                                             Constant::ELECTRONMASS, env._ne) *
+		secondTerm = fZ[0] *
+		             collisionalChargingRate(a, env._T, Zmin, -1,
+		                                     Constant::ELECTRONMASS, env._ne) *
 		             _grainType.ionizationPotential(a, Zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
@@ -497,7 +508,8 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	Array frequencyv(vecfrequencyv.data(), vecfrequencyv.size());
 
 	// Input spectrum
-	const Array& specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
+	const Array& specificIntensityv =
+	                Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
 
 	// Gather environment parameters
 	const Environment env(frequencyv, specificIntensityv, gasT, ne, ne, {-1, 1}, {ne, ne},
@@ -528,21 +540,23 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 
 		// Integrate over the radiation field
 		Array intensityTimesQabs = Qabs * specificIntensityv;
-		double intensityQabsIntegral =
-		                TemplatedUtils::integrate<double>(frequencyv, intensityTimesQabs);
+		double intensityQabsIntegral = TemplatedUtils::integrate<double>(
+		                frequencyv, intensityTimesQabs);
 
 		// Calculate and write out the heating efficiency
 		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs);
-		double totalAbsorbed = Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
+		double totalAbsorbed =
+		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
 		double efficiency = heating / totalAbsorbed;
 		if (isnan(efficiency))
-			cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed << endl;
+			cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed
+			     << endl;
 
 		efficiencyOf << a / Constant::ANG_CM << '\t' << efficiency << '\n';
 
 		// Calculate and write out the ISRF-averaged absorption efficiency
-		double intensityIntegral =
-		                TemplatedUtils::integrate<double>(frequencyv, specificIntensityv);
+		double intensityIntegral = TemplatedUtils::integrate<double>(
+		                frequencyv, specificIntensityv);
 		double avgQabs = intensityQabsIntegral / intensityIntegral;
 		avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
 		a *= aStepFactor;
@@ -562,7 +576,8 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 #ifdef EXACTGRID
 	vector<double> vecwavelengthv = Testing::FILELAMBDAV;
 #else
-	vector<double> vecwavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
+	vector<double> vecwavelengthv =
+	                Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
 #endif
 	Array wavelengthv(vecwavelengthv.data(), vecwavelengthv.size());
 	Array frequencyv = Testing::freqToWavGrid(wavelengthv);

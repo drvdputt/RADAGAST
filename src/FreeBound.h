@@ -16,7 +16,8 @@ public:
 private:
 	/* Function that reads the data. To be called in the constructor*/
 	void readData(std::string file, std::vector<double>& fileFrequencyv,
-	              std::vector<double>& fileThresholdv, std::vector<double>& fileTemperaturev,
+	              std::vector<double>& fileThresholdv,
+	              std::vector<double>& fileTemperaturev,
 	              std::vector<std::vector<double>>& fileGammaDaggervv) const;
 
 public:

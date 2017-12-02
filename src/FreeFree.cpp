@@ -247,9 +247,9 @@ double FreeFree::gauntFactor(double logu, double logg2) const
 	double yLow = yUp - _logStep;
 
 	double gff = TemplatedUtils::interpolateRectangular<double>(
-	                logg2, logu, xLeft, xRight, yLow, yUp, _fileGauntFactorvv(iLower, iLeft),
-	                _fileGauntFactorvv(iLower, iRight), _fileGauntFactorvv(iUpper, iLeft),
-	                _fileGauntFactorvv(iUpper, iRight));
+	                logg2, logu, xLeft, xRight, yLow, yUp,
+	                _fileGauntFactorvv(iLower, iLeft), _fileGauntFactorvv(iLower, iRight),
+	                _fileGauntFactorvv(iUpper, iLeft), _fileGauntFactorvv(iUpper, iRight));
 	return exp(gff);
 }
 
@@ -284,8 +284,8 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 {
 	// 32pi e^6 / 3mc^3 * sqrt(2pi / 3m)
 	constexpr double c3 = Constant::LIGHT * Constant::LIGHT * Constant::LIGHT;
-	const double gamma_nu_constantFactor =
-	                32 * Constant::PI * e6 / 3. / Constant::ELECTRONMASS / c3 * sqrt_2piOver3m;
+	const double gamma_nu_constantFactor = 32 * Constant::PI * e6 / 3. /
+	                                       Constant::ELECTRONMASS / c3 * sqrt_2piOver3m;
 
 	// gamma is fixed for a given temperature
 	double kT = Constant::BOLTZMAN * T;
@@ -315,7 +315,8 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 {
 	// C = 4 e^6 / 3mhc * sqrt(2pi / 3m)
 	const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS /
-	                                        Constant::PLANCK / Constant::LIGHT * sqrt_2piOver3m;
+	                                        Constant::PLANCK / Constant::LIGHT *
+	                                        sqrt_2piOver3m;
 	double kT = Constant::BOLTZMAN * T;
 	double sqrtkT = sqrt(kT);
 	double loggamma2 = log10(Constant::RYDBERG / kT);
@@ -328,8 +329,8 @@ void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 		double u = Constant::PLANCK * nu / kT;
 		double logu = log10(u);
 		// C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
-		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u) *
-		                   gauntFactor(logu, loggamma2);
+		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu *
+		                   -expm1(-u) * gauntFactor(logu, loggamma2);
 #ifdef DEBUG_CONTINUUM_DATA
 		out << _frequencyv[iFreq] << "\t" << opCoeffNu << endl;
 #endif
@@ -345,7 +346,8 @@ double FreeFree::heating(double np_ne, double T, const Array& specificIntensityv
 	Array freefreeOpCoefv(_frequencyv.size());
 	addOpacityCoefficientv(T, freefreeOpCoefv);
 	Array intensityOpacityv(specificIntensityv * np_ne * freefreeOpCoefv);
-	return Constant::FPI * TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	return Constant::FPI *
+	       TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
 }
 
 double FreeFree::cooling(double np_ne, double T) const

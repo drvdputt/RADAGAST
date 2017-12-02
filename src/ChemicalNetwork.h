@@ -34,7 +34,8 @@ private:
 	    properly set up. */
 	void addReaction(const std::string& reactionName,
 	                 const std::vector<std::string>& reactantNamev,
-	                 const Array& reactantStoichv, const std::vector<std::string>& productNamev,
+	                 const Array& reactantStoichv,
+	                 const std::vector<std::string>& productNamev,
 	                 const Array& productStoichv);
 
 public:
