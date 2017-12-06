@@ -166,8 +166,7 @@ vector<Array> Testing::qAbsvvForTesting(const Array& av, const Array& frequencyv
 	return result;
 }
 
-Array Testing::improveFrequencyGrid(const NLevel& boundBound, const FreeBound& freeBound,
-                                    const Array& oldPoints)
+Array Testing::improveFrequencyGrid(const NLevel& boundBound, const Array& oldPoints)
 {
 	// Add extra points for the lines
 	int numLines;
@@ -182,7 +181,15 @@ Array Testing::improveFrequencyGrid(const NLevel& boundBound, const FreeBound& f
 	vector<double> gridVector(begin(oldPoints), end(oldPoints));
 	Testing::refineFrequencyGrid(gridVector, 13, 2.5, lineFreqv, lineWidthv);
 
-	// And for the jumps in the bound-bound spectrum
+	return Array(gridVector.data(), gridVector.size());
+}
+
+Array Testing::improveFrequencyGrid(const FreeBound& freeBound, const Array& oldPoints)
+{
+	// Copy the current points
+	vector<double> gridVector(begin(oldPoints), end(oldPoints));
+
+	// Add points for the jumps in the bound-bound spectrum
 	const Array& thresholdv = freeBound.thresholdv();
 	// Don't bother with the last jump, because that's the end of the data
 	Array jumpFreqv(&thresholdv[0], thresholdv.size() - 2);
@@ -222,9 +229,7 @@ Array Testing::freqToWavGrid(const Array& frequencyv)
 	size_t numWav = frequencyv.size();
 	Array wavelengthv(numWav);
 	for (size_t iWav = 0; iWav < numWav; iWav++)
-	{
 		wavelengthv[iWav] = Constant::LIGHT / frequencyv[numWav - 1 - iWav];
-	}
 	return wavelengthv;
 }
 
@@ -322,11 +327,9 @@ Array Testing::freqToWavSpecificIntensity(const Array& frequencyv,
 {
 	Array I_lambda(frequencyv.size());
 	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
-	{
 		I_lambda[I_lambda.size() - iFreq - 1] = specificIntensity_nu[iFreq] *
 		                                        frequencyv[iFreq] * frequencyv[iFreq] /
 		                                        Constant::LIGHT;
-	}
 	return I_lambda;
 }
 
@@ -557,8 +560,8 @@ void Testing::testACollapse()
 		*pointer = isnan(value) ? 0 : value;
 	}
 	cout << relDiff << endl;
-	// For automated testing, assert the following (maximum allowed error is just slightly above
-	// the value outputted above)
+	// For automated testing, assert the following (maximum allowed error is just slightly
+	// above the value outputted above)
 	assert((relDiff.cwiseAbs().array() < 0.002).all());
 }
 
@@ -575,8 +578,8 @@ void Testing::testPS64Collisions()
 	speciesNv(SpeciesIndex::inp()) = np;
 	EMatrix cvv = hff.cvv(T, speciesNv);
 
-	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total downwards
-	 rate from level nl. */
+	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total
+	 downwards rate from level nl. */
 	EVector anlv = avv.rowwise().sum();
 	for (int n : std::array<int, 2>{4, 5})
 	{
@@ -595,7 +598,8 @@ void Testing::testPS64Collisions()
 				size_t nlfIndex = hff.indexOutput(n, lf);
 				qnl += cvv(nliIndex, nlfIndex);
 
-				// l-changing collision rates should be zero except for changes by 1
+				// l-changing collision rates should be zero except for changes
+				// by 1
 				int deltal = li - lf;
 				if (cvv(nliIndex, nlfIndex) > 0 && abs(deltal) != 1)
 				{
@@ -699,25 +703,39 @@ void Testing::testFromFilesvsHardCoded()
 
 void Testing::runH2()
 {
-	auto grid = generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
-	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
-
 	int maxJ = 99;
 	int maxV = 99;
 
-	Array frequencyv(grid.data(), grid.size());
 	double nH2 = 1000;
 	double ne = 100;
 	double np = 100;
 	double nH = 100;
+	double T = 500;
+	double Tc = 10000;
+	double G0 = 100;
+
+	auto grid = generateGeometricGridv(200, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array unrefined(grid.data(), grid.size());
+
+	// Add points for H lines
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
+	unrefined = improveFrequencyGrid(hl, unrefined);
+
+	// Add points for H continuum
+	FreeBound fb(unrefined);
+	unrefined = improveFrequencyGrid(fb, unrefined);
+
+	// Add points for H2 lines
+	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
+	Array frequencyv = improveFrequencyGrid(h2l, unrefined);
+
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
 	speciesNv(SpeciesIndex::inH2()) = nH2;
 	speciesNv(SpeciesIndex::ine()) = ne;
 	speciesNv(SpeciesIndex::inp()) = np;
 	speciesNv(SpeciesIndex::inH()) = nH;
-	double T = 500;
-	double Tc = 10000;
-	double G0 = 100;
+
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
 
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
@@ -747,7 +765,8 @@ void Testing::runFromFilesvsHardCoded()
 	// Hey, at least we'll get a decent frequency grid out of this hack
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefined);
 	FreeBound fb(unrefined);
-	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
+	Array frequencyv = improveFrequencyGrid(hl, unrefined);
+	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
 	GasModule::GasInterface gihhc(frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
@@ -765,7 +784,8 @@ GasModule::GasInterface Testing::genFullModel()
 
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
 	FreeBound fb(unrefined);
-	Array frequencyv = improveFrequencyGrid(hl, fb, unrefined);
+	Array frequencyv = improveFrequencyGrid(hl, unrefined);
+	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
 	// TODO: use a smaller H2 model for testing?
 	return {frequencyv, "", "5 5"};
@@ -794,23 +814,21 @@ void Testing::runWithDust()
 	// 10 A, 100A ,1000 A
 	sizev = {1e-7, 1e-6, 1e-5};
 	densityv = {1e-5, 1e-8, 1e-11};
-	// number of grains per H atom (this should be very small, as grains are much heavier than a
-	// hydrogen atom AND their total mass is only about 1% of the hydrogen mass
+	// number of grains per H atom (this should be very small, as grains are much heavier
+	// than a hydrogen atom AND their total mass is only about 1% of the hydrogen mass
 
 	densityv *= nHtotal; // density in cm-3
 	// densityv *= 0;
 
-	// Actually, a temperature distribution per grain size is the most detailed form we'll be
-	// using. Maybe we need multiple versions of the grain interface with regards to storing the
-	// grain temperatures.
+	// Actually, a temperature distribution per grain size is the most detailed form we'll
+	// be using. Maybe we need multiple versions of the grain interface with regards to
+	// storing the grain temperatures.
 	temperaturev = {15, 10, 5};
-	// And now I need some absorption efficiencies for every wavelength. Let's try to use the
-	// old photoelectric heating test code.
+	// And now I need some absorption efficiencies for every wavelength. Let's try to use
+	// the old photoelectric heating test code.
 	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.frequencyv())};
 
 	// TODO: check if the qabsvv has loaded correctly
-	//
-	//
 
 	// Construct grain info using list of population objects
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};

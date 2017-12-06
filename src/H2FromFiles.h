@@ -9,17 +9,17 @@
 #include <map>
 #include <vector>
 
-/** This class will implement the reading in and processing of all the files for the level model of
-    H2. */
+/** This class will implement the reading in and processing of all the files for the level model
+    of H2. */
 class H2FromFiles : public LevelDataProvider
 {
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
 	//------------------------------//
 public:
-	/** Creates a new \c H2FromFiles object, reads in all the data. Optional arguments: upper
-	    limits for vibrational and rotational numbers. The data goes to 31 for J, and to 14 for
-	    v. */
+	/** Creates a new \c H2FromFiles object, reads in all the data. Optional arguments:
+	    upper limits for vibrational and rotational numbers. The data goes to 31 for J, and
+	    to 14 for v. */
 	H2FromFiles(int maxJ = 99, int maxV = 99);
 
 	/** A clear way to index the electronic states of molecular hydrogen */
@@ -98,21 +98,22 @@ public:
 	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
-	/** Returns true if the given J and V are within the boundaries specified by the user. */
+	/** Returns true if the given J and V are within the boundaries specified by the
+	    user. */
 	bool validJV(int J, int v) const;
 
-	/** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i, f)
-	    and the_cvv(f, i) respectively. For each transition in the CollisionData object, q_if
-	    [cm3 s-1] is interpolated for the given temperature, and multiplied by the given partner
-	    density to obtain the Cif [s-1]. Cfi is calculated using @f$ C_{fi} =
+	/** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i,
+	    f) and the_cvv(f, i) respectively. For each transition in the CollisionData object,
+	    q_if [cm3 s-1] is interpolated for the given temperature, and multiplied by the
+	    given partner density to obtain the Cif [s-1]. Cfi is calculated using @f$ C_{fi} =
 	    C_{if}\frac{g_i}{g_f}\exp(-h \nu_{if} / kT) @f$. */
 	void addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,
 	              double nPartner) const;
 
 	int _maxJ, _maxV;
 
-	/* Contains the quantum numbers and energies of the levels. The output will be indexed in
-	   the same way. */
+	/* Contains the quantum numbers and energies of the levels. The output will be indexed
+	   in the same way. */
 	std::vector<H2Level> _levelv;
 	size_t _numL{0};
 
@@ -125,8 +126,8 @@ private:
 		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, _levelv.size() - 1});
 	}
 
-	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our map
-	    approach. */
+	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our
+	    map approach. */
 	EMatrix _avv;
 
 	/** Collisions between H and H2. */

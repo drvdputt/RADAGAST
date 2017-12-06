@@ -59,8 +59,8 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 	if (density > 0)
 	{
 		s.cvv = _ldp->cvv(temperature, speciesNv);
-		/* Calculate BijPij (needs to be redone at each temperature because the line profile
-		   can change) Also needs the Cij to calculate collisional broadening */
+		/* Calculate BijPij (needs to be redone at each temperature because the line
+		   profile can change) Also needs the Cij to calculate collisional broadening. */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
 
 #ifdef REPORT_LINE_QUALITY
@@ -176,8 +176,8 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double 
 		BPvv(upper, lower) *= Constant::CSQUARE_TWOPLANCK / nu_ij / nu_ij / nu_ij *
 		                      _avv(upper, lower);
 
-		// Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij =
-		// Pji
+		/* Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij =
+		   Pji. */
 		BPvv(lower, upper) = _gv(upper) / _gv(lower) * BPvv(upper, lower);
 	});
 	return BPvv;
@@ -292,7 +292,8 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 	// Half the FWHM of the Lorentz
 	double halfWidth = decayRate / Constant::FPI;
 
-	// The standard deviation in frequency units. It is about half of the FWHM for a Gaussian
+	// The standard deviation in frequency units. It is about half of the FWHM for a
+	// Gaussian
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
 
