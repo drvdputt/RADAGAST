@@ -24,9 +24,6 @@ public:
 	double dissociationHeating(const Solution& s) const;
 
 private:
-	double evaluateSinglePopulation(size_t i, const EVector& nv, const EMatrix& Mvv,
-	                                const EVector& sourcev, const EVector& sinkv) const;
-
 	std::shared_ptr<const H2FromFiles> _hff;
 };
 

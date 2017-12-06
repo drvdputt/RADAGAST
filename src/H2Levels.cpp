@@ -11,34 +11,14 @@ H2Levels::H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequenc
 
 H2Levels::~H2Levels() = default;
 
-/** Mvv is Mij in my notes. */
-double H2Levels::evaluateSinglePopulation(size_t i, const EVector& nv, const EMatrix& Mvv,
-                                          const EVector& sourcev, const EVector& sinkv) const
-{
-	// TODO: different implementation for X vs excited levels
-	// creationRate - ni * destructionFraction = 0
-	// ==> ni = creationRate / destructionFraction
-
-	// FIXME: assume that we only have X states (this is the case at the moment
-	// (28/11/2017))) for excited states the summation boundaries are different
-
-	// sum_j M_ij n_j + f_i
-	double creationRate = (Mvv.row(i) * nv).sum() + sourcev(i);
-	if (creationRate <= 0)
-		return 0;
-
-	// sum_j M_ji + d_i
-	double destructionFraction = Mvv.col(i).sum() + sinkv(i);
-
-	return creationRate / destructionFraction;
-}
-
 EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                      const EVector& sourcev, const EVector& sinkv,
                                      int chooseConsvEq) const
 {
 #define USE_ITERATION_METHOD
 #ifdef USE_ITERATION_METHOD
+	size_t numLv = _hff->numLv();
+
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
@@ -46,16 +26,31 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	// need this).
 	EVector nv = n * solveBoltzmanEquations(100);
 
+	// Destruction rate (in s-1) stays constant when populations are adjusted
+	Array destructionRatev(numLv);
+	for (size_t i = 0; i < numLv; i++)
+		destructionRatev[i] = Mvv.col(i).sum() + sinkv(i);
+
 	// Iterate until converged
 	bool converged = false;
 	size_t counter{0};
 	while (!converged)
 	{
+		// The previous nv, for convergence checking
 		EVector previousNv = nv;
-		for (size_t i = 0; i < _hff->numLv(); i++)
-			nv(i) = evaluateSinglePopulation(i, nv, Mvv, sourcev, sinkv);
 
-		/* Renormalize; the algorithm has no sum rule, */
+		/* Do a 'sweep' over all the populations. It is important that this happens one
+		   by one, and not as a single vector operation (hence the word sweep). */
+		for (size_t i = 0; i < numLv; i++)
+		{
+			double creationRate = (Mvv.row(i) * nv).sum() + sourcev(i);
+			if (creationRate <= 0)
+				nv(i) = 0;
+			else
+				nv(i) = creationRate / destructionRatev[i];
+		}
+
+		/* Renormalize because the algorithm has no sum rule, */
 		nv *= n / nv.sum();
 
 		EVector deltaNv = (nv - previousNv).array().abs();
