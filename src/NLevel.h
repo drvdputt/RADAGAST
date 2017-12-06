@@ -162,7 +162,7 @@ private:
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all
 	    downward transitions have line activity, then this function will loop over all
 	    elements of the lower triangle of the level matrix. */
-	void forActiveLinesDo(std::function<void(size_t initial, size_t final)> thing) const;
+	void forActiveLinesDo(std::function<void(size_t ini, size_t fin)> thing) const;
 
 	/** Calculates the intensity of a specific line [erg / s / cm2]. Multiplying with the
 	    line profile will yield the specific intensity. */

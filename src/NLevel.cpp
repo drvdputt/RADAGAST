@@ -124,17 +124,17 @@ Array NLevel::opacityv(const Solution& s) const
 double NLevel::heating(const Solution& s) const
 {
 	double powerDensityIn = 0;
-	for (size_t initial = 0; initial < _numLv; initial++)
+	for (size_t ini = 0; ini < _numLv; ini++)
 	{
-		for (size_t final = 0; final < _numLv; final++)
+		for (size_t fin = 0; fin < _numLv; fin++)
 		{
 			// Downward transitions inject kinetic energy into the medium
-			if (_ev(initial) > _ev(final))
+			if (_ev(ini) > _ev(fin))
 			{
-				double cul = s.cvv(initial, final);
+				double cul = s.cvv(ini, fin);
 				if (cul > 0)
-					powerDensityIn += (_ev(initial) - _ev(final)) * cul *
-					                  s.nv(initial);
+					powerDensityIn +=
+					                (_ev(ini) - _ev(fin)) * cul * s.nv(ini);
 			}
 		}
 	}
@@ -144,17 +144,17 @@ double NLevel::heating(const Solution& s) const
 double NLevel::cooling(const Solution& s) const
 {
 	double powerDensityOut = 0;
-	for (size_t initial = 0; initial < _numLv; initial++)
+	for (size_t ini = 0; ini < _numLv; ini++)
 	{
-		for (size_t final = 0; final < _numLv; final++)
+		for (size_t fin = 0; fin < _numLv; fin++)
 		{
 			// Upward transitions absorb kinetic energy from the medium
-			if (_ev(initial) < _ev(final))
+			if (_ev(ini) < _ev(fin))
 			{
-				double clu = s.cvv(initial, final);
+				double clu = s.cvv(ini, fin);
 				if (clu > 0)
-					powerDensityOut += (_ev(final) - _ev(initial)) * clu *
-					                   s.nv(initial);
+					powerDensityOut +=
+					                (_ev(fin) - _ev(ini)) * clu * s.nv(ini);
 			}
 		}
 	}
@@ -241,13 +241,13 @@ EVector NLevel::solveBoltzmanEquations(double T) const
 	return pv / pSum;
 }
 
-void NLevel::forActiveLinesDo(function<void(size_t initial, size_t final)> thing) const
+void NLevel::forActiveLinesDo(function<void(size_t ini, size_t fin)> thing) const
 {
 	// Execute the same function for all transitions that are optically active.
-	for (size_t final = 0; final < _numLv; final++)
-		for (size_t initial = 0; initial < _numLv; initial++)
-			if (_avv(initial, final))
-				thing(initial, final);
+	for (size_t fin = 0; fin < _numLv; fin++)
+		for (size_t ini = 0; ini < _numLv; ini++)
+			if (_avv(ini, fin))
+				thing(ini, fin);
 }
 
 double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const
