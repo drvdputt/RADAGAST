@@ -43,6 +43,7 @@ private:
 	void readLevels();
 	void readTransProb();
 	void readCollisions();
+	void readDirectDissociation();
 
 private:
 	class H2Level
@@ -88,14 +89,20 @@ public:
 
 	/** Retrieve the index of a level with these quantum numbers. */
 	size_t indexOutput(ElectronicState eState, int j, int v) const;
-	EVector ev() const override;
 
+	/** The required overrides of the super class. */
+	EVector ev() const override;
 	EVector gv() const override;
 	EMatrix avv() const override;
 	EMatrix extraAvv() const override;
 	EMatrix cvv(double T, const EVector& speciesNv) const override;
 	EVector sourcev(double T, const EVector& speciesNv) const override;
-	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
+	EVector sinkv(double T, double n, const EVecto000r& speciesNv) const override;
+
+	/** Functionality specific for H2. */
+
+	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
+	double directDissociationCrossSection(double nu, int j, int v);
 
 private:
 	/** Returns true if the given J and V are within the boundaries specified by the
@@ -117,6 +124,8 @@ private:
 	std::vector<H2Level> _levelv;
 	size_t _numL{0};
 
+	/* The dissociation energy of each electronic level. I assume the ionization threshold is 
+
 	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
 	   vector above. Function below shows how to add level. */
 	std::map<std::array<int, 3>, int> _ejvToIndexm;
@@ -134,6 +143,8 @@ private:
 	// Cache species index of the collision partner
 	int _inH;
 	CollisionData _qH;
+
+	// TODO: dissociating collisions
 };
 
 #endif /* GASMODULE_GIT_SRC_H2FROMFILES_H_ */
