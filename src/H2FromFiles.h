@@ -97,7 +97,7 @@ public:
 	EMatrix extraAvv() const override;
 	EMatrix cvv(double T, const EVector& speciesNv) const override;
 	EVector sourcev(double T, const EVector& speciesNv) const override;
-	EVector sinkv(double T, double n, const EVecto000r& speciesNv) const override;
+	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 	/** Functionality specific for H2. */
 
