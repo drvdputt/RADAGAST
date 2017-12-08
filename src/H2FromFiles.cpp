@@ -208,6 +208,8 @@ EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 	double nH = speciesNv(_inH);
 	addToCvv(the_cvv, _qH, T, nH);
 
+	// TODO: (optional?) g-bar approximation for missing coefficients
+
 	return the_cvv;
 }
 
