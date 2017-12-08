@@ -40,9 +40,19 @@ public:
 	};
 
 private:
+
+	/** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have
+	    been some corrections, but the original data comes from Dabrowski (1984). */
 	void readLevels();
+
+	/** Load the data from Wolniewicz (1998) for X and abgrall (1994) for excited states.
+	    See also MOLAT database. */
 	void readTransProb();
+
+	/** Load data from Lique (2015). */
 	void readCollisions();
+
+	/** Load dissociation cross sections from Gay et al. (2012). */
 	void readDirectDissociation();
 
 private:
