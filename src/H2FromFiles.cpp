@@ -6,6 +6,8 @@
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 
+#include <regex>
+
 // TODO: make model
 
 using namespace std;
@@ -180,6 +182,43 @@ void H2FromFiles::readCollisions()
 	DEBUG("Read in " << _qH.transitionv().size() << " collision coefficients." << endl);
 }
 
+void H2FromFiles::readDirectDissociation()
+{
+	_dissociationCrossSectionv.resize(_levelv.size());
+	ifstream cont_diss = IOTools::ifstreamRepoFile("dat/h2/const_diss.dat");
+	string line;
+
+	// Main file traversal loop
+	while (getline(cont_diss, line))
+	{
+		// Find the start of a data block
+		if (line.at(0) == "#" && line.at(1) == "!")
+		{
+			// Process the three lines starting with "#!"
+			string line1, line2;
+			getline(cont_diss, line1);
+			getline(cont_diss, line2);
+			int nei, nef, vi, ji;
+			string clean = regex_replace(line, std::regex("[^0-9.]+"), " ");
+			istringstream(clean) >> nei >> nef >> vi >> ji;
+
+			// Skip to the next #! block if we are not treating this level
+			if (nei > 0 || !validJV(ji,vi))
+				continue; // This will never be used;
+
+			// Read the data
+			string dataline
+			while(true)
+			{
+				getline(cont_diss, dataline);
+				if (const_diss.peek() == "#")
+					break;
+			}
+			
+		}
+	}
+}
+
 EVector H2FromFiles::ev() const
 {
 	EVector the_ev(_numL);
@@ -232,8 +271,8 @@ void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double 
 		return;
 
 	/* Find the grid point to the right of (>=) the requested log-temperature. (Returns last
-	   point if T > Tmax). We will naively extrapolate for points outside the range, and cut off
-	   the result at 0 if it becomes negative. */
+	   point if T > Tmax). We will naively extrapolate for points outside the range, and cut
+	   off the result at 0 if it becomes negative. */
 	const Array& temperaturev = qdata.temperaturev();
 	int iRight = TemplatedUtils::index(T, temperaturev);
 	iRight = max(iRight, 1);

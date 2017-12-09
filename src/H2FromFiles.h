@@ -3,6 +3,7 @@
 
 #include "CollisionData.h"
 #include "LevelDataProvider.h"
+#include "Spectrum.h"
 
 #include <array>
 #include <limits>
@@ -40,7 +41,6 @@ public:
 	};
 
 private:
-
 	/** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have
 	    been some corrections, but the original data comes from Dabrowski (1984). */
 	void readLevels();
@@ -134,8 +134,6 @@ private:
 	std::vector<H2Level> _levelv;
 	size_t _numL{0};
 
-	/* The dissociation energy of each electronic level. I assume the ionization threshold is 
-
 	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
 	   vector above. Function below shows how to add level. */
 	std::map<std::array<int, 3>, int> _ejvToIndexm;
@@ -154,7 +152,8 @@ private:
 	int _inH;
 	CollisionData _qH;
 
-	// TODO: dissociating collisions
+	/** Cross sections for direct radiative dissociation from X. Indexed on level index. */
+	std::vector<Spectrum> _dissociationCrossSectionv;
 };
 
 #endif /* GASMODULE_GIT_SRC_H2FROMFILES_H_ */
