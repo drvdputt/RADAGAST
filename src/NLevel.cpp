@@ -28,10 +28,13 @@ NLevel::~NLevel() = default;
 
 void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const
 {
+	// Count the number of active lines
 	numLines = 0;
 	forActiveLinesDo([&](size_t, size_t) { numLines++; });
 	lineFreqv.resize(numLines);
 	naturalLineWidthv.resize(numLines);
+
+	// Calculate the natural line width for these transitions
 	int index = 0;
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		lineFreqv[index] = (_ev(upper) - _ev(lower)) / Constant::PLANCK;

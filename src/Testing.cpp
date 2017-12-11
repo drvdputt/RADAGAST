@@ -170,16 +170,16 @@ Array Testing::improveFrequencyGrid(const NLevel& boundBound, const Array& oldPo
 {
 	// Add extra points for the lines
 	int numLines;
-	Array lineFreqv, lineWidthv;
-	boundBound.lineInfo(numLines, lineFreqv, lineWidthv);
+	Array lineFreqv, naturalWidthv;
+	boundBound.lineInfo(numLines, lineFreqv, naturalWidthv);
 
 	double lineWindowFactor = 1.;
-	double thermalFactor = sqrt(Constant::BOLTZMAN * 500000 / Constant::HMASS_CGS) /
+	double thermalFactor = sqrt(Constant::BOLTZMAN * 50000 / Constant::HMASS_CGS) /
 	                       Constant::LIGHT;
-	lineWidthv = lineWindowFactor * (lineWidthv + lineFreqv * thermalFactor);
+	naturalWidthv = lineWindowFactor * (naturalWidthv + lineFreqv * thermalFactor);
 
 	vector<double> gridVector(begin(oldPoints), end(oldPoints));
-	Testing::refineFrequencyGrid(gridVector, 13, 2.5, lineFreqv, lineWidthv);
+	Testing::refineFrequencyGrid(gridVector, 13, 2.5, lineFreqv, naturalWidthv);
 
 	return Array(gridVector.data(), gridVector.size());
 }
@@ -719,12 +719,12 @@ void Testing::runH2()
 	Array unrefined(grid.data(), grid.size());
 
 	// Add points for H lines
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
-	unrefined = improveFrequencyGrid(hl, unrefined);
+	// HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
+	// unrefined = improveFrequencyGrid(hl, unrefined);
 
 	// Add points for H continuum
-	FreeBound fb(unrefined);
-	unrefined = improveFrequencyGrid(fb, unrefined);
+	// FreeBound fb(unrefined);
+	// unrefined = improveFrequencyGrid(fb, unrefined);
 
 	// Add points for H2 lines
 	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
