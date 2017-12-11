@@ -152,8 +152,12 @@ private:
 	int _inH;
 	CollisionData _qH;
 
-	/** Cross sections for direct radiative dissociation from X. Indexed on level index. */
-	std::vector<Spectrum> _dissociationCrossSectionv;
+	/** Cross sections for direct radiative dissociation from X. Indexed on (level index,
+	    process). There can be multiple cross sections for a level, because there are
+	    different processes which can occur per level (indicated by different 'nef' (final
+	    electronic level) in the data file. These will be indexed arbitrarily, as the nature
+	    of the process shouldn't matter. */
+	std::vector<std::vector<Spectrum>> _dissociationCrossSectionv;
 };
 
 #endif /* GASMODULE_GIT_SRC_H2FROMFILES_H_ */

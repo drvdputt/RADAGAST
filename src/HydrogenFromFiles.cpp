@@ -203,8 +203,6 @@ EVector HydrogenFromFiles::ev() const
 	EVector the_ev(_numL);
 	for (size_t i = 0; i < _numL; i++)
 		the_ev(i) = _levelOrdering[i].e();
-	DEBUG("energy vector" << endl);
-	DEBUG(the_ev << endl);
 	return the_ev;
 }
 
@@ -213,8 +211,6 @@ EVector HydrogenFromFiles::gv() const
 	EVector the_gv(_numL);
 	for (size_t i = 0; i < _numL; i++)
 		the_gv(i) = _levelOrdering[i].g();
-	DEBUG("degeneracy vector" << endl);
-	DEBUG(the_gv << endl);
 	return the_gv;
 }
 

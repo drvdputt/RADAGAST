@@ -191,30 +191,59 @@ void H2FromFiles::readDirectDissociation()
 	// Main file traversal loop
 	while (getline(cont_diss, line))
 	{
-		// Find the start of a data block
-		if (line.at(0) == "#" && line.at(1) == "!")
+		// Find the start of a cross section data block
+		if (line.at(0) == '#' && line.at(1) == '!')
 		{
-			// Process the three lines starting with "#!"
+			// Get the three lines starting with "#!". I don't think I need the
+			// 2nd and 3rd lines though.
 			string line1, line2;
 			getline(cont_diss, line1);
 			getline(cont_diss, line2);
-			int nei, nef, vi, ji;
-			string clean = regex_replace(line, std::regex("[^0-9.]+"), " ");
-			istringstream(clean) >> nei >> nef >> vi >> ji;
 
-			// Skip to the next #! block if we are not treating this level
-			if (nei > 0 || !validJV(ji,vi))
+			// Parse the first line to get the quantum numbers
+			int nei, nef, vi, ji;
+			string cleanline = regex_replace(line, regex("[^0-9.]+"), " ");
+			istringstream(cleanline) >> nei >> nef >> vi >> ji;
+
+			// Skip to the next #! block if we are not treating this level (There
+			// should be no data for states other than X, but let's ignore nei
+			// anyway. .
+			if (nei > 0 || !validJV(ji, vi))
 				continue; // This will never be used;
 
 			// Read the data
-			string dataline
-			while(true)
+			string dataline;
+			vector<double> frequencyv, crossSectionv;
+
+			while (getline(cont_diss, dataline))
 			{
-				getline(cont_diss, dataline);
-				if (const_diss.peek() == "#")
+				cout << dataline << endl;
+
+				// Parse the data line
+				double energy_invcm;
+				double crossSection_ang2;
+				istringstream iss(dataline);
+				iss >> energy_invcm >> crossSection_ang2;
+				if (iss.fail())
+					Error::runtime("Invalid data line");
+				cout << energy_invcm << " " << crossSection_ang2 << endl;
+
+				// Convert to the correct units and add
+				frequencyv.emplace_back(Constant::LIGHT * energy_invcm);
+				crossSectionv.emplace_back(crossSection_ang2 *
+				                           Constant::ANG_CM * Constant::ANG_CM);
+
+				if (cont_diss.peek() == '#')
 					break;
 			}
-			
+			// When this loop exits, we should be at the start of the next comment
+			// block, or at the end of the file.
+
+			// Add the new cross section at the correct level index.
+			size_t levelIndex = indexOutput(ElectronicState::X, ji, vi);
+			_dissociationCrossSectionv[levelIndex].emplace_back(
+			                Array(frequencyv.data(), frequencyv.size()),
+			                Array(crossSectionv.data(), crossSectionv.size()));
 		}
 	}
 }
