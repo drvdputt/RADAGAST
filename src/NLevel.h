@@ -121,8 +121,11 @@ public:
 	    j_nu f * (erg/cm3/s/Hz). */
 	Array lineEmissivityv(const Solution& s) const;
 
-	/** The opacity alpha_nu, equivalent to kappaRho for dust (cm-1). */
-	Array opacityv(const Solution& s) const;
+	/** The opacity alpha_nu, equivalent to kappaRho for dust (cm-1). The default
+	    implementation gives just the line opacity, but subclasses can override it to add
+	    extra contributions, such as absorption cross sections per level. */
+	virtual Array opacityv(const Solution& s) const;
+	Array lineOpacityv(const Solution& s) const;
 
 	/** Heating rate due to collisional de-excitation (ergs / s / cm3). */
 	double heating(const Solution& s) const;

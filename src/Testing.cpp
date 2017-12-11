@@ -714,7 +714,7 @@ void Testing::runH2()
 	double Tc = 10000;
 	double G0 = 100;
 
-	auto grid = generateGeometricGridv(200, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	auto grid = generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
 	Array unrefined(grid.data(), grid.size());
 
@@ -742,16 +742,19 @@ void Testing::runH2()
 	H2Levels h2Levels{h2Data, frequencyv};
 	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv);
 
-	Array emissivityv = h2Levels.lineEmissivityv(s);
+	Array emissivityv = h2Levels.emissivityv(s);
 	Array opacityv = h2Levels.opacityv(s);
+	Array lineOp = h2Levels.lineOpacityv(s);
 
 	ofstream h2optical = IOTools::ofstreamFile("h2/opticalProperties.dat");
-	h2optical << "# nu (hz)\temissivity\topacity\n";
+	h2optical << "# nu (hz)\tlambda (micron)\temissivity\topacity\tlineOpacity\n";
 	const string tab{"\t"};
 	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
 	{
-		h2optical << frequencyv[iFreq] << tab << emissivityv[iFreq] << tab
-		          << opacityv[iFreq] << endl;
+		h2optical << frequencyv[iFreq] << tab
+		          << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM << tab
+		          << emissivityv[iFreq] << tab << opacityv[iFreq] << tab
+		          << lineOp[iFreq] << endl;
 	}
 }
 

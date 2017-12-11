@@ -186,7 +186,7 @@ void H2FromFiles::readCollisions()
 void H2FromFiles::readDirectDissociation()
 {
 	_dissociationCrossSectionv.resize(_levelv.size());
-	ifstream cont_diss = IOTools::ifstreamRepoFile("dat/h2/const_diss.dat");
+	ifstream cont_diss = IOTools::ifstreamRepoFile("dat/h2/cont_diss.dat");
 	string line;
 
 	// Main file traversal loop
@@ -218,16 +218,15 @@ void H2FromFiles::readDirectDissociation()
 
 			while (getline(cont_diss, dataline))
 			{
-				cout << dataline << endl;
-
-				// Parse the data line
-				double energy_invcm;
-				double crossSection_ang2;
+				// Parse the data line:	Split by comma
 				istringstream iss(dataline);
-				iss >> energy_invcm >> crossSection_ang2;
-				if (iss.fail())
-					Error::runtime("Invalid data line");
-				cout << energy_invcm << " " << crossSection_ang2 << endl;
+				string s0, s1;
+				getline(iss, s0, ',');
+				getline(iss, s1);
+
+				// String to double
+				double energy_invcm = stod(s0);
+				double crossSection_ang2 = stod(s1);
 
 				// Convert to the correct units and add
 				frequencyv.emplace_back(Constant::LIGHT * energy_invcm);
@@ -292,12 +291,13 @@ EVector H2FromFiles::sinkv(double T, double n, const EVector& speciesNv) const
 	return EVector::Zero(_numL);
 }
 
-double H2FromFiles::directDissociationCrossSection(double nu, int j, int v)
+double H2FromFiles::directDissociationCrossSection(double nu, int j, int v) const
 {
 	return directDissociationCrossSection(nu, indexOutput(ElectronicState::X, j, v));
 }
 
-double H2FromFiles::directDissociationCrossSection(double nu, size_t index) {
+double H2FromFiles::directDissociationCrossSection(double nu, size_t index) const
+{
 	double sigma{0.};
 	// Evaluate all the cross sections for this level at this frequency
 	for (const Spectrum& cs : _dissociationCrossSectionv[index])

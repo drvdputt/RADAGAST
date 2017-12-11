@@ -112,8 +112,8 @@ public:
 	/** Functionality specific for H2. */
 
 	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
-	double directDissociationCrossSection(double nu, int j, int v);
-	double directDissociationCrossSection(double nu, size_t index);
+	double directDissociationCrossSection(double nu, int j, int v) const;
+	double directDissociationCrossSection(double nu, size_t index) const;
 
 private:
 	/** Returns true if the given J and V are within the boundaries specified by the

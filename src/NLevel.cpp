@@ -117,6 +117,10 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 
 Array NLevel::opacityv(const Solution& s) const
 {
+	return lineOpacityv(s);
+}
+
+Array NLevel::lineOpacityv(const Solution& s) const {
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);

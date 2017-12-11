@@ -11,6 +11,20 @@ H2Levels::H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequenc
 
 H2Levels::~H2Levels() = default;
 
+Array H2Levels::opacityv(const Solution& s) const
+{
+	// Start with the line opacity
+	Array totalOpv = lineOpacityv(s);
+
+	// Then add the dissociation cross section of each level, for each frequency
+	const Array& freqv = frequencyv();
+	for (size_t iLv = 0; iLv < _hff->numLv(); iLv++)
+		for (size_t iNu = 0; iNu < freqv.size(); iNu++)
+			totalOpv[iNu] += s.nv(iLv) *
+			                 _hff->directDissociationCrossSection(freqv[iNu], iLv);
+	return totalOpv;
+}
+
 EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                      const EVector& sourcev, const EVector& sinkv,
                                      int chooseConsvEq) const
@@ -86,8 +100,6 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	return result;
 }
 
-double H2Levels::dissociationHeating(const NLevel::Solution& s) const
-{
-	// TODO
-	return 0;
-}
+double H2Levels::dissociationHeating(const Solution& s) const { return 0.0; }
+
+double H2Levels::dissociationCooling(const Solution& s) const { return 0.0; }

@@ -11,6 +11,9 @@ public:
 	H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequencyv);
 	~H2Levels();
 
+	Array opacityv(const Solution& s) const override;
+
+protected:
 	/** An override which is better suited for H2. It scales as a*n^2, where a is the number
 	    of iterations, instead of n^3, apparently. I might be interesting to see this with
 	    my own eyes. */
@@ -18,6 +21,7 @@ public:
 	                           const EVector& sourcev, const EVector& sinkv,
 	                           int chooseConsvEq) const override;
 
+public:
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon
 	    process derived from the level population solution. This rate is usable by the
 	    chemical network. */
