@@ -283,7 +283,7 @@ Array GasInterfaceImpl::opacityv(const Solution& s) const
 {
 	Array lineOp = _atomicLevels->opacityv(s.HSolution);
 	if (_molecular)
-		lineOp += _molecular->emissivityv(s.H2Solution);
+		lineOp += _molecular->opacityv(s.H2Solution);
 
 	Array contOpCoeffv(_frequencyv.size());
 	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);

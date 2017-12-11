@@ -18,6 +18,7 @@ H2FromFiles::H2FromFiles(int maxJ, int maxV)
 	readLevels();
 	readTransProb();
 	readCollisions();
+	readDirectDissociation();
 #ifdef PRINT_LEVEL_MATRICES
 	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
 	avvOut << _avv << endl;
@@ -289,6 +290,19 @@ EVector H2FromFiles::sourcev(double T, const EVector& speciesNv) const
 EVector H2FromFiles::sinkv(double T, double n, const EVector& speciesNv) const
 {
 	return EVector::Zero(_numL);
+}
+
+double H2FromFiles::directDissociationCrossSection(double nu, int j, int v)
+{
+	return directDissociationCrossSection(nu, indexOutput(ElectronicState::X, j, v));
+}
+
+double H2FromFiles::directDissociationCrossSection(double nu, size_t index) {
+	double sigma{0.};
+	// Evaluate all the cross sections for this level at this frequency
+	for (const Spectrum& cs : _dissociationCrossSectionv[index])
+		sigma += cs.evaluate(nu);
+	return sigma;
 }
 
 bool H2FromFiles::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }

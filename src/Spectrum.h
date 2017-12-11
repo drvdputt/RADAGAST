@@ -22,7 +22,8 @@ public:
 	/** Interpolates the data to the given frequency. */
 	double evaluate(double frequency) const
 	{
-		return TemplatedUtils::evaluateLinInterpf(frequency, _frequencyv, _valuev);
+		double value = TemplatedUtils::evaluateLinInterpf(frequency, _frequencyv, _valuev);
+		return std::max(0., value);
 	}
 
 private:
