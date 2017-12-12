@@ -295,6 +295,11 @@ double H2FromFiles::directDissociationCrossSection(double nu, size_t index) cons
 	return sigma;
 }
 
+vector<Spectrum> H2FromFiles::directDissociationCrossSection(size_t index) const
+{
+	return _dissociationCrossSectionv[index];
+}
+
 bool H2FromFiles::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }
 
 void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,

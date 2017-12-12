@@ -3,6 +3,8 @@
 
 #include "NLevel.h"
 
+#include <vector>
+
 class H2FromFiles;
 
 class H2Levels : public NLevel
@@ -54,6 +56,9 @@ private:
 
 private:
 	std::shared_ptr<const H2FromFiles> _hff;
+
+	// List of levels that have dissociation cross section data
+	std::vector<size_t> _levelsWithCrossSectionv;
 };
 
 #endif /* GASMODULE_GIT_SRC_H2LEVELS_H_ */
