@@ -135,141 +135,146 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
-	if (nHtotal > 0)
-	{
-		DEBUG("Calculating state for T = " << T << "K" << endl);
-
-		/* Initial guess for the chemistry. Rather important for getting good
-		   convergence. */
-		double iniNH2 = nHtotal / 4;
-		double iniAtomAndIon = nHtotal / 2;
-		double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
-		                                         specificIntensityv);
-		s.speciesNv = EVector(4);
-		s.speciesNv << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
-		                (1 - guessF) * iniAtomAndIon, iniNH2;
-
-		/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 *
-		   nH2 / 4 = 0 + n / 2 + 2n / 2 = ntotal */
-
-		/* Lambda function, because it is only needed in this scope. The [&] passes the
-		   current scope by reference, so the lambda function can modify s. */
-		auto solveLevelBalances = [&]() {
-			double nH = s.speciesNv(_inH);
-			EVector Hsourcev = _atomicLevels->sourcev(T, s.speciesNv);
-			EVector Hsinkv = _atomicLevels->sinkv(T, nH, s.speciesNv);
-			DEBUG("Solving levels nH = " << nH << endl);
-			s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
-			                                          specificIntensityv, Hsourcev,
-			                                          Hsinkv);
-			if (_molecular)
-			{
-				double nH2 = s.speciesNv(_inH2);
-				EVector H2sourcev = EVector::Zero(_molecular->numLv());
-				EVector H2sinkv = _molecular->dissociationSinkv(
-				                specificIntensityv);
-				DEBUG("Solving levels nH2 = " << nH2 << endl);
-				s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
-				                                        specificIntensityv,
-				                                        H2sourcev, H2sinkv);
-			}
-		};
-
-		/* Use the initial guess for the chemical abundances to calculate our first set
-		   of level populations. */
-		solveLevelBalances();
-
-		int counter = 0;
-		bool stopCriterion = false;
-		while (!stopCriterion)
-		{
-			EVector previousAbundancev = s.speciesNv;
-
-			// Put breakpoint in case of NaN here
-			if (previousAbundancev.array().isNaN().any())
-				Error::runtime("Nan in chemistry solution!");
-
-			// When including H2
-			if (_molecular)
-			{
-				// Calculate fixed rate coefficients
-				double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
-				double kDissH2Levels = _molecular->dissociationRate(
-				                s.H2Solution, s.specificIntensityv);
-
-				DEBUG("Formation rate " << kFormH2 << endl);
-				DEBUG("Dissociation rate " << kDissH2Levels << endl);
-
-				// Solve chemistry network
-				EVector reactionRates =
-				                _chemSolver->chemicalNetwork()->rateCoeffv(
-				                                T, _frequencyv,
-				                                specificIntensityv,
-				                                kDissH2Levels, kFormH2);
-				s.speciesNv = _chemSolver->solveBalance(reactionRates,
-				                                        s.speciesNv);
-
-				/* TODO: Add effect of grain charging to chemical network. I
-				   think it might be possible to do this by imposing a
-				   conservation equation for the number of electrons: ne + nH +
-				   nH2 = (ne + nH + nH2)_0 + <Cg>*ng. The average grain charge
-				   <Gg> should be updated together with the rates I guess?
-				   Another option would be to include the grain charge rates
-				   into the network as extra reactions. The production vector
-				   would be (1 0 0 0) while the reactant vector would be zero
-				   (the grains don't disappear when they lose an electron) Grain
-				   recombination / charge exchange reaction could also be added.
-				   I need to think about whether the 'disappearing' particles
-				   will cause problems when couples with conservation
-				   equations. */
-			}
-			// When ignoring H2
-			else
-			{
-				/* Just solve the ionization balance in the nebular
-				   approximation. */
-				double f = Ionization::solveBalance(nHtotal, T, _frequencyv,
-				                                    specificIntensityv);
-				DEBUG("Ionized fraction = " << f << endl);
-
-				// Neutral fraction
-				s.speciesNv[_inH] = nHtotal * (1 - f);
-				// Ionized fraction
-				s.speciesNv[_inp] = nHtotal * f;
-				// Electron density is simply equal to proton density
-				s.speciesNv[_ine] = s.speciesNv[_inp];
-				s.speciesNv[_inH2] = 0;
-			}
-			solveLevelBalances();
-
-			// An abundance has converged if it changes by less than 1%
-			EArray changev = s.speciesNv - previousAbundancev;
-			// Or if it is negligible compared to the norm (or sum maybe?)
-			double norm = s.speciesNv.norm();
-			Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
-			                changev.abs() <= 0.01 * previousAbundancev.array() ||
-			                s.speciesNv.array() < 1.e-99 * norm;
-			counter++;
-			DEBUG("Chemistry: " << counter << endl
-			                    << s.speciesNv << endl
-			                    << "convergence: \n"
-			                    << convergedv << endl);
-
-			/* Currently, the implementation without molecules does not need
-			   iteration. */
-			stopCriterion = !_molecular || convergedv.all() ||
-			                counter > MAXCHEMISTRYITERATIONS;
-		}
-	}
-	else
+	// Exceptions first
+	if (nHtotal <= 0)
 	{
 		s.speciesNv = EVector::Zero(SpeciesIndex::size());
 		s.HSolution = _atomicLevels->solveZero(T);
 		if (_molecular)
 			s.H2Solution = _molecular->solveZero(T);
+		return s;
+	}
+
+	DEBUG("Calculating state for T = " << T << "K" << endl);
+
+	// Initial guess for the chemistry. Rather important for getting good convergence.
+	double iniNH2 = nHtotal / 4;
+	double iniAtomAndIon = nHtotal / 2;
+	double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
+	                                         specificIntensityv);
+	s.speciesNv = EVector(4);
+	s.speciesNv << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
+	                (1 - guessF) * iniAtomAndIon, iniNH2;
+
+	/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2 / 4
+	   = 0 + n / 2 + 2n / 2 = ntotal */
+
+	/* Lambda function, because it is only needed in this scope. The [&] passes the current
+	   scope by reference, so the lambda function can modify s. */
+	auto solveLevelBalances = [&]() {
+		double nH = s.speciesNv(_inH);
+		EVector Hsourcev = _atomicLevels->sourcev(T, s.speciesNv);
+		EVector Hsinkv = _atomicLevels->sinkv(T, nH, s.speciesNv);
+		DEBUG("Solving levels nH = " << nH << endl);
+		s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
+		                                          specificIntensityv, Hsourcev, Hsinkv);
+		if (_molecular)
+		{
+			double nH2 = s.speciesNv(_inH2);
+			EVector H2sourcev = EVector::Zero(_molecular->numLv());
+			EVector H2sinkv = _molecular->dissociationSinkv(specificIntensityv);
+			DEBUG("Solving levels nH2 = " << nH2 << endl);
+			s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
+			                                        specificIntensityv, H2sourcev,
+			                                        H2sinkv);
+		}
+	};
+
+	/* Use the initial guess for the chemical abundances to calculnate our first set of
+	   level populations. */
+	solveLevelBalances();
+
+	/* The main loop: e
+         v---------------------------------------------------<
+	 > LEVELS SOLUTION, CHEMISTRY SOLUTION -> CHEM RATES |
+                                                             |
+	   CHEM RATES -> CHEMISTRY SOLUTION                  |
+                                                             |
+	   CHEMISTRY SOLUTION -> LEVEL SOURCE AND SINK RATES |
+                                                             |
+	   LEVEL SOURCE AND SINK RATES -> LEVEL SOLUTION ----^
+	*/
+
+	int counter = 0;
+	bool stopCriterion = false;
+	while (!stopCriterion)
+	{
+		EVector previousAbundancev = s.speciesNv;
+
+		if (previousAbundancev.array().isNaN().any())
+			Error::runtime("Nan in chemistry solution!");
+
+		// When including H2
+		if (_molecular)
+		{
+			// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
+			double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
+			double kDissH2Levels = _molecular->dissociationRate(
+			                s.H2Solution, s.specificIntensityv);
+
+			DEBUG("Formation rate " << kFormH2 << endl);
+			DEBUG("Dissociation rate " << kDissH2Levels << endl);
+
+			// CHEM RATES -> CHEMISTRY SOLUTION
+			EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
+			                T, _frequencyv, specificIntensityv, kDissH2Levels,
+			                kFormH2);
+			s.speciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv);
+
+			/* TODO: Add effect of grain charging to chemical network. I think it
+			   might be possible to do this by imposing a conservation equation for
+			   the number of electrons: ne + nH + nH2 = (ne + nH + nH2)_0 + <Cg>*ng.
+			   The average grain charge <Gg> should be updated together with the
+			   rates I guess? Another option would be to include the grain charge
+			   rates into the network as extra reactions. The production vector
+			   would be (1 0 0 0) while the reactant vector would be zero (the
+			   grains don't disappear when they lose an electron) Grain
+			   recombination / charge exchange reaction could also be added. I need
+			   to think about whether the 'disappearing' particles will cause
+			   problems when couples with conservation equations. */
+		}
+		// When ignoring H2
+		else
+		{
+			// DIRECT SOLUTION (IONIZATION BALANCE ONLY, NO MOLECULES)
+
+			// Just solve the ionization balance in the nebular approximation.
+			double f = Ionization::solveBalance(nHtotal, T, _frequencyv,
+			                                    specificIntensityv);
+			DEBUG("Ionized fraction = " << f << endl);
+
+			// Neutral fraction
+			s.speciesNv[_inH] = nHtotal * (1 - f);
+			// Ionized fraction
+			s.speciesNv[_inp] = nHtotal * f;
+			// Electron density is simply equal to proton density
+			s.speciesNv[_ine] = s.speciesNv[_inp];
+			s.speciesNv[_inH2] = 0;
+		}
+
+		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
+		solveLevelBalances();
+
+		// CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%
+		EArray changev = s.speciesNv - previousAbundancev;
+		// Or if it is negligible compared to the norm (or sum maybe?)
+		double norm = s.speciesNv.norm();
+		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
+		                changev.abs() <= 0.01 * previousAbundancev.array() ||
+		                s.speciesNv.array() < 1.e-99 * norm;
+		counter++;
+		DEBUG("Chemistry: " << counter << endl
+		                    << s.speciesNv << endl
+		                    << "convergence: \n"
+		                    << convergedv << endl);
+
+		// Currently, the implementation without molecules does not need iteration.
+		stopCriterion = !_molecular || convergedv.all() ||
+		                counter > MAXCHEMISTRYITERATIONS;
 	}
 	return s;
 }
+
 
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {
