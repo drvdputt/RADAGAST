@@ -75,7 +75,7 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		EVector deltaNv = (nv - previousNv).array().abs();
 		converged = deltaNv.maxCoeff() < 1e-6 * n;
 		counter++;
-		DEBUG(" lvl it " << counter << " norm " << previousNv.sum());
+		DEBUG(" lvl it " << counter);
 	}
 	DEBUG("\nnv\n" << nv << endl);
 	return nv;

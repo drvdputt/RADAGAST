@@ -139,11 +139,13 @@ T integrate(const T1& xContainer, const T2& yContainer)
 
 /** Finds the index of the first element >= val, in the iterable container `container'. If val < all
     the elements, 0 is returned. If val > all the elements, then the index to the last element is
-    returned. */
+    returned instead. */
 template <typename T, typename T1> inline size_t index(T val, const T1& container)
 {
-	auto idx = std::lower_bound(std::begin(container), std::end(container), val);
-	return std::distance(std::begin(container), idx);
+	auto iterator = std::lower_bound(std::begin(container), std::end(container), val);
+	size_t index = std::distance(std::begin(container), iterator);
+	if (index == container.size()) index--;
+	return index;
 }
 
 /** Evaluates the polynomial \Sum_{i = 0}^{coeffv.size() - 1} x^i coeffv[i]. */

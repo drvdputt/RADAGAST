@@ -838,7 +838,7 @@ void Testing::runWithDust()
 	GasModule::GrainInterface grainInterface(move(grainPopv));
 
 	// Run
-	GasModule::GasState gs{};
+	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
 	writeGasState("", gasInterface, gs);
 }
