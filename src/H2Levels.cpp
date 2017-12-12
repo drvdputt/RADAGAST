@@ -155,7 +155,7 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 			for (size_t j = 0; j < nuv.size(); j++)
 				sigmaFv[j] *= _hff->directDissociationCrossSection(nuv[j], iLv);
 
-			result(iLv) = TemplatedUtils::integrate<double>(nuv, sigmaFv);
+			result(iLv) += TemplatedUtils::integrate<double>(nuv, sigmaFv);
 		}
 	}
 	return result;
