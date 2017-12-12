@@ -189,36 +189,20 @@ EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
 	return Cvv;
 }
 
-EVector HydrogenHardcoded::sourcev(double T, const EVector& speciesNv) const
+size_t HydrogenHardcoded::indexOutput(int n, int l) const
 {
-	// approximations from Draine's book, p 138, valid for 3000 to 30000 K
-	// yes, this is natural log
-	double T4 = T / 1.e4;
-	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
-	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-	double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
-
-	// 2015-Raga (equation A13) (rmxaa, 51, 231-239)
-	double t = log10(T4);
-	vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
-	vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
-	vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
-
-	double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
-	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
-	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
-
-	EVector alphav(NLV);
-	alphav << alphaGround, alpha2s, alpha2p, alpha3, alpha4, alpha5;
-	double ne = speciesNv(SpeciesIndex::ine());
-	double np = speciesNv(SpeciesIndex::inp());
-	return alphav * ne * np;
-}
-
-EVector HydrogenHardcoded::sinkv(double T, double n, const EVector& speciesNv) const
-{
-	double sink = Ionization::recombinationRateCoeff(T) / NLV;
-	double ne = speciesNv(SpeciesIndex::ine());
-	double np = speciesNv(SpeciesIndex::inp());
-	return EVector::Constant(NLV, sink * ne * np);
+	// Levels are
+	// 1, 2s, 2p, 3, 4, 5
+	// 0, 1, 2, 3, 4, 5
+	if (n == 1)
+		return 0;
+	else if (n == 2)
+	{
+		if (l == 0)
+			return 1;
+		else
+			return 2;
+	}
+	else // 3, 4, 5
+		return n;
 }

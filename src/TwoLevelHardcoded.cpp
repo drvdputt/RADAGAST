@@ -51,14 +51,3 @@ EMatrix TwoLevelHardcoded::cvv(double T, const EVector& speciesNv) const
 	            exp(-(the_ev(1) - the_ev(0)) / Constant::BOLTZMAN / T);
 	return Cvv;
 }
-
-EVector TwoLevelHardcoded::sourcev(double T, const EVector& speciesNv) const
-{
-	// There is no ion
-	return EVector::Zero(2);
-}
-
-EVector TwoLevelHardcoded::sinkv(double T, double n, const EVector& speciesNv) const
-{
-	return EVector::Zero(2);
-}

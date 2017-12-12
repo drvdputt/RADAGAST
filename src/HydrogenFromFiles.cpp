@@ -195,7 +195,10 @@ size_t HydrogenFromFiles::numLv() const { return _numL; }
 
 size_t HydrogenFromFiles::indexOutput(int n, int l) const
 {
-	return _nlToOutputIndexm.at({n, l});
+	if (n > _resolvedUpTo)
+		return _nlToOutputIndexm.at({n, -1});
+	else
+		return _nlToOutputIndexm.at({n, l});
 }
 
 EVector HydrogenFromFiles::ev() const
@@ -426,79 +429,6 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 	assert((result.array() >= 0).all());
 #endif
 	return result.array().max(0);
-}
-
-EVector HydrogenFromFiles::sourcev(double T, const EVector& speciesNv) const
-{
-	/* TODO: find better recombination coefficients. */
-
-	/* for now use the hardcoded implementation, but this needs to change (is copy paste from
-	   HydrogenHardcoded). */
-	double T4 = T / 1.e4;
-	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
-	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
-	double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
-
-	// 2015-Raga (A13)
-	double t = log10(T4);
-	vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
-	vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
-	vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
-
-	double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
-	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
-	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
-
-	// this hack should work for n up to 5
-	Array unresolvedAlphav({alphaGround, alpha2p + alpha2s, alpha3, alpha4, alpha5});
-
-	EVector alphav = EVector::Zero(_numL);
-
-	// Now loop over all levels, and add the correct recombination coefficient
-	for (size_t f = 0; f < _numL; f++)
-	{
-		const HydrogenLevel& final = _levelOrdering[f];
-		int n = final.n();
-
-		// Get one of the alphas calculated above
-		double unresolvedAlpha = unresolvedAlphav[n - 1];
-
-		// If it's the one for n = 2, use the resolved ones instead
-		if (n == 2)
-		{
-			int l = final.l();
-			if (l == 0)
-				alphav[f] = alpha2s;
-			else if (l == 1)
-				alphav[f] = alpha2p;
-			else if (l == -1)
-				alphav[f] = unresolvedAlpha;
-			else
-				Error::runtime("invalid l value");
-		}
-		else
-		{
-			// weigh by multiplicity
-			alphav[f] = unresolvedAlpha / (2 * n * n) * final.g();
-		}
-	}
-	double ne = speciesNv(SpeciesIndex::ine());
-	double np = speciesNv(SpeciesIndex::inp());
-	return alphav * ne * np;
-}
-
-EVector HydrogenFromFiles::sinkv(double T, double n, const EVector& speciesNv) const
-{
-	/* The ionization rate calculation makes no distinction between the levels.  When
-	   the upper level population is small, and its decay rate is large, the second term
-	   doesn't really matter. Therefore, we choose the sink to be the same for each
-	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
-	   => sink = totalsource / n because n0/n + n1/n = 1. */
-	double ne = speciesNv(_ine);
-	double np = speciesNv(_inp);
-	double totalSource = ne * np * Ionization::recombinationRateCoeff(T);
-	double sink = totalSource / n; // Sink rate per (atom per cm3)
-	return EVector::Constant(_numL, sink);
 }
 
 double HydrogenFromFiles::energy(int n, int l) const

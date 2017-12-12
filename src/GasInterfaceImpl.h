@@ -10,7 +10,7 @@
 class ChemistrySolver;
 class FreeBound;
 class FreeFree;
-class NLevel;
+class HydrogenLevels;
 class H2Levels;
 
 /** This class contains the actual implementation of the Gas Interface, and currently is the
@@ -74,7 +74,7 @@ public:
 	    constructor for manual setup (an argument for each subprocess of which more than 1
 	    usable subclass/configuration exists). The components can be set up outside of this
 	    constructor, and ownership is then transferred using a unique pointer. */
-	GasInterfaceImpl(std::unique_ptr<NLevel> atomModel,
+	GasInterfaceImpl(std::unique_ptr<HydrogenLevels> atomModel,
 	                 std::unique_ptr<H2Levels> molecularModel, const Array& frequencyv);
 
 	Array frequencyv() const { return _frequencyv; }
@@ -169,7 +169,7 @@ private:
 	std::unique_ptr<ChemistrySolver> _chemSolver;
 
 	/* Pointers to other parts of the implementation, to make late initialization possible */
-	std::unique_ptr<NLevel> _atomicLevels;
+	std::unique_ptr<HydrogenLevels> _atomicLevels;
 	std::unique_ptr<H2Levels> _molecular;
 	/* Continuum contributions */
 	std::unique_ptr<FreeBound> _freeBound;

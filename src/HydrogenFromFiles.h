@@ -44,7 +44,7 @@ private:
 		/** Constructor for an nlJ-resolved level. Takes \f$n\f$ and \f$l\f$ as integers,
 		    and \f$2j + 1\f$ instead of \f$j\f$ so an int can be used. */
 		HydrogenLevel(int n, int l, int twoJplus1, double e)
-		                : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
+				: _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
 		{
 		}
 		/** Constructor for an nl-resolved level. Puts -1 at the place of \f$2j+1\f$. */
@@ -92,12 +92,6 @@ public:
 	/* Returns the number of levels */
 	size_t numLv() const override;
 
-	/* Gives the index of the (n, l) energy level which is used in the output functions. To get
-	   the energy of the n=5, l=2 level for example, one can call i = indexOutput(5, 2). The
-	   energy you need will be the i'th element of the output vector produced by the
-	   ev()-function (which the client should have cached, since this function is "slow"). */
-	size_t indexOutput(int n, int l) const;
-
 	/** Returns a vector containing the energy of each level. [erg] */
 	EVector ev() const override;
 
@@ -113,16 +107,6 @@ public:
 	    two-photon processes, which generate a continuum instead). [s-1] */
 	EMatrix extraAvv() const override;
 
-	/** Return a pair of indices indication the upper and lower level of the two-photon
-	    transition (2s ans 1s respectively). When the upper level is collapsed, the index
-	    corresponding to n=2 will be given. In this case, the extra transition rate at these
-	    indices, extraAvv(n=2, n=1), equals 1/4 of the two-photon transition rate, which is the
-	    same as assuming that 1/4 of the n=2 atoms is in a 2s state. Therefore, in case the n=2
-	    level is collapsed, the two photon continuum emission should be rescaled with the same
-	    factor. This will probably give very inaccurate results, but its the best you can do
-	    with a collapsed n=2 level. */
-	std::array<size_t, 2> twoPhotonIndices() const override;
-
 	// FUNCTIONS RETURNING VARIABLE DATA //
 	/** These functions provide coefficients that depend on external variables such as the
 	    temperature. */
@@ -132,6 +116,28 @@ public:
 	    electron densities. */
 	EMatrix cvv(double T, const EVector& speciesNv) const override;
 
+	/** @name Specific for atomic hydrogen */
+	int nMax() const override { return 5; }
+
+	/**@{*/
+	/* Gives the index of the (n, l) energy level which is used in the output functions. To get
+	   the energy of the n=5, l=2 level for example, one can call i = indexOutput(5, 2). The
+	   energy you need will be the i'th element of the output vector produced by the
+	   ev()-function (which the client should have cached, since this function is "slow").
+
+	   If the n'th level is collapsed, the given l will be ignored. */
+	size_t indexOutput(int n, int l = 0) const;
+
+	/** Return a pair of indices indication the upper and lower level of the two-photon
+	    transition (2s ans 1s respectively). When the upper level is collapsed, the index
+	    corresponding to n=2 will be given. In this case, the extra transition rate at these
+	    indices, extraAvv(n=2, n=1), equals 1/4 of the two-photon transition rate, which is the
+	    same as assuming that 1/4 of the n=2 atoms is in a 2s state. Therefore, in case the n=2
+	    level is collapsed, the two photon continuum emission should be rescaled with the same
+	    factor. This will probably give very inaccurate results, but its the best you can do
+	    with a collapsed n=2 level. */
+	std::array<size_t, 2> twoPhotonIndices() const override;
+	/**@}*/
 private:
 	/** Calculates the l-changing collision rate coefficients as described by Pengelley \&
 	    Seaton (1964) Since l can only change by 1, the calculation starts at either end (li=0
@@ -141,30 +147,13 @@ private:
 	    declared private here. [cm3 s-1] */
 	EMatrix PS64CollisionRateCoeff(int n, double T, double ne) const;
 
-public:
-	/** Returns a vector containing the source terms for the equilibrium equations, such as the
-	    partial recombination rates into each level. Note that this function is separated from
-	    the ionization balance calculation, as there only the total recombination rate matters.
-	    In this case, this function returns the partial recombination rate into each level,
-	    interpolated from some formulae found in 2015-Raga (for levels 3-5) , and Draine's book
-	    (for levels 1, 2). The l-resolved recombination rates are just weighed by the degeneracy
-	    of the level, for levels 3, 4 and 5. TODO: Use better data here. [cm-3 s-1] */
-	EVector sourcev(double T, const EVector& speciesNv) const override;
-
-	/** Produces the sink term to be used by the equilibrium equations. In this case, hydrogen
-	    disappears from the level populations because it's being ionized. In the current
-	    implementation, all the ionization is assumed to be drawn equally from all levels. TODO:
-	    add the effects of H2 formation in here?. Take care of this using actual ionization
-	    cross sections? [s-1] */
-	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
-
 	//-----------------------------------------//
 	// FUNCTIONS THAT PROCESS THE READ-IN DATA //
 	//-----------------------------------------//
 	/** All of the functions below are private, and derive their output from 'scratch', meaning
 	    directly from the data that was read-in during readData(). Once readData() has finished,
 	    these should be safe to call. */
-private:
+
 	/** Returns energy of a level read in from CHIANTI, given the principal (n) and angular
 	    momentum (l) numbers. Already averaged over different j. [erg] */
 	double energy(int n, int l) const;
@@ -194,7 +183,7 @@ private:
 	/** Works with LevelInfo objects, determining automatically what version to pick. Again,
 	    this only works for downward transitions. */
 	double eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
-	                          double T_eV) const;
+				  double T_eV) const;
 
 	// STORAGE OF THE READ-IN DATA //
 
@@ -225,7 +214,7 @@ private:
 
 	/* A simple map for translating orbital letters into numbers */
 	const std::map<char, int> _lNumberm = {
-	                {'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
+			{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
 
 	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
 	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1}. */

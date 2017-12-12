@@ -694,11 +694,6 @@ void Testing::testFromFilesvsHardCoded()
 	EMatrix cvvhc = hhc.cvv(T, speciesNv);
 	EMatrix cvvff = hff.cvv(T, speciesNv);
 	hc_vs_ff(cvvhc, cvvff);
-
-	cout << "Recombinations:" << endl;
-	EVector alphavhc = hhc.sourcev(T, speciesNv) / ne / np;
-	EVector alphavff = hff.sourcev(T, speciesNv) / ne / np;
-	hc_vs_ff(alphavhc, alphavff);
 }
 
 void Testing::runH2()
@@ -740,7 +735,10 @@ void Testing::runH2()
 
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
 	H2Levels h2Levels{h2Data, frequencyv};
-	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv);
+	EVector sourcev = EVector::Zero(h2Levels.numLv());
+	EVector sinkv = h2Levels.dissociationSinkv(specificIntensityv);
+	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv,
+	                                           sourcev, sinkv);
 
 	Array emissivityv = h2Levels.emissivityv(s);
 	Array opacityv = h2Levels.opacityv(s);

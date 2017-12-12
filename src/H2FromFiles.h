@@ -95,26 +95,26 @@ private:
 	// PUBLIC FUNCTIONS AKA THE OUTPUT OF THIS CLASS //
 	//-----------------------------------------------//
 public:
+	/** @name The required overrides of the super class. */
+	/**@{*/
 	size_t numLv() const override;
-
-	/** Retrieve the index of a level with these quantum numbers. */
-	size_t indexOutput(ElectronicState eState, int j, int v) const;
-
-	/** The required overrides of the super class. */
 	EVector ev() const override;
 	EVector gv() const override;
 	EMatrix avv() const override;
 	EMatrix extraAvv() const override;
 	EMatrix cvv(double T, const EVector& speciesNv) const override;
-	EVector sourcev(double T, const EVector& speciesNv) const override;
-	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
+	/**@}*/
 
-	/** Functionality specific for H2. */
+	/** @name Functionality specific for H2. */
+	/**@{*/
+
+	/** Retrieve the index of a level with these quantum numbers. */
+	size_t indexOutput(ElectronicState eState, int j, int v) const;
 
 	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
 	double directDissociationCrossSection(double nu, int j, int v) const;
 	double directDissociationCrossSection(double nu, size_t index) const;
-
+	/**@}*/
 private:
 	/** Returns true if the given J and V are within the boundaries specified by the
 	    user. */

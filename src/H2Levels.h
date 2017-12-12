@@ -13,13 +13,14 @@ public:
 
 	Array opacityv(const Solution& s) const override;
 
-protected:
-	/** An override which is better suited for H2. It scales as a*n^2, where a is the number
+	protected :
+	                /** An override which is better suited for H2. It scales as a*n^2, where a is the number
 	    of iterations, instead of n^3, apparently. I might be interesting to see this with
 	    my own eyes. */
-	EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-	                           const EVector& sourcev, const EVector& sinkv,
-	                           int chooseConsvEq) const override;
+	                EVector
+	                solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
+	                                   const EVector& sourcev, const EVector& sinkv,
+	                                   int chooseConsvEq) const override;
 
 public:
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon
@@ -41,6 +42,15 @@ public:
 	    transferred during the collision, I will need data for this. Have found no
 	    candidates yet. */
 	double dissociationCooling(const Solution& s) const;
+
+	EVector dissociationSinkv(const Array& specificIntensityv) const;
+
+private:
+	/** Sink term due to direct radiative dissociation. Needs radiation field. */
+	EVector directDissociationSinkv(const Array& specificIntensityv) const;
+
+	/** Sink term due to the spontaneous dissociation rate. */
+	EVector spontaneousDissociationSinkv() const;
 
 private:
 	std::shared_ptr<const H2FromFiles> _hff;

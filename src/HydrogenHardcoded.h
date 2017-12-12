@@ -29,6 +29,10 @@ public:
 	    two-photon processes, which generate a continuum instead). */
 	EMatrix extraAvv() const override;
 
+	int nMax() const override { return 5; }
+
+	size_t indexOutput(int n, int l) const override;
+
 	std::array<size_t, 2> twoPhotonIndices() const override;
 
 	//-----------------------------------//
@@ -40,11 +44,6 @@ public:
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
 	    the partner density), for a given temperature and proton and electron densities. */
 	EMatrix cvv(double T, const EVector& speciesNv) const override;
-
-	/** Returns a vector containing partial recombination rates based on fits I found somewhere
-	    (see source code for origin). */
-	EVector sourcev(double T, const EVector& speciesNv) const override;
-	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
 	EVector the_ev;

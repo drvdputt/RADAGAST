@@ -82,6 +82,7 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 double H2Levels::dissociationRate(const NLevel::Solution& s,
                                   const Array& specificIntensityv) const
 {
+#ifdef STERNBERG2014
 	// See 2014-Sternberg eq 3
 	// F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
 	Array photonFluxv =
@@ -96,10 +97,50 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	// eq 4 and 5
 	double Iuv{F0 / 2.07e7};
 	double result{5.8e-11 * Iuv};
-
 	return result;
+#else
+
+	// Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which can be
+	// used in chemical network (it will multiply by the density again.
+	// TODO: need separate rates for H2g and H2*
+	return dissociationSinkv(specificIntensityv).dot(s.nv) / s.nv.sum();
+#endif
 }
 
 double H2Levels::dissociationHeating(const Solution& s) const { return 0.0; }
 
 double H2Levels::dissociationCooling(const Solution& s) const { return 0.0; }
+
+EVector H2Levels::dissociationSinkv(const Array& specificIntensityv) const
+{
+	return directDissociationSinkv(specificIntensityv) + spontaneousDissociationSinkv();
+}
+
+EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
+{
+	size_t numLv{_hff->numLv()};
+	EVector result{EVector::Zero(numLv)};
+
+	// Photon flux density in s-1 cm-2 Hz-1: 4pi I_nu / h nu
+	Array photonFluxv =
+	                Constant::FPI * specificIntensityv / Constant::PLANCK / frequencyv();
+
+	// For each level
+	for (size_t iLv = 0; iLv < numLv; iLv++)
+	{
+		// Integrate over the dissociation cross section TODO: optimize by only
+		// integrating over the nonzero range. Best way to do this: provide raw access
+		// to spectrum objects.
+		Array sigmaTimesFlux{photonFluxv};
+		for (size_t iNu = 0; iNu < frequencyv().size(); iNu++)
+			sigmaTimesFlux *= _hff->directDissociationCrossSection(
+			                frequencyv()[iNu], iLv);
+		result(iLv) = TemplatedUtils::integrate<double, Array, Array>(frequencyv(), sigmaTimesFlux);
+	}
+	return result;
+}
+
+EVector H2Levels::spontaneousDissociationSinkv() const
+{
+	return EVector::Zero(_hff->numLv(), _hff->numLv());
+}

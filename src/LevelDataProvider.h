@@ -59,20 +59,6 @@ public:
 	    q_ij * np * ni --> Cij = q_ij * np with np the density of collision partner. This
 	    function return Cij in these equations, hence the unit is [s-1]. */
 	virtual EMatrix cvv(double T, const EVector& speciesNv) const = 0;
-
-	/** Return a vector which describes the rate at which new atoms/molecules appear
-	    directly into the levels, due to external processes such as recombination or the
-	    atom/molecule being a reaction product. These values will appear as constants in the
-	    equilibrium equations. [cm-3 s-1] */
-	virtual EVector sourcev(double T, const EVector& speciesNv) const = 0;
-
-	/** Returns a vector which describes the fractional rate at which atoms/molecules will
-	    disappear from a level, for example because they are being ionized, or because they
-	    are involved in a chemical reaction. These values typically depend on the radiation
-	    field and other environmental parameters. In the equilibrium equations, this value
-	    will be muliplied by the level population density, hence the unit needs to be
-	    [s-1]. */
-	virtual EVector sinkv(double T, double n, const EVector& speciesNv) const = 0;
 };
 
 #endif /* GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_ */

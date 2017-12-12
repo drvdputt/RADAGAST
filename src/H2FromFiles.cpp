@@ -281,16 +281,6 @@ EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 	return the_cvv;
 }
 
-EVector H2FromFiles::sourcev(double T, const EVector& speciesNv) const
-{
-	return EVector::Zero(_numL);
-}
-
-EVector H2FromFiles::sinkv(double T, double n, const EVector& speciesNv) const
-{
-	return EVector::Zero(_numL);
-}
-
 double H2FromFiles::directDissociationCrossSection(double nu, int j, int v) const
 {
 	return directDissociationCrossSection(nu, indexOutput(ElectronicState::X, j, v));

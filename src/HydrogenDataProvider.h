@@ -16,6 +16,10 @@ protected:
 	virtual ~HydrogenDataProvider() = default;
 
 public:
+	virtual int nMax() const = 0;
+
+	virtual size_t indexOutput(int n, int l) const = 0;
+
 	/** Returns the upper and lower index (in that order) of the two photon transition as an
 	    array of size 2. This is a pure virtual function, as the indices returned depend on the
 	    indexing scheme used, which depends on the specific implementation of how the hydrogen

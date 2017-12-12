@@ -98,19 +98,28 @@ public:
 	    LevelDataProvider, while the induced transitions rates (B coefficients * line power)
 	    are derived from the given specific intensity.
 
+	    External processes can influence the level balance by their contribution to the sink
+	    and source terms. Examples are: level-specific formation (think in the chemical
+	    network), ionization from specific levels, dissociation from specific levels... Some
+	    knowledge about the nature of the levels will be necessary. Subclasses of NLevel can
+	    provide an interface to whatever that knowledge may be (usually a mapping from
+	    quantum numbers to level index), but the general NLevel implementation will remain
+	    completely oblivious. It is up to the client to correctly construct the source and
+	    sink terms using this information.
+
 	    More specifically, this function calculates all the matrices for the statistical
 	    equilibrium equations, and then calls @c solveRateEquations() do the actual
 	    calculation. This function should be generic, while the latter is allowed to have a
 	    specialized implementation per subclass. */
 	Solution solveBalance(double density, const EVector& speciesNv, double T,
-	                      const Array& specificIntensityv) const;
+			      const Array& specificIntensityv, const EVector& sourcev,
+			      const EVector& sinkv) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
 	Solution solveLTE(double density, const EVector& speciesNv, double T,
-	                  const Array& specificIntensityv);
-	// TODO: add in source and sink terms here, so that formation rates derived from the
-	// chemical network can be factored in. At the same time, there should be some mechanism
-	// for spontaneous decay of levels into 'nothing', for example dissociation.
+			  const Array& specificIntensityv) const;
+
+	Solution solveZero(double T) const;
 
 	/** The total emitted spectrum by the system of levels. The default implementation gives
 	    just the line emission, but subclasses can override it to add extra contributions,
@@ -148,8 +157,8 @@ protected:
 	    an iterative approach based on the fact that there is no transition data between and
 	    within the electronically excited levels. */
 	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-	                                   const EVector& sourcev, const EVector& sinkv,
-	                                   int chooseConsvEq) const;
+					   const EVector& sourcev, const EVector& sinkv,
+					   int chooseConsvEq) const;
 
 	EVector solveBoltzmanEquations(double T) const;
 
@@ -159,7 +168,7 @@ private:
 	    units of Bij and Pij are often different in the literature and other codes, but
 	    their product should always have units [s-1]. */
 	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-	                                const EMatrix& Cvv) const;
+					const EMatrix& Cvv) const;
 
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all

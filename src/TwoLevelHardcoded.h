@@ -19,8 +19,6 @@ public:
 	EMatrix avv() const override;
 	EMatrix extraAvv() const override;
 	EMatrix cvv(double T, const EVector& speciesNv) const override;
-	EVector sourcev(double T, const EVector& speciesNv) const override;
-	EVector sinkv(double T, double n, const EVector& speciesNv) const override;
 
 private:
 	EVector the_ev{EVector::Zero(2)};

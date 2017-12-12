@@ -20,11 +20,17 @@ public:
 	bool hasData() const { return _hasData; }
 
 	/** Interpolates the data to the given frequency. */
+
 	double evaluate(double frequency) const;
+
+	double freqMax() const { return _freqMax; }
+
+	double freqMin() const { return _freqMin; }
 
 private:
 	bool _hasData;
-	double _freqMin{0}, _freqMax{0};
+	double _freqMin{0};
+	double _freqMax{0};
 	Array _frequencyv, _valuev;
 };
 #endif /* GASMODULE_GIT_SRC_SPECTRUM_H_ */

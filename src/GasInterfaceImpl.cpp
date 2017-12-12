@@ -22,7 +22,7 @@ using namespace std;
 
 constexpr int MAXCHEMISTRYITERATIONS{100};
 
-GasInterfaceImpl::GasInterfaceImpl(unique_ptr<NLevel> atomModel,
+GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
                                    unique_ptr<H2Levels> molecularModel, const Array& frequencyv)
                 : _frequencyv(frequencyv), _atomicLevels(move(atomModel)),
                   _molecular(move(molecularModel)),
@@ -156,15 +156,22 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		   current scope by reference, so the lambda function can modify s. */
 		auto solveLevelBalances = [&]() {
 			double nH = s.speciesNv(_inH);
+			EVector Hsourcev = _atomicLevels->sourcev(T, s.speciesNv);
+			EVector Hsinkv = _atomicLevels->sinkv(T, nH, s.speciesNv);
 			DEBUG("Solving levels nH = " << nH << endl);
 			s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
-			                                          specificIntensityv);
+			                                          specificIntensityv, Hsourcev,
+			                                          Hsinkv);
 			if (_molecular)
 			{
 				double nH2 = s.speciesNv(_inH2);
+				EVector H2sourcev = EVector::Zero(_molecular->numLv());
+				EVector H2sinkv = _molecular->dissociationSinkv(
+				                specificIntensityv);
 				DEBUG("Solving levels nH2 = " << nH2 << endl);
 				s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
-				                                        specificIntensityv);
+				                                        specificIntensityv,
+				                                        H2sourcev, H2sinkv);
 			}
 		};
 
@@ -257,11 +264,9 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	else
 	{
 		s.speciesNv = EVector::Zero(SpeciesIndex::size());
-		s.HSolution = _atomicLevels->solveBalance(0, s.speciesNv, T,
-		                                          specificIntensityv);
+		s.HSolution = _atomicLevels->solveZero(T);
 		if (_molecular)
-			s.H2Solution = _molecular->solveBalance(0, s.speciesNv, T,
-			                                        specificIntensityv);
+			s.H2Solution = _molecular->solveZero(T);
 	}
 	return s;
 }
@@ -374,9 +379,12 @@ double GasInterfaceImpl::lineHeating(const Solution& s) const
 
 double GasInterfaceImpl::continuumCooling(const Solution& s) const
 {
-	return _freeFree->cooling(np_ne(s), s.T) + Ionization::cooling(s.speciesNv(_inH),
-	                                                               s.speciesNv(_inp),
-	                                                               s.speciesNv(_ine), s.T);
+	double result = _freeFree->cooling(np_ne(s), s.T) +
+	                Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp),
+	                                    s.speciesNv(_ine), s.T);
+	if (_molecular)
+		result += _molecular->dissociationCooling(s.H2Solution);
+	return result;
 }
 
 double GasInterfaceImpl::continuumHeating(const Solution& s) const

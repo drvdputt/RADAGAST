@@ -1,6 +1,13 @@
 #include "HydrogenLevels.h"
 #include "Constants.h"
 #include "HydrogenDataProvider.h"
+#include "SpeciesIndex.h"
+#include "TemplatedUtils.h"
+#include "IonizationBalance.h"
+
+#include <vector>
+
+using namespace std;
 
 HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp,
                                const Array& frequencyv)
@@ -13,6 +20,77 @@ HydrogenLevels::~HydrogenLevels() = default;
 Array HydrogenLevels::emissivityv(const Solution& s) const
 {
 	return lineEmissivityv(s) + twoPhotonEmissivityv(s);
+}
+
+namespace
+{
+double alpha(int n, int l, double T)
+{
+	/* TODO: find better recombination coefficients. */
+
+	/* for now use the hardcoded implementation, but this needs to change (is copy paste from
+	   HydrogenHardcoded). */
+	double T4 = T / 1.e4;
+	double alphaGround = 1.58e-13 * pow(T4, -0.53 - 0.17 * log(T4));
+	double alpha2p = 5.36e-14 * pow(T4, -0.681 - 0.061 * log(T4));
+	double alpha2s = 2.34e-14 * pow(T4, -0.537 - 0.019 * log(T4));
+
+	// 2015-Raga (A13)
+	double t = log10(T4);
+	vector<double> logAlpha3poly = {-13.3377, -0.7161, -0.1435, -0.0386, 0.0077};
+	vector<double> logAlpha4poly = {-13.5225, -0.7928, -0.1749, -0.0412, 0.0154};
+	vector<double> logAlpha5poly = {-13.6820, -0.8629, -0.1957, -0.0375, 0.0199};
+
+	double alpha3 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha3poly));
+	double alpha4 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha4poly));
+	double alpha5 = pow(10., TemplatedUtils::evaluatePolynomial(t, logAlpha5poly));
+
+	Array unresolvedAlphav({alphaGround, alpha2p + alpha2s, alpha3, alpha4, alpha5});
+
+	if (n == 2 && l == 0)
+		return alpha2s;
+	else if (n == 2 && l == 1)
+		return alpha2p;
+	else if (n <= 5)
+		return (2 * l + 1) * unresolvedAlphav[n - 1] / (2. * n * n);
+	else
+		return 0;
+}
+}
+
+EVector HydrogenLevels::sourcev(double T, const EVector& speciesNv) const
+{
+	EVector result{EVector::Zero(_hdp->numLv())};
+
+	// TODO: make this more elegant
+
+	// Now loop over all levels, and add the correct recombination coefficient. If a level
+	// is collapsed, the alpha will be added to the same level multiple times.
+	for (int n = 1; n <= _hdp->nMax(); n++)
+	{
+		for (int l = 0; l < n; l++)
+		{
+			size_t index = _hdp->indexOutput(n, l);
+			result[index] += alpha(n, l, T);
+		}
+	}
+	double ne = speciesNv(SpeciesIndex::ine());
+	double np = speciesNv(SpeciesIndex::inp());
+	return result * ne * np;
+}
+
+EVector HydrogenLevels::sinkv(double T, double n, const EVector& speciesNv) const
+{
+	/* The ionization rate calculation makes no distinction between the levels.  When
+	   the upper level population is small, and its decay rate is large, the second term
+	   doesn't really matter. Therefore, we choose the sink to be the same for each
+	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
+	   => sink = totalsource / n because n0/n + n1/n = 1. */
+	double ne = speciesNv(SpeciesIndex::ine());
+	double np = speciesNv(SpeciesIndex::inp());
+	double totalSource = ne * np * Ionization::recombinationRateCoeff(T);
+	double sink = totalSource / n; // Sink rate per (atom per cm3)
+	return EVector::Constant(numLv(), sink);
 }
 
 Array HydrogenLevels::twoPhotonEmissivityv(const Solution& s) const

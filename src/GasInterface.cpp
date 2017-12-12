@@ -19,32 +19,20 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const string& ato
                            const string& moleculeChoice)
                 : _frequencyv(frequencyv)
 {
-	// Level model for the atom.
-	unique_ptr<NLevel> atomicLevels;
-	// Choose a data provider and make a level model out of it
-	if (atomChoice == "twolevel")
-	{
-		// Generic level model with hardcoded 2-level data
-		auto twoLevelData{make_shared<TwoLevelHardcoded>()};
-		atomicLevels = make_unique<NLevel>(twoLevelData, _frequencyv);
-	}
+	unique_ptr<HydrogenLevels> atomicLevels;
+
+	// Choose a hydrogen data provider
+	shared_ptr<HydrogenDataProvider> hLevelData;
+	if (atomChoice == "hhc")
+		hLevelData = make_shared<HydrogenHardcoded>();
+	else if (atomChoice == "hff2")
+		hLevelData = make_shared<HydrogenFromFiles>(2);
+	else if (atomChoice == "hff4")
+		hLevelData = make_shared<HydrogenFromFiles>(4);
 	else
-	{
-		// Specialized level model for atomic hydrogen
-		shared_ptr<HydrogenDataProvider> hLevelData;
+		hLevelData = make_shared<HydrogenFromFiles>();
 
-		// Choose a hydrogen data provider
-		if (atomChoice == "hhc")
-			hLevelData = make_shared<HydrogenHardcoded>();
-		else if (atomChoice == "hff2")
-			hLevelData = make_shared<HydrogenFromFiles>(2);
-		else if (atomChoice == "hff4")
-			hLevelData = make_shared<HydrogenFromFiles>(4);
-		else
-			hLevelData = make_shared<HydrogenFromFiles>();
-
-		atomicLevels = make_unique<HydrogenLevels>(hLevelData, _frequencyv);
-	}
+	atomicLevels = make_unique<HydrogenLevels>(hLevelData, _frequencyv);
 
 	// Level model for the molecule.
 	unique_ptr<H2Levels> molecularLevels;

@@ -45,7 +45,8 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 }
 
 NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
-                                      double temperature, const Array& specificIntensityv) const
+                                      double temperature, const Array& specificIntensityv,
+                                      const EVector& sourcev, const EVector& sinkv) const
 {
 	Solution s;
 	s.n = density;
@@ -84,8 +85,6 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
-		EVector sourcev = _ldp->sourcev(temperature, speciesNv);
-		EVector sinkv = _ldp->sinkv(temperature, s.n, speciesNv);
 		// Calculate Fij and bi and solve F.n = b
 		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
 	}
@@ -93,7 +92,7 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 }
 
 NLevel::Solution NLevel::solveLTE(double density, const EVector& speciesNv, double T,
-                                  const Array& specificIntensityv)
+                                  const Array& specificIntensityv) const
 {
 	NLevel::Solution s;
 	s.n = density;
@@ -101,6 +100,17 @@ NLevel::Solution NLevel::solveLTE(double density, const EVector& speciesNv, doub
 	s.nv = density * solveBoltzmanEquations(T);
 	s.cvv = _ldp->cvv(T, speciesNv);
 	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, T, s.cvv);
+	return s;
+}
+
+NLevel::Solution NLevel::solveZero(double T) const
+{
+	NLevel::Solution s;
+	s.n = 0;
+	s.T = T;
+	s.nv = EVector::Zero(_numLv);
+	s.cvv = EMatrix::Zero(_numLv, _numLv);
+	s.bpvv = EMatrix::Zero(_numLv, _numLv);
 	return s;
 }
 
@@ -115,12 +125,10 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 	return total;
 }
 
-Array NLevel::opacityv(const Solution& s) const
-{
-	return lineOpacityv(s);
-}
+Array NLevel::opacityv(const Solution& s) const { return lineOpacityv(s); }
 
-Array NLevel::lineOpacityv(const Solution& s) const {
+Array NLevel::lineOpacityv(const Solution& s) const
+{
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
