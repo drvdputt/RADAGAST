@@ -236,38 +236,59 @@ Array Testing::freqToWavGrid(const Array& frequencyv)
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
                                   Array lineFreqv, Array freqWidthv)
 {
+	// Function that inserts a point, but only if the neighbouring points are not
+	// too close (distance smaller than the resolution argument)
+	auto insertIfRoom = [&](double freq, double resolution) {
+		// Find the points that would neighbour our candidate frequency in the
+		// current grid
+		size_t iRight = TemplatedUtils::index(freq, grid);
+		double fRight = grid[iRight];
+
+		// If the point to the right is too close, do not insert
+		if (abs(freq - fRight) < resolution)
+			return;
+
+		// Consider the point to the left, if there is one
+		if (iRight > 0)
+		{
+			size_t iLeft = iRight - 1;
+			double fLeft = grid[iLeft];
+			if (abs(freq - fLeft) < resolution)
+				return;
+		}
+
+		// We have now covered all exceptions (left too close, right too close)
+		// and decide to insert the point.
+		TemplatedUtils::sortedInsert(freq, grid);
+	};
+
 	// We want an odd nPerLine, so we can put 1 point in the center
 	if (!(nPerLine % 2))
 		nPerLine += 1;
-
-	grid.reserve(grid.size() + nPerLine * lineFreqv.size());
 
 	for (size_t i = 0; i < lineFreqv.size(); i++)
 	{
 		// Add a point at the center of the line, while keeping the vector sorted
 		TemplatedUtils::sortedInsert<double, vector<double>>(lineFreqv[i], grid);
 
-		/* Skip the wing points of line if it lies near the core of the previous one, to
-		   prevent too much points from bunching up. */
-		if (i > 0 && (lineFreqv[i] - lineFreqv[i - 1]) / freqWidthv[i - 1] < 0.01)
-			continue;
-
-		// Add the rest of the points in a power law spaced way
 		if (nPerLine > 1)
 		{
+			double center = lineFreqv[i];
+			double width = freqWidthv[i];
+			// do not add points if there are already points at this distance
+			double resolutionLimit = 0.1 * width / nPerLine;
+
+			// Add the rest of the points in a power law spaced way
 			size_t nOneSide = (nPerLine - 1) / 2;
-			double a = freqWidthv[i] / pow(nOneSide, spacingPower);
+
+			// Normalization factor. Last point is placed at distance 'width'
+			double a = width / pow(nOneSide, spacingPower);
 			for (size_t sidePoint = 1; sidePoint <= nOneSide; sidePoint++)
 			{
 				double distance = a * pow(sidePoint, spacingPower);
-
-				// Left of center
-				double freq = lineFreqv[i] - distance;
-				TemplatedUtils::sortedInsert<double>(freq, grid);
-
-				// Right of center
-				freq = lineFreqv[i] + distance;
-				TemplatedUtils::sortedInsert<double>(freq, grid);
+				// Left and right of center
+				insertIfRoom(center - distance, resolutionLimit);
+				insertIfRoom(center + distance, resolutionLimit);
 			}
 		}
 	}
@@ -785,11 +806,12 @@ GasModule::GasInterface Testing::genFullModel()
 
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
 	FreeBound fb(unrefined);
+	H2Levels h2l(make_shared<H2FromFiles>(4,4), unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
+	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
-	// TODO: use a smaller H2 model for testing?
-	return {frequencyv, "", "5 5"};
+	return {frequencyv, "", "4 4"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
