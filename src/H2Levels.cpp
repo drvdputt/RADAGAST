@@ -41,8 +41,8 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
-	// Initial guess (TODO: better initial guess with actual temperature? Maybe we don't even
-	// need this).
+	// Initial guess (TODO: better initial guess with actual temperature? Maybe we don't
+	// even need this).
 	EVector nv = n * solveBoltzmanEquations(100);
 
 	// Destruction rate (in s-1) stays constant when populations are adjusted
@@ -89,6 +89,7 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 {
 #ifdef STERNBERG2014
 	// See 2014-Sternberg eq 3
+
 	// F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
 	Array photonFluxv =
 	                Constant::FPI * specificIntensityv / frequencyv() / Constant::PLANCK;
@@ -105,8 +106,8 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	return result;
 #else
 	// Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which can be
-	// used in chemical network (it will multiply by the density again.
-	// TODO: need separate rates for H2g and H2*
+	// used in chemical network (it will multiply by the density again. TODO: need separate
+	// rates for H2g and H2*
 	return dissociationSinkv(specificIntensityv).dot(s.nv) / s.nv.sum();
 #endif
 }

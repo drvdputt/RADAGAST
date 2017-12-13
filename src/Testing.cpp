@@ -568,7 +568,11 @@ void Testing::testACollapse()
 	cout << "Compare this with values directly from NIST below:" << endl;
 	EMatrix nistA(5, 5);
 	// clang-format off
-	nistA << 0, 0, 0, 0, 0, 4.6986e+08, 0, 0, 0, 0, 5.5751e+07, 4.4101e+07, 0, 0, 0, 1.2785e+07, 8.4193e+06, 8.9860e+06, 0, 0, 4.1250e+06, 2.5304e+06, 2.2008e+06, 2.6993e+06, 0;
+	nistA << 0, 0, 0, 0, 0,
+		4.6986e+08, 0, 0, 0, 0,
+		5.5751e+07, 4.4101e+07, 0, 0, 0,
+		1.2785e+07, 8.4193e+06, 8.9860e+06, 0, 0,
+		4.1250e+06, 2.5304e+06, 2.2008e+06, 2.6993e+06, 0;
 	// clang-format on
 	cout << nistA << endl;
 	cout << "The element-wise relative difference is " << endl;
@@ -600,7 +604,7 @@ void Testing::testPS64Collisions()
 	EMatrix cvv = hff.cvv(T, speciesNv);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total
-	 downwards rate from level nl. */
+	   downwards rate from level nl. */
 	EVector anlv = avv.rowwise().sum();
 	for (int n : std::array<int, 2>{4, 5})
 	{

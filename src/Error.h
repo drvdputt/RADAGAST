@@ -13,6 +13,8 @@ static inline void runtime(std::string message)
 	abort();
 }
 
+/** Checks if the two given values are not equal, and prints a message containing the given name
+    if this is the case. */
 template <typename T> void equalCheck(std::string variable_names, T value1, T value2)
 {
 	if (value1 != value2)
@@ -24,7 +26,8 @@ template <typename T> void equalCheck(std::string variable_names, T value1, T va
 	}
 }
 
-/** Prints a message to stderr and aborts if the given variable does not lie between min and max. */
+/** Prints a message to stderr and aborts if the given variable does not lie between min and
+    max. */
 template <typename T> void rangeCheck(std::string variable, T value, T min, T max)
 {
 	if (value <= min || value >= max)
@@ -33,14 +36,6 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 		          << ". Should be between " << min << " and " << max << std::endl;
 		abort();
 	}
-}
-
-/** Can probably be removed */
-template <typename T>
-void reportOverridden(std::string name, T original, T replacement, std::string reason)
-{
-	std::cout << std::scientific << name << "has been overridden from " << original
-	          << " to " << replacement << " because " << reason << std::endl;
 }
 } /* namespace Error */
 #endif /* GASMODULE_GIT_SRC_ERROR_H_ */

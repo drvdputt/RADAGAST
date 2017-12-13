@@ -505,8 +505,8 @@ double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial,
 		// Collapsed-resolved
 		else if (initial.nCollapsed() && final.nlResolved())
 			return einsteinA(initial.n(), final.n(), final.l());
-		/* Resolved-collapsed (should not be called, and if it is, the collapsed-collapsed
-		   result should be zero). */
+		/* Resolved-collapsed (should not be called, and if it is, the
+		   collapsed-collapsed result should be zero). */
 		else if (initial.nlResolved() && final.nCollapsed())
 		{
 			double a = einsteinA(initial.n(), final.n());
@@ -521,8 +521,8 @@ double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial,
 
 double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
 {
-	/* Find the requested transition in the map that translates n,l to the index in the Anderson
-	   file. */
+	/* Find the requested transition in the map that translates n,l to the index in the
+	   Anderson file. */
 	auto uAndersonIndexIt = _nlToAndersonIndexm.find({ni, li});
 	auto lAndersonIndexIt = _nlToAndersonIndexm.find({nf, lf});
 	auto indexMapEnd = _nlToAndersonIndexm.end();
@@ -543,8 +543,8 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, dou
 	if (UpsilonvIt == _andersonUpsilonvm.end())
 		return 0;
 
-	/* If data is available for this transition, interpolate the Upsilon(T)-array (at the given
-	   temperature (in eV). */
+	/* If data is available for this transition, interpolate the Upsilon(T)-array (at the
+	   given temperature (in eV). */
 	double Upsilon_ip = TemplatedUtils::evaluateLinInterpf<double, Array, Array>(
 	                T_eV, _andersonTempv, UpsilonvIt->second);
 	return Upsilon_ip;
