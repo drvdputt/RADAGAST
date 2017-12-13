@@ -214,6 +214,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 
 			DEBUG("Formation rate " << kFormH2 << endl);
 			DEBUG("Dissociation rate " << kDissH2Levels << endl);
+			if (kDissH2Levels < 0)
+				Error::runtime("negative dissociation rate!");
 
 			// CHEM RATES -> CHEMISTRY SOLUTION
 			EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
@@ -274,7 +276,6 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	}
 	return s;
 }
-
 
 Array GasInterfaceImpl::emissivityv(const Solution& s) const
 {

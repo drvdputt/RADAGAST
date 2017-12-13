@@ -153,8 +153,10 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 			vector<double> sigmaFv(begin(photonFluxv) + iNuMin,
 			                       begin(photonFluxv) + iNuMax);
 			for (size_t j = 0; j < nuv.size(); j++)
-				sigmaFv[j] *= _hff->directDissociationCrossSection(nuv[j], iLv);
-
+			{
+				double sigma = cs.evaluate(nuv[j]);
+				sigmaFv[j] *= sigma;
+			}
 			result(iLv) += TemplatedUtils::integrate<double>(nuv, sigmaFv);
 		}
 	}

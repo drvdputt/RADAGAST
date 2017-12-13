@@ -14,5 +14,9 @@ double Spectrum::evaluate(double frequency) const
 	if (frequency > _freqMax || frequency < _freqMin)
 		return 0;
 	else
-		return TemplatedUtils::evaluateLinInterpf(frequency, _frequencyv, _valuev);
+	{
+		double val = TemplatedUtils::evaluateLinInterpf(frequency, _frequencyv,
+		                                                _valuev);
+		return val;
+	}
 }
