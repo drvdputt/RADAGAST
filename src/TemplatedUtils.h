@@ -37,10 +37,10 @@ template <typename T, typename T1> inline size_t index(T val, const T1& containe
 template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv);
 
 /** Performs a search by bisection on a continuous interval between xMax and xMin. The function
-    given as argument should be a decreasing function which indicates in which direction the search
-    should proceed, and hence has a zero at the final value of T. The bisection will start from
-    xInit, and continues until the final value of x is constrained to an interval of width
-    xTolerance. */
+    given as argument should be a decreasing function which indicates in which direction the
+    search should proceed, and hence has a zero at the final value of T. The bisection will
+    start from xInit, and continues until the final value of x is constrained to an interval of
+    width xTolerance. */
 template <typename T>
 T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolerance, T xMax,
                        T xMin)
@@ -54,7 +54,8 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 
 	while (upperbound - lowerbound > xTolerance)
 	{
-		// Indicates whether the (unknown) final value lies above or below the current one
+		// Indicates whether the (unknown) final value lies above or below the current
+		// one
 		double iCompare = searchDirection(current);
 
 		if (iCompare > 0)
@@ -77,7 +78,7 @@ template <typename T, typename T1> void inline sortedInsert(T elem, T1& containe
 }
 
 /** Evaluate the linear interpolation f(x) of a function f represented by fContainer =
-   f(xContainer) */
+    f(xContainer) */
 template <typename T, typename T1, typename T2>
 T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer)
 {
@@ -85,16 +86,20 @@ T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer)
 	if (iRight == 0)
 		iRight = 1;
 	else if (iRight == xContainer.size())
-		iRight -= 1;
+		iRight--;
 	size_t iLeft = iRight - 1;
-	return interpolateLinear(x, xContainer[iLeft], xContainer[iRight], fContainer[iLeft],
-	                         fContainer[iRight]);
+	double val = interpolateLinear(x, xContainer[iLeft], xContainer[iRight],
+	                               fContainer[iLeft], fContainer[iRight]);
+	if (val < 0)
+		Error::runtime("negative interpolated value");
+	return val;
 }
 
 template <typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRight)
 {
-	T weightRight = (x - xLeft) / (xLeft - xRight);
-	return fLeft + weightRight * (fRight - fLeft);
+	T weightRight = (x - xLeft) / (xRight - xLeft);
+	T val = fLeft + weightRight * (fRight - fLeft);
+	return val;
 }
 
 template <typename T>
@@ -109,19 +114,20 @@ T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLef
 	return fLowerI + weightUpper * (fUpperI - fLowerI);
 }
 
-/** Trapezoidal integration over two containers. xContainer and yContainer should be the same size,
-    and support iteration using std::begin and std::end. Should work with vector and valarray for T1
-    and T2. */
+/** Trapezoidal integration over two containers. xContainer and yContainer should be the same
+    size, and support iteration using std::begin and std::end. Should work with vector and
+    valarray for T1 and T2. */
 template <typename T, typename T1, typename T2>
 T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax)
 {
 	T answer = 0.0;
 	if (xContainer.size() > 1)
 	{
-		auto ix = std::begin(xContainer) + iMin;
-		auto iy = std::begin(yContainer) + iMin;
-		auto ixEnd = std::begin(xContainer) + iMax +
-		             1; // TODO make sure this is correct
+		// Start at the right side of the first interval (iMin, iMin + 1)
+		auto ix = std::begin(xContainer) + iMin + 1;
+		auto iy = std::begin(yContainer) + iMin + 1;
+		// One past the last point
+		auto ixEnd = std::begin(xContainer) + iMax + 1;
 		for (; ix != ixEnd; ix++, iy++)
 			answer += 0.5 * (*ix - *(ix - 1)) * (*iy + *(iy - 1));
 	}
@@ -137,14 +143,15 @@ T integrate(const T1& xContainer, const T2& yContainer)
 	                            size_t{xContainer.size() - 1});
 }
 
-/** Finds the index of the first element >= val, in the iterable container `container'. If val < all
-    the elements, 0 is returned. If val > all the elements, then the index to the last element is
-    returned instead. */
+/** Finds the index of the first element >= val, in the iterable container `container'. If val <
+    all the elements, 0 is returned. If val > all the elements, then the index to the last
+    element is returned instead. */
 template <typename T, typename T1> inline size_t index(T val, const T1& container)
 {
 	auto iterator = std::lower_bound(std::begin(container), std::end(container), val);
 	size_t index = std::distance(std::begin(container), iterator);
-	if (index == container.size()) index--;
+	if (index == container.size())
+		index--;
 	return index;
 }
 
@@ -162,14 +169,14 @@ template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv)
 }
 
 /** Resamples a function f(x), given on the know points x, to the new points u. This template
-    function will work with any combination of types of containers that supports the size() and the
-    square bracket dereference operator []. Note that this function has not been tested for other
-    types than containers of doubles. The first and second argument provide the known f(x) and x
-    values, and should be of equal size. The type of the result can be chosen.  The last two
-    arguments determine different extrapolation behaviours. -1 means setting everything out of the
-    original range to zero. 0 means staying constant once the last point has been passed. Any other
-    number means a power law lastvalue * (newpoint / lastpoint), with the argument used as an
-    exponent. Stolen from DIRTY/NumUtils.h */
+    function will work with any combination of types of containers that supports the size() and
+    the square bracket dereference operator []. Note that this function has not been tested for
+    other types than containers of doubles. The first and second argument provide the known f(x)
+    and x values, and should be of equal size. The type of the result can be chosen. The last
+    two arguments determine different extrapolation behaviours. -1 means setting everything out
+    of the original range to zero. 0 means staying constant once the last point has been passed.
+    Any other number means a power law lastvalue * (newpoint / lastpoint), with the argument
+    used as an exponent. Stolen from DIRTY/NumUtils.h */
 template <typename T, typename T1, typename T2, typename T3>
 T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints, int LoEx,
                  int HiEx)
