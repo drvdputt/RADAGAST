@@ -3,6 +3,7 @@
 
 #include "Array.h"
 #include "EigenAliases.h"
+#include "SpecialFunctions.h"
 
 #include <array>
 #include <memory>
@@ -112,12 +113,12 @@ public:
 	    calculation. This function should be generic, while the latter is allowed to have a
 	    specialized implementation per subclass. */
 	Solution solveBalance(double density, const EVector& speciesNv, double T,
-			      const Array& specificIntensityv, const EVector& sourcev,
-			      const EVector& sinkv) const;
+	                      const Array& specificIntensityv, const EVector& sourcev,
+	                      const EVector& sinkv) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
 	Solution solveLTE(double density, const EVector& speciesNv, double T,
-			  const Array& specificIntensityv) const;
+	                  const Array& specificIntensityv) const;
 
 	Solution solveZero(double T) const;
 
@@ -157,8 +158,8 @@ protected:
 	    an iterative approach based on the fact that there is no transition data between and
 	    within the electronically excited levels. */
 	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-					   const EVector& sourcev, const EVector& sinkv,
-					   int chooseConsvEq) const;
+	                                   const EVector& sourcev, const EVector& sinkv,
+	                                   int chooseConsvEq) const;
 
 	EVector solveBoltzmanEquations(double T) const;
 
@@ -168,7 +169,7 @@ private:
 	    units of Bij and Pij are often different in the literature and other codes, but
 	    their product should always have units [s-1]. */
 	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
-					const EMatrix& Cvv) const;
+	                                const EMatrix& Cvv) const;
 
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all
@@ -237,6 +238,9 @@ private:
 	   single photon, but is about 8 s-1 for two photons. Maybe this can also be used for
 	   some H2 transitions. */
 	EMatrix _extraAvv;
+
+	/** Tabulated voigt function. */
+	SpecialFunctions::LookupTable2D _voigt;
 };
 
 #endif /* _NLEVEL_H_ */

@@ -64,7 +64,10 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 #endif
 	Solution s;
 
-	if (n > 0)
+	if (n <= 0)
+		s = calculateDensities(0, 0, specificIntensityv, gi);
+
+	else
 	{
 		const double Tmax = 1000000.;
 		const double Tmin = 10;
@@ -97,10 +100,6 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 
 		// Evaluate the densities for one last time, using the final temperature.
 		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi);
-	}
-	else
-	{
-		s = calculateDensities(0, 0, specificIntensityv, gi);
 	}
 
 	const Array& emv = emissivityv(s);

@@ -2,14 +2,15 @@
 #include "Constants.h"
 #include "DebugMacros.h"
 #include "LevelDataProvider.h"
-#include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
+#include "Testing.h"
 
 using namespace std;
 
 NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
                 : _ldp(ldp), _frequencyv(frequencyv), _numLv(_ldp->numLv()), _ev(_ldp->ev()),
-                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
+                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv()),
+                  _voigt(SpecialFunctions::voigt)
 {
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -22,6 +23,13 @@ NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
 			               "correct");
 		}
 	});
+
+	// Tabulate part of the voigt function. TODO: optimize the grid for the tabulation. Now,
+	// I'll just do a wild guess and see what it gives.
+	vector<double> aGrid = Testing::generateGeometricGridv(2000, 1e-24, 1);
+	vector<double> uGrid = Testing::generateGeometricGridv(2000, 1e-2, 1e20);
+	uGrid[0] = 0;
+	_voigt.setup(Array(aGrid.data(), aGrid.size()), Array(uGrid.data(), uGrid.size()));
 }
 
 NLevel::~NLevel() = default;
@@ -315,10 +323,12 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 	Array profile(_frequencyv.size());
 	for (size_t n = 0; n < _frequencyv.size(); n++)
 	{
-		double deltaNu = _frequencyv[n] - nu0;
-		profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
-		                                     one_sqrt2sigma * deltaNu) /
+		double deltaNu = abs(_frequencyv[n] - nu0);
+		profile[n] = _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
 		             Constant::SQRT2PI / sigma_nu;
+		// profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
+		// one_sqrt2sigma * deltaNu) /
+		// Constant::SQRT2PI / sigma_nu;
 	}
 	return profile;
 }
