@@ -128,7 +128,8 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
-		total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
+		addLine(total, upper, lower, lineIntensityFactor(upper, lower, s), s.T, s.cvv);
+		// total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
 }
@@ -139,7 +140,8 @@ Array NLevel::lineOpacityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
-		total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
+		addLine(total, upper, lower, lineOpacityFactor(upper, lower, s), s.T, s.cvv);
+		// total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
 }
@@ -331,4 +333,65 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 		// Constant::SQRT2PI / sigma_nu;
 	}
 	return profile;
+}
+
+void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor, double T,
+                     const EMatrix& Cvv) const
+{
+	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
+
+	// this can become negative! // FIXME
+	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
+	                   Cvv(upper, lower) // decay rate of top level
+	                   + Cvv(lower, upper); // decay rate of bottom level
+	// (stimulated emission doesn't count, as it causes no broadening)
+
+	if (decayRate < 0)
+		cout << _avv << endl << _extraAvv << endl << Cvv << endl;
+
+	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
+
+	// Half the FWHM of the Lorentz
+	double halfWidth = decayRate / Constant::FPI;
+
+	// The standard deviation in frequency units. It is about half of the FWHM for a
+	// Gaussian
+	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
+	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
+
+	// Start at the line center (assumes there is a suitable frequency point in the grid)
+	size_t iCenter = TemplatedUtils::index(nu0, _frequencyv);
+	const double CUTOFFWINGCONTRIBUTION = 1e-9;
+
+	// Right wing
+	for (size_t i = iCenter; i < _frequencyv.size(); i++)
+	{
+		double deltaNu = abs(_frequencyv[i] - nu0);
+		double value = factor *
+		               _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
+		               Constant::SQRT2PI / sigma_nu;
+		spectrumv[i] += value;
+
+		// Stop evaluating the wing if its contribution becomes negligible. Keep
+		// skipping points until the spectrum drops below the last evaluated wing value
+		// again, or until we reach the end of the spectrum.
+		while (value < spectrumv[i] * CUTOFFWINGCONTRIBUTION && i < _frequencyv.size())
+			i++;
+	}
+
+	// Left wing
+	for (size_t iPlus1 = iCenter; iPlus1 >= 1; iPlus1--)
+	{
+		size_t i = iPlus1 - 1;
+
+		// TODO: no copypasta plox
+		double deltaNu = abs(_frequencyv[i] - nu0);
+		double value = factor *
+		               _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
+		               Constant::SQRT2PI / sigma_nu;
+		spectrumv[i] += value;
+
+		while (value < spectrumv[iPlus1 - 1] * CUTOFFWINGCONTRIBUTION && iPlus1 >= 1)
+			iPlus1--;
+	}
 }
