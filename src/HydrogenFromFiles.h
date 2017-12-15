@@ -126,7 +126,7 @@ public:
 	   ev()-function (which the client should have cached, since this function is "slow").
 
 	   If the n'th level is collapsed, the given l will be ignored. */
-	size_t indexOutput(int n, int l = 0) const;
+	size_t indexOutput(int n, int l = 0) const override;
 
 	/** Return a pair of indices indication the upper and lower level of the two-photon
 	    transition (2s ans 1s respectively). When the upper level is collapsed, the index
