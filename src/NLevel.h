@@ -1,8 +1,9 @@
-#ifndef GASMODULE_GITGASMODULE_GIT_SRC_NLEVEL_H_
-#define GASMODULE_GITGASMODULE_GIT_SRC_NLEVEL_H_
+#ifndef GASMODULE_GIT_SRC_NLEVEL_H_
+#define GASMODULE_GIT_SRC_NLEVEL_H_
 
 #include "Array.h"
 #include "EigenAliases.h"
+#include "LineProfile.h"
 #include "SpecialFunctions.h"
 
 #include <array>
@@ -186,17 +187,20 @@ private:
 	/** Computes the opacity of a line, not yet multiplied with the line profile. */
 	double lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const;
 
-	/** A wrapper around the voigt function (just some utility). */
-	double voigt(double sigma_nu, double halfWidth, double deltaNu) const;
+	/** Return a line profile object that can be used to calculate the (normalized to 1)
+	    line profile of the upper-lower line. Uses the temperature and collision rates
+	    stored in the provided Solution struct. */
+	LineProfile lineProfile(size_t upper, size_t lower, const Solution& s) const;
+	LineProfile lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
 	/** Calculates the Voigt profile for a certain line, using the frequency grid supplied
 	    at construction and the temperature and collision rates contained in the Solution
 	    struct. */
-	Array lineProfile(size_t upper, size_t lower, const Solution& s) const;
+	Array lineProfile_array(size_t upper, size_t lower, const Solution& s) const;
 
 	/** Or when the full solution is not yet known, and hence a Solution object is not yet
 	    available. */
-	Array lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
+	Array lineProfile_array(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
 	/** Adds the contribution of a single line to the given spectrum. This way we can stop
 	    evaluating the voigt function for the line once the contribution to the total
@@ -204,6 +208,9 @@ private:
 	    profile should be multiplied before its values are added to the spectrum. */
 	void addLine(Array& spectrumv, size_t upper, size_t lower, double factor, double T,
 	             const EMatrix& Cvv) const;
+
+	void integrateOverLineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv,
+	                              const Array& specificIntensityv);
 
 protected:
 	/** A number of protected getters are provided, so the subclasses can make use of these
@@ -250,9 +257,6 @@ private:
 	   single photon, but is about 8 s-1 for two photons. Maybe this can also be used for
 	   some H2 transitions. */
 	EMatrix _extraAvv;
-
-	/** Tabulated voigt function. */
-	SpecialFunctions::LookupTable2D _voigt;
 };
 
-#endif /* _NLEVEL_H_ */
+#endif /* GASMODULE_GIT_SRC_NLEVEL_H_ */

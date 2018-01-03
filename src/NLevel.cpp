@@ -9,8 +9,7 @@ using namespace std;
 
 NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
                 : _ldp(ldp), _frequencyv(frequencyv), _numLv(_ldp->numLv()), _ev(_ldp->ev()),
-                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv()),
-                  _voigt(SpecialFunctions::voigt)
+                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
 {
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -23,14 +22,6 @@ NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
 			               "correct");
 		}
 	});
-#ifdef LOOKUPTABLEVOIGT
-	// Tabulate part of the voigt function. TODO: optimize the grid for the tabulation. Now,
-	// I'll just do a wild guess and see what it gives.
-	vector<double> aGrid = Testing::generateGeometricGridv(2000, 1e-24, 1);
-	vector<double> uGrid = Testing::generateGeometricGridv(2000, 1e-2, 1e20);
-	uGrid[0] = 0;
-	_voigt.setup(Array(aGrid.data(), aGrid.size()), Array(uGrid.data(), uGrid.size()));
-#endif /* LOOKUPTABLEVOIGT */
 }
 
 NLevel::~NLevel() = default;
@@ -129,14 +120,8 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
-		// DEBUG: figure out where the emissivity becomes negative
-		for (size_t i = 0; i < total.size(); i++)
-			if (total[i] < 0)
-				Error::runtime("negative line emissivity detected");
-
 		double factor = lineIntensityFactor(upper, lower, s);
 		addLine(total, upper, lower, factor, s.T, s.cvv);
-		// total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
 }
@@ -149,7 +134,6 @@ Array NLevel::lineOpacityv(const Solution& s) const
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double factor = lineOpacityFactor(upper, lower, s);
 		addLine(total, upper, lower, factor, s.T, s.cvv);
-		// total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
 }
@@ -200,7 +184,7 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double 
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
 		                _frequencyv,
-		                lineProfile(upper, lower, T, Cvv) * specificIntensityv);
+		                lineProfile_array(upper, lower, T, Cvv) * specificIntensityv);
 
 		// Multiply by Bij in terms of Aij, valid for i > j
 		double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
@@ -300,25 +284,12 @@ double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) 
 	return result;
 }
 
-double NLevel::voigt(double sigma_nu, double halfWidth, double deltaNu) const
-{
-	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
-	// Note that the normalization factor is 1 / sqrt(2 pi sigma)
-#ifdef LOOKUPTABLEVOIGT
-	return _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) / r,
-	       Constant::SQRT2PI / sigma_nu;
-#else
-	return SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
-	       Constant::SQRT2PI / sigma_nu;
-#endif
-}
-
-inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
+LineProfile NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
 {
 	return lineProfile(upper, lower, s.T, s.cvv);
 }
 
-Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const
+LineProfile NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const
 {
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 
@@ -326,9 +297,6 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 	                   Cvv(upper, lower) // decay rate of top level
 	                   + Cvv(lower, upper); // decay rate of bottom level
 	// (stimulated emission doesn't count, as it causes no broadening)
-
-	if (decayRate < 0)
-		cout << _avv << endl << _extraAvv << endl << Cvv << endl;
 
 	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
 
@@ -339,43 +307,28 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 	// Gaussian
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 
-	Array profile(_frequencyv.size());
+	return LineProfile(nu0, sigma_nu, halfWidth);
+}
+
+Array NLevel::lineProfile_array(size_t upper, size_t lower, const Solution& s) const
+{
+	return lineProfile_array(upper, lower, s.T, s.cvv);
+}
+
+Array NLevel::lineProfile_array(size_t upper, size_t lower, double T, const EMatrix& Cvv) const
+{
+	Array result(_frequencyv.size());
+	LineProfile lp = lineProfile(upper, lower, T, Cvv);
 	for (size_t n = 0; n < _frequencyv.size(); n++)
-	{
-		double deltaNu = abs(_frequencyv[n] - nu0);
-		profile[n] = voigt(sigma_nu, halfWidth, deltaNu);
-	}
-	return profile;
+		result[n] = lp(_frequencyv[n]);
+	return result;
 }
 
 void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor, double T,
                      const EMatrix& Cvv) const
 {
-	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
+	LineProfile lp = lineProfile(upper, lower, T, Cvv);
 
-	// this can become negative! // FIXME
-	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
-	                   Cvv(upper, lower) // decay rate of top level
-	                   + Cvv(lower, upper); // decay rate of bottom level
-	// (stimulated emission doesn't count, as it causes no broadening)
-
-	if (decayRate < 0)
-		cout << _avv << endl << _extraAvv << endl << Cvv << endl;
-
-	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
-
-	// Half the FWHM of the Lorentz
-	double halfWidth = decayRate / Constant::FPI;
-
-	// The standard deviation in frequency units. It is about half of the FWHM for a
-	// Gaussian
-	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
-
-	auto lineValuef = [&](size_t i) {
-		double deltaNu = abs(_frequencyv[i] - nu0);
-		double value = factor * voigt(sigma_nu, halfWidth, deltaNu);
-		return value;
-	};
 #define OPTIMIZED_LINE_SPECTRUM
 #ifdef OPTIMIZED_LINE_SPECTRUM
 	// Only calculate the voigt function for significant contributions of this line to the
@@ -388,7 +341,7 @@ void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor
 	// Add values for center and right wing:
 	for (size_t i = iCenter; i < _frequencyv.size(); i++)
 	{
-		double value = lineValuef(i);
+		double value = factor * lp(_frequencyv[i]);
 		spectrumv[i] += value;
 
 		// Once we are in the wing (arbitrarily defined here), check if we can start
@@ -430,7 +383,7 @@ void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor
 		// loop safely stops when the body exits with i == 0)
 		for (size_t i = iCenter; i-- > 0;)
 		{
-			double value = lineValuef(i);
+			double value = factor * lp(_frequencyv[i]);
 			spectrumv[i] += value;
 			double absval = abs(value);
 			// For an insignificant wing value
@@ -461,6 +414,6 @@ void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor
 #else
 	// Add the whole line to the spectrum
 	for (size_t i = 0; i < _frequencyv.size(); i++)
-		spectrumv[i] += lineValuef(i);
+		spectrumv[i] += factor * lp(_frequencyv[i]);
 #endif
 }
