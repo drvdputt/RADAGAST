@@ -186,6 +186,9 @@ private:
 	/** Computes the opacity of a line, not yet multiplied with the line profile. */
 	double lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const;
 
+	/** A wrapper around the voigt function (just some utility). */
+	double voigt(double sigma_nu, double halfWidth, double deltaNu) const;
+
 	/** Calculates the Voigt profile for a certain line, using the frequency grid supplied
 	    at construction and the temperature and collision rates contained in the Solution
 	    struct. */

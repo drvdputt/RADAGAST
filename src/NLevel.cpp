@@ -23,13 +23,14 @@ NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
 			               "correct");
 		}
 	});
-
+#ifdef LOOKUPTABLEVOIGT
 	// Tabulate part of the voigt function. TODO: optimize the grid for the tabulation. Now,
 	// I'll just do a wild guess and see what it gives.
 	vector<double> aGrid = Testing::generateGeometricGridv(2000, 1e-24, 1);
 	vector<double> uGrid = Testing::generateGeometricGridv(2000, 1e-2, 1e20);
 	uGrid[0] = 0;
 	_voigt.setup(Array(aGrid.data(), aGrid.size()), Array(uGrid.data(), uGrid.size()));
+#endif /* LOOKUPTABLEVOIGT */
 }
 
 NLevel::~NLevel() = default;
@@ -128,7 +129,13 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
-		addLine(total, upper, lower, lineIntensityFactor(upper, lower, s), s.T, s.cvv);
+		// DEBUG: figure out where the emissivity becomes negative
+		for (size_t i = 0; i < total.size(); i++)
+			if (total[i] < 0)
+				Error::runtime("negative line emissivity detected");
+
+		double factor = lineIntensityFactor(upper, lower, s);
+		addLine(total, upper, lower, factor, s.T, s.cvv);
 		// total += lineIntensityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
@@ -140,7 +147,8 @@ Array NLevel::lineOpacityv(const Solution& s) const
 {
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
-		addLine(total, upper, lower, lineOpacityFactor(upper, lower, s), s.T, s.cvv);
+		double factor = lineOpacityFactor(upper, lower, s);
+		addLine(total, upper, lower, factor, s.T, s.cvv);
 		// total += lineOpacityFactor(upper, lower, s) * lineProfile(upper, lower, s);
 	});
 	return total;
@@ -148,7 +156,7 @@ Array NLevel::lineOpacityv(const Solution& s) const
 
 double NLevel::heating(const Solution& s) const
 {
-	double powerDensityIn = 0;
+	double total = 0;
 	for (size_t ini = 0; ini < _numLv; ini++)
 	{
 		for (size_t fin = 0; fin < _numLv; fin++)
@@ -158,17 +166,16 @@ double NLevel::heating(const Solution& s) const
 			{
 				double cul = s.cvv(ini, fin);
 				if (cul > 0)
-					powerDensityIn +=
-					                (_ev(ini) - _ev(fin)) * cul * s.nv(ini);
+					total += (_ev(ini) - _ev(fin)) * cul * s.nv(ini);
 			}
 		}
 	}
-	return powerDensityIn;
+	return total;
 }
 
 double NLevel::cooling(const Solution& s) const
 {
-	double powerDensityOut = 0;
+	double total = 0;
 	for (size_t ini = 0; ini < _numLv; ini++)
 	{
 		for (size_t fin = 0; fin < _numLv; fin++)
@@ -178,12 +185,11 @@ double NLevel::cooling(const Solution& s) const
 			{
 				double clu = s.cvv(ini, fin);
 				if (clu > 0)
-					powerDensityOut +=
-					                (_ev(fin) - _ev(ini)) * clu * s.nv(ini);
+					total += (_ev(fin) - _ev(ini)) * clu * s.nv(ini);
 			}
 		}
 	}
-	return powerDensityOut;
+	return total;
 }
 
 EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
@@ -294,6 +300,19 @@ double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) 
 	return result;
 }
 
+double NLevel::voigt(double sigma_nu, double halfWidth, double deltaNu) const
+{
+	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
+	// Note that the normalization factor is 1 / sqrt(2 pi sigma)
+#ifdef LOOKUPTABLEVOIGT
+	return _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) / r,
+	       Constant::SQRT2PI / sigma_nu;
+#else
+	return SpecialFunctions::voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
+	       Constant::SQRT2PI / sigma_nu;
+#endif
+}
+
 inline Array NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
 {
 	return lineProfile(upper, lower, s.T, s.cvv);
@@ -303,7 +322,6 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 {
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 
-	// this can become negative! // FIXME
 	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
 	                   Cvv(upper, lower) // decay rate of top level
 	                   + Cvv(lower, upper); // decay rate of bottom level
@@ -320,17 +338,12 @@ Array NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& C
 	// The standard deviation in frequency units. It is about half of the FWHM for a
 	// Gaussian
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
-	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
 
 	Array profile(_frequencyv.size());
 	for (size_t n = 0; n < _frequencyv.size(); n++)
 	{
 		double deltaNu = abs(_frequencyv[n] - nu0);
-		profile[n] = _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
-		             Constant::SQRT2PI / sigma_nu;
-		// profile[n] = SpecialFunctions::voigt(one_sqrt2sigma * halfWidth,
-		// one_sqrt2sigma * deltaNu) /
-		// Constant::SQRT2PI / sigma_nu;
+		profile[n] = voigt(sigma_nu, halfWidth, deltaNu);
 	}
 	return profile;
 }
@@ -357,41 +370,97 @@ void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor
 	// The standard deviation in frequency units. It is about half of the FWHM for a
 	// Gaussian
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
-	double one_sqrt2sigma = M_SQRT1_2 / sigma_nu;
 
-	// Start at the line center (assumes there is a suitable frequency point in the grid)
+	auto lineValuef = [&](size_t i) {
+		double deltaNu = abs(_frequencyv[i] - nu0);
+		double value = factor * voigt(sigma_nu, halfWidth, deltaNu);
+		return value;
+	};
+#define OPTIMIZED_LINE_SPECTRUM
+#ifdef OPTIMIZED_LINE_SPECTRUM
+	// Only calculate the voigt function for significant contributions of this line to the
+	// total spectrum. Start at the line center (assumes there is a suitable frequency point
+	// in the grid)
 	size_t iCenter = TemplatedUtils::index(nu0, _frequencyv);
 	const double CUTOFFWINGCONTRIBUTION = 1e-9;
+	double wingThres = abs(1e-6 * lineValuef(iCenter));
 
-	// Right wing
+	// Add values for center and right wing:
 	for (size_t i = iCenter; i < _frequencyv.size(); i++)
 	{
-		double deltaNu = abs(_frequencyv[i] - nu0);
-		double value = factor *
-		               _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
-		               Constant::SQRT2PI / sigma_nu;
+		double value = lineValuef(i);
 		spectrumv[i] += value;
 
-		// Stop evaluating the wing if its contribution becomes negligible. Keep
-		// skipping points until the spectrum drops below the last evaluated wing value
-		// again, or until we reach the end of the spectrum.
-		while (value < spectrumv[i] * CUTOFFWINGCONTRIBUTION && i < _frequencyv.size())
-			i++;
+		// Once we are in the wing (arbitrarily defined here), check if we can start
+		// ignoring some points. Stop evaluating the wing if its contribution becomes
+		// negligible
+		double absval = abs(value);
+		if (absval < wingThres && absval < abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
+		{
+			// Keep skipping points until the spectrum drops below the threshold for
+			// significance of the line again, or until we reach the end of the
+			// spectrum.
+			while (true)
+			{
+				// If we reach te end of the spectrum, break. The main loop will
+				// exit.
+				if (i >= _frequencyv.size())
+					break;
+				// If the current value is significant compared to the spectrum
+				// at index i, roll back by 1 and break. The main loop will then
+				// increment back to the current i, and calculate the value of
+				// the line profile for it.
+				if (absval > abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
+				{
+					i--;
+					break;
+				}
+				// If the current value is still too small compared to the
+				// current spectrum at i (remember that our wing is descending
+				// and becoming even smaller), skip this point.
+				i++;
+			}
+		}
 	}
 
-	// Left wing
-	for (size_t iPlus1 = iCenter; iPlus1 >= 1; iPlus1--)
+	// Add values for left wing
+	if (iCenter > 0)
 	{
-		size_t i = iPlus1 - 1;
-
-		// TODO: no copypasta plox
-		double deltaNu = abs(_frequencyv[i] - nu0);
-		double value = factor *
-		               _voigt(one_sqrt2sigma * halfWidth, one_sqrt2sigma * deltaNu) /
-		               Constant::SQRT2PI / sigma_nu;
-		spectrumv[i] += value;
-
-		while (value < spectrumv[iPlus1 - 1] * CUTOFFWINGCONTRIBUTION && iPlus1 >= 1)
-			iPlus1--;
+		// Stops when i == 0 (i-- decrements to i - 1, but returns the original, so the
+		// loop safely stops when the body exits with i == 0)
+		for (size_t i = iCenter; i-- > 0;)
+		{
+			double value = lineValuef(i);
+			spectrumv[i] += value;
+			double absval = abs(value);
+			// For an insignificant wing value
+			if (value < wingThres &&
+			    absval < abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
+			{
+				// Move through the spectrum until it the value of the spectrum
+				// is small enough for the value of the wing point to be
+				// significant again.
+				while (true)
+				{
+					if (i == 0)
+						break;
+					if (absval > abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
+					{
+						// Found a significant value! Go back up, then
+						// let the main loop continue.
+						i++;
+						break;
+					}
+					// Did not find significant value, move further in the
+					// left wing.
+					i--;
+				}
+			}
+		}
 	}
+#else
+	// Add the whole line to the spectrum
+	for (size_t i = 0; i < _frequencyv.size(); i++)
+		spectrumv[i] += lineValuef(i);
+#endif
 }

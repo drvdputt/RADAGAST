@@ -19,7 +19,8 @@ H2FromFiles::H2FromFiles(int maxJ, int maxV)
 	readTransProb();
 	readCollisions();
 	readDirectDissociation();
-#ifdef PRINT_LEVEL_MATRICES
+#define PLOT_LEVEL_MATRICES
+#ifdef PLOT_LEVEL_MATRICES
 	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
 	avvOut << _avv << endl;
 	avvOut.close();
