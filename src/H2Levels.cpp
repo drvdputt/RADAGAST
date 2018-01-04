@@ -7,7 +7,7 @@
 using namespace std;
 
 H2Levels::H2Levels(shared_ptr<const H2FromFiles> hff, const Array& frequencyv)
-                : NLevel(hff, frequencyv), _hff(hff)
+                : NLevel(hff, frequencyv, 2 * Constant::HMASS_CGS), _hff(hff)
 {
 	for (size_t i = 0; i < _hff->numLv(); i++)
 		if (!_hff->directDissociationCrossSection(i).empty())

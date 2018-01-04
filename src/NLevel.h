@@ -57,7 +57,8 @@ public:
 	    made sure that this object exists for the lifetime of this class instance. The
 	    number of levels, energies, multiplicities, and transition coefficients are filled
 	    in immediately using the data provider referred to by this pointer. */
-	NLevel(std::shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv);
+	NLevel(std::shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv,
+	       double mass);
 
 	virtual ~NLevel();
 
@@ -188,9 +189,16 @@ private:
 	double lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const;
 
 	/** Return a line profile object that can be used to calculate the (normalized to 1)
-	    line profile of the upper-lower line. Uses the temperature and collision rates
+	    line profile of the "upper-lower" line. Uses the temperature and collision rates
 	    stored in the provided Solution struct. */
 	LineProfile lineProfile(size_t upper, size_t lower, const Solution& s) const;
+
+	/** Return a line profile object that can be used to calculate the (normalized to 1)
+	    line profile of the "upper-lower" line. The natural line width (the lorenzian
+	    contribution) is calculated from the total decay rate due to both spontaneous and
+	    collisional transitions contained in _avv and Cvv, respectively. The thermal line
+	    width (the gaussian contribution) is calculated from the given temperature and the
+	    mass of the particle. */
 	LineProfile lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
 	/** Calculates the Voigt profile for a certain line, using the frequency grid supplied
@@ -241,6 +249,9 @@ private:
 
 	/* Wavelength grid */
 	const Array& _frequencyv;
+
+	/* Particle mass (important for line width) */
+	double _mass;
 
 	/* Energy levels (constant) */
 	size_t _numLv{0};

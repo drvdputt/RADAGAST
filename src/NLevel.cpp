@@ -7,9 +7,10 @@
 
 using namespace std;
 
-NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv)
-                : _ldp(ldp), _frequencyv(frequencyv), _numLv(_ldp->numLv()), _ev(_ldp->ev()),
-                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
+NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv, double mass)
+                : _ldp(ldp), _frequencyv(frequencyv), _mass(mass), _numLv(_ldp->numLv()),
+                  _ev(_ldp->ev()), _gv(_ldp->gv()), _avv(_ldp->avv()),
+                  _extraAvv(_ldp->extraAvv())
 {
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -298,7 +299,7 @@ LineProfile NLevel::lineProfile(size_t upper, size_t lower, double T, const EMat
 	                   + Cvv(lower, upper); // decay rate of bottom level
 	// (stimulated emission doesn't count, as it causes no broadening)
 
-	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
+	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / _mass);
 
 	// Half the FWHM of the Lorentz
 	double halfWidth = decayRate / Constant::FPI;
@@ -334,9 +335,9 @@ void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor
 	// Only calculate the voigt function for significant contributions of this line to the
 	// total spectrum. Start at the line center (assumes there is a suitable frequency point
 	// in the grid)
-	size_t iCenter = TemplatedUtils::index(nu0, _frequencyv);
+	size_t iCenter = TemplatedUtils::index(lp.center(), _frequencyv);
 	const double CUTOFFWINGCONTRIBUTION = 1e-9;
-	double wingThres = abs(1e-6 * lineValuef(iCenter));
+	double wingThres = 1e-6 * factor * lp(_frequencyv[iCenter]);
 
 	// Add values for center and right wing:
 	for (size_t i = iCenter; i < _frequencyv.size(); i++)

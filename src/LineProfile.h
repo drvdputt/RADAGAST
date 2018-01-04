@@ -8,6 +8,7 @@ public:
 	LineProfile(double center, double sigma_gauss, double halfWidht_lorenz);
 	// Evaluate the line profile at the given value (frequency) x
 	double operator()(double nu) const;
+	double center() const {return _center;}
 
 private:
 	double _center, _sigma_gauss;

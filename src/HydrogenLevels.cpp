@@ -11,7 +11,7 @@ using namespace std;
 
 HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp,
                                const Array& frequencyv)
-                : NLevel(hdp, frequencyv), _hdp(hdp)
+	: NLevel(hdp, frequencyv, Constant::HMASS_CGS), _hdp(hdp)
 {
 }
 
