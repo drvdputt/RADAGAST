@@ -153,6 +153,9 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
                                        std::function<EVector(const EVector& xv)> functionFv,
                                        const EVector& x0v) const
 {
+	// TODO: better way to ensure numerical stability is to replace the equation for the
+	// most abundant species containing an atom by the conservation equation for this atom.
+
 	int iNRIteration{0};
 	EVector xv = x0v;
 	bool converged = true;
@@ -169,9 +172,10 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		DEBUG("Function: " << std::endl << fv << std::endl);
 #endif
 
-		/* I want to remove species (== 1 row and 1 column) that cause numerical instability
-		   A typical culprit is a very high or very low dissociation rate for H2 Then, we
-		   get like [small small small big] for H and [0 0 0 -big] for the H2 row. */
+		/* I want to remove species (== 1 row and 1 column) that cause numerical
+		   instability A typical culprit is a very high or very low dissociation rate
+		   for H2 Then, we get like [small small small big] for H and [0 0 0 -big] for
+		   the H2 row. */
 		std::vector<bool> allZerov(_numSpecies, false);
 		std::vector<bool> allZeroButDiagonalv(_numSpecies, false);
 		std::vector<bool> isRemovedv(_numSpecies, false);
@@ -179,8 +183,8 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		for (size_t i = 0; i < _numSpecies; i++)
 		{
 			if ((jvv.row(i).array() == 0).all())
-				// We will set delta to zero for this component; it will stay at its
-				// current value
+				// We will set delta to zero for this component; it will stay at
+				// its current value
 				allZerov[i] = true;
 			else
 			{
@@ -208,34 +212,34 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 		EVector deltaxv;
 		if (!countToRemove)
 		{
-			/* If no equations/species need to be removed, simply take a Newton-Raphson
-			   step. */
+			/* If no equations/species need to be removed, simply take a
+			   Newton-Raphson step. */
 			deltaxv = newtonRaphsonStep(jvv, fv, functionFv, xv);
 		}
 		else
 		{
-			/* If there are some species/equations giving the algorithm trouble, we will
-			   redefine the system here No doubt that this is very hacky, and possibly a
-			   bit too specialized. */
+			/* If there are some species/equations giving the algorithm trouble, we
+			   will redefine the system here No doubt that this is very hacky, and
+			   possibly a bit too specialized. */
 
 			size_t newNumEq = jvv.rows() - countToRemove;
 			size_t newNumSp = jvv.cols() - countToRemove;
 
-			/* If all the elements of a row are zero, the density should stay constant
-			   If all the elements except the 'diagonal' element are zero, then the
-			   density of a species should become zero. */
+			/* If all the elements of a row are zero, the density should stay
+			   constant If all the elements except the 'diagonal' element are zero,
+			   then the density of a species should become zero. */
 
-			/* Function that converts the 'reduced' density vector to a modified 'full'
-			   one. This algorithm takes the current value of the full density vector,
-			   sets the elements that need to be zero to zero, and puts the values of
-			   the reduced density vector in the right place. */
+			/* Function that converts the 'reduced' density vector to a modified
+			   'full' one. This algorithm takes the current value of the full
+			   density vector, sets the elements that need to be zero to zero, and
+			   puts the values of the reduced density vector in the right place. */
 			auto fullXvWithConstants = [&](const EVector& reducedXv) -> EVector {
 				EVector result{xv};
 				int reducedIndex{0};
 				for (int i = 0; i < xv.size(); i++)
 				{
-					// All coefficients are zero -> keep current value constant
-					// *do nothing*
+					// All coefficients are zero -> keep current value
+					// constant *do nothing*
 
 					// Only the diagonal element is nonzero, so
 					// density has to be fi/ jii
@@ -333,9 +337,10 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			}
 		}
 
-		/* We assume that a density has converged when the relative change is less than .1%,
-		   or when its relative abundance is negligibly small. Notice that the inequalities
-		   NEED to be 'smaller than or equal', in case one of the x'es is zero. */
+		/* We assume that a density has converged when the relative change is less than
+		   .1%, or when its relative abundance is negligibly small. Notice that the
+		   inequalities NEED to be 'smaller than or equal', in case one of the x'es is
+		   zero. */
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 		                deltaxv.array().abs() <= 1.e-9 * xv.array().abs() ||
 		                xv.array().abs() <= 1.e-32 * xv.norm();
@@ -369,25 +374,25 @@ EVector ChemistrySolver::newtonRaphsonStep(const EMatrix& currentJvv, const EMat
 	/* A possible problem is that, when the density of a species i is zero, the > 0 density
 	   criterion prevents steps from being taken whenever delta x_i is negative.
 
-	   Attempt to fix 1: whenever this happens, just set the component delta x_i to zero, and do
-	   the line search along the x_i = 0 hyperplane.
+	   Attempt to fix 1: whenever this happens, just set the component delta x_i to zero,
+	   and do the line search along the x_i = 0 hyperplane.
 
-	   Result 1: For small dissociation rate (< 1e-15), and starting with everything H2, a lot of
-	   iterations are needed, but the algorithm eventually pushes through. For even smaller
-	   rates, numerical instability occurs. */
+	   Result 1: For small dissociation rate (< 1e-15), and starting with everything H2, a
+	   lot of iterations are needed, but the algorithm eventually pushes through. For even
+	   smaller rates, numerical instability occurs. */
 
 	/* Never take negative step in x_i when the x_i is zero. */
 	for (int i = 0; i < currentXv.size(); i++)
 		if (currentXv(i) <= 0 && deltaxv(i) < 0)
 			deltaxv(i) = 0;
 
-	/* Line search such as described in Numerical Recipes (I'm basing this on a flowchart found
-	   in Comput. Chem. Eng., 2013, 58, 135 - 143). The bottom line is, we rescale the step
-	   until none of the densities are negative, and the norm of the residual function ||f(x +
-	   factor * deltax)|| will actually become smaller. Note that this will not always be that
-	   case for factor=1, as the system is non-linear.  The second criterion can be dropped if
-	   no solution with a smaller ||f|| can be found. Another option is finding the minimum
-	   along the line. I'll keep that in mind for later maybe. */
+	/* Line search such as described in Numerical Recipes (I'm basing this on a flowchart
+	   found in Comput. Chem. Eng., 2013, 58, 135 - 143). The bottom line is, we rescale the
+	   step until none of the densities are negative, and the norm of the residual function
+	   ||f(x + factor * deltax)|| will actually become smaller. Note that this will not
+	   always be that case for factor=1, as the system is non-linear. The second criterion
+	   can be dropped if no solution with a smaller ||f|| can be found. Another option is
+	   finding the minimum along the line. I'll keep that in mind for later maybe. */
 	double factor{1.}, factorReduce{.5};
 	int count{0}, maxCount{20};
 	EVector newxv = currentXv + factor * deltaxv;
@@ -403,15 +408,15 @@ EVector ChemistrySolver::newtonRaphsonStep(const EMatrix& currentJvv, const EMat
 				break;
 		}
 
-		/* In case there's a negative density or an increase of the norm of fv, adjust the
-		   step scale factor. */
+		/* In case there's a negative density or an increase of the norm of fv, adjust
+		   the step scale factor. */
 		factor *= factorReduce;
 		newxv = currentXv + factor * deltaxv;
 		count++;
 	}
 
-	/* If there is still a negative density (count ran out for example), choose the scale factor
-	   such that this density is incremented to zero. */
+	/* If there is still a negative density (count ran out for example), choose the scale
+	   factor such that this density is incremented to zero. */
 	if ((newxv.array() < 0).any())
 	{
 		int iMin;

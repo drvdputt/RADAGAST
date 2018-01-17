@@ -122,7 +122,8 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double factor = lineIntensityFactor(upper, lower, s);
-		addLine(total, upper, lower, factor, s.T, s.cvv);
+		LineProfile lp = lineProfile(upper, lower, s);
+		lp.addToSpectrum(_frequencyv, total, factor);
 	});
 	return total;
 }
@@ -134,7 +135,8 @@ Array NLevel::lineOpacityv(const Solution& s) const
 	Array total(_frequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double factor = lineOpacityFactor(upper, lower, s);
-		addLine(total, upper, lower, factor, s.T, s.cvv);
+		LineProfile lp = lineProfile(upper, lower, s);
+		lp.addToSpectrum(_frequencyv, total, factor);
 	});
 	return total;
 }
@@ -183,9 +185,15 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double 
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
-		BPvv(upper, lower) = TemplatedUtils::integrate<double, Array, Array>(
-		                _frequencyv,
-		                lineProfile_array(upper, lower, T, Cvv) * specificIntensityv);
+		LineProfile lp = lineProfile(upper, lower, T, Cvv);
+		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensityv);
+
+		// Uncomment these two lines to check correctness of optimized integration
+		// method
+		// double fullIntegral = TemplatedUtils::integrate<double, Array, Array>(
+		// _frequencyv,
+		// lineProfile_array(upper, lower, T, Cvv) * specificIntensityv);
+		// cout << BPvv(upper, lower) << '\t' << fullintegral << endl;
 
 		// Multiply by Bij in terms of Aij, valid for i > j
 		double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
@@ -323,98 +331,4 @@ Array NLevel::lineProfile_array(size_t upper, size_t lower, double T, const EMat
 	for (size_t n = 0; n < _frequencyv.size(); n++)
 		result[n] = lp(_frequencyv[n]);
 	return result;
-}
-
-void NLevel::addLine(Array& spectrumv, size_t upper, size_t lower, double factor, double T,
-                     const EMatrix& Cvv) const
-{
-	LineProfile lp = lineProfile(upper, lower, T, Cvv);
-
-#define OPTIMIZED_LINE_SPECTRUM
-#ifdef OPTIMIZED_LINE_SPECTRUM
-	// Only calculate the voigt function for significant contributions of this line to the
-	// total spectrum. Start at the line center (assumes there is a suitable frequency point
-	// in the grid)
-	size_t iCenter = TemplatedUtils::index(lp.center(), _frequencyv);
-	const double CUTOFFWINGCONTRIBUTION = 1e-9;
-	double wingThres = 1e-6 * factor * lp(_frequencyv[iCenter]);
-
-	// Add values for center and right wing:
-	for (size_t i = iCenter; i < _frequencyv.size(); i++)
-	{
-		double value = factor * lp(_frequencyv[i]);
-		spectrumv[i] += value;
-
-		// Once we are in the wing (arbitrarily defined here), check if we can start
-		// ignoring some points. Stop evaluating the wing if its contribution becomes
-		// negligible
-		double absval = abs(value);
-		if (absval < wingThres && absval < abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
-		{
-			// Keep skipping points until the spectrum drops below the threshold for
-			// significance of the line again, or until we reach the end of the
-			// spectrum.
-			while (true)
-			{
-				// If we reach te end of the spectrum, break. The main loop will
-				// exit.
-				if (i >= _frequencyv.size())
-					break;
-				// If the current value is significant compared to the spectrum
-				// at index i, roll back by 1 and break. The main loop will then
-				// increment back to the current i, and calculate the value of
-				// the line profile for it.
-				if (absval > abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
-				{
-					i--;
-					break;
-				}
-				// If the current value is still too small compared to the
-				// current spectrum at i (remember that our wing is descending
-				// and becoming even smaller), skip this point.
-				i++;
-			}
-		}
-	}
-
-	// Add values for left wing
-	if (iCenter > 0)
-	{
-		// Stops when i == 0 (i-- decrements to i - 1, but returns the original, so the
-		// loop safely stops when the body exits with i == 0)
-		for (size_t i = iCenter; i-- > 0;)
-		{
-			double value = factor * lp(_frequencyv[i]);
-			spectrumv[i] += value;
-			double absval = abs(value);
-			// For an insignificant wing value
-			if (value < wingThres &&
-			    absval < abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
-			{
-				// Move through the spectrum until it the value of the spectrum
-				// is small enough for the value of the wing point to be
-				// significant again.
-				while (true)
-				{
-					if (i == 0)
-						break;
-					if (absval > abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
-					{
-						// Found a significant value! Go back up, then
-						// let the main loop continue.
-						i++;
-						break;
-					}
-					// Did not find significant value, move further in the
-					// left wing.
-					i--;
-				}
-			}
-		}
-	}
-#else
-	// Add the whole line to the spectrum
-	for (size_t i = 0; i < _frequencyv.size(); i++)
-		spectrumv[i] += factor * lp(_frequencyv[i]);
-#endif
 }

@@ -210,16 +210,6 @@ private:
 	    available. */
 	Array lineProfile_array(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
-	/** Adds the contribution of a single line to the given spectrum. This way we can stop
-	    evaluating the voigt function for the line once the contribution to the total
-	    spectrum drops below a chosen threshold. 'factor' is the factor by which the line
-	    profile should be multiplied before its values are added to the spectrum. */
-	void addLine(Array& spectrumv, size_t upper, size_t lower, double factor, double T,
-	             const EMatrix& Cvv) const;
-
-	void integrateOverLineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv,
-	                              const Array& specificIntensityv);
-
 protected:
 	/** A number of protected getters are provided, so the subclasses can make use of these
 	    coefficients. */
