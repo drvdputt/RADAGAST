@@ -113,6 +113,7 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 
 double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spectrumv) const
 {
+#define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION
 	const size_t iCenter = TemplatedUtils::index(_center, frequencyv);
 	// Get max of spectrum. As long as a frequency interval * maxSpectrum is small, we can
@@ -135,11 +136,16 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 		return 0.5 * (x2 - x1) * (y2 + y1);
 	};
 
-	// Integral over right wing
-	for (size_t i = iCenter + 1; i < frequencyv.size(); i++)
+	// Add the center contribution (iRight = iCenter, or [iCenter - 1, iCenter])
+	if (iCenter > 0)
+		integral += evaluateIntegralInterval(iCenter);
+
+	// Integral over right wing (starting with [iCenter, iCenter + 1], or iRight = iCenter +
+	// 1)
+	for (size_t iRight = iCenter + 1; iRight < frequencyv.size(); iRight++)
 	{
-		double contribution = evaluateIntegralInterval(i);
-		cout << "interval " << i - 1 << ", " << i << endl;
+		double contribution = evaluateIntegralInterval(iRight);
+		// cout << "interval " << iRight - 1 << ", " << iRight << endl;
 		integral += contribution;
 		double absContribution = abs(contribution);
 		double significanceThres = abs(integral) * CUTOFFCONTRIBUTIONFRAC;
@@ -157,29 +163,36 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 			// appears in the wing).
 			while (true)
 			{
-				if (i >= frequencyv.size())
+				// The order of these statements is pretty important. I hope
+				// this works for all cases.
+				if (iRight >= frequencyv.size() - 1)
 					break;
-				double deltaX = frequencyv[i] - frequencyv[i - 1];
-				double sumY = spectrumv[i] + spectrumv[i - 1];
+				// The increment needs to happen right away, otherwise, when the
+				// loop is first entered, we make an estimate for a point that
+				// already has a value.
+				iRight++;
+				double deltaX = frequencyv[iRight] - frequencyv[iRight - 1];
+				double sumY = spectrumv[iRight] + spectrumv[iRight - 1];
 				double contributionGuess = last_voigt * deltaX * sumY * 0.5;
-				if (abs(contributionGuess) > significanceThres)
+				if (abs(contributionGuess) >= significanceThres)
 				{
-					i--;
+					iRight--;
 					break;
 				}
-				i++;
 			}
 		}
 	}
 
-	if (iCenter == 0)
+	// if iCenter is 1 or 0, then there is no left wing
+	if (iCenter < 2)
 		return integral;
 
-	// Integral over left wing (loop stops after i == 1)
-	for (size_t i = iCenter + 1; i-- > 1;)
+	// Integral over left wing (loop stops after iRight == 1), starting with iRight =
+	// iCenter - 1, or [iCenter - 2, iCenter - 1].
+	for (size_t iRight = iCenter; iRight-- > 1;)
 	{
-		double contribution = evaluateIntegralInterval(i);
-		cout << "interval " << i - 1 << ", " << i << endl;
+		double contribution = evaluateIntegralInterval(iRight);
+		// cout << "interval " << iRight - 1 << ", " << iRight << endl;
 		integral += contribution;
 		double absContribution = abs(contribution);
 		double significanceThres = abs(integral) * CUTOFFCONTRIBUTIONFRAC;
@@ -188,17 +201,17 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 			double last_voigt = max(v1, v2);
 			while (true)
 			{
-				if (i == 0)
+				if (iRight <= 1)
 					break;
-				double deltaX = frequencyv[i] - frequencyv[i - 1];
-				double sumY = spectrumv[i] - spectrumv[i - 1];
+				iRight--;
+				double deltaX = frequencyv[iRight] - frequencyv[iRight - 1];
+				double sumY = spectrumv[iRight] - spectrumv[iRight - 1];
 				double contributionGuess = last_voigt * deltaX * sumY * 0.5;
-				if (abs(contributionGuess) > significanceThres)
+				if (abs(contributionGuess) >= significanceThres)
 				{
-					i++;
+					iRight++;
 					break;
 				}
-				i--;
 			}
 		}
 	}
@@ -206,8 +219,8 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 	return integral;
 #else
 	Array integrandv(spectrumv.size());
-	for (size_t i = 0; i < frequencyv.size(); i++)
-		integrandv[i] = spectrumv[i] * (*this)(frequencyv[i]);
+	for (size_t iRight = 0; iRight < frequencyv.size(); iRight++)
+		integrandv[iRight] = spectrumv[iRight] * (*this)(frequencyv[iRight]);
 
 	return TemplatedUtils::integrate<double>(frequencyv, integrandv);
 #endif /* OPTIMIZED_LINE_INTEGRATION */
