@@ -32,7 +32,7 @@ namespace
 {
 vector<double> FILELAMBDAV, FILEAV;
 vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
-}
+} // namespace
 
 void Testing::readQabs(bool car)
 {
@@ -721,7 +721,7 @@ void Testing::testFromFilesvsHardCoded()
 	hc_vs_ff(cvvhc, cvvff);
 }
 
-void Testing::runH2()
+void Testing::runH2(bool write)
 {
 	int maxJ = 99;
 	int maxV = 99;
@@ -765,19 +765,23 @@ void Testing::runH2()
 	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv,
 	                                           sourcev, sinkv);
 
-	Array emissivityv = h2Levels.emissivityv(s);
-	Array opacityv = h2Levels.opacityv(s);
-	Array lineOp = h2Levels.lineOpacityv(s);
-
-	ofstream h2optical = IOTools::ofstreamFile("h2/opticalProperties.dat");
-	h2optical << "# nu (hz)\tlambda (micron)\temissivity\topacity\tlineOpacity\n";
-	const string tab{"\t"};
-	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
+	if (write)
 	{
-		h2optical << frequencyv[iFreq] << tab
-		          << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM << tab
-		          << emissivityv[iFreq] << tab << opacityv[iFreq] << tab
-		          << lineOp[iFreq] << endl;
+
+		Array emissivityv = h2Levels.emissivityv(s);
+		Array opacityv = h2Levels.opacityv(s);
+		Array lineOp = h2Levels.lineOpacityv(s);
+
+		ofstream h2optical = IOTools::ofstreamFile("h2/opticalProperties.dat");
+		h2optical << "# nu (hz)\tlambda (micron)\temissivity\topacity\tlineOpacity\n";
+		const string tab{"\t"};
+		for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
+		{
+			h2optical << frequencyv[iFreq] << tab
+			          << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM
+			          << tab << emissivityv[iFreq] << tab << opacityv[iFreq] << tab
+			          << lineOp[iFreq] << endl;
+		}
 	}
 }
 
@@ -810,7 +814,7 @@ GasModule::GasInterface Testing::genFullModel()
 
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
 	FreeBound fb(unrefined);
-	H2Levels h2l(make_shared<H2FromFiles>(4,4), unrefined);
+	H2Levels h2l(make_shared<H2FromFiles>(4, 4), unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);

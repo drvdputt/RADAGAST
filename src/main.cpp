@@ -33,7 +33,7 @@ int main()
 		// Testing::runFromFilesvsHardCoded();
 		// Testing::runFullModel();
 		// Testing::runWithDust();
-		Testing::runH2();
+		Testing::runH2(false);
 	}
 	catch (const std::exception& ex)
 	{

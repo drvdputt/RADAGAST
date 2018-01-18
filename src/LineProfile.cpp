@@ -31,7 +31,7 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 	// in the grid)
 	size_t iCenter = TemplatedUtils::index(_center, frequencyv);
 	const double CUTOFFWINGCONTRIBUTION = 1e-9;
-	double wingThres = 1e-6 * factor * (*this)(frequencyv[iCenter]);
+	double wingThres = 1e-2 * factor * (*this)(frequencyv[iCenter]);
 
 	// Add values for center and right wing:
 	for (size_t i = iCenter; i < frequencyv.size(); i++)
@@ -52,8 +52,9 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 			{
 				// If we reach te end of the spectrum, break. The main loop will
 				// exit.
-				if (i >= frequencyv.size())
+				if (i >= frequencyv.size() - 1)
 					break;
+				i++;
 				// If the current value is significant compared to the spectrum
 				// at index i, roll back by 1 and break. The main loop will then
 				// increment back to the current i, and calculate the value of
@@ -66,7 +67,6 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 				// If the current value is still too small compared to the
 				// current spectrum at i (remember that our wing is descending
 				// and becoming even smaller), skip this point.
-				i++;
 			}
 		}
 	}
@@ -91,6 +91,7 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 			{
 				if (i == 0)
 					break;
+				i--;
 				if (absval > abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
 				{
 					// Found a significant value! Go back up, then
@@ -100,7 +101,6 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 				}
 				// Did not find significant value, move further in the
 				// left wing.
-				i--;
 			}
 		}
 	}

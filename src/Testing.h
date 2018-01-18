@@ -84,7 +84,7 @@ void testChemistry();
 void testFromFilesvsHardCoded();
 
 /** Test the H2 implementation. */
-void runH2();
+void runH2(bool write);
 
 /** Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will
     be written out to separate files. */
@@ -100,6 +100,6 @@ void runFullModel();
 
 /** A test run for the model with a fixed dust model included. */
 void runWithDust();
-}
+} // namespace Testing
 
 #endif /* _TESTING_H_ */
