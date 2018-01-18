@@ -58,8 +58,9 @@ class GasInterfaceImpl
 {
 public:
 	/** The main routine returns a \c Solution object. This struct contains a bunch of
-	    information about the final state, including similar \c Solution objects for the levels.
-	    By passing around this object, the operation of the module can be kept thread-safe. */
+	    information about the final state, including similar \c Solution objects for the
+	    levels. By passing around this object, the operation of the module can be kept
+	    thread-safe. */
 	typedef struct Solution
 	{
 		Array specificIntensityv;
@@ -69,11 +70,12 @@ public:
 		NLevel::Solution H2Solution;
 	} Solution;
 
-	/** Creates an object which can calculates the NLTE state, of a pure (ionized and atomic)
-	    hydrogen gas and the resulting opacity and emission on the provided frequency grid. A
-	    constructor for manual setup (an argument for each subprocess of which more than 1
-	    usable subclass/configuration exists). The components can be set up outside of this
-	    constructor, and ownership is then transferred using a unique pointer. */
+	/** Creates an object which can calculates the NLTE state, of a pure (ionized and
+	    atomic) hydrogen gas and the resulting opacity and emission on the provided
+	    frequency grid. A constructor for manual setup (an argument for each subprocess of
+	    which more than 1 usable subclass/configuration exists). The components can be set
+	    up outside of this constructor, and ownership is then transferred using a unique
+	    pointer. */
 	GasInterfaceImpl(std::unique_ptr<HydrogenLevels> atomModel,
 	                 std::unique_ptr<H2Levels> molecularModel, const Array& frequencyv);
 
@@ -81,30 +83,32 @@ public:
 
 	~GasInterfaceImpl();
 
-	/** Used by the balance solver to calculate the ionization fraction and level populations
-	    for a certain electron temperature, under influence of a blackbody isrf of that same
-	    temperature. Can be used by the client to manually set the temperature and calculate
-	    some properties which can be used as an initial guess. */
+	/** Used by the balance solver to calculate the ionization fraction and level
+	    populations for a certain electron temperature, under influence of a blackbody isrf
+	    of that same temperature. Can be used by the client to manually set the temperature
+	    and calculate some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasModule::GasState&, double n, double T,
 	                       const GasModule::GrainInterface&) const;
 
-	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron) temperature
-	    guess, and a vector containing the radiation field in specific intensity per frequency
-	    units (on the same frequency grid as the one provided at construction). */
+	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
+	    temperature guess, and a vector containing the radiation field in specific intensity
+	    per frequency units (on the same frequency grid as the one provided at
+	    construction). */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
 	                  const Array& specificIntensity,
 	                  const GasModule::GrainInterface&) const;
 
-	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this class
-	    until equilibrium is found. */
+	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
+	    class until equilibrium is found. */
 	Solution calculateDensities(double n, double T, const Array& specificIntensityv,
-	                            const GasModule::GrainInterface&) const;
+	                            const GasModule::GrainInterface&,
+	                            const GasInterfaceImpl::Solution* previous = nullptr) const;
 
 public:
 	/** @name Properties of final state
 
-	    These function calculate the properties which depend on the state of the gas. They all
-	    take a \c Solution object as an argument, which can be obtained by calling \c
+	    These function calculate the properties which depend on the state of the gas. They
+	    all take a \c Solution object as an argument, which can be obtained by calling \c
 	    calculateDensities(). */
 	/**@{*/
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
@@ -168,7 +172,8 @@ private:
 	int _ine, _inp, _inH, _inH2;
 	std::unique_ptr<ChemistrySolver> _chemSolver;
 
-	/* Pointers to other parts of the implementation, to make late initialization possible */
+	/* Pointers to other parts of the implementation, to make late initialization
+	   possible */
 	std::unique_ptr<HydrogenLevels> _atomicLevels;
 	std::unique_ptr<H2Levels> _molecular;
 	/* Continuum contributions */

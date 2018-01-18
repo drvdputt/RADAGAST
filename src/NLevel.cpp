@@ -236,7 +236,7 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 #endif
 	// Call the linear solver for the system sum_j (Fij - diag[d_i]) * n_j = -f_i
 	EVector nv = Mvv.colPivHouseholderQr().solve(f);
-	DEBUG("nv" << endl << nv << endl);
+	// DEBUG("nv" << endl << nv << endl);
 
 	// Hack: put populations = 0 if they were negative due to precision issues
 	nv = nv.array().max(0);
@@ -244,7 +244,7 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 	// Element wise relative errors
 	EArray diffv = Mvv * nv - f;
 	EArray errv = diffv / EArray(f);
-	DEBUG("The relative errors are:\n" << errv << endl);
+	// DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;
 }

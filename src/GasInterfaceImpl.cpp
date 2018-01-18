@@ -84,9 +84,12 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		   (there is net cooling so we need a lower temperature leading to less
 		   cooling). */
 		int counter = 0;
+		const Solution* previous = nullptr;
 		function<int(double)> evaluateThermalBalance = [&](double logT) -> int {
 			counter++;
-			s = calculateDensities(n, pow(10., logT), specificIntensityv, gi);
+			s = calculateDensities(n, pow(10., logT), specificIntensityv, gi,
+			                       previous);
+			previous = &s;
 			double netPowerIn = heating(s, gi) - cooling(s);
 			DEBUG("Cycle " << counter << ": logT = " << logT
 			               << "; netHeating = " << netPowerIn << endl
@@ -99,7 +102,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		                logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
-		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi);
+		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi, previous);
 	}
 
 	const Array& emv = emissivityv(s);
@@ -128,13 +131,15 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 
 GasInterfaceImpl::Solution
 GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& specificIntensityv,
-                                     const GasModule::GrainInterface& gi) const
+                                     const GasModule::GrainInterface& gi,
+                                     const GasInterfaceImpl::Solution* previous) const
 {
 	Solution s;
+
+	// We can already fill these in.
 	s.T = T;
 	s.specificIntensityv = specificIntensityv;
 
-	// Exceptions first
 	if (nHtotal <= 0)
 	{
 		s.speciesNv = EVector::Zero(SpeciesIndex::size());
@@ -144,19 +149,34 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		return s;
 	}
 
-	DEBUG("Calculating state for T = " << T << "K" << endl);
+	DEBUG("Calculating densities for T = " << T << "K" << endl);
 
-	// Initial guess for the chemistry. Rather important for getting good convergence.
-	double iniNH2 = nHtotal / 4;
-	double iniAtomAndIon = nHtotal / 2;
-	double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
-	                                         specificIntensityv);
-	s.speciesNv = EVector(4);
-	s.speciesNv << guessF * iniAtomAndIon, guessF * iniAtomAndIon,
-	                (1 - guessF) * iniAtomAndIon, iniNH2;
+	// Decide how to do the initial guess
+	bool manualGuess = true;
 
-	/* Note that the total density of H nuclei is 0 * ne + 1 * np + 1 * nH / 2 + 2 * nH2 / 4
-	   = 0 + n / 2 + 2n / 2 = ntotal */
+	// If a previous solution is available (pointer is nonzero)
+	if (previous)
+	{
+		double fT = T / previous->T;
+		if (fT > 0.5 && fT < 2)
+		{
+			cout << "Using previous speciesNv as initial guess" << std::endl;
+			s.speciesNv = previous->speciesNv;
+			manualGuess = false;
+		}
+	}
+	if (manualGuess)
+	{
+		double iniNH2 = nHtotal / 4;
+		double iniAtomAndIon = nHtotal / 2;
+		double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
+		                                         specificIntensityv);
+		s.speciesNv = EVector(SpeciesIndex::size());
+		s.speciesNv(_ine) = guessF * iniAtomAndIon;
+		s.speciesNv(_inp) = guessF * iniAtomAndIon;
+		s.speciesNv(_inH) = (1 - guessF) * iniAtomAndIon;
+		s.speciesNv(_inH2) = iniNH2;
+	}
 
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
 	   scope by reference, so the lambda function can modify s. */
@@ -179,10 +199,6 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		}
 	};
 
-	/* Use the initial guess for the chemical abundances to calculnate our first set of
-	   level populations. */
-	solveLevelBalances();
-
 	/* The main loop: e
          v---------------------------------------------------<
 	 > LEVELS SOLUTION, CHEMISTRY SOLUTION -> CHEM RATES |
@@ -198,6 +214,12 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	bool stopCriterion = false;
 	while (!stopCriterion)
 	{
+		/* Use the current guess for the chemical abundances to calculate our first set of level
+		   populations. */
+
+		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
+		solveLevelBalances();
+
 		EVector previousAbundancev = s.speciesNv;
 
 		if (previousAbundancev.array().isNaN().any())
@@ -252,9 +274,6 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			s.speciesNv[_ine] = s.speciesNv[_inp];
 			s.speciesNv[_inH2] = 0;
 		}
-
-		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
-		solveLevelBalances();
 
 		// CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%
 		EArray changev = s.speciesNv - previousAbundancev;

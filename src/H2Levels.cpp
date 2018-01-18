@@ -77,7 +77,7 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		counter++;
 		DEBUG(" lvl it " << counter);
 	}
-	DEBUG("\nnv\n" << nv << endl);
+	// DEBUG("\nnv\n" << nv << endl);
 	return nv;
 #else
 	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq);

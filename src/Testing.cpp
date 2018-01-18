@@ -484,10 +484,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
 
 	cout << "TestHydrogenCalculator done" << endl;
-
-	// cout << "----------------------------------" << endl;
-	// cout << "plotting heating curve..." << endl;
-	// plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensityv, n);
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
@@ -767,7 +763,6 @@ void Testing::runH2(bool write)
 
 	if (write)
 	{
-
 		Array emissivityv = h2Levels.emissivityv(s);
 		Array opacityv = h2Levels.opacityv(s);
 		Array lineOp = h2Levels.lineOpacityv(s);
@@ -814,12 +809,12 @@ GasModule::GasInterface Testing::genFullModel()
 
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
 	FreeBound fb(unrefined);
-	H2Levels h2l(make_shared<H2FromFiles>(4, 4), unrefined);
+	H2Levels h2l(make_shared<H2FromFiles>(99, 99), unrefined);
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
-	return {frequencyv, "", "4 4"};
+	return {frequencyv, "", "99 99"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
