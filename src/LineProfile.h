@@ -20,8 +20,11 @@ public:
 
 	/** Integrate the product of the line profile and the given spectrum in an efficient
 	    way. The line profile is only evaluated if the expected contribution of a frequency
-	    point to the total exceeds a minimum threshold. */
-	double integrateSpectrum(const Array& frequencyv, const Array& spectrumv) const;
+	    point to the total exceeds a minimum threshold. Optionally the maximum of the
+	    spectrum can be given, to help with speeding up the calculation (for example when
+	    calculation the line integral over the same spectrum for many different lines). This
+	    maximum is used to guess when the calculation can be cut off. */
+	double integrateSpectrum(const Array& frequencyv, const Array& spectrumv, double spectrumMax = 0) const;
 
 private:
 	double _center, _sigma_gauss;

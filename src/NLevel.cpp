@@ -183,17 +183,23 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double 
                                         const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
+
+	double spectrumMax = *max_element(begin(specificIntensityv), end(specificIntensityv));
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
-		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensityv);
+		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensityv,
+		                                          spectrumMax);
 
 		// Uncomment these two lines to check correctness of optimized integration
 		// method
 		// double fullIntegral = TemplatedUtils::integrate<double, Array, Array>(
 		// _frequencyv,
 		// lineProfile_array(upper, lower, T, Cvv) * specificIntensityv);
-		// cout << BPvv(upper, lower) << '\t' << fullintegral << endl;
+		// double ratio = BPvv(upper, lower) / fullIntegral;
+		// if (abs(ratio - 1.) > 1.e-6)
+		// cout << BPvv(upper, lower) << '\t' << fullIntegral
+		// << "\tratio:" << ratio << endl;
 
 		// Multiply by Bij in terms of Aij, valid for i > j
 		double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;

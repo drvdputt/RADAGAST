@@ -111,7 +111,8 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 #endif /* OPTIMIZED_LINE_ADD */
 }
 
-double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spectrumv) const
+double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spectrumv,
+                                      double spectrumMax) const
 {
 #define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION
@@ -119,6 +120,10 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 	// Get max of spectrum. As long as a frequency interval * maxSpectrum is small, we can
 	// keep skipping points. Once a frequency interval * maxSpectrum > than the threshold
 	// appears, re-evaluate the line profile at this frequency point.
+
+	// This value needs to be tuned to the desired accuracy. Some naive testing has shown me
+	// that 1e-5 to 1e-6 is good for H2, while the H lines need a much smaller value of 1e-9
+	// to 1e-10.
 	const double CUTOFFCONTRIBUTIONFRAC = 1e-9;
 
 	double integral = 0;
@@ -147,22 +152,41 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 		double contribution = evaluateIntegralInterval(iRight);
 		// cout << "interval " << iRight - 1 << ", " << iRight << endl;
 		integral += contribution;
+
+		// Flag that breaks out of this loop if set to true by the end of this body
+		bool stopIntegrating = false;
+
 		double absContribution = abs(contribution);
 		double significanceThres = abs(integral) * CUTOFFCONTRIBUTIONFRAC;
 		// If the contribution is insignificant
 		if (absContribution < significanceThres)
 		{
 			double last_voigt = max(v1, v2);
-			// The last voigt evaluation is v2 Start skipping, until last_voigt *
-			// new_deltaX * sumSpec/2 is significant. Since we are moving further
-			// into the wing when skipping, we know that any new voig evaluation
-			// will be even smaller than the current one. So if v2 * deltaX * Ysum /
-			// 2 is insignificant, then the the same value but with the proper voigt
-			// function will be even smaller, and we can safely ignore everything
-			// until this value is big again (for example when a tall spectrum peak
-			// appears in the wing).
+
+			/* Start skipping, until last_voigt * new_deltaX * sumSpec/2 is
+			   significant. Since we are moving further into the wing when skipping,
+			   we know that any new voig evaluation will be even smaller than the
+			   current one. So if v2 * deltaX * Ysum / 2 is insignificant, then the
+			   the same value but with the proper voigt function will be even
+			   smaller, and we can safely ignore everything until this value is big
+			   again (for example when a tall spectrum peak appears in the wing). */
 			while (true)
 			{
+				/* If the maximum * the interval all the way to the end *
+				   current voigt is insignificant, break off the calculation.
+				   (This value is much larger than the remaining contribution,
+				   so if even this value is insignificant we are safe to say
+				   that the rest of the integral does not matter) */
+				double deltaNuToEnd = frequencyv[frequencyv.size() - 1] -
+				                      frequencyv[iRight];
+				// Default value of spectrummax is 0 (this means don't use it)
+				if (spectrumMax &&
+				    spectrumMax * last_voigt * deltaNuToEnd < significanceThres)
+				{
+					stopIntegrating = true;
+					break;
+				}
+
 				// The order of these statements is pretty important. I hope
 				// this works for all cases.
 				if (iRight >= frequencyv.size() - 1)
@@ -181,6 +205,8 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 				}
 			}
 		}
+		if (stopIntegrating)
+			break;
 	}
 
 	// if iCenter is 1 or 0, then there is no left wing
@@ -194,11 +220,23 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 		double contribution = evaluateIntegralInterval(iRight);
 		// cout << "interval " << iRight - 1 << ", " << iRight << endl;
 		integral += contribution;
+
+		bool stopIntegrating = false;
+
 		double absContribution = abs(contribution);
 		double significanceThres = abs(integral) * CUTOFFCONTRIBUTIONFRAC;
 		if (absContribution < significanceThres)
 		{
 			double last_voigt = max(v1, v2);
+
+			double deltaNuToBegin = frequencyv[iRight] - frequencyv[0];
+			if (spectrumMax &&
+			    last_voigt * spectrumMax * deltaNuToBegin < significanceThres)
+			{
+				stopIntegrating = true;
+				break;
+			}
+
 			while (true)
 			{
 				if (iRight <= 1)
@@ -214,8 +252,9 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 				}
 			}
 		}
+		if (stopIntegrating)
+			break;
 	}
-
 	return integral;
 #else
 	Array integrandv(spectrumv.size());

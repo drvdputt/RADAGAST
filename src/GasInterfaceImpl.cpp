@@ -73,7 +73,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		const double Tmin = 10;
 		const double logTmax = log10(Tmax);
 		const double logTmin = log10(Tmin);
-		const double logTtolerance = 1.e-4;
+		const double logTtolerance = 1.e-3;
 
 		double logTinit = log10(Tinit);
 
@@ -102,7 +102,8 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		                logTmin);
 
 		// Evaluate the densities for one last time, using the final temperature.
-		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi, previous);
+		s = calculateDensities(n, pow(10., logTfinal), specificIntensityv, gi,
+		                       previous);
 	}
 
 	const Array& emv = emissivityv(s);
