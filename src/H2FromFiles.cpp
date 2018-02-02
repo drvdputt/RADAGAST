@@ -13,7 +13,8 @@
 using namespace std;
 
 H2FromFiles::H2FromFiles(int maxJ, int maxV)
-                : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()}
+                : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()},
+                  _inH2{SpeciesIndex::inH2()}
 {
 	readLevels();
 	readTransProb();
@@ -131,38 +132,42 @@ void H2FromFiles::readTransProb()
 	DEBUG("Read in " << counter << " Einstein A coefficients." << endl);
 }
 
-void H2FromFiles::readCollisions()
+CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
 {
-	ifstream coll_rates_H_15 = IOTools::ifstreamRepoFile("dat/h2/coll_rates_H_15.dat");
+	ifstream coll_rates = IOTools::ifstreamRepoFile(repoFile);
 
 	int m;
-	IOTools::istringstreamNextLine(coll_rates_H_15) >> m;
-	Error::equalCheck("coll_rates_H_15 magic numbers", m, 110416);
+	IOTools::istringstreamNextLine(coll_rates) >> m;
+	Error::equalCheck(repoFile + "magic number", m, 110416);
 
 	// Read until the temperature line
 	string line;
-	while (getline(coll_rates_H_15, line))
+	while (getline(coll_rates, line))
 		if (line.at(0) != '#')
 			break;
 
-	// Hardcode this
-	const size_t numTemperatures{50};
+	// The number of dots gives us the number of columns
+	size_t numTemperatures = count(begin(line), end(line), '.');
+
+	// Read in the temperatures
 	Array temperaturev(numTemperatures);
-	istringstream tempLine(line);
+	istringstream issTemperatures(line);
 	for (size_t i = 0; i < numTemperatures; i++)
-		tempLine >> temperaturev[i];
+		issTemperatures >> temperaturev[i];
 
-	// Do not care about efficiency for now.
-	// For each line, get the initial level index, final level index, and the data.
+	// For each line, get the initial level index, final level index, and the data
 	vector<int> iv, fv;
-	vector<Array> qvv; // indexed on [transition][temperature]
-	while (getline(coll_rates_H_15, line))
+	vector<Array> qvv;
+	while (getline(coll_rates, line))
 	{
-		istringstream transitionLine(line);
-		int VU, JU, VL, JL;
-		transitionLine >> VU >> JU >> VL >> JL;
+		if (line.empty() || line.at(0) == '#')
+			continue;
 
-		// If we are not treating one of these (J,v)'s, skip to the next line
+		istringstream issCollRates(line);
+		int VU, JU, VL, JL;
+		issCollRates >> VU >> JU >> VL >> JL;
+
+		// If we are not treating this level (the J or the v is out of range), skip.
 		if (!validJV(JU, VU) || !validJV(JL, VL))
 			continue;
 
@@ -171,17 +176,29 @@ void H2FromFiles::readCollisions()
 		fv.emplace_back(indexOutput(ElectronicState::X, JL, VL));
 		Array qForEachTv(numTemperatures);
 		for (size_t i = 0; i < numTemperatures; i++)
-			transitionLine >> qForEachTv[i];
+			issCollRates >> qForEachTv[i];
 		qvv.emplace_back(qForEachTv);
 	}
 
-	// Now put this information into the CollisionData object
 	size_t numTransitions = qvv.size();
-	_qH.prepare(temperaturev, numTransitions);
+	CollisionData qData;
+	qData.prepare(temperaturev, numTransitions);
 	for (size_t t = 0; t < numTransitions; t++)
-		_qH.insertDataForTransition(qvv[t], iv[t], fv[t]);
-	_qH.check();
-	DEBUG("Read in " << _qH.transitionv().size() << " collision coefficients." << endl);
+		qData.insertDataForTransition(qvv[t], iv[t], fv[t]);
+	qData.check();
+	DEBUG("Read in " << qData.transitionv().size() << " collision coefficients from "
+	                 << repoFile << endl);
+	return qData;
+}
+
+void H2FromFiles::readCollisions()
+{
+	// Collisions with H, from Lique 2015
+	_qH = readCollisionFile("dat/h2/coll_rates_H_15.dat");
+
+	// Collision rates with H2, from Lee 2008
+	_qH2ortho = readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat");
+	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
 }
 
 void H2FromFiles::readDirectDissociation()
@@ -278,6 +295,14 @@ EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 	addToCvv(the_cvv, _qH, T, nH);
 
 	// TODO: (optional?) g-bar approximation for missing coefficients
+
+	// H2-H2 collisions. TODO: I actually need the ortho-para ratio here, which
+	// unfortunately depends on the levels themselves... Maybe I need a wrapper around
+	// speciesNv, which also contains a bunch of other parameters, such as the ortho and
+	// para contributions. I just pick a ratio of 3 here, hardcoded.
+	double nH2 = speciesNv(_inH2);
+	addToCvv(the_cvv, _qH2ortho, T, 0.75 * nH2);
+	addToCvv(the_cvv, _qH2para, T, 0.25 * nH2);
 
 	return the_cvv;
 }

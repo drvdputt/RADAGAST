@@ -50,7 +50,7 @@ public:
 	/** Get the temperature vector */
 	Array temperaturev() const { return _temperaturev; }
 
-	/** Get a list of all the transitions that were inserted. */
+	/** Get a list of all the transitions (initial, final) that were inserted. */
 	std::vector<std::array<int, 2>> transitionv() const { return _transitionv; }
 
 	/** Get the data entry for the transition i -> f, for the temperature at index iT. */
@@ -73,8 +73,8 @@ private:
 	/** A map from {initial level index, final level index} to transition index. */
 	std::map<std::array<int, 2>, int> _transitionToColm;
 
-	/** Also store a list of all the transitions. Impact of this should be pretty
-	    minimal. */
+	/** Also store a list of all the transitions. This makes the whole thing more
+	    bidirectional.*/
 	std::vector<std::array<int, 2>> _transitionv;
 };
 

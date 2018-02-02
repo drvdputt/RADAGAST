@@ -49,8 +49,9 @@ private:
 	    See also MOLAT database. */
 	void readTransProb();
 
-	/** Load data from Lique (2015). */
+	/** Load data from Lique (2015), Lee (2008). */
 	void readCollisions();
+	CollisionData readCollisionFile(const std::string& repoFile) const;
 
 	/** Load dissociation cross sections from Gay et al. (2012). */
 	void readDirectDissociation();
@@ -156,9 +157,14 @@ private:
 	EMatrix _avv;
 
 	/** Collisions between H and H2. */
-	// Cache species index of the collision partner
-	int _inH;
 	CollisionData _qH;
+
+	/** Collisions between H2 and H2. */
+	CollisionData _qH2ortho, _qH2para;
+
+	// Caches species index of the collision partners
+	int _inH;
+	int _inH2;
 
 	/** Cross sections for direct radiative dissociation from X. Indexed on (level index,
 	    process). There can be multiple cross sections for a level, because there are
