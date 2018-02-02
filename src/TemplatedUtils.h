@@ -90,8 +90,6 @@ T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer)
 	size_t iLeft = iRight - 1;
 	double val = interpolateLinear(x, xContainer[iLeft], xContainer[iRight],
 	                               fContainer[iLeft], fContainer[iRight]);
-	if (val < 0)
-		Error::runtime("negative interpolated value");
 	return val;
 }
 

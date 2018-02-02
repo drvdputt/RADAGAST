@@ -547,7 +547,7 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, dou
 	   given temperature (in eV). */
 	double Upsilon_ip = TemplatedUtils::evaluateLinInterpf<double, Array, Array>(
 	                T_eV, _andersonTempv, UpsilonvIt->second);
-	return Upsilon_ip;
+	return max(Upsilon_ip, 0.);
 }
 
 double HydrogenFromFiles::eCollisionStrength(int ni, int nf, int lf, double T_eV) const

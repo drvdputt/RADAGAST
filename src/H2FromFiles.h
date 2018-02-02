@@ -113,8 +113,14 @@ public:
 
 	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
 	double directDissociationCrossSection(double nu, int j, int v) const;
+
+	/** Cross section for direct dissociation from level with index @c index. */
 	double directDissociationCrossSection(double nu, size_t index) const;
-	std::vector<Spectrum> directDissociationCrossSection(size_t index) const;
+
+	/** Get all the cross sections as a vector of Spectrum objects. This is handy if you
+	    want to integrate over these cross sections efficiently, since the Spectrum object
+	    contains the minimum and maximum frequency. */
+	std::vector<Spectrum> directDissociationCrossSections(size_t index) const;
 	/**@}*/
 private:
 	/** Returns true if the given J and V are within the boundaries specified by the

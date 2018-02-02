@@ -296,7 +296,7 @@ double H2FromFiles::directDissociationCrossSection(double nu, size_t index) cons
 	return sigma;
 }
 
-vector<Spectrum> H2FromFiles::directDissociationCrossSection(size_t index) const
+vector<Spectrum> H2FromFiles::directDissociationCrossSections(size_t index) const
 {
 	return _dissociationCrossSectionv[index];
 }

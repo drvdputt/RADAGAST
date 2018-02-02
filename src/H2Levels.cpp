@@ -10,7 +10,7 @@ H2Levels::H2Levels(shared_ptr<const H2FromFiles> hff, const Array& frequencyv)
                 : NLevel(hff, frequencyv, 2 * Constant::HMASS_CGS), _hff(hff)
 {
 	for (size_t i = 0; i < _hff->numLv(); i++)
-		if (!_hff->directDissociationCrossSection(i).empty())
+		if (!_hff->directDissociationCrossSections(i).empty())
 			_levelsWithCrossSectionv.emplace_back(i);
 }
 
@@ -75,8 +75,8 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		EVector deltaNv = (nv - previousNv).array().abs();
 		converged = deltaNv.maxCoeff() < 1e-6 * n;
 		counter++;
-		DEBUG(" lvl it " << counter);
 	}
+	DEBUG("Solved H2 in " << counter << " iterations" << endl);
 	// DEBUG("\nnv\n" << nv << endl);
 	return nv;
 #else
@@ -126,24 +126,19 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 	size_t numLv{_hff->numLv()};
 	EVector result{EVector::Zero(numLv)};
 
-	// Photon flux density in s-1 cm-2 Hz-1: 4pi I_nu / h nu
-	Array photonFluxv =
-	                Constant::FPI * specificIntensityv / Constant::PLANCK / frequencyv();
-
 	// For each level that has cross section data
 	for (size_t iLv : _levelsWithCrossSectionv)
 	{
 		// For each cross section
-		for (const Spectrum& cs : _hff->directDissociationCrossSection(iLv))
+		for (const Spectrum& cs : _hff->directDissociationCrossSections(iLv))
 		{
-			// Integration bounds
-
-			// Index right of the minimum frequency
+			// Integration lower bound: Index right of the minimum frequency
 			size_t iNuMin = TemplatedUtils::index(cs.freqMin(), frequencyv());
 			// Index left of the minimum frequency
 			if (iNuMin > 0)
 				iNuMin--;
-			// Index right of the maximum frequency
+
+			// Integration upper bound: Index right of the maximum frequency
 			size_t iNuMax = TemplatedUtils::index(cs.freqMax(), frequencyv());
 
 			// Integration points
@@ -151,13 +146,17 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 			                   begin(frequencyv()) + iNuMax);
 
 			// Integrand: flux * sigma
-			vector<double> sigmaFv(begin(photonFluxv) + iNuMin,
-			                       begin(photonFluxv) + iNuMax);
+			// Start with specific intensity
+			vector<double> sigmaFv(begin(specificIntensityv) + iNuMin,
+			                       begin(specificIntensityv) + iNuMax);
 			for (size_t j = 0; j < nuv.size(); j++)
 			{
-				double sigma = cs.evaluate(nuv[j]);
-				sigmaFv[j] *= sigma;
+				// Convert to photon flux density in s-1 cm-2 Hz-1: F_nu = 4pi I_nu / h nu
+				sigmaFv[j] = Constant::FPI * sigmaFv[j] / Constant::PLANCK / nuv[j];
+				// Convert to dissociation count (s-1 Hz-1)
+				sigmaFv[j] *= cs.evaluate(nuv[j]);
 			}
+			// Integrate to total number of dissociations (s-1)
 			result(iLv) += TemplatedUtils::integrate<double>(nuv, sigmaFv);
 		}
 	}
