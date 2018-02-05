@@ -8,8 +8,6 @@
 
 #include <regex>
 
-// TODO: make model
-
 using namespace std;
 
 H2FromFiles::H2FromFiles(int maxJ, int maxV)
@@ -17,10 +15,11 @@ H2FromFiles::H2FromFiles(int maxJ, int maxV)
                   _inH2{SpeciesIndex::inH2()}
 {
 	readLevels();
-	readTransProb();
+	readTransProbs();
 	readCollisions();
+	readDissProbs();
 	readDirectDissociation();
-#define PLOT_LEVEL_MATRICES
+// #define PLOT_LEVEL_MATRICES
 #ifdef PLOT_LEVEL_MATRICES
 	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
 	avvOut << _avv << endl;
@@ -47,101 +46,18 @@ void H2FromFiles::readLevels()
 {
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
+	readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
 	_numL = _levelv.size();
 }
 
-void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
-{
-	ifstream energy = IOTools::ifstreamRepoFile(repoFile);
-
-	string line;
-	getline(energy, line);
-	int y, m, d;
-	istringstream(line) >> y >> m >> d;
-	Error::equalCheck("magic number y", y, 2);
-	Error::equalCheck("magic number m", m, 4);
-	Error::equalCheck("magic number d", d, 29);
-
-	// Start reading in the V, J and E (cm-1) of the levels
-	vector<int> vv, jv;
-	vector<double> ev;
-	int counter = 0;
-	while (getline(energy, line))
-	{
-		auto iss = istringstream(line);
-		if (line.front() == '#')
-		{
-			string word1, word2;
-			iss >> word1 >> word2;
-			// If the comment is anything else than "#extra data", we will skip this
-			// line
-			if (word1 != "#extra" || word2 != "data")
-				continue;
-		}
-		int v, j;
-		iss >> v >> j;
-		double k; // cm-1
-		iss >> k;
-
-		// Add the level if within the requested J,v limits. Convert 1/wavelength [cm-1]
-		// to ergs by using E = hc / lambda.
-		if (validJV(j, v))
-		{
-			counter++;
-			addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
-		}
-	}
-	DEBUG("Read in " << counter << " levels from " << repoFile << endl);
-}
-
-void H2FromFiles::readTransProb()
+void H2FromFiles::readTransProbs()
 {
 	_avv = EMatrix::Zero(_numL, _numL);
 
 	// Radiative transitions within ground stated. Fills _avv with data from Wolniewicz
 	// (1998)
 	readTransProbFile("dat/h2/transprob_X.dat", ElectronicState::X, ElectronicState::X);
-}
-
-void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState upperE,
-                                    ElectronicState lowerE)
-{
-	ifstream transprob = IOTools::ifstreamRepoFile(repoFile);
-
-	string line;
-	getline(transprob, line);
-	int y, m, d;
-	istringstream(line) >> y >> m >> d;
-	Error::equalCheck("magic number y", y, 2);
-	Error::equalCheck("magic number m", m, 4);
-	Error::equalCheck("magic number d", d, 29);
-
-	size_t counter = 0;
-	while (getline(transprob, line))
-	{
-		if (line.empty() || line.at(0) == '#')
-			continue;
-
-		int EU, VU, JU, EL, VL, JL;
-		double A; // Unit s-1
-		istringstream(line) >> EU >> VU >> JU >> EL >> VL >> JL >> A;
-
-		// Check if the entry in the file and the expected Estate-changing transition
-		// correspond (just a double check on the enum scheme)
-		Error::equalCheck("EU and cast of upperE", EU, static_cast<int>(upperE));
-		Error::equalCheck("EL and cast of lowerE", EL, static_cast<int>(lowerE));
-
-		// If within the J,v limits, fill in the coefficient.
-		if (validJV(JU, VU) && validJV(JL, VL))
-		{
-			// An error will be thrown if the level is still not in the list.
-			size_t upperIndex = indexOutput(upperE, JU, VU);
-			size_t lowerIndex = indexOutput(lowerE, JL, VL);
-			_avv(upperIndex, lowerIndex) = A;
-			counter++;
-		}
-	}
-	DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
+	readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B, ElectronicState::X);
 }
 
 void H2FromFiles::readCollisions()
@@ -154,63 +70,36 @@ void H2FromFiles::readCollisions()
 	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
 }
 
-CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
+void H2FromFiles::readDissProbs()
 {
-	ifstream coll_rates = IOTools::ifstreamRepoFile(repoFile);
+	_dissProbv = EVector::Zero(_numL);
+	_dissKinEv = EVector::Zero(_numL);
 
-	int m;
-	IOTools::istringstreamNextLine(coll_rates) >> m;
-	Error::equalCheck(repoFile + "magic number", m, 110416);
+	ifstream dissprobs = IOTools::ifstreamRepoFile("/dat/h2/dissprob_B.dat");
+	int y, m, d;
+	IOTools::istringstreamNextLine(dissprobs) >> y >> m >> d;
+	Error::equalCheck("magic y", y, 3);
+	Error::equalCheck("magic m", m, 2);
+	Error::equalCheck("magic d", d, 11);
 
-	// Read until the temperature line
 	string line;
-	while (getline(coll_rates, line))
-		if (line.at(0) != '#')
-			break;
-
-	// The number of dots gives us the number of columns
-	size_t numTemperatures = count(begin(line), end(line), '.');
-
-	// Read in the temperatures
-	Array temperaturev(numTemperatures);
-	istringstream issTemperatures(line);
-	for (size_t i = 0; i < numTemperatures; i++)
-		issTemperatures >> temperaturev[i];
-
-	// For each line, get the initial level index, final level index, and the data
-	vector<int> iv, fv;
-	vector<Array> qvv;
-	while (getline(coll_rates, line))
+	while (getline(dissprobs, line))
 	{
 		if (line.empty() || line.at(0) == '#')
 			continue;
 
-		istringstream issCollRates(line);
-		int VU, JU, VL, JL;
-		issCollRates >> VU >> JU >> VL >> JL;
+		int v, j;
+		// diss prob in s-1, kin energy in eV
+		double diss, kin;
+		istringstream(line) >> v >> j >> diss >> kin;
 
-		// If we are not treating this level (the J or the v is out of range), skip.
-		if (!validJV(JU, VU) || !validJV(JL, VL))
+		if (!validJV(j, v))
 			continue;
 
-		// Else, add the level indices and data.
-		iv.emplace_back(indexOutput(ElectronicState::X, JU, VU));
-		fv.emplace_back(indexOutput(ElectronicState::X, JL, VL));
-		Array qForEachTv(numTemperatures);
-		for (size_t i = 0; i < numTemperatures; i++)
-			issCollRates >> qForEachTv[i];
-		qvv.emplace_back(qForEachTv);
+		int index = indexOutput(ElectronicState::B, j, v);
+		_dissProbv[index] = diss;
+		_dissKinEv[index] = kin / Constant::ERG_EV;
 	}
-
-	size_t numTransitions = qvv.size();
-	CollisionData qData;
-	qData.prepare(temperaturev, numTransitions);
-	for (size_t t = 0; t < numTransitions; t++)
-		qData.insertDataForTransition(qvv[t], iv[t], fv[t]);
-	qData.check();
-	DEBUG("Read in " << qData.transitionv().size() << " collision coefficients from "
-	                 << repoFile << endl);
-	return qData;
 }
 
 void H2FromFiles::readDirectDissociation()
@@ -276,6 +165,150 @@ void H2FromFiles::readDirectDissociation()
 			                Array(crossSectionv.data(), crossSectionv.size()));
 		}
 	}
+}
+
+void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
+{
+	ifstream energy = IOTools::ifstreamRepoFile(repoFile);
+
+	string line;
+	getline(energy, line);
+	int y, m, d;
+	istringstream(line) >> y >> m >> d;
+	Error::equalCheck("magic number y", y, 2);
+	Error::equalCheck("magic number m", m, 4);
+	Error::equalCheck("magic number d", d, 29);
+
+	// Start reading in the V, J and E (cm-1) of the levels
+	vector<int> vv, jv;
+	vector<double> ev;
+	int counter = 0;
+	while (getline(energy, line))
+	{
+		auto iss = istringstream(line);
+		if (line.front() == '#')
+		{
+			string word1, word2;
+			iss >> word1 >> word2;
+			// If the comment is anything else than "#extra data", we will skip this
+			// line
+			if (word1 != "#extra" || word2 != "data")
+				continue;
+		}
+		int v, j;
+		iss >> v >> j;
+		double k; // cm-1
+		iss >> k;
+
+		// Add the level if within the requested J,v limits. Convert 1/wavelength [cm-1]
+		// to ergs by using E = hc / lambda.
+		if (validJV(j, v))
+		{
+			counter++;
+			addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
+		}
+	}
+	DEBUG("Read in " << counter << " levels from " << repoFile << endl);
+}
+
+void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState upperE,
+                                    ElectronicState lowerE)
+{
+	ifstream transprob = IOTools::ifstreamRepoFile(repoFile);
+
+	string line;
+	getline(transprob, line);
+	int y, m, d;
+	istringstream(line) >> y >> m >> d;
+	Error::equalCheck("magic number y", y, 2);
+	Error::equalCheck("magic number m", m, 4);
+	Error::equalCheck("magic number d", d, 29);
+
+	size_t counter = 0;
+	while (getline(transprob, line))
+	{
+		if (line.empty() || line.at(0) == '#')
+			continue;
+
+		int EU, VU, JU, EL, VL, JL;
+		double A; // Unit s-1
+		istringstream(line) >> EU >> VU >> JU >> EL >> VL >> JL >> A;
+
+		// Check if the entry in the file and the expected Estate-changing transition
+		// correspond (just a double check on the enum scheme)
+		Error::equalCheck("EU and cast of upperE", EU, static_cast<int>(upperE));
+		Error::equalCheck("EL and cast of lowerE", EL, static_cast<int>(lowerE));
+
+		// If within the J,v limits, fill in the coefficient.
+		if (validJV(JU, VU) && validJV(JL, VL))
+		{
+			// An error will be thrown if the level is still not in the list.
+			size_t upperIndex = indexOutput(upperE, JU, VU);
+			size_t lowerIndex = indexOutput(lowerE, JL, VL);
+			_avv(upperIndex, lowerIndex) = A;
+			counter++;
+		}
+	}
+	DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
+}
+
+CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
+{
+	ifstream coll_rates = IOTools::ifstreamRepoFile(repoFile);
+
+	int m;
+	IOTools::istringstreamNextLine(coll_rates) >> m;
+	Error::equalCheck(repoFile + "magic number", m, 110416);
+
+	// Read until the temperature line
+	string line;
+	while (getline(coll_rates, line))
+		if (line.at(0) != '#')
+			break;
+
+	// The number of dots gives us the number of columns
+	size_t numTemperatures = count(begin(line), end(line), '.');
+
+	// Read in the temperatures
+	Array temperaturev(numTemperatures);
+	istringstream issTemperatures(line);
+	for (size_t i = 0; i < numTemperatures; i++)
+		issTemperatures >> temperaturev[i];
+
+	// For each line, get the initial level index, final level index, and the data
+	vector<int> iv, fv;
+	vector<Array> qvv;
+	while (getline(coll_rates, line))
+	{
+		if (line.empty() || line.at(0) == '#')
+			continue;
+
+		istringstream issCollRates(line);
+		int VU, JU, VL, JL;
+		issCollRates >> VU >> JU >> VL >> JL;
+
+		// If we are not treating this level (the J or the v is out of range), skip.
+		if (!validJV(JU, VU) || !validJV(JL, VL))
+			continue;
+
+		// Else, add the level indices and data.
+		iv.emplace_back(indexOutput(ElectronicState::X, JU, VU));
+		fv.emplace_back(indexOutput(ElectronicState::X, JL, VL));
+		Array qForEachTv(numTemperatures);
+		for (size_t i = 0; i < numTemperatures; i++)
+			issCollRates >> qForEachTv[i];
+		qvv.emplace_back(qForEachTv);
+	}
+
+	size_t numTransitions = qvv.size();
+	CollisionData qData;
+	qData.prepare(temperaturev, numTransitions);
+	for (size_t t = 0; t < numTransitions; t++)
+		qData.insertDataForTransition(qvv[t], iv[t], fv[t]);
+	qData.check();
+	DEBUG("Read in " << qData.transitionv().size() << " collision coefficients from "
+	                 << repoFile << endl);
+	return qData;
 }
 
 EVector H2FromFiles::ev() const

@@ -47,20 +47,27 @@ private:
 	/** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have
 	    been some corrections, but the original data comes from Dabrowski (1984). */
 	void readLevels();
-	void readLevelFile(const std::string& repoFile, ElectronicState eState);
 
 	/** Load the data from Wolniewicz (1998) (electric) and Pachucki and Komasa (2011)
 	    (magnetic) for X; Abgrall (1994) for excited states. See also MOLAT database. */
-	void readTransProb();
-	void readTransProbFile(const std::string& repoFile, ElectronicState upperE,
-	                       ElectronicState lowerE);
+	void readTransProbs();
 
 	/** Load data from Lique (2015), Lee (2008). */
 	void readCollisions();
-	CollisionData readCollisionFile(const std::string& repoFile) const;
+
+	/** Load data for the dissociation probabilities and the resulting kinetic energy for
+	    each level. */
+	void readDissProbs();
 
 	/** Load dissociation cross sections from Gay et al. (2012). */
 	void readDirectDissociation();
+
+	void readLevelFile(const std::string& repoFile, ElectronicState eState);
+
+	void readTransProbFile(const std::string& repoFile, ElectronicState upperE,
+	                       ElectronicState lowerE);
+
+	CollisionData readCollisionFile(const std::string& repoFile) const;
 
 private:
 	class H2Level
@@ -122,6 +129,9 @@ public:
 	/** Retrieve the index of a level with these quantum numbers. */
 	size_t indexOutput(ElectronicState eState, int j, int v) const;
 
+	EVector dissociationProbabilityv() const { return _dissProbv; }
+	EVector dissociationKineticEnergyv() const { return _dissKinEv; }
+
 	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
 	double directDissociationCrossSection(double nu, int j, int v) const;
 
@@ -171,6 +181,11 @@ private:
 
 	/** Collisions between H2 and H2. */
 	CollisionData _qH2ortho, _qH2para;
+
+	/** Dissociation probability for each level. [s-1] */
+	EVector _dissProbv;
+	/** Kinetic energy following dissociation. [erg] */
+	EVector _dissKinEv;
 
 	// Caches species index of the collision partners
 	int _inH;

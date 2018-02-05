@@ -234,8 +234,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			double kDissH2Levels = _molecular->dissociationRate(
 			                s.H2Solution, s.specificIntensityv);
 
-			DEBUG("Formation rate " << kFormH2 << endl);
-			DEBUG("Dissociation rate " << kDissH2Levels << endl);
+			DEBUG("Formation rate per H " << kFormH2 << endl);
+			DEBUG("Dissociation rate per H2 " << kDissH2Levels << endl);
 			if (kDissH2Levels < 0)
 				Error::runtime("negative dissociation rate!");
 
@@ -418,6 +418,9 @@ double GasInterfaceImpl::continuumHeating(const Solution& s) const
 	result += Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T, _frequencyv,
 	                              s.specificIntensityv);
 	if (_molecular)
-		result += _molecular->dissociationHeating(s.H2Solution);
+	{
+		double dissheat = _molecular->dissociationHeating(s.H2Solution);
+		result += dissheat;
+	}
 	return result;
 }

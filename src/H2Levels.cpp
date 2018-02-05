@@ -112,7 +112,14 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 #endif
 }
 
-double H2Levels::dissociationHeating(const Solution& s) const { return 0.0; }
+double H2Levels::dissociationHeating(const Solution& s) const
+{
+	// Fraction that dissociates per second * kinetic energy per dissociation * density of
+	// level population = heating power density
+	EArray p = _hff->dissociationProbabilityv().array();
+	EArray k = _hff->dissociationKineticEnergyv().array();
+	return s.nv.dot(EVector{p * k});
+}
 
 double H2Levels::dissociationCooling(const Solution& s) const { return 0.0; }
 
@@ -152,7 +159,8 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 			for (size_t j = 0; j < nuv.size(); j++)
 			{
 				// Convert to photon flux density in s-1 cm-2 Hz-1: F_nu = 4pi I_nu / h nu
-				sigmaFv[j] = Constant::FPI * sigmaFv[j] / Constant::PLANCK / nuv[j];
+				sigmaFv[j] = Constant::FPI * sigmaFv[j] / Constant::PLANCK /
+				             nuv[j];
 				// Convert to dissociation count (s-1 Hz-1)
 				sigmaFv[j] *= cs.evaluate(nuv[j]);
 			}
@@ -163,4 +171,7 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 	return result;
 }
 
-EVector H2Levels::spontaneousDissociationSinkv() const { return EVector::Zero(_hff->numLv()); }
+EVector H2Levels::spontaneousDissociationSinkv() const
+{
+	return _hff->dissociationProbabilityv();
+}
