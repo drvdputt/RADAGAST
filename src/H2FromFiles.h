@@ -23,7 +23,10 @@ public:
 	    to 14 for v. */
 	H2FromFiles(int maxJ = 99, int maxV = 99);
 
-	/** A clear way to index the electronic states of molecular hydrogen */
+	/** A clear way to index the electronic states of molecular hydrogen. The files from
+	    cloudy index these in the same order, from 0 to 6. To get this numerical index, it
+	    should be safe to simply do a static cast to an int. I also do that to make a map
+	    from the quantum numbers to the index of each level. */
 	enum class ElectronicState
 	{
 		// 1s 1Sigma+u
@@ -44,10 +47,13 @@ private:
 	/** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have
 	    been some corrections, but the original data comes from Dabrowski (1984). */
 	void readLevels();
+	void readLevelFile(const std::string& repoFile, ElectronicState eState);
 
-	/** Load the data from Wolniewicz (1998) for X and abgrall (1994) for excited states.
-	    See also MOLAT database. */
+	/** Load the data from Wolniewicz (1998) (electric) and Pachucki and Komasa (2011)
+	    (magnetic) for X; Abgrall (1994) for excited states. See also MOLAT database. */
 	void readTransProb();
+	void readTransProbFile(const std::string& repoFile, ElectronicState upperE,
+	                       ElectronicState lowerE);
 
 	/** Load data from Lique (2015), Lee (2008). */
 	void readCollisions();
@@ -70,7 +76,6 @@ private:
 		double e() const { return _e; }
 		int g() const
 		{
-			// ortho = nuclear spin triplet / para = nuclear sping singlet
 			bool ortho;
 			bool oddJ = _j % 2;
 
@@ -79,10 +84,15 @@ private:
 			    _eState == ElectronicState::Cminus ||
 			    _eState == ElectronicState::Dminus)
 				ortho = oddJ;
-			/* For the other states, it's the other way round. */
+			/* For the other states, it's the other way round. This is explained in
+			   the Cloudy H2 paper (Shaw et al. 2005). */
 			else
 				ortho = !oddJ;
 
+			// ortho = nuclear spin triplet / para = nuclear spin singlet. Also,
+			// remember that the states of a harmonic oscillator are not degenerate
+			// in 1D, therefore v doesn't play a role for determining the
+			// degeneracy.
 			return ortho ? 3 * (2 * _j + 1) : 2 * _j + 1;
 		}
 

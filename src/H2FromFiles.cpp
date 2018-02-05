@@ -45,30 +45,30 @@ size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
 
 void H2FromFiles::readLevels()
 {
-	ifstream energyX = IOTools::ifstreamRepoFile("dat/h2/energy_X.dat");
-	string line;
+	// Expand levelv with the levels listed in these files
+	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
+	_numL = _levelv.size();
+}
 
-	// Get the date / magic number
-	getline(energyX, line);
+void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
+{
+	ifstream energy = IOTools::ifstreamRepoFile(repoFile);
+
+	string line;
+	getline(energy, line);
 	int y, m, d;
 	istringstream(line) >> y >> m >> d;
-	Error::equalCheck("y", y, 2);
-	Error::equalCheck("m", m, 4);
-	Error::equalCheck("d", d, 29);
+	Error::equalCheck("magic number y", y, 2);
+	Error::equalCheck("magic number m", m, 4);
+	Error::equalCheck("magic number d", d, 29);
 
-	// Skip the next two lines;
-	getline(energyX, line);
-	getline(energyX, line);
-
-	// The eState will be fixed to X here
-	auto eState{ElectronicState::X};
 	// Start reading in the V, J and E (cm-1) of the levels
-	_levelv.reserve(301);
-	while (getline(energyX, line))
+	vector<int> vv, jv;
+	vector<double> ev;
+	int counter = 0;
+	while (getline(energy, line))
 	{
 		auto iss = istringstream(line);
-
-		// If there is a comment in front of the entry, extract it as a string.
 		if (line.front() == '#')
 		{
 			string word1, word2;
@@ -78,36 +78,46 @@ void H2FromFiles::readLevels()
 			if (word1 != "#extra" || word2 != "data")
 				continue;
 		}
-
-		// Get the numbers
 		int v, j;
 		iss >> v >> j;
-		// Wave number (in cm-1)
-		double k;
+		double k; // cm-1
 		iss >> k;
 
-		// Add the level if within the given limits.
+		// Add the level if within the requested J,v limits. Convert 1/wavelength [cm-1]
+		// to ergs by using E = hc / lambda.
 		if (validJV(j, v))
+		{
+			counter++;
 			addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
+		}
 	}
-	_numL = _levelv.size();
-	DEBUG("Read in " << _numL << " H2 levels" << endl);
+	DEBUG("Read in " << counter << " levels from " << repoFile << endl);
 }
 
 void H2FromFiles::readTransProb()
 {
 	_avv = EMatrix::Zero(_numL, _numL);
 
-	ifstream transprobX = IOTools::ifstreamRepoFile("dat/h2/transprob_X.dat");
+	// Radiative transitions within ground stated. Fills _avv with data from Wolniewicz
+	// (1998)
+	readTransProbFile("dat/h2/transprob_X.dat", ElectronicState::X, ElectronicState::X);
+}
+
+void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState upperE,
+                                    ElectronicState lowerE)
+{
+	ifstream transprob = IOTools::ifstreamRepoFile(repoFile);
+
 	string line;
-	getline(transprobX, line);
+	getline(transprob, line);
 	int y, m, d;
 	istringstream(line) >> y >> m >> d;
+	Error::equalCheck("magic number y", y, 2);
+	Error::equalCheck("magic number m", m, 4);
+	Error::equalCheck("magic number d", d, 29);
 
-	// Transition for eState X (ground state) (Data from Wolniewicz (1998))
-	auto eState{ElectronicState::X};
-	size_t counter{0};
-	while (getline(transprobX, line))
+	size_t counter = 0;
+	while (getline(transprob, line))
 	{
 		if (line.empty() || line.at(0) == '#')
 			continue;
@@ -115,21 +125,33 @@ void H2FromFiles::readTransProb()
 		int EU, VU, JU, EL, VL, JL;
 		double A; // Unit s-1
 		istringstream(line) >> EU >> VU >> JU >> EL >> VL >> JL >> A;
-		/* TODO: check if the energy of level upperIndex is actually higher than energy of
-		   level lowerIndex */
-		// Dont use EU and EL here, as we already know that it's all for X
 
-		// If within the limits, fill in the coefficient.
+		// Check if the entry in the file and the expected Estate-changing transition
+		// correspond (just a double check on the enum scheme)
+		Error::equalCheck("EU and cast of upperE", EU, static_cast<int>(upperE));
+		Error::equalCheck("EL and cast of lowerE", EL, static_cast<int>(lowerE));
+
+		// If within the J,v limits, fill in the coefficient.
 		if (validJV(JU, VU) && validJV(JL, VL))
 		{
 			// An error will be thrown if the level is still not in the list.
-			size_t upperIndex = indexOutput(eState, JU, VU);
-			size_t lowerIndex = indexOutput(eState, JL, VL);
+			size_t upperIndex = indexOutput(upperE, JU, VU);
+			size_t lowerIndex = indexOutput(lowerE, JL, VL);
 			_avv(upperIndex, lowerIndex) = A;
 			counter++;
 		}
 	}
-	DEBUG("Read in " << counter << " Einstein A coefficients." << endl);
+	DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
+}
+
+void H2FromFiles::readCollisions()
+{
+	// Collisions with H, from Lique 2015
+	_qH = readCollisionFile("dat/h2/coll_rates_H_15.dat");
+
+	// Collision rates with H2, from Lee 2008
+	_qH2ortho = readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat");
+	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
 }
 
 CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
@@ -189,16 +211,6 @@ CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
 	DEBUG("Read in " << qData.transitionv().size() << " collision coefficients from "
 	                 << repoFile << endl);
 	return qData;
-}
-
-void H2FromFiles::readCollisions()
-{
-	// Collisions with H, from Lique 2015
-	_qH = readCollisionFile("dat/h2/coll_rates_H_15.dat");
-
-	// Collision rates with H2, from Lee 2008
-	_qH2ortho = readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat");
-	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
 }
 
 void H2FromFiles::readDirectDissociation()
