@@ -10,6 +10,12 @@
 
 using namespace std;
 
+namespace
+{
+constexpr bool BLEVELS{true};
+constexpr bool CLEVELS{true};
+}
+
 H2FromFiles::H2FromFiles(int maxJ, int maxV)
                 : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()},
                   _inH2{SpeciesIndex::inH2()}
@@ -46,7 +52,13 @@ void H2FromFiles::readLevels()
 {
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
-	readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
+	if (BLEVELS)
+		readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
+	if (CLEVELS)
+	{
+		readLevelFile("dat/h2/energy_C_plus.dat",ElectronicState::Cplus);
+		readLevelFile("dat/h2/energy_C_minus.dat", ElectronicState::Cminus);
+	}
 	_numL = _levelv.size();
 }
 
@@ -57,7 +69,27 @@ void H2FromFiles::readTransProbs()
 	// Radiative transitions within ground stated. Fills _avv with data from Wolniewicz
 	// (1998)
 	readTransProbFile("dat/h2/transprob_X.dat", ElectronicState::X, ElectronicState::X);
-	readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B, ElectronicState::X);
+	if (BLEVELS)
+		readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B, ElectronicState::X);
+	if (CLEVELS)
+	{
+		readTransProbFile("dat/h2/transprob_C_plus.dat",ElectronicState::Cplus,ElectronicState::X);
+		readTransProbFile("dat/h2/transprob_C_minus.dat",ElectronicState::Cminus,ElectronicState::X);
+	}
+}
+
+void H2FromFiles::readDissProbs()
+{
+	_dissProbv = EVector::Zero(_numL);
+	_dissKinEv = EVector::Zero(_numL);
+
+	if (BLEVELS)
+		readDissProbFile("/dat/h2/dissprob_B.dat",ElectronicState::B);
+	if (CLEVELS)
+	{
+		readDissProbFile("dat/h2/dissprob_C_plus.dat", ElectronicState::Cplus);
+		readDissProbFile("dat/h2/dissprob_C_minus.dat", ElectronicState::Cminus);
+	}
 }
 
 void H2FromFiles::readCollisions()
@@ -68,38 +100,6 @@ void H2FromFiles::readCollisions()
 	// Collision rates with H2, from Lee 2008
 	_qH2ortho = readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat");
 	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
-}
-
-void H2FromFiles::readDissProbs()
-{
-	_dissProbv = EVector::Zero(_numL);
-	_dissKinEv = EVector::Zero(_numL);
-
-	ifstream dissprobs = IOTools::ifstreamRepoFile("/dat/h2/dissprob_B.dat");
-	int y, m, d;
-	IOTools::istringstreamNextLine(dissprobs) >> y >> m >> d;
-	Error::equalCheck("magic y", y, 3);
-	Error::equalCheck("magic m", m, 2);
-	Error::equalCheck("magic d", d, 11);
-
-	string line;
-	while (getline(dissprobs, line))
-	{
-		if (line.empty() || line.at(0) == '#')
-			continue;
-
-		int v, j;
-		// diss prob in s-1, kin energy in eV
-		double diss, kin;
-		istringstream(line) >> v >> j >> diss >> kin;
-
-		if (!validJV(j, v))
-			continue;
-
-		int index = indexOutput(ElectronicState::B, j, v);
-		_dissProbv[index] = diss;
-		_dissKinEv[index] = kin / Constant::ERG_EV;
-	}
 }
 
 void H2FromFiles::readDirectDissociation()
@@ -250,6 +250,38 @@ void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState uppe
 		}
 	}
 	DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
+}
+
+void H2FromFiles::readDissProbFile(const string& repoFile, ElectronicState eState)
+{
+	ifstream dissprobs = IOTools::ifstreamRepoFile(repoFile);
+	int y, m, d;
+	IOTools::istringstreamNextLine(dissprobs) >> y >> m >> d;
+	Error::equalCheck("magic y", y, 3);
+	Error::equalCheck("magic m", m, 2);
+	Error::equalCheck("magic d", d, 11);
+
+	string line;
+	int counter = 0;
+	while (getline(dissprobs, line))
+	{
+		if (line.empty() || line.at(0) == '#')
+			continue;
+
+		int v, j;
+		// diss prob in s-1, kin energy in eV
+		double diss, kin;
+		istringstream(line) >> v >> j >> diss >> kin;
+
+		if (!validJV(j, v))
+			continue;
+
+		int index = indexOutput(eState, j, v);
+		_dissProbv[index] = diss;
+		_dissKinEv[index] = kin / Constant::ERG_EV;
+		counter++;
+	}
+	DEBUG("Read in " << counter << " dissociation rates from " << repoFile << endl);
 }
 
 CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
