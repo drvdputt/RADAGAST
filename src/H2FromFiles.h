@@ -52,12 +52,12 @@ private:
 	    (magnetic) for X; Abgrall (1994) for excited states. See also MOLAT database. */
 	void readTransProbs();
 
-	/** Load data from Lique (2015), Lee (2008). */
-	void readCollisions();
-
 	/** Load data for the dissociation probabilities and the resulting kinetic energy for
 	    each level. */
 	void readDissProbs();
+
+	/** Load data from Lique (2015), Lee (2008). */
+	void readCollisions();
 
 	/** Load dissociation cross sections from Gay et al. (2012). */
 	void readDirectDissociation();
@@ -66,6 +66,8 @@ private:
 
 	void readTransProbFile(const std::string& repoFile, ElectronicState upperE,
 	                       ElectronicState lowerE);
+
+	void readDissProbFile(const std::string& repoFile, ElectronicState eState);
 
 	CollisionData readCollisionFile(const std::string& repoFile) const;
 
