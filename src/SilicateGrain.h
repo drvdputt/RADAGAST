@@ -7,8 +7,6 @@
 class SilicateGrain : public GrainType
 {
 public:
-	/** TODO: maybe these things shouldn't be set through the constructor. It might be clearer
-	    to just put them as constants in the member functions, just for clarity. */
 	SilicateGrain();
 
 	/** @name WD01 wrapper functions

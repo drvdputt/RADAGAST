@@ -226,7 +226,7 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 	// = arrival rate in level i from level j
 	EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
-	// See equation for Fij (37) in document
+	// See equation for Fij in gasphysics document
 	// Subtract departure rate from level i to all other levels
 	EMatrix departureDiagonal = Mvv.colwise().sum().asDiagonal();
 	Mvv -= departureDiagonal; // Fij

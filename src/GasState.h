@@ -22,15 +22,16 @@ void writeGasState(const std::string&, const GasModule::GasInterface&,
 namespace GasModule
 {
 
-/** This class is part of the 'public' \c GasModule interface. It provides a way to store the output
-    of the calculations done in the gas module in an opaque manner. A client code should typically
-    have a list of \c GasState objects; one per computational volume element. The \c GasInterface is
-    a friend class, as it is used to retrieve different properties from these gas states. By making
-    these objects opaque, it is made sure that client codes do not depend on how the different
-    properties are stored, and how the emissivity and opacity can be obtained. This way, we can
-    change the way the result is stored and the spectra are calculated, which will help in finding a
-    trade-off between storage space and computation time (e.g. storing whole spectra vs calculating
-    them on the fly from a minimal set of properties). */
+/** This class is part of the 'public' \c GasModule interface. It provides a way to store the
+    output of the calculations done in the gas module in an opaque manner. A client code should
+    typically have a list of \c GasState objects; one per computational volume element. The \c
+    GasInterface is a friend class, as it is used to retrieve different properties from these
+    gas states. By making these objects opaque, it is made sure that client codes do not depend
+    on how the different properties are stored, and how the emissivity and opacity can be
+    obtained. This way, we can change the way the result is stored and the spectra are
+    calculated, which will help in finding a trade-off between storage space and computation
+    time (e.g. storing whole spectra vs calculating them on the fly from a minimal set of
+    properties). */
 class GasState
 {
 	friend class GasInterface;
@@ -40,7 +41,8 @@ class GasState
 
 public:
 	/** Creates an empty GasState object. The resulting object can't be used for anything,
-	    except to allocate space, and handing it to the update function of the \c GasInterface. */
+	    except to allocate space, and handing it to the update function of the \c
+	    GasInterface. */
 	GasState() {}
 
 	/** Returns the gas temperature in K. */
@@ -50,10 +52,10 @@ public:
 	/** Return the heating rate by the grains in erg cm-3 s-1 */
 	double grainHeat() const { return _grainHeat; }
 
-	/** Returns the density of a species included in the model. For
-	    the moment, some "inside knowledge" about the indices is required (0:e-, 1:H+, 2:H,
-	    3:H2), but of course a more human readable format is desired for the future. TODO: use
-	    some kind of map instead of "secret" indices. */
+	/** Returns the density of a species included in the model. For the moment, some "inside
+	    knowledge" about the indices is required (0:e-, 1:H+, 2:H, 3:H2), but of course a
+	    more human readable format is desired for the future. TODO: use some kind of map
+	    instead of "secret" indices. */
 	double density(int i) const { return _densityv[i]; }
 	double density_SI(int i) const { return 1e6 * _densityv[i]; }
 
@@ -64,8 +66,8 @@ public:
 	}
 
 private:
-	/** Private constructor, only to be used by friended class which acts as a factory and can
-	    fill in all the members. */
+	/** Private constructor, only to be used by friended class which acts as a factory and
+	    can fill in all the members. */
 	GasState(const std::valarray<double>& previousISRFv,
 	         const std::valarray<double>& emissivityv,
 	         const std::valarray<double>& opacityv,
