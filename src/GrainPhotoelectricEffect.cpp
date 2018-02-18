@@ -35,14 +35,15 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 	// Shortest wavelength = highest possible energy of a photon
 	double hnumax = Constant::PLANCK * *(end(env._frequencyv) - 1);
 
-	/* The maximum charge is one more than the highest charge which still allows ionization by
-	   photons of hnumax. */
+	/* The maximum charge is one more than the highest charge which still allows ionization
+	   by photons of hnumax. */
 	resultZmax = floor(
 	                ((hnumax - _grainType.workFunction()) * Constant::ERG_EV / 14.4 * aA +
 	                 .5 - .3 / aA) /
 	                (1 + .3 / aA));
 
-	// The minimum charge is the most negative charge for which autoionization does not occur
+	// The minimum charge is the most negative charge for which autoionization does not
+	// occur
 	resultZmin = minimumCharge(a);
 
 	if (resultZmax < resultZmin)
@@ -51,17 +52,18 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		               "small for the recipe used.");
 	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
-	// These two functions determine the up and down rates for the detailed balance
-	// The equation which must be satisfied is f(Z) * upRate(Z) = f(Z+1) * downRate(Z+1)
+	// These two functions determine the up and down rates for the detailed balance The
+	// equation which must be satisfied is f(Z) * upRate(Z) = f(Z+1) * downRate(Z+1)
 
 	// The rate at which the grain moves out of charge Z, in the positive direction.
 	auto chargeUpRate = [&](int Z) -> double {
 		double Jtotal{0};
 		// Photoelectric effect rate
 		Jtotal += emissionRate(a, Z, env._frequencyv, Qabs, env.specificIntensityv);
-		/* Collisions with positive particles. Collisions with multiply charged particles
-		   are treated as if they can only change the charge by 1. This is technically
-		   incorrect, but the charging rate due to positive ions is very small anyway. */
+		/* Collisions with positive particles. Collisions with multiply charged
+		   particles are treated as if they can only change the charge by 1. This is
+		   technically incorrect, but the charging rate due to positive ions is very
+		   small anyway. */
 		for (size_t i = 0; i < env._chargev.size(); i++)
 			if (env._chargev[i] > 0)
 				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[i],
@@ -82,8 +84,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		return Jtotal;
 	};
 
-	/* We will cut off the distribution at some point past the maximum (in either the positive
-	   or the negative direction). */
+	/* We will cut off the distribution at some point past the maximum (in either the
+	   positive or the negative direction). */
 	double cutOffFactor = 1.e-6;
 	int trimLow = 0;
 	int trimHigh = resultfZ.size() - 1;
@@ -132,8 +134,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
 
-		// Cut off calculation once the values past the maximum have a relative size of 1e-6
-		// or less Detects the maximum
+		// Cut off calculation once the values past the maximum have a relative size of
+		// 1e-6 or less Detects the maximum
 		if (!passedMaximum && resultfZ[index] < resultfZ[index - 1])
 		{
 			passedMaximum = true;
@@ -169,8 +171,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		}
 	}
 
-	/* Apply the cutoffs (this might be done more elegantly, i.e. while avoiding the allocation
-	   of all the memory for the initial fZ buffer). */
+	/* Apply the cutoffs (this might be done more elegantly, i.e. while avoiding the
+	   allocation of all the memory for the initial fZ buffer). */
 
 	// Trim the top first! Makes things (i.e. dealing with the indices) much easier.
 
@@ -240,13 +242,13 @@ double GrainPhotoelectricEffect::rateIntegral(
 		{
 			// Quantities dependent on nu
 			double hnuDiff = hnu - hnu_pet;
-			// TODO use this somewhere: double Ehigh = Z < 0 ? Emin + hnuDiff : hnuDiff;
 
 			// The integral over the electron energy distribution
 			double Y = _grainType.photoElectricYield(a, Z, hnu);
 
-			// dimensionless * dimensionless * (energy / time / freq / area / angle) / energy
-			// * <function unit> * dFreq =  <function unit> / time / area / angle
+			// dimensionless * dimensionless * (energy / time / freq / area / angle)
+			// / energy * <function unit> * dFreq = <function unit> / time / area /
+			// angle
 			peIntegrandv[iFreq] = Y * Qabs[iFreq] * specificIntensityv[iFreq] /
 			                      hnu * peFunction(hnuDiff, Elow);
 		}
@@ -266,13 +268,13 @@ double GrainPhotoelectricEffect::rateIntegral(
 		}
 	}
 
-	// angle (4pi) * area (pi a^2) * <function unit> / time / area / angle = <function unit> / time
-	// => we end up with a rate if we multiply by 4pi and the area (cross section) of
+	// angle (4pi) * area (pi a^2) * <function unit> / time / area / angle = <function unit>
+	// / time => we end up with a rate if we multiply by 4pi and the area (cross section) of
 	// the grain
 	double peIntegral = Constant::FPI * Constant::PI * a * a *
 	                    TemplatedUtils::integrate<double>(frequencyv, peIntegrandv);
 
-	// *** Constant factor from sigma_pdt moved in front of integral
+	// *** Constant factor from sigma_pdt moved in front of integral.
 	// Multiply with angle (4pi) to arrive at <function unit> / time
 	double pdIntegral{0.};
 	if (Z < 0)
@@ -328,8 +330,8 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 		double heatAZ = heatingRateAZ(a, Z, env._frequencyv, Qabs,
 		                              env.specificIntensityv);
 
-		/* Fraction of grains in this charge state * heating by a single particle of charge
-		   Z. */
+		/* Fraction of grains in this charge state * heating by a single particle of
+		   charge Z. */
 		totalHeatingForGrainSize += fZz * heatAZ;
 	}
 
@@ -366,8 +368,10 @@ double GrainPhotoelectricEffect::heatingRate(
 	double total{0.};
 	for (size_t m = 0; m < grainPop.numSizes(); m++)
 	{
-		/* FIXME: temporarily ignore the contribution of the large grains to speed up the
-		   calculation */
+		/* TODO: The contribution of the large grains is ignored here to speed up the
+		   calculation. Need to double check this limit, or implement a faster charge
+		   algorithm, such as the one proposed in van Hoof (2004) that is used in
+		   Cloudy. */
 		double a{grainPop.sizev()[m]};
 		if (a < 500 * Constant::ANG_CM)
 			total += grainPop.densityv()[m] *
@@ -444,8 +448,8 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 		particleSum += env._densityv[i] * sqrt(eightkT3DivPi / env._massv[i]) * Zsum;
 	}
 
-	/* The second term of equation 42: autoionization of grains with the most negative charge
-	   inhibits the cooling of the gas. */
+	/* The second term of equation 42: autoionization of grains with the most negative
+	   charge inhibits the cooling of the gas. */
 	// EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
 	double secondTerm = 0;
 	/* This term is only included when the population of the maximally negative grain charge
@@ -515,8 +519,8 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	const Environment env(frequencyv, specificIntensityv, gasT, ne, ne, {-1, 1}, {ne, ne},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
-	/* File that writes out the absorption efficiency, averaged using the input radiation field
-	   as weights. */
+	/* File that writes out the absorption efficiency, averaged using the input radiation
+	   field as weights. */
 	ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
 
 	// Grain sizes for test
@@ -535,7 +539,8 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	// For every grain size
 	for (size_t m = 0; m < Na; m++)
 	{
-		// From the data read in from the SKIRT file, interpolate an absorption efficiency.
+		// From the data read in from the SKIRT file, interpolate an absorption
+		// efficiency.
 		const Array& Qabs = Testing::generateQabsv(a, frequencyv);
 
 		// Integrate over the radiation field

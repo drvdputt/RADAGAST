@@ -255,7 +255,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			   grains don't disappear when they lose an electron) Grain
 			   recombination / charge exchange reaction could also be added. I need
 			   to think about whether the 'disappearing' particles will cause
-			   problems when couples with conservation equations. */
+			   problems when coupled with conservation equations. */
 		}
 		// When ignoring H2
 		else

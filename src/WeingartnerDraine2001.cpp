@@ -13,7 +13,9 @@ double WD01::workFunction(bool carbonaceous)
 
 double WD01::eMin(double a, int Z)
 {
-//#define VANHOOF_EMIN
+// TODO: use this as a default instead. Before I can do that, the charge calculation algorithm
+// needs to be made more robust.
+// #define VANHOOF_EMIN
 #ifdef VANHOOF_EMIN
 	// replace by van Hoof (2004) eq 1
 	if (Z >= -1)

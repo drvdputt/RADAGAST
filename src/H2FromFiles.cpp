@@ -14,7 +14,7 @@ namespace
 {
 constexpr bool BLEVELS{true};
 constexpr bool CLEVELS{true};
-}
+} // namespace
 
 H2FromFiles::H2FromFiles(int maxJ, int maxV)
                 : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()},
@@ -56,7 +56,7 @@ void H2FromFiles::readLevels()
 		readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
 	if (CLEVELS)
 	{
-		readLevelFile("dat/h2/energy_C_plus.dat",ElectronicState::Cplus);
+		readLevelFile("dat/h2/energy_C_plus.dat", ElectronicState::Cplus);
 		readLevelFile("dat/h2/energy_C_minus.dat", ElectronicState::Cminus);
 	}
 	_numL = _levelv.size();
@@ -70,11 +70,14 @@ void H2FromFiles::readTransProbs()
 	// (1998)
 	readTransProbFile("dat/h2/transprob_X.dat", ElectronicState::X, ElectronicState::X);
 	if (BLEVELS)
-		readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B, ElectronicState::X);
+		readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B,
+		                  ElectronicState::X);
 	if (CLEVELS)
 	{
-		readTransProbFile("dat/h2/transprob_C_plus.dat",ElectronicState::Cplus,ElectronicState::X);
-		readTransProbFile("dat/h2/transprob_C_minus.dat",ElectronicState::Cminus,ElectronicState::X);
+		readTransProbFile("dat/h2/transprob_C_plus.dat", ElectronicState::Cplus,
+		                  ElectronicState::X);
+		readTransProbFile("dat/h2/transprob_C_minus.dat", ElectronicState::Cminus,
+		                  ElectronicState::X);
 	}
 }
 
@@ -84,7 +87,7 @@ void H2FromFiles::readDissProbs()
 	_dissKinEv = EVector::Zero(_numL);
 
 	if (BLEVELS)
-		readDissProbFile("/dat/h2/dissprob_B.dat",ElectronicState::B);
+		readDissProbFile("dat/h2/dissprob_B.dat", ElectronicState::B);
 	if (CLEVELS)
 	{
 		readDissProbFile("dat/h2/dissprob_C_plus.dat", ElectronicState::Cplus);
