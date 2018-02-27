@@ -191,6 +191,11 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
+			// TODO: the source term should contain the 'formation pumping'
+			// contributions. When H2 is formed on grain surfaces, it can be
+			// released from the grain in an excited state. The simplest way is
+			// assuming a fixed distribution. In that case, the source vector is
+			// this distribution scaled with the total grain H2 formation rate.
 			EVector H2sourcev = EVector::Zero(_molecular->numLv());
 			EVector H2sinkv = _molecular->dissociationSinkv(specificIntensityv);
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
@@ -378,7 +383,7 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 		{
 			/* Choose the correct parameters for the photoelectric heating
 			   calculation based on the type (a.k.a. composition) of the
-			   population. */
+			   Population. */
 			GrainPhotoelectricEffect gpe(*type);
 			grainPhotoelectricHeating += gpe.heatingRate(env, *pop);
 		}
