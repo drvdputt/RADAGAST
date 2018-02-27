@@ -381,6 +381,8 @@ EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 	addToCvv(the_cvv, _qH2ortho, T, 0.75 * nH2);
 	addToCvv(the_cvv, _qH2para, T, 0.25 * nH2);
 
+	// TODO: test if these are loaded correctly (compare with graph in Lee paper)
+
 	return the_cvv;
 }
 
