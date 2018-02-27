@@ -75,11 +75,10 @@ public:
 	    calculation, will be passed around using this struct (instead of storing them as
 	    members, which is not threadsafe. Note that Solution objects are not interchangeable
 	    between NLevel instances, as the number of levels and their properties can be
-	    different.
-
-	    TODO: Reconsider how we can prevent breaking abstraction here. Ideally, we'd want a
-	    mechanism so that Solutions can only be used with the object that created them.
-	    Store pointer to parent? */
+	    different. Ideally, we'd want a mechanism so that Solutions can only be used with
+	    the object that created them. (Store pointer to parent?). This breaks abstraction a
+	    bit. Maybe there are other approaches, but right now we do no checking as that would
+	    be tedious. */
 	typedef struct Solution
 	{
 		/* The total density and temperature of the ensemble of atoms/molecules for

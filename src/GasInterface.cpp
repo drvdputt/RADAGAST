@@ -59,8 +59,7 @@ GasInterface::GasInterface(const valarray<double>& frequencyv, const string& ato
 		molecularLevels = make_unique<H2Levels>(h2LevelData, _frequencyv);
 	}
 
-	// Give these level models to the main implementation (TODO: check if giving a nullptr works
-	// correctly)
+	// Give these level models to the main implementation
 	_pimpl = make_unique<GasInterfaceImpl>(move(atomicLevels), move(molecularLevels),
 	                                       _frequencyv);
 }
