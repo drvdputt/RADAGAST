@@ -59,7 +59,10 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		EVector previousNv = nv;
 
 		/* Do a 'sweep' over all the populations. It is important that this happens one
-		   by one, and not as a single vector operation (hence the word sweep). */
+		   by one, and not as a single vector operation (hence the word sweep). TODO:
+		   need separate sweeps for excited vs ground state, as there are no transitions
+		   between the excited levels, neither within nor between electronic excited
+		   states. */
 		for (size_t i = 0; i < numLv; i++)
 		{
 			double creationRate = (Mvv.row(i) * nv).sum() + sourcev(i);
@@ -158,7 +161,8 @@ EVector H2Levels::directDissociationSinkv(const Array& specificIntensityv) const
 			                       begin(specificIntensityv) + iNuMax);
 			for (size_t j = 0; j < nuv.size(); j++)
 			{
-				// Convert to photon flux density in s-1 cm-2 Hz-1: F_nu = 4pi I_nu / h nu
+				// Convert to photon flux density in s-1 cm-2 Hz-1: F_nu = 4pi
+				// I_nu / h nu
 				sigmaFv[j] = Constant::FPI * sigmaFv[j] / Constant::PLANCK /
 				             nuv[j];
 				// Convert to dissociation count (s-1 Hz-1)
