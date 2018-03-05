@@ -15,10 +15,14 @@ using namespace std;
 
 namespace GasModule
 {
-GasInterface::GasInterface(const valarray<double>& frequencyv, const string& atomChoice,
+GasInterface::GasInterface(const valarray<double>& iFrequencyv,
+                           const valarray<double>& eFrequencyv,
+                           const valarray<double>& oFrequencyv, const string& atomChoice,
                            const string& moleculeChoice)
-                : _frequencyv(frequencyv)
+                : _iFrequencyv(iFrequencyv), _eFrequencyv(eFrequencyv),
+                  _oFrequencyv(oFrequencyv)
 {
+
 	unique_ptr<HydrogenLevels> atomicLevels;
 
 	// Choose a hydrogen data provider
