@@ -9,7 +9,7 @@ namespace GasModule
 {
 class GasInterface;
 class GasState;
-}
+} // namespace GasModule
 
 class GasInterfaceImpl;
 
@@ -68,21 +68,19 @@ public:
 private:
 	/** Private constructor, only to be used by friended class which acts as a factory and
 	    can fill in all the members. */
-	GasState(const std::valarray<double>& previousISRFv,
-	         const std::valarray<double>& emissivityv,
+	GasState(const std::valarray<double>& emissivityv,
 	         const std::valarray<double>& opacityv,
 	         const std::valarray<double>& scatteringOpacityv, double T,
 	         const std::valarray<double>& densityv, double h2form, double grainHeat)
-	                : _previousISRFv(previousISRFv), _emissivityv(emissivityv),
-	                  _opacityv(opacityv), _scatteringOpacityv(scatteringOpacityv),
-	                  _temperature(T), _densityv(densityv), _h2form(h2form),
-	                  _grainHeat(grainHeat)
+	                : _emissivityv(emissivityv), _opacityv(opacityv),
+	                  _scatteringOpacityv(scatteringOpacityv), _temperature(T),
+	                  _densityv(densityv), _h2form(h2form), _grainHeat(grainHeat)
 	{
 	}
 
 private:
 	/** Memory-heavy, but simple implementation: just store all the output */
-	std::valarray<double> _previousISRFv, _emissivityv, _opacityv, _scatteringOpacityv;
+	std::valarray<double> _emissivityv, _opacityv, _scatteringOpacityv;
 
 	/** Some diagnostics which are publicly available */
 	double _temperature{0};

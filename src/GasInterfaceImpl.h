@@ -6,6 +6,7 @@
 #include "GrainInterface.h"
 #include "GrainPhotoelectricEffect.h"
 #include "NLevel.h"
+#include "Spectrum.h"
 
 class ChemistrySolver;
 class FreeBound;
@@ -14,46 +15,39 @@ class HydrogenLevels;
 class H2Levels;
 
 /** This class contains the actual implementation of the Gas Interface, and currently is the
-    backbone of the whole code. That might change once more than one element is included, as this
-    class is currently a gathering of Hydrogen-related functions. It calculates the ionized
-    fraction, level populations and net heating rate of hydrogen repeatedly, until the equilibrium
-    temperature is found.
+    backbone of the whole code. It calculates the abundances, level populations and net heating
+    rate of hydrogen repeatedly, until the equilibrium temperature is found.
 
     For now, different parts of the code are grouped by the kind of process. When an instance of
     GasInterfaceImpl is constructed, a few members which provide implementations of the various
     processes are constructed too. Objects of the classes FreeFree, FreeBound and NLevel are
     created, which decribe respectively the Brehmsstrahlung, the recombination continuum and
-    bound-bound processes (between energy levels of Hydrogen). During their construction, they each
-    read the data they need to perform their functions.
+    bound-bound processes (between energy levels of Hydrogen). During their construction, they
+    each read the data they need to perform their functions.
 
     The most recent addition is a chemistry network, which can calculate the abundances of the
-    different species, give a set of rate coefficients for the different formation and destruction
-    processes.  The invocations of the chemistry calculation, level calculation of H, and
-    calculation of H2 are currently at the same level in the call hierarchy. The implementation
-    alternates between chemistry and level population calculations, until a self-consistent result
-    is reached. Functions which calculate the optical properties and thermal effects of H and H2 are
-    explicitly invoked from this class.
+    different species, given a set of rate coefficients for the different formation and
+    destruction processes. The invocations of the chemistry calculation, level population
+    calculations for H2 and H, and deriving new rate coefficients are currently at the same
+    level in the call hierarchy. The implementation alternates between chemistry and level
+    population calculations, until a self-consistent result is reached. Functions which
+    calculate the optical properties and thermal effects of H and H2 are explicitly invoked from
+    this class (as opposed to, for example, putting all the "opacity-havers" in a list).
 
-    When more species which are optically or thermally active are added, the hydrogen-specific parts
-    of this class might be moved down in the call hierarchy. The species should be polymorphic so
-    they can be put in a list, and the functions which calculate their individual optical properties
-    should be callable from a loop. The total net heating rate for the gas mixture should take into
-    account chemical heating, as well as the heating/cooling contributions which the species provide
-    independently.
+    The total net heating rate for the gas mixture should take into account chemical heating, as
+    well as the heating/cooling contributions which the species provide independently.
 
-    The decision still has to be made on how we want to group the processes. We could make a list of
-    objects representing each species, and indicate which of the objects provides heating, cooling,
-    line emission, continuum, emission, opacity... or we could make separate lists of of heating
-    providers, line emission provides, opacity providers ... and do a multiple inheritance thing. Or
-    a maybe even a lambda function approach, where we make lists of functions that need to be called
-    to get the total heating, emission, opacity...
+    The decision still has to be made on how we want to group the processes. We could make a
+    list of objects representing each species, and indicate which of the objects provides
+    heating, cooling, line emission, continuum, emission, opacity... or we could make separate
+    lists of of heating providers, line emission providers, opacity providers ... (this smells of 
+    multiple inheritance).
 
-    It's pretty clear that we can put all the NLevel systems into a list, and call solveBalance. So
-    solveBalance should have the same signature for all subclasses of NLevel. But different
+    It's pretty clear that we can put all the NLevel systems into a list, and call solveBalance.
+    So solveBalance should have the same signature for all subclasses of NLevel. But different
     subclasses of NLevel provide some different information, such as HydrogenLevels for the
     two-photon continuum, or H2Levels for dissociation rates. This explains the need for
     subclassing. */
-
 class GasInterfaceImpl
 {
 public:
@@ -63,7 +57,7 @@ public:
 	    thread-safe. */
 	typedef struct Solution
 	{
-		Array specificIntensityv;
+		Spectrum specificIntensity;
 		double T;
 		EVector speciesNv;
 		NLevel::Solution HSolution;
@@ -91,16 +85,15 @@ public:
 	                       const GasModule::GrainInterface&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
-	    temperature guess, and a vector containing the radiation field in specific intensity
-	    per frequency units (on the same frequency grid as the one provided at
-	    construction). */
+	    temperature guess, and a Spectrum object containing the radiation field in specific
+	    intensity per frequency units. */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
-	                  const Array& specificIntensity,
+	                  const Spectrum& specificIntensity,
 	                  const GasModule::GrainInterface&) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
-	Solution calculateDensities(double n, double T, const Array& specificIntensityv,
+	Solution calculateDensities(double n, double T, const Spectrum& specificIntensityv,
 	                            const GasModule::GrainInterface&,
 	                            const GasInterfaceImpl::Solution* previous = nullptr) const;
 
@@ -157,6 +150,7 @@ public:
 		return s.speciesNv(_ine) * s.speciesNv(_inp);
 	}
 
+	/** Expression for the ionized fraction. */
 	inline double f(const Solution& s) const
 	{
 		return s.speciesNv(_inp) / (s.speciesNv(_inH) + 2 * s.speciesNv(_inH2));

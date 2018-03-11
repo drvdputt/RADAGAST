@@ -27,6 +27,9 @@ public:
 
 	double freqMin() const { return _freqMin; }
 
+	Array frequencyv() const {return _frequencyv;}
+	Array valuev() const {return _valuev;}
+
 private:
 	bool _hasData;
 	double _freqMin{0};

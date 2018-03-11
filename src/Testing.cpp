@@ -415,7 +415,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	const Array& frequencyv = gi.frequencyv();
 	const Array& emv = gs._emissivityv;
 	const Array& opv = gs._opacityv;
-	const Array& scav = gs._scatteringOpacityv * gs._previousISRFv;
 
 	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, emv)
 	     << endl;
@@ -427,7 +426,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	                "wavelength",
 	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
-	                "scattered (erg s-1 cm-3 Hz-1 sr-1)",
 	};
 	out << "#";
 	int i = 0;
@@ -444,10 +442,8 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		double freq = frequencyv[iFreq];
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
-		double effective = emv[iFreq] - scav[iFreq];
-		effective = effective > 0 ? effective : 0;
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
-		    << opv[iFreq] << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq]
+		    << opv[iFreq] << tab << emv[iFreq] - scav[iFreq]
 		    << tab << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
@@ -468,7 +464,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 
 	double fBralpha = Constant::LIGHT / 4052.27e-7;
 
-	function<double(double frequency)> evaluateSpectrum = [&](double f) {
+	auto evaluateSpectrum = [&](double f) {
 		return TemplatedUtils::evaluateLinInterpf<double>(f, frequencyv, emv);
 	};
 
@@ -784,10 +780,10 @@ void Testing::runFromFilesvsHardCoded()
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(frequencyv, frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(frequencyv, frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
@@ -806,8 +802,8 @@ GasModule::GasInterface Testing::genFullModel()
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
-	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {frequencyv, "", "99 99"};
+
+	return {coarseFrequencyv, frequencyv, "", "8 5"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }

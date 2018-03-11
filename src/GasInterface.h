@@ -30,6 +30,8 @@ public:
 	    - iFrequencyv is the grid used to discretize the input radiation field (the specific
               intensity at a certain point in space, in [erg s-1 cm-1 Hz-1 units]).
 
+	    - frequencyv is used for all the rest, until we replace it by (maybe):
+
 	    - eFrequencyv will be the grid on which the emissivity is calculated. Following a
               recent discussion on the future design of SKIRT, this can typically have a
               somewhat larger resolution, if you do your radiative transfer per cell for
@@ -39,12 +41,15 @@ public:
 	      is typically coarser because a radiative transfer algorithm usually needs the
 	      opacity in each grid cell.
 
+	    (other approaches are still considered)
+
 	    Some configuration options in the form of strings are also provided. These are
 	    subject to change, and it is currently best to look at the source code of this
 	    function to see which options are available. */
 	GasInterface(const std::valarray<double>& iFrequencyv,
-	             const std::valarray<double>& eFrequencyv,
-	             const std::valarray<double>& oFrequencyv,
+		     const std::valarray<double>& frequencyv,
+	             /* const std::valarray<double>& eFrequencyv, */
+	             /* const std::valarray<double>& oFrequencyv, */
 	             const std::string& atomChoice = "",
 	             const std::string& moleculeChoice = "");
 
@@ -110,8 +115,8 @@ private:
 	/** Modifies the contents of a GasState so that it is equivalent to no gas at all. */
 	void zeroOpticalProperties(GasState& gs) const;
 
-	/* The frequency grids used for the calculations, which are given at construction. */
-	std::valarray<double> _iFrequencyv, _eFrequencyv, _oFrequencyv;
+	std::valarray<double> _frequencyv;
+	std::valarray<double> _iFrequencyv;
 
 	/* The implementation details, especially those that require the inclusion of other
 	   files than 'GasState.h' in this header, are hidden behind this pointer. This way, the
@@ -121,7 +126,8 @@ private:
 	std::unique_ptr<GasInterfaceImpl> _pimpl;
 
 public:
-	/* This can be used to test individual components of the implementation. */
+	/* This can be used to test individual components of the implementation. TODO: remove
+	   this eventually.*/
 	const GasInterfaceImpl* pimpl() const { return _pimpl.get(); }
 };
 } /* namespace GasModule */
