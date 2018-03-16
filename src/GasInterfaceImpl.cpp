@@ -418,7 +418,7 @@ double GasInterfaceImpl::continuumCooling(const Solution& s) const
 double GasInterfaceImpl::continuumHeating(const Solution& s) const
 {
 	double result = _freeFree->heating(np_ne(s), s.T, s.specificIntensity);
-	result += Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T, _frequencyv,
+	result += Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
 	                              s.specificIntensity);
 	if (_molecular)
 	{

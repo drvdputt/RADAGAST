@@ -1,8 +1,8 @@
 #ifndef _TESTING_H_
 #define _TESTING_H_
 
-#include "Array.h"
 #include "GasInterface.h"
+#include "Spectrum.h"
 
 #include <string>
 #include <vector>

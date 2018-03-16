@@ -441,7 +441,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
-		    << opv[iFreq] << tab endl;
+		    << opv[iFreq] << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}
@@ -515,7 +515,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	}
 	output.close();
 
-	double isrf = TemplatedUtils::integrate<double>(gi.frequencyv(), specificIntensityv);
+	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
+	                                                specificIntensity.valuev());
 
 	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
 	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
