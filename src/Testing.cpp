@@ -422,9 +422,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency",
-	                "wavelength",
-	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	};
 	out << "#";
@@ -443,8 +441,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
-		    << opv[iFreq] << tab << emv[iFreq] - scav[iFreq]
-		    << tab << endl;
+		    << opv[iFreq] << tab endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}
@@ -483,7 +480,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                               const Array& specificIntensityv, double n)
+                               const Spectrum& specificIntensity, double n)
 {
 	const string tab = "\t";
 	const int samples = 200;
@@ -500,7 +497,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	{
 		GasModule::GrainInterface gri{};
 		GasInterfaceImpl::Solution s =
-		                gi.calculateDensities(n, T, specificIntensityv, gri);
+		                gi.calculateDensities(n, T, specificIntensity, gri);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -644,8 +641,8 @@ void Testing::testChemistry()
 	// Formation and dissociation rates should come from somewhere else
 	double kform = 0;
 	double kdiss = 0;
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss,
-	                                              kform);
+	Spectrum specificIntensity(frequencyv, specificIntensityv);
+	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, specificIntensity, kdiss, kform);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
 	int ie = SpeciesIndex::index("e-");

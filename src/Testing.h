@@ -59,7 +59,7 @@ void writeGasState(const std::string& outputPath, const GasModule::GasInterface&
                    const GasModule::GasState& gs);
 
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                      const Array& specificIntensityv, double n);
+                      const Spectrum& specificIntensity, double n);
 
 void testIonizationStuff();
 

@@ -125,8 +125,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 	// Derive this again, just for diagnostics
 	double h2form = GasGrain::surfaceH2FormationRateCoeff(gi, s.T) * s.speciesNv[_inH];
 	double grainHeat = grainHeating(s, gi);
-	gs = GasModule::GasState(specificIntensity, emv, opv, scv, s.T, densityv, h2form,
-	                         grainHeat);
+	gs = GasModule::GasState(emv, opv, scv, s.T, densityv, h2form, grainHeat);
 }
 
 GasInterfaceImpl::Solution
@@ -246,8 +245,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 
 			// CHEM RATES -> CHEMISTRY SOLUTION
 			EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
-			                T, _frequencyv, specificIntensity, kDissH2Levels,
-			                kFormH2);
+			                T, specificIntensity, kDissH2Levels, kFormH2);
 			s.speciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv);
 
 			/* TODO: Add effect of grain charging to chemical network. I think it
