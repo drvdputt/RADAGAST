@@ -169,8 +169,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	{
 		double iniNH2 = nHtotal / 4;
 		double iniAtomAndIon = nHtotal / 2;
-		double guessF = Ionization::solveBalance(iniAtomAndIon, T, _frequencyv,
-		                                         specificIntensity);
+		double guessF = Ionization::solveBalance(iniAtomAndIon, T, specificIntensity);
 		s.speciesNv = EVector(SpeciesIndex::size());
 		s.speciesNv(_ine) = guessF * iniAtomAndIon;
 		s.speciesNv(_inp) = guessF * iniAtomAndIon;
@@ -266,8 +265,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 			// DIRECT SOLUTION (IONIZATION BALANCE ONLY, NO MOLECULES)
 
 			// Just solve the ionization balance in the nebular approximation.
-			double f = Ionization::solveBalance(nHtotal, T, _frequencyv,
-			                                    specificIntensity);
+			double f = Ionization::solveBalance(nHtotal, T, specificIntensity);
 			DEBUG("Ionized fraction = " << f << endl);
 
 			// Neutral fraction
@@ -370,7 +368,7 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 	double ne = s.speciesNv[_ine];
 	double np = s.speciesNv[_inp];
 	GrainPhotoelectricEffect::Environment env(
-	                _frequencyv, s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np},
+	                s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np},
 	                {Constant::ELECTRONMASS, Constant::PROTONMASS});
 	size_t numPop = g.numPopulations();
 	for (size_t i = 0; i < numPop; i++)

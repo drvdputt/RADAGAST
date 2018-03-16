@@ -636,13 +636,14 @@ void Testing::testChemistry()
 	const double T = 10000;
 	Array frequencyv = generateGeometricGridv(200, 1e11, 1e16);
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, 25000, 10);
+	Spectrum specificIntensity(frequencyv, specificIntensityv);
 
 	ChemistrySolver cs(make_unique<ChemicalNetwork>());
 
 	// Formation and dissociation rates should come from somewhere else
 	double kform = 0;
 	double kdiss = 0;
-	Spectrum specificIntensity(frequencyv, specificIntensityv);
+
 	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, specificIntensity, kdiss, kform);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
@@ -658,8 +659,8 @@ void Testing::testChemistry()
 	n0v(iH2) = 0;
 
 	EVector nv = cs.solveBalance(kv, n0v);
-	double ionizedFraction = Ionization::solveBalance(nv(iH) + nv(ip), T, frequencyv,
-	                                                  specificIntensityv);
+	double ionizedFraction =
+	                Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
 
 	cout << "Compare with ionized fraction calculation: " << endl;
 	cout << "f = " << ionizedFraction << endl;

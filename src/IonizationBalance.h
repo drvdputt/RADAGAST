@@ -1,18 +1,17 @@
 #ifndef _IONIZATIONBALANCE_H_
 #define _IONIZATIONBALANCE_H_
 
-#include "Array.h"
+#include "Spectrum.h"
 
 namespace Ionization
 {
 /** Solves the ionization balance (in the nebular approximation, i.e. this function assumes that all
     hydrogen is in the ground state). */
-double solveBalance(double nH, double T, const Array& frequencyv,
-                    const Array& specificIntensityv);
+double solveBalance(double nH, double T, const Spectrum& specificIntensity);
 
 /** Photoionization rate coefficient. Integrates over the spectrum. Multiply with neutral density
     to get total rate. */
-double photoRateCoeff(const Array& frequencyv, const Array& specificIntensityv);
+double photoRateCoeff(const Spectrum& specificIntensity);
 
 /** Photoionization cross section in cm2 */
 double crossSection(double frequency);
@@ -24,8 +23,7 @@ double collisionalRateCoeff(double T);
 double recombinationRateCoeff(double T);
 
 /** Heating due to thermalization of freed electrons */
-double heating(double nH, double f, double T, const Array& frequencyv,
-               const Array& specificIntensityv);
+double heating(double nH, double f, double T, const Spectrum& specificIntensity);
 
 /** Kinetic energy lost during recombination (basically the photon energy, minus the binding energy
     contribution. */
