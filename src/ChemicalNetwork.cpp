@@ -37,9 +37,8 @@ ChemicalNetwork::ChemicalNetwork() : _numSpecies{SpeciesIndex::size()}
 	_numReactions = _reactionv.size();
 }
 
-EVector ChemicalNetwork::rateCoeffv(double T, const Array& frequencyv,
-                                    const Array& specificIntensityv, double kDissFromH2Levels,
-                                    double kH2FormationGrain) const
+EVector ChemicalNetwork::rateCoeffv(double T, const Spectrum& specificIntensity,
+                                    double kDissFromH2Levels, double kH2FormationGrain) const
 {
 	EVector k(_numReactions);
 	k(reactionIndex("H photoionization")) =
@@ -59,15 +58,15 @@ void ChemicalNetwork::addReaction(const std::string& reactionName,
                                   const std::vector<std::string>& productNamev,
                                   const Array& productStoichv)
 {
-	if (reactantNamev.size() != reactantStoichv.size())
-		Error::runtime("Error adding reaction: reactantNamev and reactantStoichv size "
-		               "mismatch");
-	if (productNamev.size() != productStoichv.size())
-		Error::runtime("Error adding reaction: productNamev and productStoichv size "
-		               "mismatch");
+	Error::equalCheck("reactantNamev and reactantStoichv lengths", reactantNamev.size(),
+	                  reactantStoichv.size());
+	Error::equalCheck("productNamev and productStoichv lengths", productNamev.size(),
+	                  productStoichv.size());
 
+	// Give the reaction a number, and put its name in the map
 	_reactionIndexm.emplace(reactionName, _reactionIndexm.size());
 
+	// Represent the stoichiometry on both sides as a vector in species space
 	EVector leftSidev = EVector::Zero(_numSpecies);
 	for (size_t r = 0; r < reactantNamev.size(); r++)
 		leftSidev(SpeciesIndex::index(reactantNamev[r])) += reactantStoichv[r];

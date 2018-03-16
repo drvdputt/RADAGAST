@@ -1,8 +1,8 @@
 #ifndef GASMODULE_GIT_SRC_CHEMICALNETWORK_H_
 #define GASMODULE_GIT_SRC_CHEMICALNETWORK_H_
 
-#include "Array.h"
 #include "EigenAliases.h"
+#include "Spectrum.h"
 
 #include <map>
 #include <string>
@@ -23,17 +23,16 @@ public:
 	    with the densities of the reaction products, so watch out. The unit varies, but
 	    multiplying with the correct densities (for example *np*ne for radiative
 	    recombination) will amount to cm-3 s-1 as expected. Some of the arguments are rates
-	    which have been calculated somewhere else. This functions simply fill them in into
+
+	    which have been calculated somewhere else. This function simply fills them in into
 	    the right spot of the k-vector. */
-	EVector rateCoeffv(double T, const Array& frequencyv, const Array& specificIntensityv,
+	EVector rateCoeffv(double T, const Spectrum& specificIntensity,
 	                   double kDissFromH2Levels, double kH2FormationGrain) const;
 
 private:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
-	    network. Also gives the reaction a number, and the reaction is added to the reaction
-	    index with the give name as a key. If I ever want to make the species list dynamic,
-	    I have to make sure that this function is only called \em after the species index
-	    has been properly set up. */
+	    network. Each reaction is given a number, and the reaction is added to the reaction
+	    index using the given name as a key. */
 	void addReaction(const std::string& reactionName,
 	                 const std::vector<std::string>& reactantNamev,
 	                 const Array& reactantStoichv,
