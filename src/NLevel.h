@@ -1,7 +1,7 @@
 #ifndef GASMODULE_GIT_SRC_NLEVEL_H_
 #define GASMODULE_GIT_SRC_NLEVEL_H_
 
-#include "Array.h"
+#include "Spectrum.h"
 #include "EigenAliases.h"
 #include "LineProfile.h"
 #include "SpecialFunctions.h"
@@ -234,7 +234,7 @@ private:
 	   initialized with depends on the subclass. */
 	std::shared_ptr<const LevelDataProvider> _ldp;
 
-	/* Wavelength grid */
+	/* Frequency grid */
 	const Array& _frequencyv;
 
 	/* Particle mass (important for line width) */
