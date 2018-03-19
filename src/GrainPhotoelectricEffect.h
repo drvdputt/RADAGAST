@@ -1,9 +1,10 @@
 #ifndef _PHOTOELECTRICHEATING_H_
 #define _PHOTOELECTRICHEATING_H_
 
-#include "Array.h"
 #include "Constants.h"
 #include "GrainInterface.h"
+#include "Spectrum.h"
+
 #include <functional>
 #include <vector>
 
@@ -60,15 +61,14 @@ public:
 		    which participate in the charging of the grains. A list of particle charges,
 		    number densities and a list containing the mass of each particle type should
 		    be provided. */
-		Environment(const Array& frequencyv, const Array& specificIntensityv, double T,
+		Environment(const Spectrum& specificIntensity, double T,
 		            double ne, double np, const std::vector<int>& chargev,
 		            const Array& densityv, const Array& massv)
-		                : _frequencyv(frequencyv),
-		                  specificIntensityv(specificIntensityv), _T(T), _ne(ne),
+		                : specificIntensity(specificIntensity), _T(T), _ne(ne),
 		                  _np(np), _chargev(chargev), _densityv(densityv),
 		                  _massv(massv){};
 		// Radiation field
-		Array _frequencyv, specificIntensityv;
+		Spectrum specificIntensity;
 		// The gas temperature, and frequently used densities
 		double _T, _ne, _np;
 		/* Properties of all the charged particles in the environment (also contains ne
