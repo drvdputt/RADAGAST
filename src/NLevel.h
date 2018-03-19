@@ -11,8 +11,6 @@
 
 class LevelDataProvider;
 
-// TODO: use the correct mass for thermal velocity (line width)
-
 /** This class contains a generic implementation for calculating the statistical equilibrium of
     a system with a certain amount of levels (private part), and some properties that result
     from it (public part). NLevel can be used as-is, if this generic (lines only) implementation
