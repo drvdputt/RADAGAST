@@ -39,7 +39,7 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 }
 
 /** Throws an error if @c value and @c reference are equal up to a factor @c precision */
-void fuzzyCheck(std::string variable, double value, double reference, double precision)
+inline void fuzzyCheck(std::string variable, double value, double reference, double precision)
 {
 	double minus = reference * (1 - precision);
 	double plus = reference * (1 + precision);
