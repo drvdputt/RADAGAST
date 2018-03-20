@@ -46,7 +46,7 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 }
 
 NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
-                                      double temperature, const Array& specificIntensityv,
+                                      double temperature, const Spectrum& specificIntensity,
                                       const EVector& sourcev, const EVector& sinkv) const
 {
 	Solution s;
@@ -56,19 +56,17 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 	s.cvv = EMatrix::Zero(_numLv, _numLv);
 	s.nv = EVector::Zero(_numLv);
 
-	if (specificIntensityv.size() != _frequencyv.size())
-		Error::runtime("Given ISRF and frequency vectors do not have the same size " +
-		               std::to_string(specificIntensityv.size()) + " vs " +
-		               std::to_string(_frequencyv.size()));
-
 	if (density > 0)
 	{
 		s.cvv = _ldp->cvv(temperature, speciesNv);
 		/* Calculate BijPij (needs to be redone at each temperature because the line
-		   profile can change) Also needs the Cij to calculate collisional broadening. */
-		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
+		   profile can change). Also needs the Cij to calculate collisional
+		   broadening. */
+		s.bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
 
 #ifdef REPORT_LINE_QUALITY
+		// TODO: make this work after coming up with a good way to integrate the
+		// Spectrum object over a line
 		double maxNorm = 0, minNorm = 1e9;
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
@@ -93,14 +91,14 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 }
 
 NLevel::Solution NLevel::solveLTE(double density, const EVector& speciesNv, double T,
-                                  const Array& specificIntensityv) const
+                                  const Spectrum& specificIntensity) const
 {
 	NLevel::Solution s;
 	s.n = density;
 	s.T = T;
 	s.nv = density * solveBoltzmanEquations(T);
 	s.cvv = _ldp->cvv(T, speciesNv);
-	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, T, s.cvv);
+	s.bpvv = prepareAbsorptionMatrix(specificIntensity, T, s.cvv);
 	return s;
 }
 
@@ -179,16 +177,17 @@ double NLevel::cooling(const Solution& s) const
 	return total;
 }
 
-EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
+EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
                                         const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
 
-	double spectrumMax = *max_element(begin(specificIntensityv), end(specificIntensityv));
+	double spectrumMax = *max_element(begin(specificIntensity.valuev()),
+	                                  end(specificIntensity.valuev()));
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
-		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensityv,
+		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensity,
 		                                          spectrumMax);
 
 		// Uncomment these two lines to check correctness of optimized integration

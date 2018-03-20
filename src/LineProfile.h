@@ -1,13 +1,13 @@
 #ifndef GASMODULE_GIT_SRC_LINEPROFILE_H
 #define GASMODULE_GIT_SRC_LINEPROFILE_H
 
-#include "Array.h"
+#include "Spectrum.h"
 
 /** A set of tools to handle line profile in an efficient way. */
 class LineProfile
 {
 public:
-	LineProfile(double center, double sigma_gauss, double halfWidht_lorenz);
+	LineProfile(double center, double sigma_gauss, double halfWidth_lorenz);
 	// Evaluate the line profile at the given value (frequency) x
 	double operator()(double nu) const;
 	double center() const { return _center; }
@@ -19,16 +19,28 @@ public:
 	void addToSpectrum(const Array& frequencyv, Array& spectrumv, double factor) const;
 
 	/** Integrate the product of the line profile and the given spectrum in an efficient
-	    way. The line profile is only evaluated if the expected contribution of a frequency
-	    point to the total exceeds a minimum threshold. Optionally the maximum of the
-	    spectrum can be given, to help with speeding up the calculation (for example when
-	    calculation the line integral over the same spectrum for many different lines). This
-	    maximum is used to guess when the calculation can be cut off. */
-	double integrateSpectrum(const Array& frequencyv, const Array& spectrumv, double spectrumMax = 0) const;
+	    way. A recommended set of frequency points for the line (determined by this class)
+	    is combined with the frequency points that discretize the given spectrum.
+
+	    The line profile is only evaluated if the expected contribution of a frequency point
+	    to the total (using a conservative heuristic) exceeds a minimum threshold.
+	    Optionally the maximum of the spectrum can be given, to help with speeding up the
+	    calculation (for example when calculation the line integral over the same spectrum
+	    for many different lines). This maximum is used to guess when the calculation can be
+	    cut off. */
+	double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0) const;
 
 private:
-	double _center, _sigma_gauss;
+	/** Generates a number of points around the line center, spaced according to a power
+	    law, within a distance _halfWidth_lorenz * width of the center. */
+	Array recommendedFrequencyGrid(int numPoints, double width = 1) const;
+
+	double _center, _sigma_gauss, _halfWidth_lorenz;
 	double _one_sqrt2sigma;
 	double _a;
 };
+
+void test_addToSpectrum();
+
+void test_integrateSpectrum();
 #endif /* GASMODULE_GIT_SRC_LINEPROFILE_H */
