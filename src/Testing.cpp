@@ -747,7 +747,7 @@ void Testing::runH2(bool write)
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
 	H2Levels h2Levels{h2Data, frequencyv};
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
-	EVector sinkv = h2Levels.dissociationSinkv(specificIntensityv);
+	EVector sinkv = h2Levels.dissociationSinkv(specificIntensity);
 	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensity,
 	                                           sourcev, sinkv);
 
