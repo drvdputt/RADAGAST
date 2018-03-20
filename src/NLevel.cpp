@@ -72,7 +72,7 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 		double maxNorm = 0, minNorm = 1e9;
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
-			                _frequencyv, lineProfile(upper, lower, s));
+			                _frequencyv, lineProfile_array(upper, lower, s));
 			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm
 			              << endl);
 			maxNorm = max(norm, maxNorm);
