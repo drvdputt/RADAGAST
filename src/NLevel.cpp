@@ -65,14 +65,30 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 		s.bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
 
 #ifdef REPORT_LINE_QUALITY
-		// TODO: make this work after coming up with a good way to integrate the
-		// Spectrum object over a line
+		// Full integral of the line profile, to check the discretization of the output
+		// (emission) grid.
 		double maxNorm = 0, minNorm = 1e9;
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
-			                _frequencyv, lineProfile(upper, lower, s));
-			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm
-			              << endl);
+			                _frequencyv, lineProfile_array(upper, lower, s));
+			DEBUG("lineProfile_array " << upper << " --> " << lower << " has norm "
+			                           << norm << endl);
+			maxNorm = max(norm, maxNorm);
+			minNorm = min(norm, minNorm);
+		});
+		DEBUG("Max profile norm = " << maxNorm << endl);
+		DEBUG("Min profile norm = " << minNorm << endl);
+		maxNorm = 0;
+		minNorm = 1e9; // any large number will do
+		// Integral over contant spectrum, using the LineProfile class. An integration
+		// grid is chosen internally, and we check the quality of it here (at least for
+		// now.)
+		forActiveLinesDo([&](size_t upper, size_t lower) {
+			auto lp = lineProfile(upper, lower, s);
+			Spectrum flat(_frequencyv, Array(1, _frequencyv.size()));
+			double norm = lp.integrateSpectrum(flat);
+			DEBUG("LineProfile " << upper << " --> " << lower << " has norm "
+			                     << norm << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
 		});
@@ -187,8 +203,7 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
-		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensity,
-		                                          spectrumMax);
+		BPvv(upper, lower) = lp.integrateSpectrum(specificIntensity, spectrumMax);
 
 		// Uncomment these two lines to check correctness of optimized integration
 		// method
