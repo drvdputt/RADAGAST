@@ -396,10 +396,7 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
                                   const std::string& outputPath, double Tc, double G0, double n,
                                   double expectedTemperature)
 {
-	auto grid = generateGeometricGridv(200, Constant::LIGHT / (1e4 * Constant::UM_CM),
-	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
-	Array specificIntensityv =
-	                generateSpecificIntensityv(Array(grid.data(), grid.size()), Tc, G0);
+	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
 	GasModule::GrainInterface grainInfo{};
@@ -731,6 +728,7 @@ void Testing::runH2(bool write)
 	Array unrefined =
 	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+
 	Array specificIntensityv = generateSpecificIntensityv(unrefined, Tc, G0);
 	Spectrum specificIntensity(unrefined, specificIntensityv);
 
@@ -738,16 +736,22 @@ void Testing::runH2(bool write)
 	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
 	Array frequencyv = improveFrequencyGrid(h2l, unrefined);
 
+	// Make an H2 model
+	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
+	H2Levels h2Levels{h2Data, frequencyv};
+
+	// Set the densities
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
 	speciesNv(SpeciesIndex::inH2()) = nH2;
 	speciesNv(SpeciesIndex::ine()) = ne;
 	speciesNv(SpeciesIndex::inp()) = np;
 	speciesNv(SpeciesIndex::inH()) = nH;
 
-	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
-	H2Levels h2Levels{h2Data, frequencyv};
+	// Calculate the source and sink terms for the level calculation
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
 	EVector sinkv = h2Levels.dissociationSinkv(specificIntensity);
+
+	// Solve the H2 molecule populations
 	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensity,
 	                                           sourcev, sinkv);
 
@@ -791,21 +795,22 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarseFrequencyv =
-	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	vector<double> coarsev =
+	                generateGeometricGridv(400, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array coarsev(coarseFrequencyv.data(), coarseFrequencyv.size());
 
-	cout << "Constructing model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarseFrequencyv);
-	FreeBound fb(coarseFrequencyv);
-	H2Levels h2l(make_shared<H2FromFiles>(99, 99), coarseFrequencyv);
+	cout << "Construction model to help with refining frequency grid" << endl;
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarsev);
+	FreeBound fb(coarsev);
+	H2Levels h2l(make_shared<H2FromFiles>(99, 99), coarsev);
 
-	Array frequencyv = improveFrequencyGrid(hl, coarseFrequencyv);
+	Array frequencyv = improveFrequencyGrid(hl, coarsev);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
-
-	return {coarseFrequencyv, frequencyv, "", "8 5"};
+	cout << "Constructing new model using the improved frequency grid" << endl;
+	return {coarsev, frequencyv, "", "8 5"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
@@ -816,14 +821,11 @@ void Testing::runWithDust()
 	GasModule::GasInterface gasInterface = genFullModel();
 	const Array& frequencyv = gasInterface.frequencyv();
 
-	auto coarseFreqv = generateGeometricGridv(200, frequencyv[0],
-	                                          frequencyv[frequencyv.size() - 1]);
-
 	// Radiation field
 	double Tc{4e3};
 	double G0{1e-1};
-	Array specificIntensityv = generateSpecificIntensityv(
-	                Array(coarseFreqv.data(), coarseFreqv.size()), Tc, G0);
+	Array specificIntensityv =
+	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
 	// Gas density
 	double nHtotal{1000};

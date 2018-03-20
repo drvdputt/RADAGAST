@@ -61,6 +61,10 @@ public:
 	    situations where the code generates its own frequency points. */
 	std::valarray<double> frequencyv() const { return _frequencyv; }
 
+	/** Return the frequency grid used for the specific intensity (the one the user gave at
+	    construction. */
+	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
+
 	// USAGE 1: Calculate GasState objects //
 
 	/** Exports the state of the gas as a compact, opaque object. Codes which make use of
