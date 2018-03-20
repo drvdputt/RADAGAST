@@ -396,9 +396,10 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
                                   const std::string& outputPath, double Tc, double G0, double n,
                                   double expectedTemperature)
 {
-	const Array& frequencyv = gi.frequencyv();
-
-	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
+	auto grid = generateGeometricGridv(200, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array specificIntensityv =
+	                generateSpecificIntensityv(Array(grid.data(), grid.size()), Tc, G0);
 
 	GasModule::GasState gs;
 	GasModule::GrainInterface grainInfo{};
@@ -422,7 +423,9 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency",
+	                "wavelength",
+	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	};
 	out << "#";
@@ -745,7 +748,7 @@ void Testing::runH2(bool write)
 	H2Levels h2Levels{h2Data, frequencyv};
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
 	EVector sinkv = h2Levels.dissociationSinkv(specificIntensityv);
-	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv,
+	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensity,
 	                                           sourcev, sinkv);
 
 	if (write)
@@ -810,13 +813,17 @@ void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
 void Testing::runWithDust()
 {
 	// Gas model
-	GasModule::GasInterface gasInterface{genFullModel()};
-	const Array& frequencyv{gasInterface.frequencyv()};
+	GasModule::GasInterface gasInterface = genFullModel();
+	const Array& frequencyv = gasInterface.frequencyv();
+
+	auto coarseFreqv = generateGeometricGridv(200, frequencyv[0],
+	                                          frequencyv[frequencyv.size() - 1]);
 
 	// Radiation field
 	double Tc{4e3};
 	double G0{1e-1};
-	Array specificIntensityv{generateSpecificIntensityv(frequencyv, Tc, G0)};
+	Array specificIntensityv = generateSpecificIntensityv(
+	                Array(coarseFreqv.data(), coarseFreqv.size()), Tc, G0);
 
 	// Gas density
 	double nHtotal{1000};

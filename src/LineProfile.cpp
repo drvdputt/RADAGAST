@@ -318,7 +318,7 @@ LineProfile testLine()
 
 Spectrum testSpectrum(double base)
 {
-	int numFreq = 100;
+	size_t numFreq = 100;
 	Array frequencyv(numFreq);
 	double fmin = .01;
 	double fmax = 10.;
