@@ -83,9 +83,12 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 		// Integral over contant spectrum, using the LineProfile class. An integration
 		// grid is chosen internally, and we check the quality of it here (at least for
 		// now.)
+		double minFreq = _frequencyv[0];
+		double maxFreq = _frequencyv[_frequencyv.size() - 1];
+		Array someFreqs = {minFreq, (minFreq + maxFreq) / 2, maxFreq};
+		Spectrum flat(someFreqs, Array(1, someFreqs.size()));
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			auto lp = lineProfile(upper, lower, s);
-			Spectrum flat(_frequencyv, Array(1, _frequencyv.size()));
 			double norm = lp.integrateSpectrum(flat);
 			DEBUG("LineProfile " << upper << " --> " << lower << " has norm "
 			                     << norm << endl);

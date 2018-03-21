@@ -32,15 +32,22 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 	// Because then this is the center
 	int iCenter = numPoints / 2;
 
-	// We will space the points according to a power law. For the Last point, we want w *
-	// r_max^(power) = _halfWidth_lorenz.
+	// We will space the points according to a power law.
 	double spacingPower = 2.5;
-	double w = width * _halfWidth_lorenz / pow(iCenter, spacingPower);
+	double total_distance = 1.e-6 * _center;
+	// double total_distance = width * _halfWidth_lorenz;
+	double w = total_distance / pow(iCenter, spacingPower);
 
 	// Fill in the values
 	Array freqv(numPoints);
 	freqv[iCenter] = _center;
-	for (int i = 1; i < iCenter; i++)
+	// Example: iCenter = 2
+	// frequency index:
+	// 0 1 2 3 4
+	// i:
+	// 2 1 0 1 2
+	// So i must include iCenter --> use <=
+	for (int i = 1; i <= iCenter; i++)
 	{
 		double d = w * pow(i, spacingPower);
 
@@ -142,7 +149,7 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
 {
 	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(11);
+	const Array& lineGrid = recommendedFrequencyGrid(13);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());
 
 	// Merges the two grids, and writes the result to the last argument
@@ -328,24 +335,25 @@ Spectrum testSpectrum(double base)
 	Array spectrumv(base, numFreq);
 	return Spectrum(frequencyv, spectrumv);
 }
-}
+} // namespace
 
 void test_addToSpectrum()
 {
-	LineProfile lp = testLine();
+	cout << "test_addToSpectrum" << endl;
+	auto lp = testLine();
 
 	double base = 1.;
-	Spectrum s = testSpectrum(base);
+	auto s = testSpectrum(base);
 	Array frequencyv = s.frequencyv();
 	Array spectrumv = s.valuev();
 
 	double factor = 3.;
 	lp.addToSpectrum(frequencyv, spectrumv, factor);
 
-	double e = 1.e-6;
+	double e = 1.e-15;
 	for (size_t i = 0; i < frequencyv.size(); i++)
 	{
-		double linevalue = lp(frequencyv[i]);
+		double linevalue = factor * lp(frequencyv[i]);
 		double manual = base + linevalue;
 		Error::fuzzyCheck("test value", spectrumv[i], manual, e);
 	}
@@ -353,6 +361,7 @@ void test_addToSpectrum()
 
 void test_integrateSpectrum()
 {
+	cout << "test_integrateSpectrum" << endl;
 	auto lp = testLine();
 
 	double base = 2.;
@@ -363,6 +372,6 @@ void test_integrateSpectrum()
 	// compare with full integration
 	double manual = TemplatedUtils::integrate<double, Array, Array>(s.frequencyv(),
 	                                                                s.valuev());
-	double e = 1.e-6;
+	double e = 1.e-3;
 	Error::fuzzyCheck("test value", integral, manual, e);
 }
