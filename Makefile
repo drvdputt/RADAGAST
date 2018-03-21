@@ -141,4 +141,4 @@ doc:
 # Test suite
 test: $(TEST)
 $(TEST): $(LIBFILE) test_main/main.cpp
-	$(CXX) $(CXXFLAGS) -L$(LIBFILE) -o $@ test_main/main.cpp
+	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -L$(LIBDIR) -lgasmodule -o $@ test_main/main.cpp
