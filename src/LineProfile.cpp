@@ -35,7 +35,7 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 	// We will space the points according to a power law.
 	double spacingPower = 2.5;
 	// double total_distance = 1.e-6 * _center;
-	double total_distance = width * _halfWidth_lorenz;
+	double total_distance = width * (_halfWidth_lorenz + _sigma_gauss) / 2;
 	double w = total_distance / pow(iCenter, spacingPower);
 
 	// Fill in the values
@@ -149,12 +149,16 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
 {
 	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(27);
+	const Array& lineGrid = recommendedFrequencyGrid(27, 5);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());
 
 	// Merges the two grids, and writes the result to the last argument
 	merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
 	      begin(frequencyv));
+
+	// Temporary override to check if the integration works with only the points generated
+	// for the line
+	frequencyv = lineGrid;
 
 #define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION
@@ -302,11 +306,13 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	}
 	return integral;
 #else
-	Array integrandv(frequencyv.size());
-	for (size_t iRight = 0; iRight < frequencyv.size(); iRight++)
+        Array integrandv(frequencyv.size());
+	for (size_t i = 0; i < frequencyv.size(); i++)
 	{
-		double freq = frequencyv[iRight];
-		integrandv[iRight] = spectrum.evaluate(freq) * (*this)(freq);
+		double freq = frequencyv[i];
+		double val = spectrum.evaluate(freq);
+		// cout << val << endl;
+		integrandv[i] = val * (*this)(freq);
 	}
 	return TemplatedUtils::integrate<double>(frequencyv, integrandv);
 #endif /* OPTIMIZED_LINE_INTEGRATION */
