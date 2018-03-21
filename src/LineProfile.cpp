@@ -34,8 +34,8 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 
 	// We will space the points according to a power law.
 	double spacingPower = 2.5;
-	double total_distance = 1.e-6 * _center;
-	// double total_distance = width * _halfWidth_lorenz;
+	// double total_distance = 1.e-6 * _center;
+	double total_distance = width * _halfWidth_lorenz;
 	double w = total_distance / pow(iCenter, spacingPower);
 
 	// Fill in the values
@@ -149,7 +149,7 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
 {
 	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(13);
+	const Array& lineGrid = recommendedFrequencyGrid(27);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());
 
 	// Merges the two grids, and writes the result to the last argument
@@ -302,13 +302,12 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	}
 	return integral;
 #else
-	Array integrandv(spectrumv.size());
+	Array integrandv(frequencyv.size());
 	for (size_t iRight = 0; iRight < frequencyv.size(); iRight++)
 	{
 		double freq = frequencyv[iRight];
 		integrandv[iRight] = spectrum.evaluate(freq) * (*this)(freq);
 	}
-
 	return TemplatedUtils::integrate<double>(frequencyv, integrandv);
 #endif /* OPTIMIZED_LINE_INTEGRATION */
 }
@@ -369,9 +368,7 @@ void test_integrateSpectrum()
 
 	double integral = lp.integrateSpectrum(s);
 
-	// compare with full integration
-	double manual = TemplatedUtils::integrate<double, Array, Array>(s.frequencyv(),
-	                                                                s.valuev());
+	// This integral should be about equal to base, if gridpoints are chosen well
 	double e = 1.e-3;
-	Error::fuzzyCheck("test value", integral, manual, e);
+	Error::fuzzyCheck("test value", integral, base, e);
 }
