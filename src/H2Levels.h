@@ -50,6 +50,8 @@ private:
 	/** Sink term due to direct radiative dissociation. Needs radiation field. */
 	EVector directDissociationSinkv(const Array& specificIntensityv) const;
 
+	/** TODO: need collisional dissociation contribution. */
+
 	/** Sink term due to the spontaneous dissociation rate. */
 	EVector spontaneousDissociationSinkv() const;
 
