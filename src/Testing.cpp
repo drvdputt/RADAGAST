@@ -729,16 +729,17 @@ void Testing::runH2(bool write)
 	double Tc = 10000;
 	double G0 = 100;
 
-	// input spectrum
+	// Base grid
 	Array unrefined =
 	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
-	Array specificIntensityv = generateSpecificIntensityv(unrefined, Tc, G0);
-	Spectrum specificIntensity(unrefined, specificIntensityv);
-
 	// Add points for H2 lines
 	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
 	Array frequencyv = improveFrequencyGrid(h2l, unrefined);
+
+	// input spectrum
+	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
+	Spectrum specificIntensity(unrefined, specificIntensityv);
 
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
 	speciesNv(SpeciesIndex::inH2()) = nH2;

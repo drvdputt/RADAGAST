@@ -131,6 +131,14 @@ public:
 	/** Retrieve the index of a level with these quantum numbers. */
 	size_t indexOutput(ElectronicState eState, int j, int v) const;
 
+	/** Get a list of all the indices that correspond levels of the electronic ground (X)
+	    state. */
+	std::vector<size_t> indicesX() const { return _indicesX; }
+
+	/** Get a list of all the indices that correspond levels of any of the electronic
+	    excited states. */
+	std::vector<size_t> indicesExcited() const { return _indicesExcited; }
+
 	EVector dissociationProbabilityv() const { return _dissProbv; }
 	EVector dissociationKineticEnergyv() const { return _dissKinEv; }
 
@@ -163,15 +171,27 @@ private:
 	/* Contains the quantum numbers and energies of the levels. The output will be indexed
 	   in the same way. */
 	std::vector<H2Level> _levelv;
+
+	/* The total number of levels (equivalent to _levelv.size()) */
 	size_t _numL{0};
 
+	/* List of levels that belong to the electronic ground state, and any of the excited
+	   states, respectively. */
+	std::vector<size_t> _indicesX;
+	std::vector<size_t> _indicesExcited;
+
 	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
-	   vector above. Function below shows how to add level. */
+	   vector above. Function below shows how adding a level works. */
 	std::map<std::array<int, 3>, int> _ejvToIndexm;
 	inline void addLevel(ElectronicState eState, int j, int v, double e)
 	{
+		size_t newIndex = _levelv.size();
 		_levelv.emplace_back(eState, j, v, e);
-		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, _levelv.size() - 1});
+		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, newIndex});
+		if (eState == ElectronicState::X)
+			_indicesX.emplace_back(newIndex);
+		else
+			_indicesExcited.emplace_back(newIndex);
 	}
 
 	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our
