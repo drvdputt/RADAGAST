@@ -161,7 +161,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		double fT = T / previous->T;
 		if (fT > 0.5 && fT < 2)
 		{
-			cout << "Using previous speciesNv as initial guess" << std::endl;
+			DEBUG("Using previous speciesNv as initial guess" << std::endl);
 			s.speciesNv = previous->speciesNv;
 			manualGuess = false;
 		}
