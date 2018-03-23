@@ -159,22 +159,21 @@ EVector H2Levels::directDissociationSinkv(const Spectrum& specificIntensity) con
 			// Integration upper bound: Index right of the maximum frequency
 			size_t iNuMax = TemplatedUtils::index(maxFreq, cs_nuv);
 
-			vector<double> nuv(begin(cs_nuv) + iNuMin, begin(cs_nuv) + iNuMax);
-
 			// Integrand: flux * sigma
 			// Start with cross section [cm-2]
-			vector<double> sigmaFv(begin(cs.valuev()) + iNuMin,
-			                       begin(cs.valuev()) + iNuMax);
-			for (size_t j = 0; j < nuv.size(); j++)
+			Array sigmaFv{cs.valuev()};
+			for (size_t iNu = iNuMin; iNu <= iNuMax; iNu++)
 			{
 				// Multiply with photon flux density [s-1 cm-2 Hz-1]: F_nu = 4pi
 				// I_nu / h nu. (As always constant factors are applied after
 				// integrating.)
-				sigmaFv[j] *= specificIntensity.evaluate(nuv[j]) / nuv[j];
+				double nu = cs_nuv[iNu];
+				sigmaFv[iNu] *= specificIntensity.evaluate(nu) / nu;
 			}
 			// Integrate to total number of dissociations (s-1)
 			result(iLv) += Constant::FPI / Constant::PLANCK *
-			               TemplatedUtils::integrate<double>(nuv, sigmaFv);
+			               TemplatedUtils::integrate<double>(cs_nuv, sigmaFv,
+			                                                 iNuMin, iNuMax);
 		}
 	}
 	return result;
