@@ -14,7 +14,7 @@ endif
 
 # Options, to be customized by user.
 # Debug build
-OPTFLAGS=-O3 -g -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -Wconversion
+OPTFLAGS=-O3 -g -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic #-Wconversion
 # Release build
 release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT
 
