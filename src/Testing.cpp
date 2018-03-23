@@ -795,15 +795,14 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	vector<double> coarsev =
+	Array coarsev =
 	                generateGeometricGridv(400, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
-	Array coarsev(coarseFrequencyv.data(), coarseFrequencyv.size());
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarsev);
 	FreeBound fb(coarsev);
-	H2Levels h2l(make_shared<H2FromFiles>(99, 99), coarsev);
+	H2Levels h2l(make_shared<H2FromFiles>(8, 5), coarsev);
 
 	Array frequencyv = improveFrequencyGrid(hl, coarsev);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
@@ -815,7 +814,7 @@ GasModule::GasInterface Testing::genFullModel()
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
 
-void Testing::runWithDust()
+void Testing::runWithDust(bool write)
 {
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
@@ -823,7 +822,7 @@ void Testing::runWithDust()
 
 	// Radiation field
 	double Tc{4e3};
-	double G0{1e-1};
+	double G0{1e2};
 	Array specificIntensityv =
 	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
@@ -862,5 +861,6 @@ void Testing::runWithDust()
 	// Run
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
-	writeGasState("", gasInterface, gs);
+	if (write)
+		writeGasState("", gasInterface, gs);
 }

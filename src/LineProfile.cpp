@@ -160,7 +160,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	// for the line
 	frequencyv = lineGrid;
 
-#define OPTIMIZED_LINE_INTEGRATION
+// #define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION
 	const size_t iCenter = TemplatedUtils::index(_center, frequencyv);
 	// We also have the maximum of the spectrum to our disposal. As long as a frequency

@@ -99,7 +99,7 @@ GasModule::GasInterface genFullModel();
 void runFullModel();
 
 /** A test run for the model with a fixed dust model included. */
-void runWithDust();
+void runWithDust(bool write=true);
 } // namespace Testing
 
 #endif /* _TESTING_H_ */

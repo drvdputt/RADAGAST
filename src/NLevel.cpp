@@ -8,9 +8,9 @@
 using namespace std;
 
 NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv, double mass)
-                : _ldp(ldp), _frequencyv(frequencyv), _mass(mass), _numLv(_ldp->numLv()),
-                  _ev(_ldp->ev()), _gv(_ldp->gv()), _avv(_ldp->avv()),
-                  _extraAvv(_ldp->extraAvv())
+		: _ldp(ldp), _frequencyv(frequencyv), _mass(mass), _numLv(_ldp->numLv()),
+		  _ev(_ldp->ev()), _gv(_ldp->gv()), _avv(_ldp->avv()),
+		  _extraAvv(_ldp->extraAvv())
 {
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -20,7 +20,7 @@ NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv,
 			cout << "u l = " << upper << " " << lower
 			     << " Aul = " << _avv(upper, lower) << endl;
 			Error::runtime("There is an upward A-coefficient. This can't be "
-			               "correct");
+				       "correct");
 		}
 	});
 }
@@ -40,14 +40,14 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		lineFreqv[index] = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 		naturalLineWidthv[index] =
-		                (_avv(upper, lower) + _extraAvv(upper, lower)) / Constant::FPI;
+				(_avv(upper, lower) + _extraAvv(upper, lower)) / Constant::FPI;
 		index++;
 	});
 }
 
 NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
-                                      double temperature, const Spectrum& specificIntensity,
-                                      const EVector& sourcev, const EVector& sinkv) const
+				      double temperature, const Spectrum& specificIntensity,
+				      const EVector& sourcev, const EVector& sinkv) const
 {
 	Solution s;
 	s.n = density;
@@ -63,16 +63,16 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 		   profile can change). Also needs the Cij to calculate collisional
 		   broadening. */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
-
+// #define REPORT_LINE_QUALITY
 #ifdef REPORT_LINE_QUALITY
 		// Full integral of the line profile, to check the discretization of the output
 		// (emission) grid.
 		double maxNorm = 0, minNorm = 1e9;
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
-			                _frequencyv, lineProfile_array(upper, lower, s));
+					_frequencyv, lineProfile_array(upper, lower, s));
 			DEBUG("lineProfile_array " << upper << " --> " << lower << " has norm "
-			                           << norm << endl);
+						   << norm << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
 		});
@@ -91,7 +91,7 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 			auto lp = lineProfile(upper, lower, s);
 			double norm = lp.integrateSpectrum(flat);
 			DEBUG("LineProfile " << upper << " --> " << lower << " has norm "
-			                     << norm << endl);
+					     << norm << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
 		});
@@ -110,7 +110,7 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 }
 
 NLevel::Solution NLevel::solveLTE(double density, const EVector& speciesNv, double T,
-                                  const Spectrum& specificIntensity) const
+				  const Spectrum& specificIntensity) const
 {
 	NLevel::Solution s;
 	s.n = density;
@@ -197,31 +197,43 @@ double NLevel::cooling(const Solution& s) const
 }
 
 EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
-                                        const EMatrix& Cvv) const
+					const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
 	const Array& v = specificIntensity.valuev();
 	auto maxIt = max_element(begin(v), end(v));
 	double spectrumMax = *maxIt;
+
+	Array highResIv(_frequencyv.size());
+	for (size_t i = 0; i < _frequencyv.size(); i++)
+		highResIv[i] = specificIntensity.evaluate(_frequencyv[i]);
+	Spectrum highResSpec(_frequencyv, highResIv);
+
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
-		BPvv(upper, lower) = lp.integrateSpectrum(specificIntensity, spectrumMax);
+		double lowResIntegral = lp.integrateSpectrum(specificIntensity);
+// #define REPORT_SPEC_INTEGRAL
+#ifdef REPORT_SPEC_INTEGRAL
+		double highResIntegral = lp.integrateSpectrum(highResSpec);
 
-		// Uncomment these two lines to check correctness of optimized integration
-		// method
-		// double fullIntegral = TemplatedUtils::integrate<double, Array, Array>(
-		// _frequencyv,
-		// lineProfile_array(upper, lower, T, Cvv) * specificIntensityv);
-		// double ratio = BPvv(upper, lower) / fullIntegral;
-		// if (abs(ratio - 1.) > 1.e-6)
-		// cout << BPvv(upper, lower) << '\t' << fullIntegral
-		// << "\tratio:" << ratio << endl;
+		const Array& lpav = lineProfile_array(upper, lower, T, Cvv);
+		double manualIntegral = TemplatedUtils::integrate<double, Array, Array>(
+				_frequencyv, lpav * highResIv);
+
+		double hrRatio = highResIntegral / lowResIntegral;
+		double mnRatio = manualIntegral / lowResIntegral;
+
+		if (abs(hrRatio - 1.) > 1.e-6 || abs(mnRatio - 1.) > 1.e-6)
+			cout << lowResIntegral << "\t HR: " << hrRatio << "\t MR:" << mnRatio
+			     << endl;
+#endif /* REPORT_SPEC_INTEGRAL */
+		BPvv(upper, lower) = lowResIntegral;
 
 		// Multiply by Bij in terms of Aij, valid for i > j
 		double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 		BPvv(upper, lower) *= Constant::CSQUARE_TWOPLANCK / nu_ij / nu_ij / nu_ij *
-		                      _avv(upper, lower);
+				      _avv(upper, lower);
 
 		/* Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij =
 		   Pji. */
@@ -236,8 +248,8 @@ EMatrix NLevel::netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const
 }
 
 EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-                                   const EVector& sourcev, const EVector& sinkv,
-                                   int chooseConsvEq) const
+				   const EVector& sourcev, const EVector& sinkv,
+				   int chooseConsvEq) const
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j
@@ -306,7 +318,7 @@ double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) 
 {
 	double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
-	                        nu_ij * _avv(upper, lower);
+				nu_ij * _avv(upper, lower);
 	double densityFactor = s.nv(lower) * _gv(upper) / _gv(lower) - s.nv(upper);
 	double result = constantFactor * densityFactor;
 #ifdef SANITY
@@ -326,8 +338,8 @@ LineProfile NLevel::lineProfile(size_t upper, size_t lower, double T, const EMat
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 
 	double decayRate = _avv(upper, lower) + _extraAvv(upper, lower) +
-	                   Cvv(upper, lower) // decay rate of top level
-	                   + Cvv(lower, upper); // decay rate of bottom level
+			   Cvv(upper, lower) // decay rate of top level
+			   + Cvv(lower, upper); // decay rate of bottom level
 	// (stimulated emission doesn't count, as it causes no broadening)
 
 	double thermalVelocity = sqrt(Constant::BOLTZMAN * T / _mass);
