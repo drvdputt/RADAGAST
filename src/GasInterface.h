@@ -119,8 +119,8 @@ private:
 	/** Modifies the contents of a GasState so that it is equivalent to no gas at all. */
 	void zeroOpticalProperties(GasState& gs) const;
 
-	std::valarray<double> _frequencyv;
 	std::valarray<double> _iFrequencyv;
+	std::valarray<double> _frequencyv;
 
 	/* The implementation details, especially those that require the inclusion of other
 	   files than 'GasState.h' in this header, are hidden behind this pointer. This way, the
