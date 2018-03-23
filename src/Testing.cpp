@@ -423,7 +423,9 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency",
+	                "wavelength",
+	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	                "scattered (erg s-1 cm-3 Hz-1 sr-1)",
 	};
@@ -744,8 +746,6 @@ void Testing::runH2(bool write)
 	speciesNv(SpeciesIndex::inp()) = np;
 	speciesNv(SpeciesIndex::inH()) = nH;
 
-	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
-
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
 	H2Levels h2Levels{h2Data, frequencyv};
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
@@ -784,17 +784,17 @@ void Testing::runFromFilesvsHardCoded()
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(unrefined, frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(unrefined, frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
 GasModule::GasInterface Testing::genFullModel()
 {
 	Array coarseFrequencyv =
-	                generateGeometricGridv(400, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	cout << "Constructing model to help with refining frequency grid" << endl;
@@ -807,7 +807,7 @@ GasModule::GasInterface Testing::genFullModel()
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {coarseFrequencyv, frequencyv, "", "8 5"};
+	return {frequencyv, "", "99 99"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
