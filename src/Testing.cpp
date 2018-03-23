@@ -202,9 +202,9 @@ Array Testing::improveFrequencyGrid(const FreeBound& freeBound, const Array& old
 	return Array(gridVector.data(), gridVector.size());
 }
 
-vector<double> Testing::generateGeometricGridv(size_t nPoints, double min, double max)
+Array Testing::generateGeometricGridv(size_t nPoints, double min, double max)
 {
-	vector<double> frequencyv(nPoints);
+	Array frequencyv(nPoints);
 	double freqStepFactor = pow(max / min, 1. / (nPoints - 1));
 	double freq = min;
 	for (size_t n = 0; n < nPoints; n++)
@@ -381,7 +381,7 @@ void Testing::testIonizationStuff()
 	// by choosing these parameters, panel 2 of figure 9 from 2017-Mao should be reproduced
 	double n = 1;
 	double f = 1;
-	vector<double> kT_eVv = generateGeometricGridv(300, 1e-3, 1e3);
+	Array kT_eVv = generateGeometricGridv(300, 1e-3, 1e3);
 	for (double kT_eV : kT_eVv)
 	{
 		double T = kT_eV / Constant::BOLTZMAN / Constant::ERG_EV;
@@ -423,9 +423,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency",
-	                "wavelength",
-	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	                "scattered (erg s-1 cm-3 Hz-1 sr-1)",
 	};
@@ -640,8 +638,7 @@ void Testing::testPS64Collisions()
 void Testing::testChemistry()
 {
 	const double T = 10000;
-	vector<double> freqvec = generateGeometricGridv(200, 1e11, 1e16);
-	Array frequencyv(freqvec.data(), freqvec.size());
+	Array frequencyv = generateGeometricGridv(200, 1e11, 1e16);
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, 25000, 10);
 
 	ChemistrySolver cs(make_unique<ChemicalNetwork>());
@@ -730,17 +727,12 @@ void Testing::runH2(bool write)
 	double Tc = 10000;
 	double G0 = 100;
 
-	auto grid = generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
-	                                   Constant::LIGHT / (0.005 * Constant::UM_CM));
-	Array unrefined(grid.data(), grid.size());
-
-	// Add points for H lines
-	// HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
-	// unrefined = improveFrequencyGrid(hl, unrefined);
-
-	// Add points for H continuum
-	// FreeBound fb(unrefined);
-	// unrefined = improveFrequencyGrid(fb, unrefined);
+	// input spectrum
+	Array unrefined =
+	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array specificIntensityv = generateSpecificIntensityv(unrefined, Tc, G0);
+	Spectrum specificIntensity(unrefined, specificIntensityv);
 
 	// Add points for H2 lines
 	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
@@ -782,10 +774,9 @@ void Testing::runH2(bool write)
 
 void Testing::runFromFilesvsHardCoded()
 {
-	vector<double> tempFrequencyv =
+	Array unrefined =
 	                generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
-	Array unrefined(tempFrequencyv.data(), tempFrequencyv.size());
 
 	// Hey, at least we'll get a decent frequency grid out of this hack
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefined);
@@ -793,28 +784,30 @@ void Testing::runFromFilesvsHardCoded()
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(unrefined, frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(unrefined, frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	vector<double> tempFrequencyv =
-	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	Array coarseFrequencyv =
+	                generateGeometricGridv(400, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
-	Array unrefined(tempFrequencyv.data(), tempFrequencyv.size());
 
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), unrefined);
-	FreeBound fb(unrefined);
-	H2Levels h2l(make_shared<H2FromFiles>(99, 99), unrefined);
-	Array frequencyv = improveFrequencyGrid(hl, unrefined);
+	cout << "Constructing model to help with refining frequency grid" << endl;
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarseFrequencyv);
+	FreeBound fb(coarseFrequencyv);
+	H2Levels h2l(make_shared<H2FromFiles>(99, 99), coarseFrequencyv);
+
+	Array frequencyv = improveFrequencyGrid(hl, coarseFrequencyv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
-	return {frequencyv, "", "99 99"};
+	cout << "Constructing new model using the improved frequency grid" << endl;
+	return {coarseFrequencyv, frequencyv, "", "8 5"};
 }
 
 void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }

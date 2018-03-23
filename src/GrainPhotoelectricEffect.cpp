@@ -507,9 +507,8 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
 {
 	// Frequency grid
-	const vector<double>& vecfrequencyv = Testing::generateGeometricGridv(
+	const Array& frequencyv = Testing::generateGeometricGridv(
 	                _nWav, Constant::LIGHT / _maxWav, Constant::LIGHT / _minWav);
-	Array frequencyv(vecfrequencyv.data(), vecfrequencyv.size());
 
 	// Input spectrum
 	const Array& specificIntensityv =
@@ -579,12 +578,10 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 {
 // Wavelength grid
 #ifdef EXACTGRID
-	vector<double> vecwavelengthv = Testing::FILELAMBDAV;
+	Array wavelengthv(Testing::FILELAMBDAV.data(), Testing::FILELAMBDAV.size());
 #else
-	vector<double> vecwavelengthv =
-	                Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
+	Array wavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
 #endif
-	Array wavelengthv(vecwavelengthv.data(), vecwavelengthv.size());
 	Array frequencyv = Testing::freqToWavGrid(wavelengthv);
 
 	// Input spectrum
