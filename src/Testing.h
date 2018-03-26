@@ -61,21 +61,21 @@ void writeGasState(const std::string& outputPath, const GasModule::GasInterface&
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
                       const Array& specificIntensityv, double n);
 
-void testIonizationStuff();
-
-/** Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/ */
-void testPhotoelectricHeating();
-
-/** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
-    NIST values between different n. */
-void testACollapse();
+void plotIonizationStuff();
 
 /** Write out data files to recreate figure 2 of PS64. Current results: the curve for n=5 looks
     good, but the last point (l=3) of the n=4 curve was a bit to high. When retrieving the PS64
     coefficients, a recursive relation is used, and one can choose to start from either l = 0 or
     l = n - 1. By applying both methods, and taking the average of the two results, the figure
     is approached quite well. */
-void testPS64Collisions();
+void plotPS64Collisions();
+
+/** Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/ */
+void plotPhotoelectricHeating();
+
+/** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
+    NIST values between different n. */
+void testACollapse();
 
 void testChemistry();
 

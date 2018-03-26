@@ -57,10 +57,12 @@ class H2Levels;
 class GasInterfaceImpl
 {
 public:
-	/** The main routine returns a \c Solution object. This struct contains a bunch of
-	    information about the final state, including similar \c Solution objects for the
-	    levels. By passing around this object, the operation of the module can be kept
-	    thread-safe. */
+	/** The main routine returns a \c Solution object, mainly to be used locally within this
+	    class. For a solution more suitable for passing around the gas properties in general
+	    between functions, check out GasStruct (TODO: merge these two concepts, maybe,
+	    preferably). This struct contains a bunch of information about the final state,
+	    including similar \c Solution objects for the levels. By passing around this object,
+	    the operation of the module can be kept thread-safe. */
 	typedef struct Solution
 	{
 		Array specificIntensityv;

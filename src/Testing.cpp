@@ -1,14 +1,10 @@
 #include "Testing.h"
 #include "ChemicalNetwork.h"
 #include "ChemistrySolver.h"
-#include "Constants.h"
-#include "EigenAliases.h"
-#include "Error.h"
 #include "FreeBound.h"
 #include "GasInterface.h"
 #include "GasInterfaceImpl.h"
-#include "GrainInterface.h"
-#include "GrainPhotoelectricEffect.h"
+#include "GasStruct.h"
 #include "GrainType.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
@@ -17,7 +13,6 @@
 #include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
-#include "NLevel.h"
 #include "SpecialFunctions.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
@@ -354,23 +349,24 @@ Array Testing::freqToWavSpecificIntensity(const Array& frequencyv,
 	return I_lambda;
 }
 
-void Testing::testIonizationStuff()
+void Testing::plotIonizationStuff()
 {
 	ofstream out;
 
 	double A0 = 6.30e-18;
 	out = IOTools::ofstreamFile("ionization/crossSection.dat");
+	double tr = Ionization::THRESHOLD;
 	for (double freq = 0; freq < 6.e16; freq += 1e14)
 	{
 		double sigma = Ionization::crossSection(freq);
-		double eps = sqrt(freq / Ionization::THRESHOLD - 1);
-		double sigmaTheoretical =
-		                freq > Ionization::THRESHOLD
-		                                ? A0 * pow(Ionization::THRESHOLD / freq, 4.) *
-		                                                  exp(4 - 4 * atan(eps) / eps) /
-		                                                  (1 -
-		                                                   exp(-2 * Constant::PI / eps))
-		                                : 0;
+		double eps = sqrt(freq / tr - 1);
+		double sigmaTheoretical;
+		if (freq > tr)
+			sigmaTheoretical = A0 * pow(tr / freq, 4.) *
+			                   exp(4 - 4 * atan(eps) / eps) /
+			                   (1 - exp(-2 * Constant::PI / eps));
+		else
+			sigmaTheoretical = 0;
 		out << freq << "\t" << sigma << "\t" << sigmaTheoretical << "\t"
 		    << (sigma - sigmaTheoretical) / sigma << endl;
 	}
@@ -482,8 +478,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Pbeta / Hbeta " << evaluateSpectrum(fPbeta) / Hbeta << endl;
 
 	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
-
-	cout << "TestHydrogenCalculator done" << endl;
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
@@ -528,7 +522,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
 }
 
-void Testing::testPhotoelectricHeating()
+void Testing::plotPhotoelectricHeating()
 {
 	bool carbon{true};
 	readQabs(carbon);
@@ -586,7 +580,7 @@ void Testing::testACollapse()
 	assert((relDiff.cwiseAbs().array() < 0.002).all());
 }
 
-void Testing::testPS64Collisions()
+void Testing::plotPS64Collisions()
 {
 	const double T = 10000;
 	const double ne = 1e4;
@@ -718,8 +712,10 @@ void Testing::testFromFilesvsHardCoded()
 
 void Testing::runH2(bool write)
 {
-	int maxJ = 99;
-	int maxV = 99;
+	cout << "RUN_H2" << endl;
+
+	int maxJ = 10;
+	int maxV = 3;
 
 	double nH2 = 1000;
 	double ne = 100;
@@ -727,7 +723,7 @@ void Testing::runH2(bool write)
 	double nH = 100;
 	double T = 500;
 	double Tc = 10000;
-	double G0 = 100;
+	double G0 = 10;
 
 	// Base grid
 	Array unrefined =
@@ -751,8 +747,9 @@ void Testing::runH2(bool write)
 	H2Levels h2Levels{h2Data, frequencyv};
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
 	EVector sinkv = h2Levels.dissociationSinkv(specificIntensityv);
-	NLevel::Solution s = h2Levels.solveBalance(nH2, speciesNv, T, specificIntensityv,
-	                                           sourcev, sinkv);
+	GasStruct gas(T, speciesNv);
+	NLevel::Solution s =
+	                h2Levels.solveBalance(nH2, specificIntensityv, sourcev, sinkv, gas);
 
 	if (write)
 	{
@@ -801,20 +798,26 @@ GasModule::GasInterface Testing::genFullModel()
 	cout << "Constructing model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarseFrequencyv);
 	FreeBound fb(coarseFrequencyv);
-	H2Levels h2l(make_shared<H2FromFiles>(99, 99), coarseFrequencyv);
+	H2Levels h2l(make_shared<H2FromFiles>(8, 3), coarseFrequencyv);
 
 	Array frequencyv = improveFrequencyGrid(hl, coarseFrequencyv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {frequencyv, "", "99 99"};
+	return {frequencyv, "", "8 3"};
 }
 
-void Testing::runFullModel() { runGasInterfaceImpl(genFullModel(), ""); }
+void Testing::runFullModel()
+{
+	cout << "RUN_FULL_MODEL" << endl;
+	runGasInterfaceImpl(genFullModel(), "gasOnly");
+}
 
 void Testing::runWithDust()
 {
+	cout << "RUN_WITH_DUST" << endl;
+
 	// Gas model
 	GasModule::GasInterface gasInterface{genFullModel()};
 	const Array& frequencyv{gasInterface.frequencyv()};
@@ -859,5 +862,5 @@ void Testing::runWithDust()
 	// Run
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
-	writeGasState("", gasInterface, gs);
+	writeGasState("withDust", gasInterface, gs);
 }

@@ -6,6 +6,7 @@
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "GasGrainInteraction.h"
+#include "GasStruct.h"
 #include "GrainType.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
@@ -182,12 +183,16 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
 	   scope by reference, so the lambda function can modify s. */
 	auto solveLevelBalances = [&]() {
+		// Package some gas parameters
+		GasStruct gas(T, s.speciesNv);
+
 		double nH = s.speciesNv(_inH);
-		EVector Hsourcev = _atomicLevels->sourcev(T, s.speciesNv);
-		EVector Hsinkv = _atomicLevels->sinkv(T, nH, s.speciesNv);
+		EVector Hsourcev = _atomicLevels->sourcev(gas);
+		EVector Hsinkv = _atomicLevels->sinkv(gas);
+
 		DEBUG("Solving levels nH = " << nH << endl);
-		s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
-		                                          specificIntensityv, Hsourcev, Hsinkv);
+		s.HSolution = _atomicLevels->solveBalance(nH, specificIntensityv, Hsourcev,
+		                                          Hsinkv, gas);
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
@@ -199,9 +204,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			EVector H2sourcev = EVector::Zero(_molecular->numLv());
 			EVector H2sinkv = _molecular->dissociationSinkv(specificIntensityv);
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
-			s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
-			                                        specificIntensityv, H2sourcev,
-			                                        H2sinkv);
+			s.H2Solution = _molecular->solveBalance(nH2, specificIntensityv,
+			                                        H2sourcev, H2sinkv, gas);
 		}
 	};
 

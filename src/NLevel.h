@@ -1,14 +1,15 @@
 #ifndef GASMODULE_GIT_SRC_NLEVEL_H_
 #define GASMODULE_GIT_SRC_NLEVEL_H_
 
-#include "Spectrum.h"
 #include "EigenAliases.h"
 #include "LineProfile.h"
 #include "SpecialFunctions.h"
+#include "Spectrum.h"
 
 #include <array>
 #include <memory>
 
+class GasStruct;
 class LevelDataProvider;
 
 /** This class contains a generic implementation for calculating the statistical equilibrium of
@@ -113,13 +114,13 @@ public:
 	    equilibrium equations, and then calls @c solveRateEquations() do the actual
 	    calculation. This function should be generic, while the latter is allowed to have a
 	    specialized implementation per subclass. */
-	Solution solveBalance(double density, const EVector& speciesNv, double T,
-	                      const Array& specificIntensityv, const EVector& sourcev,
-	                      const EVector& sinkv) const;
+	Solution solveBalance(double density, const Array& specificIntensityv,
+	                      const EVector& sourcev, const EVector& sinkv,
+	                      const GasStruct& gas) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
-	Solution solveLTE(double density, const EVector& speciesNv, double T,
-	                  const Array& specificIntensityv) const;
+	Solution solveLTE(double density, const Array& specificIntensityv,
+	                  const GasStruct& gas) const;
 
 	Solution solveZero(double T) const;
 
@@ -160,7 +161,7 @@ protected:
 	    within the electronically excited levels. */
 	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
 	                                   const EVector& sourcev, const EVector& sinkv,
-	                                   int chooseConsvEq) const;
+	                                   int chooseConsvEq, const GasStruct& gas) const;
 
 	EVector solveBoltzmanEquations(double T) const;
 

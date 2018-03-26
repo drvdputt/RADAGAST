@@ -1,6 +1,7 @@
 #include "H2Levels.h"
 #include "Constants.h"
 #include "DebugMacros.h"
+#include "GasStruct.h"
 #include "H2FromFiles.h"
 #include "TemplatedUtils.h"
 
@@ -32,25 +33,24 @@ Array H2Levels::opacityv(const Solution& s) const
 
 EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                      const EVector& sourcev, const EVector& sinkv,
-                                     int chooseConsvEq) const
+                                     int chooseConsvEq, const GasStruct& gas) const
 {
 #define USE_ITERATION_METHOD
 #ifdef USE_ITERATION_METHOD
-	// Get the indices that cover the electronic ground state
-	const auto& indicesX = _hff->indicesX();
-	const auto& indicesExcited = _hff->indicesExcited();
+	// Initial guess
+	EVector nv = n * solveBoltzmanEquations(gas._T);
 
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
-
-	// Initial guess (TODO: better initial guess with actual temperature? Maybe we don't
-	// even need this, if we could just use the solution of the previous iteration).
-	EVector nv = n * solveBoltzmanEquations(100);
 
 	// Fractional destruction rate (in s-1) stays constant when populations are adjusted
 	// (sum over the row indices by doing a colwise reduction. Need to transpose because
 	// summing each column gives a row vector, while sinkv is column one.
 	EArray fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
+
+	// Get the indices that cover the electronic ground state
+	const auto& indicesX = _hff->indicesX();
+	const auto& indicesExcited = _hff->indicesExcited();
 
 	// Iterate until converged
 	bool converged = false;
@@ -91,11 +91,6 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		// 1. First put all the creation rates in a vector, then try the division (this
 		// makes dealing with zeros a little harder though)
 
-		// 2. Have better initial conditions somehow (the inheritance is currently in
-		// the way of this, but if we change some things so that this function takes a
-		// general "environment" parameter, then we can make optimizations depend on
-		// whatever we want without having to change the function arguments every time.
-
 		/* Renormalize because the algorithm has no sum rule, */
 		nv *= n / nv.sum();
 
@@ -111,7 +106,7 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	// DEBUG("\nnv\n" << nv << endl);
 	return nv;
 #else
-	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq);
+	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq, gas);
 #endif
 }
 
