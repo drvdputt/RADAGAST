@@ -27,7 +27,7 @@
     reference as much as possible. */
 typedef struct GasStruct
 {
-	GasStruct(double T, const EVector& speciesNv) : _T{T}, _speciesNv{speciesNv} {}
+GasStruct(double T, const EVector& speciesNv) : _T{T}, _speciesNv{speciesNv} {}
 	// Naturally, these values are needed in many functions
 	double _T;
 	EVector _speciesNv;
@@ -35,4 +35,8 @@ typedef struct GasStruct
 	// The fraction of ortho H2 might be important too. Default it here to .3, until we have
 	// a better way to calculate it.
 	double _orthoH2{.3};
+
+	// The previous level solution can be used as initial conditions to speed up the level
+	// calculation. Empty by default.
+	EVector _h2Levelv{};
 } GasStruct;

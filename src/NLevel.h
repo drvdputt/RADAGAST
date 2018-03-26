@@ -163,6 +163,7 @@ protected:
 	                                   const EVector& sourcev, const EVector& sinkv,
 	                                   int chooseConsvEq, const GasStruct& gas) const;
 
+public:
 	EVector solveBoltzmanEquations(double T) const;
 
 private:

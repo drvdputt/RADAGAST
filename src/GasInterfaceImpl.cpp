@@ -166,6 +166,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			s.speciesNv = previous->speciesNv;
 			manualGuess = false;
 		}
+		// If the difference in temperature is larger than 2, do a manual guess anyway.
 	}
 	if (manualGuess)
 	{
@@ -182,9 +183,20 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
 	   scope by reference, so the lambda function can modify s. */
+	// Package some gas parameters
+	GasStruct gas(T, s.speciesNv);
+
+	// Initial guess for the H2 solution
+	if (_molecular)
+	{
+		if (manualGuess)
+			gas._h2Levelv = s.speciesNv(_inH2) *
+			                _molecular->solveBoltzmanEquations(gas._T);
+		else
+			gas._h2Levelv = previous->H2Solution.nv;
+	}
+
 	auto solveLevelBalances = [&]() {
-		// Package some gas parameters
-		GasStruct gas(T, s.speciesNv);
 
 		double nH = s.speciesNv(_inH);
 		EVector Hsourcev = _atomicLevels->sourcev(gas);
@@ -196,6 +208,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
+
 			// TODO: the source term should contain the 'formation pumping'
 			// contributions. When H2 is formed on grain surfaces, it can be
 			// released from the grain in an excited state. The simplest way is
@@ -206,6 +219,9 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
 			s.H2Solution = _molecular->solveBalance(nH2, specificIntensityv,
 			                                        H2sourcev, H2sinkv, gas);
+
+			// Save this, to be used as an initial condition later
+			gas._h2Levelv = s.H2Solution.nv;
 		}
 	};
 

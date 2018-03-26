@@ -38,7 +38,13 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 #define USE_ITERATION_METHOD
 #ifdef USE_ITERATION_METHOD
 	// Initial guess
-	EVector nv = n * solveBoltzmanEquations(gas._T);
+	EVector nv;
+	if (gas._h2Levelv.size() == 0)
+		nv = n * solveBoltzmanEquations(gas._T);
+	else if (gas._h2Levelv.size() == numLv())
+		nv = gas._h2Levelv;
+	else
+		Error::runtime("Wrong size for initial guess vector!");
 
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
