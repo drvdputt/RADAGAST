@@ -1,6 +1,7 @@
 #include "H2Levels.h"
 #include "Constants.h"
 #include "DebugMacros.h"
+#include "GasStruct.h"
 #include "H2FromFiles.h"
 #include "TemplatedUtils.h"
 
@@ -32,23 +33,30 @@ Array H2Levels::opacityv(const Solution& s) const
 
 EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                      const EVector& sourcev, const EVector& sinkv,
-                                     int chooseConsvEq) const
+                                     int chooseConsvEq, const GasStruct& gas) const
 {
 #define USE_ITERATION_METHOD
 #ifdef USE_ITERATION_METHOD
-	size_t numLv = _hff->numLv();
+	// Initial guess
+	EVector nv;
+	if (gas._h2Levelv.size() == 0)
+		nv = n * solveBoltzmanEquations(gas._T);
+	else if (gas._h2Levelv.size() == numLv())
+		nv = gas._h2Levelv;
+	else
+		Error::runtime("Wrong size for initial guess vector!");
 
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
-	// Initial guess (TODO: better initial guess with actual temperature? Maybe we don't
-	// even need this).
-	EVector nv = n * solveBoltzmanEquations(100);
+	// Fractional destruction rate (in s-1) stays constant when populations are adjusted
+	// (sum over the row indices by doing a colwise reduction. Need to transpose because
+	// summing each column gives a row vector, while sinkv is column one.
+	EArray fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
 
-	// Destruction rate (in s-1) stays constant when populations are adjusted
-	Array destructionRatev(numLv);
-	for (size_t i = 0; i < numLv; i++)
-		destructionRatev[i] = Mvv.col(i).sum() + sinkv(i);
+	// Get the indices that cover the electronic ground state
+	const auto& indicesX = _hff->indicesX();
+	const auto& indicesExcited = _hff->indicesExcited();
 
 	// Iterate until converged
 	bool converged = false;
@@ -58,19 +66,36 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		// The previous nv, for convergence checking
 		EVector previousNv = nv;
 
-		/* Do a 'sweep' over all the populations. It is important that this happens one
-		   by one, and not as a single vector operation (hence the word sweep). TODO:
-		   need separate sweeps for excited vs ground state, as there are no transitions
-		   between the excited levels, neither within nor between electronic excited
-		   states. */
-		for (size_t i = 0; i < numLv; i++)
+		// Sweep over ground state
+		for (auto i : indicesX)
 		{
-			double creationRate = (Mvv.row(i) * nv).sum() + sourcev(i);
+			// Sum Mij nj, with j running over all other levels. TODO: consider
+			// making the assumption that the X states are contigous in the eigen
+			// index space. In that case, I can simply do a matrix operation here,
+			// over a slice, leading to possible optimization.
+			double creationRate = Mvv.row(i) * nv + sourcev(i);
 			if (creationRate <= 0)
 				nv(i) = 0;
 			else
-				nv(i) = creationRate / destructionRatev[i];
+				nv(i) = creationRate / fracDestructionRatev(i);
 		}
+
+		// Sweep over the other states
+		for (auto i : indicesExcited)
+		{
+			double creationRate = sourcev(i);
+			// Only sum over the ground state here
+			for (auto j : indicesX)
+				creationRate += Mvv(i, j) * nv(j);
+			if (creationRate <= 0)
+				nv(i) = 0;
+			else
+				nv(i) = creationRate / fracDestructionRatev(i);
+		}
+		// TODO: if this is still too slow, try the following optimizations:
+
+		// 1. First put all the creation rates in a vector, then try the division (this
+		// makes dealing with zeros a little harder though)
 
 		/* Renormalize because the algorithm has no sum rule, */
 		nv *= n / nv.sum();
@@ -78,12 +103,16 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		EVector deltaNv = (nv - previousNv).array().abs();
 		converged = deltaNv.maxCoeff() < 1e-6 * n;
 		counter++;
+		if (!(counter % 1000))
+			DEBUG("Solving h2... " << counter << "iterations" << endl);
 	}
+	if (nv.array().isNaN().any())
+		Error::runtime("nan in H2 level solution");
 	DEBUG("Solved H2 in " << counter << " iterations" << endl);
 	// DEBUG("\nnv\n" << nv << endl);
 	return nv;
 #else
-	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq);
+	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq, gas);
 #endif
 }
 
@@ -111,7 +140,18 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	// Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which can be
 	// used in chemical network (it will multiply by the density again. TODO: need separate
 	// rates for H2g and H2*
-	return dissociationSinkv(specificIntensityv).dot(s.nv) / s.nv.sum();
+	double nH2 = s.nv.sum();
+	if (nH2 > 0)
+		return dissociationSinkv(specificIntensityv).dot(s.nv) / s.nv.sum();
+	else
+	{
+		// We need to return something nonzero here, otherwise the chemistry will have
+		// no dissociation coefficient, maxing out the H2.
+
+		// Just pick the one for the ground state? Or maybe LTE? TODO: choose
+		EVector lteRatios = solveBoltzmanEquations(s.T);
+		return dissociationSinkv(specificIntensityv).dot(lteRatios);
+	}
 #endif
 }
 

@@ -1,9 +1,10 @@
 #include "HydrogenLevels.h"
 #include "Constants.h"
+#include "GasStruct.h"
 #include "HydrogenDataProvider.h"
+#include "IonizationBalance.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
-#include "IonizationBalance.h"
 
 #include <vector>
 
@@ -11,7 +12,7 @@ using namespace std;
 
 HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp,
                                const Array& frequencyv)
-	: NLevel(hdp, frequencyv, Constant::HMASS_CGS), _hdp(hdp)
+                : NLevel(hdp, frequencyv, Constant::HMASS_CGS), _hdp(hdp)
 {
 }
 
@@ -58,11 +59,9 @@ double alpha(int n, int l, double T)
 }
 }
 
-EVector HydrogenLevels::sourcev(double T, const EVector& speciesNv) const
+EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 {
 	EVector result{EVector::Zero(_hdp->numLv())};
-
-	// TODO: make this more elegant
 
 	// Now loop over all levels, and add the correct recombination coefficient. If a level
 	// is collapsed, the alpha will be added to the same level multiple times.
@@ -71,25 +70,29 @@ EVector HydrogenLevels::sourcev(double T, const EVector& speciesNv) const
 		for (int l = 0; l < n; l++)
 		{
 			size_t index = _hdp->indexOutput(n, l);
-			result[index] += alpha(n, l, T);
+			result[index] += alpha(n, l, gas._T);
 		}
 	}
-	double ne = speciesNv(SpeciesIndex::ine());
-	double np = speciesNv(SpeciesIndex::inp());
+	double ne = gas._speciesNv(SpeciesIndex::ine());
+	double np = gas._speciesNv(SpeciesIndex::inp());
 	return result * ne * np;
 }
 
-EVector HydrogenLevels::sinkv(double T, double n, const EVector& speciesNv) const
+EVector HydrogenLevels::sinkv(const GasStruct& gas) const
 {
+	// TODO: ideally, this calculates the ionization rate from each level, using individual
+	// ionization cross sections.
+
 	/* The ionization rate calculation makes no distinction between the levels.  When
 	   the upper level population is small, and its decay rate is large, the second term
 	   doesn't really matter. Therefore, we choose the sink to be the same for each
 	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 	   => sink = totalsource / n because n0/n + n1/n = 1. */
-	double ne = speciesNv(SpeciesIndex::ine());
-	double np = speciesNv(SpeciesIndex::inp());
-	double totalSource = ne * np * Ionization::recombinationRateCoeff(T);
-	double sink = totalSource / n; // Sink rate per (atom per cm3)
+	double ne = gas._speciesNv(SpeciesIndex::ine());
+	double np = gas._speciesNv(SpeciesIndex::inp());
+	double nH = gas._speciesNv(SpeciesIndex::inH());
+	double totalSource = ne * np * Ionization::recombinationRateCoeff(gas._T);
+	double sink = totalSource / nH; // Sink rate per (atom per cm3)
 	return EVector::Constant(numLv(), sink);
 }
 

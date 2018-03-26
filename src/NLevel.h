@@ -1,17 +1,16 @@
 #ifndef GASMODULE_GIT_SRC_NLEVEL_H_
 #define GASMODULE_GIT_SRC_NLEVEL_H_
 
-#include "Array.h"
 #include "EigenAliases.h"
 #include "LineProfile.h"
 #include "SpecialFunctions.h"
+#include "Spectrum.h"
 
 #include <array>
 #include <memory>
 
+class GasStruct;
 class LevelDataProvider;
-
-// TODO: use the correct mass for thermal velocity (line width)
 
 /** This class contains a generic implementation for calculating the statistical equilibrium of
     a system with a certain amount of levels (private part), and some properties that result
@@ -115,13 +114,13 @@ public:
 	    equilibrium equations, and then calls @c solveRateEquations() do the actual
 	    calculation. This function should be generic, while the latter is allowed to have a
 	    specialized implementation per subclass. */
-	Solution solveBalance(double density, const EVector& speciesNv, double T,
-	                      const Array& specificIntensityv, const EVector& sourcev,
-	                      const EVector& sinkv) const;
+	Solution solveBalance(double density, const Array& specificIntensityv,
+	                      const EVector& sourcev, const EVector& sinkv,
+	                      const GasStruct& gas) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
-	Solution solveLTE(double density, const EVector& speciesNv, double T,
-	                  const Array& specificIntensityv) const;
+	Solution solveLTE(double density, const Array& specificIntensityv,
+	                  const GasStruct& gas) const;
 
 	Solution solveZero(double T) const;
 
@@ -162,8 +161,9 @@ protected:
 	    within the electronically excited levels. */
 	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
 	                                   const EVector& sourcev, const EVector& sinkv,
-	                                   int chooseConsvEq) const;
+	                                   int chooseConsvEq, const GasStruct& gas) const;
 
+public:
 	EVector solveBoltzmanEquations(double T) const;
 
 private:
@@ -225,7 +225,12 @@ protected:
 	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
 
 	/** Creates the matrix Mij as defined in my notes (basically, Mij = Aji + BPji + Cji). I
-	    reused this formula once, so I in a function it goes. */
+	    reused this formula once, so I put it into a function. Here's some help on how to
+	    interpret the elements: Mij tells you how much stuff arrives in level i, that
+	    originates from level j. Doing the multiplication Mij nj gives you the total arrival
+	    rate in each level. Doing the reduction sum_j Mji give you the factional departure
+	    rate from level i (i.e. the sum of what arrives all levels, originating from level i
+	    --> total decay rate). */
 	EMatrix netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const;
 
 private:
@@ -236,7 +241,7 @@ private:
 	   initialized with depends on the subclass. */
 	std::shared_ptr<const LevelDataProvider> _ldp;
 
-	/* Wavelength grid */
+	/* Frequency grid */
 	const Array& _frequencyv;
 
 	/* Particle mass (important for line width) */

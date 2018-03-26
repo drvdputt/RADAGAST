@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "DebugMacros.h"
 #include "Error.h"
+#include "GasStruct.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
 #include "SpeciesIndex.h"
@@ -299,15 +300,16 @@ array<size_t, 2> HydrogenFromFiles::twoPhotonIndices() const
 	return {upper, lower};
 }
 
-EMatrix HydrogenFromFiles::cvv(double T, const EVector& speciesNv) const
+EMatrix HydrogenFromFiles::cvv(const GasStruct& gas) const
 {
 	// Calculate the temperature in erg and in electron volt
+	double T = gas._T;
 	double kT = Constant::BOLTZMAN * T;
 	double T_eV = kT * Constant::ERG_EV;
 
 	EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
 	// Electron contributions (n-changing)
-	double ne = speciesNv(_ine);
+	double ne = gas._speciesNv(_ine);
 	if (ne > 0)
 	{
 		for (size_t i = 0; i < _numL; i++)
@@ -335,7 +337,7 @@ EMatrix HydrogenFromFiles::cvv(double T, const EVector& speciesNv) const
 	}
 
 	// For the l-resolved levels, get l-changing collision rates (through proton collisions)
-	double np = speciesNv(_inp);
+	double np = gas._speciesNv(_inp);
 	if (np > 0)
 	{
 		for (int n = 0; n <= _resolvedUpTo; n++)

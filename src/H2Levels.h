@@ -5,6 +5,7 @@
 
 #include <vector>
 
+struct GasStruct;
 class H2FromFiles;
 
 class H2Levels : public NLevel
@@ -21,7 +22,7 @@ protected:
 	    my own eyes. */
 	EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
 	                           const EVector& sourcev, const EVector& sinkv,
-	                           int chooseConsvEq) const override;
+	                           int chooseConsvEq, const GasStruct& gas) const override;
 
 public:
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon

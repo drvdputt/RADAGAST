@@ -6,6 +6,7 @@
 #include "FreeBound.h"
 #include "FreeFree.h"
 #include "GasGrainInteraction.h"
+#include "GasStruct.h"
 #include "GrainType.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
@@ -161,10 +162,11 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 		double fT = T / previous->T;
 		if (fT > 0.5 && fT < 2)
 		{
-			cout << "Using previous speciesNv as initial guess" << std::endl;
+			DEBUG("Using previous speciesNv as initial guess" << std::endl);
 			s.speciesNv = previous->speciesNv;
 			manualGuess = false;
 		}
+		// If the difference in temperature is larger than 2, do a manual guess anyway.
 	}
 	if (manualGuess)
 	{
@@ -181,16 +183,32 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
 	   scope by reference, so the lambda function can modify s. */
+	// Package some gas parameters
+	GasStruct gas(T, s.speciesNv);
+
+	// Initial guess for the H2 solution
+	if (_molecular)
+	{
+		if (manualGuess)
+			gas._h2Levelv = s.speciesNv(_inH2) *
+			                _molecular->solveBoltzmanEquations(gas._T);
+		else
+			gas._h2Levelv = previous->H2Solution.nv;
+	}
+
 	auto solveLevelBalances = [&]() {
+
 		double nH = s.speciesNv(_inH);
-		EVector Hsourcev = _atomicLevels->sourcev(T, s.speciesNv);
-		EVector Hsinkv = _atomicLevels->sinkv(T, nH, s.speciesNv);
+		EVector Hsourcev = _atomicLevels->sourcev(gas);
+		EVector Hsinkv = _atomicLevels->sinkv(gas);
+
 		DEBUG("Solving levels nH = " << nH << endl);
-		s.HSolution = _atomicLevels->solveBalance(nH, s.speciesNv, T,
-		                                          specificIntensityv, Hsourcev, Hsinkv);
+		s.HSolution = _atomicLevels->solveBalance(nH, specificIntensityv, Hsourcev,
+		                                          Hsinkv, gas);
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
+
 			// TODO: the source term should contain the 'formation pumping'
 			// contributions. When H2 is formed on grain surfaces, it can be
 			// released from the grain in an excited state. The simplest way is
@@ -199,9 +217,11 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T, const Array& spec
 			EVector H2sourcev = EVector::Zero(_molecular->numLv());
 			EVector H2sinkv = _molecular->dissociationSinkv(specificIntensityv);
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
-			s.H2Solution = _molecular->solveBalance(nH2, s.speciesNv, T,
-			                                        specificIntensityv, H2sourcev,
-			                                        H2sinkv);
+			s.H2Solution = _molecular->solveBalance(nH2, specificIntensityv,
+			                                        H2sourcev, H2sinkv, gas);
+
+			// Save this, to be used as an initial condition later
+			gas._h2Levelv = s.H2Solution.nv;
 		}
 	};
 

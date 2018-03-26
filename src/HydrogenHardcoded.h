@@ -43,7 +43,7 @@ public:
 
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
 	    the partner density), for a given temperature and proton and electron densities. */
-	EMatrix cvv(double T, const EVector& speciesNv) const override;
+	EMatrix cvv(const GasStruct& gas) const override;
 
 private:
 	EVector the_ev;

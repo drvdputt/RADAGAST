@@ -2,6 +2,7 @@
 #include "Constants.h"
 #include "DebugMacros.h"
 #include "Error.h"
+#include "GasStruct.h"
 #include "IOTools.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
@@ -366,12 +367,13 @@ EMatrix H2FromFiles::avv() const { return _avv; }
 
 EMatrix H2FromFiles::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
 
-EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
+EMatrix H2FromFiles::cvv(const GasStruct& gas) const
 {
+	double T = gas._T;
 	EMatrix the_cvv{EMatrix::Zero(_numL, _numL)};
 
 	// H-H2 collisions
-	double nH = speciesNv(_inH);
+	double nH = gas._speciesNv(_inH);
 	addToCvv(the_cvv, _qH, T, nH);
 
 	// TODO: (optional?) g-bar approximation for missing coefficients
@@ -380,7 +382,7 @@ EMatrix H2FromFiles::cvv(double T, const EVector& speciesNv) const
 	// unfortunately depends on the levels themselves... Maybe I need a wrapper around
 	// speciesNv, which also contains a bunch of other parameters, such as the ortho and
 	// para contributions. I just pick a ratio of 3 here, hardcoded.
-	double nH2 = speciesNv(_inH2);
+	double nH2 = gas._speciesNv(_inH2);
 	addToCvv(the_cvv, _qH2ortho, T, 0.75 * nH2);
 	addToCvv(the_cvv, _qH2para, T, 0.25 * nH2);
 

@@ -33,14 +33,14 @@ public:
 	    interpolated from some formulae found in 2015-Raga (for levels 3-5) , and Draine's book
 	    (for levels 1, 2). The l-resolved recombination rates are just weighed by the degeneracy
 	    of the level, for levels 3, 4 and 5. TODO: Use better data here. [cm-3 s-1] */
-	EVector sourcev(double T, const EVector& speciesNv) const;
+	EVector sourcev(const GasStruct& gas) const;
 
 	/** Produces the sink term to be used by the equilibrium equations. In this case, hydrogen
 	    disappears from the level populations because it's being ionized. In the current
 	    implementation, all the ionization is assumed to be drawn equally from all levels. TODO:
 	    add the effects of H2 formation in here?. Take care of this using actual ionization
 	    cross sections? [s-1] */
-	EVector sinkv(double T, double n, const EVector& speciesNv) const;
+	EVector sinkv(const GasStruct& gas) const;
 
 private:
 	/** This function calculates the two-photon continuum using Nussbaumer \& Smutz (1984). */

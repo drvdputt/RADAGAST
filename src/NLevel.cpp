@@ -1,6 +1,7 @@
 #include "NLevel.h"
 #include "Constants.h"
 #include "DebugMacros.h"
+#include "GasStruct.h"
 #include "LevelDataProvider.h"
 #include "TemplatedUtils.h"
 #include "Testing.h"
@@ -45,13 +46,13 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
-                                      double temperature, const Array& specificIntensityv,
-                                      const EVector& sourcev, const EVector& sinkv) const
+NLevel::Solution NLevel::solveBalance(double density, const Array& specificIntensityv,
+                                      const EVector& sourcev, const EVector& sinkv,
+                                      const GasStruct& gas) const
 {
 	Solution s;
 	s.n = density;
-	s.T = temperature;
+	s.T = gas._T;
 	s.bpvv = EMatrix::Zero(_numLv, _numLv);
 	s.cvv = EMatrix::Zero(_numLv, _numLv);
 	s.nv = EVector::Zero(_numLv);
@@ -63,7 +64,7 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 
 	if (density > 0)
 	{
-		s.cvv = _ldp->cvv(temperature, speciesNv);
+		s.cvv = _ldp->cvv(gas);
 		/* Calculate BijPij (needs to be redone at each temperature because the line
 		   profile can change) Also needs the Cij to calculate collisional broadening. */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
@@ -87,20 +88,20 @@ NLevel::Solution NLevel::solveBalance(double density, const EVector& speciesNv,
 		DEBUG("Cij" << endl << s.cvv << endl << endl);
 #endif
 		// Calculate Fij and bi and solve F.n = b
-		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0);
+		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0, gas);
 	}
 	return s;
 }
 
-NLevel::Solution NLevel::solveLTE(double density, const EVector& speciesNv, double T,
-                                  const Array& specificIntensityv) const
+NLevel::Solution NLevel::solveLTE(double density, const Array& specificIntensityv,
+                                  const GasStruct& gas) const
 {
 	NLevel::Solution s;
 	s.n = density;
-	s.T = T;
-	s.nv = density * solveBoltzmanEquations(T);
-	s.cvv = _ldp->cvv(T, speciesNv);
-	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, T, s.cvv);
+	s.T = gas._T;
+	s.nv = density * solveBoltzmanEquations(gas._T);
+	s.cvv = _ldp->cvv(gas);
+	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, gas._T, s.cvv);
 	return s;
 }
 
@@ -220,7 +221,7 @@ EMatrix NLevel::netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const
 
 EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                    const EVector& sourcev, const EVector& sinkv,
-                                   int chooseConsvEq) const
+                                   int chooseConsvEq, const GasStruct& gas) const
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j

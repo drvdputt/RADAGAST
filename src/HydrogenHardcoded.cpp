@@ -1,5 +1,6 @@
 #include "HydrogenHardcoded.h"
 #include "Constants.h"
+#include "GasStruct.h"
 #include "IonizationBalance.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
@@ -111,13 +112,14 @@ EMatrix HydrogenHardcoded::extraAvv() const
 
 array<size_t, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
 
-EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
+EMatrix HydrogenHardcoded::cvv(const GasStruct& gas) const
 {
+	double T = T;
 	const int index2p = 2;
 	const int index2s = 1;
 	EMatrix Cvv = EMatrix::Zero(NLV, NLV);
 
-	double electronDensity = speciesNv(SpeciesIndex::ine());
+	double electronDensity = gas._speciesNv(SpeciesIndex::ine());
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
 		// Equation 6.17 of Hazy II (6.6 Collision strengths)
@@ -130,7 +132,7 @@ EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
 	// data from 2002-anderson
 	// Electron temperatures in electron volt
 	const vector<double> grid_eT_eVv = {.5, 1., 3., 5., 10., 15., 20., 25.};
-
+	
 	double eT_eV = Constant::BOLTZMAN * T * Constant::ERG_EV;
 
 	// Naively inter- and extrapolate this data linearly
@@ -182,7 +184,7 @@ EMatrix HydrogenHardcoded::cvv(double T, const EVector& speciesNv) const
 	double qUp = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
 	double qDown_db = qUp / 3.;
 
-	double protonDensity = speciesNv(SpeciesIndex::inp());
+	double protonDensity = gas._speciesNv(SpeciesIndex::inp());
 	Cvv(index2p, index2s) = protonDensity * (qDown + qDown_db) / 2.;
 	Cvv(index2s, index2p) = protonDensity * (qUp + qUp_db) / 2.;
 
