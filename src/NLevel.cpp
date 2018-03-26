@@ -64,7 +64,7 @@ NLevel::Solution NLevel::solveBalance(double density, const Array& specificInten
 
 	if (density > 0)
 	{
-		s.cvv = _ldp->cvv(s.T, gas._speciesNv);
+		s.cvv = _ldp->cvv(gas);
 		/* Calculate BijPij (needs to be redone at each temperature because the line
 		   profile can change) Also needs the Cij to calculate collisional broadening. */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
@@ -100,7 +100,7 @@ NLevel::Solution NLevel::solveLTE(double density, const Array& specificIntensity
 	s.n = density;
 	s.T = gas._T;
 	s.nv = density * solveBoltzmanEquations(gas._T);
-	s.cvv = _ldp->cvv(gas._T, gas._speciesNv);
+	s.cvv = _ldp->cvv(gas);
 	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, gas._T, s.cvv);
 	return s;
 }

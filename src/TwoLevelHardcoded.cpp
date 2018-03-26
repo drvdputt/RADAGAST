@@ -1,5 +1,6 @@
 #include "TwoLevelHardcoded.h"
 #include "Constants.h"
+#include "GasStruct.h"
 
 TwoLevelHardcoded::TwoLevelHardcoded()
 {
@@ -33,8 +34,9 @@ EMatrix TwoLevelHardcoded::avv() const
 
 EMatrix TwoLevelHardcoded::extraAvv() const { return EMatrix::Zero(2, 2); }
 
-EMatrix TwoLevelHardcoded::cvv(double T, const EVector& speciesNv) const
+EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const
 {
+	double T = gas._T;
 	EMatrix Cvv = EMatrix::Zero(2, 2);
 
 	/* Need separate contributions for number of protons and electrons. Toy implementation

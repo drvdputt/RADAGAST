@@ -591,7 +591,8 @@ void Testing::plotPS64Collisions()
 	EVector speciesNv = EVector::Zero(SpeciesIndex::size());
 	speciesNv(SpeciesIndex::ine()) = ne;
 	speciesNv(SpeciesIndex::inp()) = np;
-	EMatrix cvv = hff.cvv(T, speciesNv);
+	GasStruct gas(T, speciesNv);
+	EMatrix cvv = hff.cvv(gas);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total
 	   downwards rate from level nl. */
@@ -703,10 +704,11 @@ void Testing::testFromFilesvsHardCoded()
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
 	speciesNv(SpeciesIndex::inp()) = np;
 	speciesNv(SpeciesIndex::ine()) = ne;
+	GasStruct gas(T, speciesNv);
 
 	cout << "Collisions:" << endl;
-	EMatrix cvvhc = hhc.cvv(T, speciesNv);
-	EMatrix cvvff = hff.cvv(T, speciesNv);
+	EMatrix cvvhc = hhc.cvv(gas);
+	EMatrix cvvff = hff.cvv(gas);
 	hc_vs_ff(cvvhc, cvvff);
 }
 

@@ -114,7 +114,7 @@ public:
 	/** Returns a matrix containing the collisional transition rates (already multiplied with
 	    the partner density: [cm3 s-1 * cm-3 = s-1]), for a given temperature and proton and
 	    electron densities. */
-	EMatrix cvv(double T, const EVector& speciesNv) const override;
+	EMatrix cvv(const GasStruct& gas) const override;
 
 	/** @name Specific for atomic hydrogen */
 	int nMax() const override { return 5; }

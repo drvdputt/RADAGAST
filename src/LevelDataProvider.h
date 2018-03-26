@@ -3,6 +3,8 @@
 
 #include "EigenAliases.h"
 
+struct GasStruct;
+
 /** When an object of the class NLevel is set up, it needs some constant data, and some data
     that can vary with temperature. This data often needs to be derived from other data that was
     read in from files. To abstract the read-in of files, and the conversion of their data to a
@@ -58,7 +60,7 @@ public:
 	    densities. Calculate the collision rates Cij. The rate we need, Rij = Cij * ni =
 	    q_ij * np * ni --> Cij = q_ij * np with np the density of collision partner. This
 	    function return Cij in these equations, hence the unit is [s-1]. */
-	virtual EMatrix cvv(double T, const EVector& speciesNv) const = 0;
+	virtual EMatrix cvv(const GasStruct& gas) const = 0;
 };
 
 #endif /* GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_ */

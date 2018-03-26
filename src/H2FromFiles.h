@@ -122,7 +122,7 @@ public:
 	EVector gv() const override;
 	EMatrix avv() const override;
 	EMatrix extraAvv() const override;
-	EMatrix cvv(double T, const EVector& speciesNv) const override;
+	EMatrix cvv(const GasStruct& gas) const override;
 	/**@}*/
 
 	/** @name Functionality specific for H2. */
