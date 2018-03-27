@@ -746,7 +746,7 @@ void Testing::runH2(bool write)
 
 	// Calculate the source and sink terms for the level calculation
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
-	EVector sinkv = h2Levels.dissociationSinkv(specificIntensityv);
+	EVector sinkv = h2Levels.dissociationSinkv(specificIntensity);
 	GasStruct gas(T, speciesNv);
 	NLevel::Solution s = h2Levels.solveBalance(nH2, specificIntensity, sourcev, sinkv, gas);
 

@@ -9,7 +9,7 @@
 #include <array>
 #include <memory>
 
-class GasStruct;
+struct GasStruct;
 class LevelDataProvider;
 
 /** This class contains a generic implementation for calculating the statistical equilibrium of

@@ -118,7 +118,8 @@ NLevel::Solution NLevel::solveLTE(double density, const Spectrum& specificIntens
 	s.T = gas._T;
 	s.nv = density * solveBoltzmanEquations(gas._T);
 	s.cvv = _ldp->cvv(gas);
-	s.bpvv = prepareAbsorptionMatrix(specificIntensityv, gas._T, s.cvv);
+	s.bpvv = prepareAbsorptionMatrix(specificIntensity
+					 , gas._T, s.cvv);
 	return s;
 }
 

@@ -62,7 +62,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 	auto chargeUpRate = [&](int Z) -> double {
 		double Jtotal{0};
 		// Photoelectric effect rate
-		Jtotal += emissionRate(a, Z, env._frequencyv, Qabs, env.specificIntensityv);
+		Jtotal += emissionRate(a, Z, frequencyv, Qabs, specificIntensityv);
 		/* Collisions with positive particles. Collisions with multiply charged
 		   particles are treated as if they can only change the charge by 1. This is
 		   technically incorrect, but the charging rate due to positive ions is very
