@@ -37,5 +37,16 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 		abort();
 	}
 }
-} /* namespace Error */
+
+/** Throws an error if @c value and @c reference are equal up to a factor @c precision */
+inline void fuzzyCheck(std::string variable, double value, double reference, double precision)
+{
+	double minus = reference * (1 - precision);
+	double plus = reference * (1 + precision);
+	double mn = std::min(minus, plus);
+	double mx = std::max(minus, plus);
+	rangeCheck<double>(variable, value, mn, mx);
+}
+
+}/* namespace Error */
 #endif /* GASMODULE_GIT_SRC_ERROR_H_ */

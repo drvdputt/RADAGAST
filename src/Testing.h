@@ -1,8 +1,8 @@
 #ifndef _TESTING_H_
 #define _TESTING_H_
 
-#include "Array.h"
 #include "GasInterface.h"
+#include "Spectrum.h"
 
 #include <string>
 #include <vector>
@@ -59,7 +59,7 @@ void writeGasState(const std::string& outputPath, const GasModule::GasInterface&
                    const GasModule::GasState& gs);
 
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                      const Array& specificIntensityv, double n);
+                      const Spectrum& specificIntensity, double n);
 
 void plotIonizationStuff();
 
@@ -99,7 +99,7 @@ GasModule::GasInterface genFullModel();
 void runFullModel();
 
 /** A test run for the model with a fixed dust model included. */
-void runWithDust();
+void runWithDust(bool write=true);
 } // namespace Testing
 
 #endif /* _TESTING_H_ */

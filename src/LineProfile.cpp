@@ -8,11 +8,12 @@
 using namespace std;
 
 LineProfile::LineProfile(double center, double sigma_gauss, double halfWidth_lorenz)
-                : _center{center}, _sigma_gauss{sigma_gauss}
+                : _center{center}, _sigma_gauss{sigma_gauss},
+                  _halfWidth_lorenz(halfWidth_lorenz)
 
 {
 	_one_sqrt2sigma = M_SQRT1_2 / _sigma_gauss;
-	_a = halfWidth_lorenz * _one_sqrt2sigma;
+	_a = _halfWidth_lorenz * _one_sqrt2sigma;
 }
 
 double LineProfile::operator()(double nu) const
@@ -20,6 +21,41 @@ double LineProfile::operator()(double nu) const
 	double x = (nu - _center) * _one_sqrt2sigma;
 	// Note that the normalization factor is 1 / sqrt(2 pi sigma)
 	return SpecialFunctions::voigt(_a, x) / Constant::SQRT2PI / _sigma_gauss;
+}
+
+Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
+{
+	// Odd numbers of points make this easier
+	if (!(numPoints % 2))
+		numPoints++;
+
+	// Because then this is the center
+	int iCenter = numPoints / 2;
+
+	// We will space the points according to a power law.
+	double spacingPower = 2.5;
+	// double total_distance = 1.e-6 * _center;
+	double total_distance = width * (_halfWidth_lorenz + _sigma_gauss) / 2;
+	double w = total_distance / pow(iCenter, spacingPower);
+
+	// Fill in the values
+	Array freqv(numPoints);
+	freqv[iCenter] = _center;
+	// Example: iCenter = 2
+	// frequency index:
+	// 0 1 2 3 4
+	// i:
+	// 2 1 0 1 2
+	// So i must include iCenter --> use <=
+	for (int i = 1; i <= iCenter; i++)
+	{
+		double d = w * pow(i, spacingPower);
+
+		// This is safe because we forced the number of points to be odd
+		freqv[iCenter + i] = _center + d;
+		freqv[iCenter - i] = _center - d;
+	}
+	return freqv;
 }
 
 void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, double factor) const
@@ -84,9 +120,8 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 		// For an insignificant wing value
 		if (value < wingThres && absval < abs(spectrumv[i] * CUTOFFWINGCONTRIBUTION))
 		{
-			// Move through the spectrum until it the value of the spectrum
-			// is small enough for the value of the wing point to be
-			// significant again.
+			// Move through the spectrum until it the value of the spectrum is small
+			// enough for the value of the wing point to be significant again.
 			while (true)
 			{
 				if (i == 0)
@@ -111,15 +146,27 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 #endif /* OPTIMIZED_LINE_ADD */
 }
 
-double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spectrumv,
-                                      double spectrumMax) const
+double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
 {
-#define OPTIMIZED_LINE_INTEGRATION
+	const Array& spectrumGrid = spectrum.frequencyv();
+	const Array& lineGrid = recommendedFrequencyGrid(27, 5);
+	Array frequencyv(spectrumGrid.size() + lineGrid.size());
+
+	// Merges the two grids, and writes the result to the last argument
+	merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
+	      begin(frequencyv));
+
+	// Temporary override to check if the integration works with only the points generated
+	// for the line
+	frequencyv = lineGrid;
+
+// #define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION
 	const size_t iCenter = TemplatedUtils::index(_center, frequencyv);
-	// Get max of spectrum. As long as a frequency interval * maxSpectrum is small, we can
-	// keep skipping points. Once a frequency interval * maxSpectrum > than the threshold
-	// appears, re-evaluate the line profile at this frequency point.
+	// We also have the maximum of the spectrum to our disposal. As long as a frequency
+	// interval * maxSpectrum is small, we can keep skipping points. Once a frequency
+	// interval * maxSpectrum > than the threshold appears, re-evaluate the line profile at
+	// this frequency point.
 
 	// This value needs to be tuned to the desired accuracy. Some naive testing has shown me
 	// that 1e-5 to 1e-6 is good for H2, while the H lines need a much smaller value of 1e-9
@@ -132,11 +179,11 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 	auto evaluateIntegralInterval = [&](size_t iRight) -> double {
 		x2 = frequencyv[iRight];
 		v2 = (*this)(x2);
-		y2 = spectrumv[iRight] * v2;
+		y2 = spectrum.evaluate(x2) * v2;
 
 		x1 = frequencyv[iRight - 1];
 		v1 = (*this)(x1);
-		y1 = spectrumv[iRight - 1] * v1;
+		y1 = spectrum.evaluate(x1) * v1;
 
 		return 0.5 * (x2 - x1) * (y2 + y1);
 	};
@@ -196,7 +243,8 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 				// already has a value.
 				iRight++;
 				double deltaX = frequencyv[iRight] - frequencyv[iRight - 1];
-				double sumY = spectrumv[iRight] + spectrumv[iRight - 1];
+				double sumY = spectrum.evaluate(frequencyv[iRight]) +
+				              spectrum.evaluate(frequencyv[iRight - 1]);
 				double contributionGuess = last_voigt * deltaX * sumY * 0.5;
 				if (abs(contributionGuess) >= significanceThres)
 				{
@@ -243,7 +291,8 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 					break;
 				iRight--;
 				double deltaX = frequencyv[iRight] - frequencyv[iRight - 1];
-				double sumY = spectrumv[iRight] - spectrumv[iRight - 1];
+				double sumY = spectrum.evaluate(frequencyv[iRight]) +
+				              spectrum.evaluate(frequencyv[iRight - 1]);
 				double contributionGuess = last_voigt * deltaX * sumY * 0.5;
 				if (abs(contributionGuess) >= significanceThres)
 				{
@@ -257,10 +306,75 @@ double LineProfile::integrateSpectrum(const Array& frequencyv, const Array& spec
 	}
 	return integral;
 #else
-	Array integrandv(spectrumv.size());
-	for (size_t iRight = 0; iRight < frequencyv.size(); iRight++)
-		integrandv[iRight] = spectrumv[iRight] * (*this)(frequencyv[iRight]);
-
+        Array integrandv(frequencyv.size());
+	for (size_t i = 0; i < frequencyv.size(); i++)
+	{
+		double freq = frequencyv[i];
+		double val = spectrum.evaluate(freq);
+		// cout << val << endl;
+		integrandv[i] = val * (*this)(freq);
+	}
 	return TemplatedUtils::integrate<double>(frequencyv, integrandv);
 #endif /* OPTIMIZED_LINE_INTEGRATION */
+}
+
+namespace
+{
+LineProfile testLine()
+{
+	double c = 4.;
+	double sg = 0.1;
+	double hwl = 0.1;
+	return LineProfile(c, sg, hwl);
+}
+
+Spectrum testSpectrum(double base)
+{
+	size_t numFreq = 100;
+	Array frequencyv(numFreq);
+	double fmin = .01;
+	double fmax = 10.;
+	double step = (fmax - fmin) / numFreq;
+	for (size_t i = 0; i < numFreq; i++)
+		frequencyv[i] = fmin + i * step;
+	Array spectrumv(base, numFreq);
+	return Spectrum(frequencyv, spectrumv);
+}
+} // namespace
+
+void test_addToSpectrum()
+{
+	cout << "test_addToSpectrum" << endl;
+	auto lp = testLine();
+
+	double base = 1.;
+	auto s = testSpectrum(base);
+	Array frequencyv = s.frequencyv();
+	Array spectrumv = s.valuev();
+
+	double factor = 3.;
+	lp.addToSpectrum(frequencyv, spectrumv, factor);
+
+	double e = 1.e-15;
+	for (size_t i = 0; i < frequencyv.size(); i++)
+	{
+		double linevalue = factor * lp(frequencyv[i]);
+		double manual = base + linevalue;
+		Error::fuzzyCheck("test value", spectrumv[i], manual, e);
+	}
+}
+
+void test_integrateSpectrum()
+{
+	cout << "test_integrateSpectrum" << endl;
+	auto lp = testLine();
+
+	double base = 2.;
+	auto s = testSpectrum(base);
+
+	double integral = lp.integrateSpectrum(s);
+
+	// This integral should be about equal to base, if gridpoints are chosen well
+	double e = 1.e-3;
+	Error::fuzzyCheck("test value", integral, base, e);
 }

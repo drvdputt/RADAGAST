@@ -46,7 +46,7 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double density, const Array& specificIntensityv,
+NLevel::Solution NLevel::solveBalance(double density, const Spectrum& specificIntensity,
                                       const EVector& sourcev, const EVector& sinkv,
                                       const GasStruct& gas) const
 {
@@ -57,25 +57,42 @@ NLevel::Solution NLevel::solveBalance(double density, const Array& specificInten
 	s.cvv = EMatrix::Zero(_numLv, _numLv);
 	s.nv = EVector::Zero(_numLv);
 
-	if (specificIntensityv.size() != _frequencyv.size())
-		Error::runtime("Given ISRF and frequency vectors do not have the same size " +
-		               std::to_string(specificIntensityv.size()) + " vs " +
-		               std::to_string(_frequencyv.size()));
-
 	if (density > 0)
 	{
 		s.cvv = _ldp->cvv(gas);
 		/* Calculate BijPij (needs to be redone at each temperature because the line
-		   profile can change) Also needs the Cij to calculate collisional broadening. */
-		s.bpvv = prepareAbsorptionMatrix(specificIntensityv, s.T, s.cvv);
-
+		   profile can change). Also needs the Cij to calculate collisional
+		   broadening. */
+		s.bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
+// #define REPORT_LINE_QUALITY
 #ifdef REPORT_LINE_QUALITY
+		// Full integral of the line profile, to check the discretization of the output
+		// (emission) grid.
 		double maxNorm = 0, minNorm = 1e9;
 		forActiveLinesDo([&](size_t upper, size_t lower) {
 			double norm = TemplatedUtils::integrate<double>(
 			                _frequencyv, lineProfile_array(upper, lower, s));
-			DEBUG("Line " << upper << " --> " << lower << " has norm " << norm
-			              << endl);
+			DEBUG("lineProfile_array " << upper << " --> " << lower << " has norm "
+			                           << norm << endl);
+			maxNorm = max(norm, maxNorm);
+			minNorm = min(norm, minNorm);
+		});
+		DEBUG("Max profile norm = " << maxNorm << endl);
+		DEBUG("Min profile norm = " << minNorm << endl);
+		maxNorm = 0;
+		minNorm = 1e9; // any large number will do
+		// Integral over contant spectrum, using the LineProfile class. An integration
+		// grid is chosen internally, and we check the quality of it here (at least for
+		// now.)
+		double minFreq = _frequencyv[0];
+		double maxFreq = _frequencyv[_frequencyv.size() - 1];
+		Array someFreqs = {minFreq, (minFreq + maxFreq) / 2, maxFreq};
+		Spectrum flat(someFreqs, Array(1, someFreqs.size()));
+		forActiveLinesDo([&](size_t upper, size_t lower) {
+			auto lp = lineProfile(upper, lower, s);
+			double norm = lp.integrateSpectrum(flat);
+			DEBUG("LineProfile " << upper << " --> " << lower << " has norm "
+			                     << norm << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
 		});
@@ -93,7 +110,7 @@ NLevel::Solution NLevel::solveBalance(double density, const Array& specificInten
 	return s;
 }
 
-NLevel::Solution NLevel::solveLTE(double density, const Array& specificIntensityv,
+NLevel::Solution NLevel::solveLTE(double density, const Spectrum& specificIntensity,
                                   const GasStruct& gas) const
 {
 	NLevel::Solution s;
@@ -180,27 +197,39 @@ double NLevel::cooling(const Solution& s) const
 	return total;
 }
 
-EMatrix NLevel::prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
+EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
                                         const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
+	const Array& v = specificIntensity.valuev();
+	auto maxIt = max_element(begin(v), end(v));
+	double spectrumMax = *maxIt;
 
-	double spectrumMax = *max_element(begin(specificIntensityv), end(specificIntensityv));
+	Array highResIv(_frequencyv.size());
+	for (size_t i = 0; i < _frequencyv.size(); i++)
+		highResIv[i] = specificIntensity.evaluate(_frequencyv[i]);
+	Spectrum highResSpec(_frequencyv, highResIv);
+
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
-		BPvv(upper, lower) = lp.integrateSpectrum(_frequencyv, specificIntensityv,
-		                                          spectrumMax);
+		double lowResIntegral = lp.integrateSpectrum(specificIntensity);
+// #define REPORT_SPEC_INTEGRAL
+#ifdef REPORT_SPEC_INTEGRAL
+		double highResIntegral = lp.integrateSpectrum(highResSpec);
 
-		// Uncomment these two lines to check correctness of optimized integration
-		// method
-		// double fullIntegral = TemplatedUtils::integrate<double, Array, Array>(
-		// _frequencyv,
-		// lineProfile_array(upper, lower, T, Cvv) * specificIntensityv);
-		// double ratio = BPvv(upper, lower) / fullIntegral;
-		// if (abs(ratio - 1.) > 1.e-6)
-		// cout << BPvv(upper, lower) << '\t' << fullIntegral
-		// << "\tratio:" << ratio << endl;
+		const Array& lpav = lineProfile_array(upper, lower, T, Cvv);
+		double manualIntegral = TemplatedUtils::integrate<double, Array, Array>(
+		                _frequencyv, lpav * highResIv);
+
+		double hrRatio = highResIntegral / lowResIntegral;
+		double mnRatio = manualIntegral / lowResIntegral;
+
+		if (abs(hrRatio - 1.) > 1.e-6 || abs(mnRatio - 1.) > 1.e-6)
+			cout << lowResIntegral << "\t HR: " << hrRatio << "\t MR:" << mnRatio
+			     << endl;
+#endif /* REPORT_SPEC_INTEGRAL */
+		BPvv(upper, lower) = lowResIntegral;
 
 		// Multiply by Bij in terms of Aij, valid for i > j
 		double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;

@@ -430,7 +430,8 @@ void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double 
 
 	double kT = T * Constant::BOLTZMAN;
 	vector<array<int, 2>> transitionv = qdata.transitionv();
-	for (int transitionIndex = 0; transitionIndex < transitionv.size(); transitionIndex++)
+	int numTr = transitionv.size();
+	for (int transitionIndex = 0; transitionIndex < numTr; transitionIndex++)
 	{
 		// Interpolate data points naively for temperatures left and right of T
 		double qLeft = qdata.q(iLeft, transitionIndex);

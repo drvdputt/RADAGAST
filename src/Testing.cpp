@@ -392,9 +392,7 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
                                   const std::string& outputPath, double Tc, double G0, double n,
                                   double expectedTemperature)
 {
-	const Array& frequencyv = gi.frequencyv();
-
-	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
+	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
 	GasModule::GrainInterface grainInfo{};
@@ -411,7 +409,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	const Array& frequencyv = gi.frequencyv();
 	const Array& emv = gs._emissivityv;
 	const Array& opv = gs._opacityv;
-	const Array& scav = gs._scatteringOpacityv * gs._previousISRFv;
 
 	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, emv)
 	     << endl;
@@ -423,7 +420,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	                "wavelength",
 	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
-	                "scattered (erg s-1 cm-3 Hz-1 sr-1)",
 	};
 	out << "#";
 	int i = 0;
@@ -440,11 +436,8 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		double freq = frequencyv[iFreq];
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
-		double effective = emv[iFreq] - scav[iFreq];
-		effective = effective > 0 ? effective : 0;
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
-		    << opv[iFreq] << tab << scav[iFreq] << tab << emv[iFreq] - scav[iFreq]
-		    << tab << endl;
+		    << opv[iFreq] << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}
@@ -464,7 +457,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 
 	double fBralpha = Constant::LIGHT / 4052.27e-7;
 
-	function<double(double frequency)> evaluateSpectrum = [&](double f) {
+	auto evaluateSpectrum = [&](double f) {
 		return TemplatedUtils::evaluateLinInterpf<double>(f, frequencyv, emv);
 	};
 
@@ -481,7 +474,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                               const Array& specificIntensityv, double n)
+                               const Spectrum& specificIntensity, double n)
 {
 	const string tab = "\t";
 	const int samples = 200;
@@ -498,7 +491,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	{
 		GasModule::GrainInterface gri{};
 		GasInterfaceImpl::Solution s =
-		                gi.calculateDensities(n, T, specificIntensityv, gri);
+		                gi.calculateDensities(n, T, specificIntensity, gri);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -516,7 +509,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	}
 	output.close();
 
-	double isrf = TemplatedUtils::integrate<double>(gi.frequencyv(), specificIntensityv);
+	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
+	                                                specificIntensity.valuev());
 
 	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
 	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
@@ -637,14 +631,15 @@ void Testing::testChemistry()
 	const double T = 10000;
 	Array frequencyv = generateGeometricGridv(200, 1e11, 1e16);
 	Array specificIntensityv = generateSpecificIntensityv(frequencyv, 25000, 10);
+	Spectrum specificIntensity(frequencyv, specificIntensityv);
 
 	ChemistrySolver cs(make_unique<ChemicalNetwork>());
 
 	// Formation and dissociation rates should come from somewhere else
 	double kform = 0;
 	double kdiss = 0;
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, frequencyv, specificIntensityv, kdiss,
-	                                              kform);
+
+	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, specificIntensity, kdiss, kform);
 	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
 
 	int ie = SpeciesIndex::index("e-");
@@ -659,8 +654,8 @@ void Testing::testChemistry()
 	n0v(iH2) = 0;
 
 	EVector nv = cs.solveBalance(kv, n0v);
-	double ionizedFraction = Ionization::solveBalance(nv(iH) + nv(ip), T, frequencyv,
-	                                                  specificIntensityv);
+	double ionizedFraction =
+	                Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
 
 	cout << "Compare with ionized fraction calculation: " << endl;
 	cout << "f = " << ionizedFraction << endl;
@@ -731,27 +726,29 @@ void Testing::runH2(bool write)
 	Array unrefined =
 	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+
+	Array specificIntensityv = generateSpecificIntensityv(unrefined, Tc, G0);
+	Spectrum specificIntensity(unrefined, specificIntensityv);
+
 	// Add points for H2 lines
 	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
 	Array frequencyv = improveFrequencyGrid(h2l, unrefined);
 
-	// input spectrum
-	Array specificIntensityv = generateSpecificIntensityv(frequencyv, Tc, G0);
-	Spectrum specificIntensity(unrefined, specificIntensityv);
+	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
+	H2Levels h2Levels{h2Data, frequencyv};
 
+	// Set the densities
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
 	speciesNv(SpeciesIndex::inH2()) = nH2;
 	speciesNv(SpeciesIndex::ine()) = ne;
 	speciesNv(SpeciesIndex::inp()) = np;
 	speciesNv(SpeciesIndex::inH()) = nH;
 
-	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
-	H2Levels h2Levels{h2Data, frequencyv};
+	// Calculate the source and sink terms for the level calculation
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
 	EVector sinkv = h2Levels.dissociationSinkv(specificIntensityv);
 	GasStruct gas(T, speciesNv);
-	NLevel::Solution s =
-	                h2Levels.solveBalance(nH2, specificIntensityv, sourcev, sinkv, gas);
+	NLevel::Solution s = h2Levels.solveBalance(nH2, specificIntensity, sourcev, sinkv, gas);
 
 	if (write)
 	{
@@ -784,30 +781,29 @@ void Testing::runFromFilesvsHardCoded()
 	Array frequencyv = improveFrequencyGrid(hl, unrefined);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(frequencyv, frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(frequencyv, frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarseFrequencyv =
-	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	Array coarsev = generateGeometricGridv(400, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
-	cout << "Constructing model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarseFrequencyv);
-	FreeBound fb(coarseFrequencyv);
-	H2Levels h2l(make_shared<H2FromFiles>(8, 3), coarseFrequencyv);
+	cout << "Construction model to help with refining frequency grid" << endl;
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarsev);
+	FreeBound fb(coarsev);
+	H2Levels h2l(make_shared<H2FromFiles>(8, 5), coarsev);
 
-	Array frequencyv = improveFrequencyGrid(hl, coarseFrequencyv);
+	Array frequencyv = improveFrequencyGrid(hl, coarsev);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {frequencyv, "", "8 3"};
+	return {coarsev, frequencyv, "", "8 5"};
 }
 
 void Testing::runFullModel()
@@ -816,18 +812,19 @@ void Testing::runFullModel()
 	runGasInterfaceImpl(genFullModel(), "gasOnly");
 }
 
-void Testing::runWithDust()
+void Testing::runWithDust(bool write)
 {
 	cout << "RUN_WITH_DUST" << endl;
 
 	// Gas model
-	GasModule::GasInterface gasInterface{genFullModel()};
-	const Array& frequencyv{gasInterface.frequencyv()};
+	GasModule::GasInterface gasInterface = genFullModel();
+	const Array& frequencyv = gasInterface.frequencyv();
 
 	// Radiation field
 	double Tc{4e3};
-	double G0{1e-1};
-	Array specificIntensityv{generateSpecificIntensityv(frequencyv, Tc, G0)};
+	double G0{1e2};
+	Array specificIntensityv =
+	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
 	// Gas density
 	double nHtotal{1000};
@@ -864,5 +861,6 @@ void Testing::runWithDust()
 	// Run
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
-	writeGasState("withDust", gasInterface, gs);
+	if (write)
+		writeGasState("withDust", gasInterface, gs);
 }

@@ -313,41 +313,43 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 
 void FreeFree::addOpacityCoefficientv(double T, Array& opCoeffv) const
 {
-	// C = 4 e^6 / 3mhc * sqrt(2pi / 3m)
-	const double opCoef_nu_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS /
-	                                        Constant::PLANCK / Constant::LIGHT *
-	                                        sqrt_2piOver3m;
-	double kT = Constant::BOLTZMAN * T;
-	double sqrtkT = sqrt(kT);
-	double loggamma2 = log10(Constant::RYDBERG / kT);
-#ifdef DEBUG_CONTINUUM_DATA
-	ofstream out = IOTools::ofstreamFile("freefree/ffopacitycoef.dat");
-#endif
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
 		double nu = _frequencyv[iFreq];
-		double u = Constant::PLANCK * nu / kT;
-		double logu = log10(u);
-		// C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
-		double opCoeffNu = opCoef_nu_constantFactor / sqrtkT / nu / nu / nu *
-		                   -expm1(-u) * gauntFactor(logu, loggamma2);
-#ifdef DEBUG_CONTINUUM_DATA
-		out << _frequencyv[iFreq] << "\t" << opCoeffNu << endl;
-#endif
-		opCoeffv[iFreq] += opCoeffNu;
+		opCoeffv[iFreq] += opacityCoefficient(nu, T);
 	}
-#ifdef DEBUG_CONTINUUM_DATA
-	out.close();
-#endif
 }
 
-double FreeFree::heating(double np_ne, double T, const Array& specificIntensityv) const
+double FreeFree::opacityCoefficient(double nu, double T) const
 {
-	Array freefreeOpCoefv(_frequencyv.size());
-	addOpacityCoefficientv(T, freefreeOpCoefv);
-	Array intensityOpacityv(specificIntensityv * np_ne * freefreeOpCoefv);
-	return Constant::FPI *
-	       TemplatedUtils::integrate<double>(_frequencyv, intensityOpacityv);
+	// C = 4 e^6 / 3mhc * sqrt(2pi / 3m)
+	const double opCoef_constantFactor = 4 * e6 / 3. / Constant::ELECTRONMASS /
+	                                     Constant::PLANCK / Constant::LIGHT *
+	                                     sqrt_2piOver3m;
+	double kT = Constant::BOLTZMAN * T;
+	double sqrtkT = sqrt(kT);
+	double loggamma2 = log10(Constant::RYDBERG / kT);
+	double u = Constant::PLANCK * nu / kT;
+	double logu = log10(u);
+
+	// C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
+	double opCoeffNu = opCoef_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u) *
+	                   gauntFactor(logu, loggamma2);
+	return opCoeffNu;
+}
+
+double FreeFree::heating(double np_ne, double T, const Spectrum& specificIntensity) const
+{
+	// This opacity is very smooth, so just go over the points of the input spectrum
+	const Array& nuv{specificIntensity.frequencyv()};
+	const Array& vv{specificIntensity.valuev()};
+
+	Array intensityOpacityv(nuv.size());
+	for (size_t i = 0; i < nuv.size(); i++)
+		intensityOpacityv[i] = vv[i] * opacityCoefficient(nuv[i], T);
+
+	return np_ne * Constant::FPI *
+	       TemplatedUtils::integrate<double>(nuv, intensityOpacityv);
 }
 
 double FreeFree::cooling(double np_ne, double T) const

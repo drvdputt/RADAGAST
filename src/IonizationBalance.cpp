@@ -8,10 +8,9 @@
 
 using namespace std;
 
-double Ionization::solveBalance(double nH, double T, const Array& frequencyv,
-                                const Array& specificIntensityv)
+double Ionization::solveBalance(double nH, double T, const Spectrum& specificIntensity)
 {
-	double integral = photoRateCoeff(frequencyv, specificIntensityv);
+	double integral = photoRateCoeff(specificIntensity);
 	double gamma = collisionalRateCoeff(T);
 	double alpha = recombinationRateCoeff(T);
 
@@ -38,16 +37,21 @@ double Ionization::solveBalance(double nH, double T, const Array& frequencyv,
 	return min(ne / nH, 1.);
 }
 
-double Ionization::photoRateCoeff(const Array& frequencyv, const Array& specificIntensityv)
+double Ionization::photoRateCoeff(const Spectrum& specificIntensity)
 {
-	size_t nFreq = frequencyv.size();
-	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
-	Array integrand(nFreq);
-	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] *
-		               crossSection(frequencyv[n]);
+	// Just integrate over the points of the input spectrum here, since the photoionization
+	// cross section is smooth
+	const Array& nuv = specificIntensity.frequencyv();
+	const Array& vv = specificIntensity.valuev();
+
+	// Only integrate over frequencies above the threshold
+	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, nuv);
+	Array integrandv(vv.size());
+	for (size_t i = iThres; i < vv.size(); i++)
+		integrandv[i] = vv[i] / nuv[i] * crossSection(nuv[i]);
+
 	double integral = Constant::FPI / Constant::PLANCK *
-	                  TemplatedUtils::integrate<double>(frequencyv, integrand);
+	                  TemplatedUtils::integrate<double>(nuv, integrandv);
 	return integral;
 }
 
@@ -93,33 +97,38 @@ double Ionization::recombinationRateCoeff(double T)
 	return a / (sqrt(T / T0) * pow(1 + sqrt(T / T0), 1 - b) * pow(1 + sqrt(T / T1), 1 + b));
 }
 
-double Ionization::heating(double np, double ne, double T, const Array& frequencyv,
-                           const Array& specificIntensityv)
+double Ionization::heating(double np, double ne, double T, const Spectrum& specificIntensity)
 {
 	// Use formula 3.2 from Osterbrock
 	double numberOfIonizations = np * ne * recombinationRateCoeff(T);
 
-	size_t nFreq = frequencyv.size();
+	auto nuv = specificIntensity.frequencyv();
+	auto iv = specificIntensity.valuev();
+
+	size_t nFreq = nuv.size();
 	Array integrand(nFreq);
-	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, frequencyv);
+	size_t iThres = TemplatedUtils::index<double>(THRESHOLD, nuv);
 
-	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] *
-		               (frequencyv[n] - THRESHOLD) * crossSection(frequencyv[n]);
-	double topIntegral = Constant::PLANCK *
-	                     TemplatedUtils::integrate<double>(frequencyv, integrand);
+	// Integrand I_nu / nu * sigma
+	for (size_t i = iThres; i < nFreq; i++)
+		integrand[i] = iv[i] / nuv[i] * crossSection(nuv[i]);
 
-	for (size_t n = iThres; n < nFreq; n++)
-		integrand[n] = specificIntensityv[n] / frequencyv[n] *
-		               crossSection(frequencyv[n]);
-
-	// The denominator comes from isolating n_0 from the balance equation, and now also includes
-	// the collisional term (top and bottom have been multiplied with h / 4pi, see 3.1, hence
-	// the extra
-	// factors)
-	double bottom = TemplatedUtils::integrate<double>(frequencyv, integrand) +
+	// The denominator comes from isolating n_0 from the balance equation, and now also
+	// includes the collisional term (top and bottom have been multiplied with h / 4pi, see
+	// 3.1, hence the extra factors)
+	double bottom = TemplatedUtils::integrate<double>(nuv, integrand) +
 	                Constant::PLANCK / Constant::FPI * ne * collisionalRateCoeff(T);
 
+	// Now multiply the original integrand with (nu - nu_0). Top / bottom will give the
+	// average energy left over after ionization.
+	for (size_t i = iThres; i < nFreq; i++)
+		integrand[i] *= (nuv[i] - THRESHOLD);
+
+	double topIntegral =
+	                Constant::PLANCK * TemplatedUtils::integrate<double>(nuv, integrand);
+
+	// The heating is hence the total ionization rate (equal to the recombination rate since
+	// we assume equilibrium), times the average energy of the release electron.
 	double result = numberOfIonizations * topIntegral / bottom;
 
 	DEBUG("Ionization heating " << result << endl);

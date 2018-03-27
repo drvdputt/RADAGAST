@@ -65,7 +65,8 @@ HEADERS=$(wildcard $(SRCDIR)/*h)
 
 # Binary
 $(shell mkdir -p $(BINDIR))
-PROGRAM=$(BINDIR)/test
+PROGRAM=$(BINDIR)/run
+TEST=$(BINDIR)/test
 
 # Objects
 $(shell mkdir -p $(OBJDIR) >/dev/null)
@@ -136,3 +137,8 @@ clean:
 .PHONY: doc
 doc:
 	(cd dox && doxygen doxygen.conf)
+
+# Test suite
+test: $(TEST)
+$(TEST): $(LIBFILE) test_main/main.cpp
+	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -L$(LIBDIR) -lgasmodule -o $@ test_main/main.cpp

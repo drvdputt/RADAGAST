@@ -15,10 +15,16 @@ using namespace std;
 
 namespace GasModule
 {
-GasInterface::GasInterface(const valarray<double>& frequencyv, const string& atomChoice,
-                           const string& moleculeChoice)
-                : _frequencyv(frequencyv)
+GasInterface::GasInterface(const valarray<double>& iFrequencyv,
+                           const valarray<double>& frequencyv,
+                           // const valarray<double>& eFrequencyv,
+                           // const valarray<double>& oFrequencyv,
+                           const string& atomChoice, const string& moleculeChoice)
+                : _iFrequencyv{iFrequencyv}, _frequencyv{frequencyv}
+// _eFrequencyv(eFrequencyv),
+// _oFrequencyv(oFrequencyv)
 {
+
 	unique_ptr<HydrogenLevels> atomicLevels;
 
 	// Choose a hydrogen data provider
@@ -70,9 +76,12 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
                                   const valarray<double>& specificIntensityv,
                                   const GrainInterface& grainInfo) const
 {
-	gasState._previousISRFv = specificIntensityv;
+	// Create a spectrum object which makes it easier to pass around the frequencies and the
+	// values for the specific intensity. It can also be used to easily interpolate the
+	// specific intensity for a certain frequency.
+	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
-		_pimpl->solveBalance(gasState, n, Tinit, specificIntensityv, grainInfo);
+		_pimpl->solveBalance(gasState, n, Tinit, specificIntensity, grainInfo);
 	else
 		zeroOpticalProperties(gasState);
 }
@@ -80,7 +89,6 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 void GasInterface::initializeGasState(GasState& gasState, double n, double T,
                                       const GrainInterface& grainInfo) const
 {
-	gasState._previousISRFv = Array(_frequencyv.size());
 	if (n > 0)
 		_pimpl->solveInitialGuess(gasState, n, T, grainInfo);
 	else

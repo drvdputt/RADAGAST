@@ -65,7 +65,7 @@ public:
 	    grains. The absorption efficiency also needs to be given (need to review its exact
 	    definition). It represents the number of photons absorbed from an ambient radiation
 	    field at a certain wavelength. It needs to be given for each grain size, and for
-	    each point of the frequency grid. */
+	    each point of the frequency grid of the input radiation field. */
 	class Population
 	{
 	public:

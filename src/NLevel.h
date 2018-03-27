@@ -61,8 +61,9 @@ public:
 
 	virtual ~NLevel();
 
-	/** Getter for the frequency grid the calculations are performed on. All of the input
-	    (ouput) spectra must have (will have) the same frequency points. */
+	/** Getter for the frequency grid the calculations are performed on. With the new
+	    specific intensity rework, the input spectrum can have a different grid than this
+	    one. */
 	const Array& frequencyv() const { return _frequencyv; }
 
 	/** Ouputs some properties about the different line transitions taken into account by
@@ -114,12 +115,12 @@ public:
 	    equilibrium equations, and then calls @c solveRateEquations() do the actual
 	    calculation. This function should be generic, while the latter is allowed to have a
 	    specialized implementation per subclass. */
-	Solution solveBalance(double density, const Array& specificIntensityv,
+	Solution solveBalance(double density, const Spectrum& specificIntensity,
 	                      const EVector& sourcev, const EVector& sinkv,
 	                      const GasStruct& gas) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
-	Solution solveLTE(double density, const Array& specificIntensityv,
+	Solution solveLTE(double density, const Spectrum& specificIntensity,
 	                  const GasStruct& gas) const;
 
 	Solution solveZero(double T) const;
@@ -171,7 +172,7 @@ private:
 	    the Aij) and Pij is the line power (isrf integrated over the line profile). The
 	    units of Bij and Pij are often different in the literature and other codes, but
 	    their product should always have units [s-1]. */
-	EMatrix prepareAbsorptionMatrix(const Array& specificIntensityv, double T,
+	EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
 	                                const EMatrix& Cvv) const;
 
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations

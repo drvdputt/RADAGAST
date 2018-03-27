@@ -29,11 +29,14 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
                                              const Array& Qabs, int& resultZmax,
                                              int& resultZmin, vector<double>& resultfZ) const
 {
+	const Array& frequencyv = env.specificIntensity.frequencyv();
+	const Array& specificIntensityv = env.specificIntensity.valuev();
+
 	// Express a in angstroms
 	double aA = a / Constant::ANG_CM;
 
 	// Shortest wavelength = highest possible energy of a photon
-	double hnumax = Constant::PLANCK * *(end(env._frequencyv) - 1);
+	double hnumax = Constant::PLANCK * *(end(frequencyv) - 1);
 
 	/* The maximum charge is one more than the highest charge which still allows ionization
 	   by photons of hnumax. */
@@ -327,8 +330,8 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 		double fZz = fZ[Z - Zmin];
 		if (isnan(fZz))
 			Error::runtime("nan in fz");
-		double heatAZ = heatingRateAZ(a, Z, env._frequencyv, Qabs,
-		                              env.specificIntensityv);
+		double heatAZ = heatingRateAZ(a, Z, env.specificIntensity.frequencyv(), Qabs,
+		                              env.specificIntensity.valuev());
 
 		/* Fraction of grains in this charge state * heating by a single particle of
 		   charge Z. */
@@ -515,7 +518,8 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	                Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
 
 	// Gather environment parameters
-	const Environment env(frequencyv, specificIntensityv, gasT, ne, ne, {-1, 1}, {ne, ne},
+	const Spectrum specificIntensity(frequencyv, specificIntensityv);
+	const Environment env(specificIntensity, gasT, ne, ne, {-1, 1}, {ne, ne},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
 	/* File that writes out the absorption efficiency, averaged using the input radiation
@@ -586,8 +590,8 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 
 	// Input spectrum
 	Array specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
-
-	const Environment env(frequencyv, specificIntensityv, gasT, ne, np, {-1, 1}, {ne, np},
+	Spectrum specificIntensity(frequencyv, specificIntensityv);
+	const Environment env(specificIntensity, gasT, ne, np, {-1, 1}, {ne, np},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
 	// Grain size
