@@ -36,4 +36,5 @@ private:
 	double _freqMax{0};
 	Array _frequencyv, _valuev;
 };
+
 #endif /* GASMODULE_GIT_SRC_SPECTRUM_H_ */

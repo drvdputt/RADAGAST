@@ -16,6 +16,7 @@
 #include "SpecialFunctions.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
+#include "Timer.h"
 
 #include <iomanip>
 #include <sstream>
@@ -416,9 +417,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency",
-	                "wavelength",
-	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	};
 	out << "#";
@@ -790,7 +789,7 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = generateGeometricGridv(400, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	Array coarsev = generateGeometricGridv(600, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	cout << "Construction model to help with refining frequency grid" << endl;
@@ -860,7 +859,11 @@ void Testing::runWithDust(bool write)
 
 	// Run
 	GasModule::GasState gs;
-	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
+	{
+		Timer t("Update gas state");
+		gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv,
+		                            grainInterface);
+	}
 	if (write)
 		writeGasState("withDust", gasInterface, gs);
 }

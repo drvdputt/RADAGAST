@@ -1,3 +1,6 @@
+#ifndef GASMODULE_GIT_SRC_GASSTRUCT_H_
+#define GASMODULE_GIT_SRC_GASSTRUCT_H_
+
 #include "EigenAliases.h"
 
 /** A struct containing a bunch of parameters about the gas that are frequently passed around,
@@ -40,3 +43,5 @@ GasStruct(double T, const EVector& speciesNv) : _T{T}, _speciesNv{speciesNv} {}
 	// calculation. Empty by default.
 	EVector _h2Levelv{};
 } GasStruct;
+
+#endif /* GASMODULE_GIT_SRC_GASSTRUCT_H_ */

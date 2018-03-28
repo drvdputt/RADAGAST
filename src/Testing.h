@@ -1,5 +1,5 @@
-#ifndef _TESTING_H_
-#define _TESTING_H_
+#ifndef GASMODULE_GIT_SRC_TESTING_H_
+#define GASMODULE_GIT_SRC_TESTING_H_
 
 #include "GasInterface.h"
 #include "Spectrum.h"
@@ -102,4 +102,4 @@ void runFullModel();
 void runWithDust(bool write=true);
 } // namespace Testing
 
-#endif /* _TESTING_H_ */
+#endif /* GASMODULE_GIT_SRC_TESTING_H_ */

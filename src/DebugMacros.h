@@ -1,5 +1,7 @@
-#ifndef _GLOBAL_H_
-#define _GLOBAL_H_
+#ifndef GASMODULE_GIT_SRC_DEBUGMACROS_H_
+#define GASMODULE_GIT_SRC_DEBUGMACROS_H_
+
+#include <iostream>
 
 /* #define SANITY */
 
@@ -23,4 +25,4 @@
 	} while (0)
 #endif
 
-#endif /* _GLOBAL_H_ */
+#endif /* GASMODULE_GIT_SRC_DEBUGMACROS_H_ */
