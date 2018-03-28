@@ -53,11 +53,20 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	// Fractional destruction rate (in s-1) stays constant when populations are adjusted
 	// (sum over the row indices by doing a colwise reduction. Need to transpose because
 	// summing each column gives a row vector, while sinkv is column one.
-	EArray fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
+	EVector fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
 
 	// Get the indices that cover the electronic ground state
 	const auto& indicesX = _hff->indicesX();
 	const auto& indicesExcited = _hff->indicesExcited();
+
+	// Use a solver for the lowest levels (this does assume that the levels are in order of
+	// energy though... maybe this isn't necessary. I think this'll be useful as long as the
+	// lower levels generally have lower indices)
+	// int numLo = indicesX.size();
+	// EMatrix Fvv = Mvv.topLeftCorner(numLo, numLo);
+	// Fvv -= fracDestructionRatev.head(numLo).asDiagonal();
+	// auto f = sourcev.head(numLo);
+	// nv.head(numLo) = Fvv.colPivHouseholderQr().solve(-f);
 
 	// Iterate until converged
 	bool converged = false;
@@ -74,11 +83,8 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			// making the assumption that the X states are contigous in the eigen
 			// index space. In that case, I can simply do a matrix operation here,
 			// over a slice, leading to possible optimization.
-			double creationRate = Mvv.row(i) * nv + sourcev(i);
-			if (creationRate <= 0)
-				nv(i) = 0;
-			else
-				nv(i) = creationRate / fracDestructionRatev(i);
+			double creationRate = sourcev(i) + Mvv.row(i) * nv;
+			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
 		}
 
 		// Sweep over the other states
@@ -88,10 +94,7 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			// Only sum over the ground state here
 			for (auto j : indicesX)
 				creationRate += Mvv(i, j) * nv(j);
-			if (creationRate <= 0)
-				nv(i) = 0;
-			else
-				nv(i) = creationRate / fracDestructionRatev(i);
+			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
 		}
 		// TODO: if this is still too slow, try the following optimizations:
 

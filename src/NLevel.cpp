@@ -118,8 +118,7 @@ NLevel::Solution NLevel::solveLTE(double density, const Spectrum& specificIntens
 	s.T = gas._T;
 	s.nv = density * solveBoltzmanEquations(gas._T);
 	s.cvv = _ldp->cvv(gas);
-	s.bpvv = prepareAbsorptionMatrix(specificIntensity
-					 , gas._T, s.cvv);
+	s.bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, s.cvv);
 	return s;
 }
 
@@ -275,12 +274,13 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 	EVector nv = Mvv.colPivHouseholderQr().solve(f);
 	// DEBUG("nv" << endl << nv << endl);
 
-	// Hack: put populations = 0 if they were negative due to precision issues
+	// Put populations = 0 if they were negative due to precision issues
 	nv = nv.array().max(0);
 
 	// Element wise relative errors
-	EArray diffv = Mvv * nv - f;
-	EArray errv = diffv / EArray(f);
+	// EArray diffv = Mvv * nv - f;
+	// EArray errv = diffv / f.array();
+	// Note that these errors will always be quite big for small components of f
 	// DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;
@@ -288,14 +288,16 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 
 EVector NLevel::solveBoltzmanEquations(double T) const
 {
+	double eMin = _ev.minCoeff();
 	// Degeneracy factor
 	EVector pv{_gv};
+	// Partition function
 	double pSum{0};
 	double kT = Constant::BOLTZMAN * T;
 	for (int i = 0; i < _ev.size(); i++)
 	{
 		// Exponential factor
-		pv(i) *= exp(-_ev(i) / kT);
+		pv(i) *= exp(eMin - _ev(i) / kT);
 		// Normalization
 		pSum += pv(i);
 	}
