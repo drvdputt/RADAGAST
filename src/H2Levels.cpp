@@ -35,12 +35,13 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
                                      const EVector& sourcev, const EVector& sinkv,
                                      int chooseConsvEq, const GasStruct& gas) const
 {
-#define USE_ITERATION_METHOD
-#ifdef USE_ITERATION_METHOD
 	// Initial guess
 	EVector nv;
 	if (gas._h2Levelv.size() == 0)
+	{
+		DEBUG("Using LTE as initial guess for H2" << endl);
 		nv = n * solveBoltzmanEquations(gas._T);
+	}
 	else if (gas._h2Levelv.size() == numLv())
 		nv = gas._h2Levelv;
 	else
@@ -104,16 +105,18 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		converged = deltaNv.maxCoeff() < 1e-6 * n;
 		counter++;
 		if (!(counter % 1000))
+		{
 			DEBUG("Solving h2... " << counter << "iterations" << endl);
+			// DEBUG("h2Levelv = \n" << nv << endl);
+		}
 	}
 	if (nv.array().isNaN().any())
 		Error::runtime("nan in H2 level solution");
 	DEBUG("Solved H2 in " << counter << " iterations" << endl);
-	// DEBUG("\nnv\n" << nv << endl);
+	// DEBUG("h2Levelv = \n" << nv << endl);
+	// EVector explicitNv = NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv,
+	// chooseConsvEq, gas);
 	return nv;
-#else
-	return NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv, chooseConsvEq, gas);
-#endif
 }
 
 double H2Levels::dissociationRate(const NLevel::Solution& s,

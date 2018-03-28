@@ -152,20 +152,21 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 
 	DEBUG("Calculating densities for T = " << T << "K" << endl);
 
-	// Decide how to do the initial guess
+	// Decide how to do the initial guess; manual, or using the previous state.
 	bool manualGuess = true;
 
 	// If a previous solution is available (pointer is nonzero)
 	if (previous)
 	{
 		double fT = T / previous->T;
-		if (fT > 0.5 && fT < 2)
+		if (fT > 0.2 && fT < 5)
 		{
 			DEBUG("Using previous speciesNv as initial guess" << std::endl);
 			s.speciesNv = previous->speciesNv;
 			manualGuess = false;
 		}
-		// If the difference in temperature is larger than 2, do a manual guess anyway.
+		// If the difference in temperature is larger than a certain factor, do a manual
+		// guess anyway.
 	}
 	if (manualGuess)
 	{
@@ -188,8 +189,11 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	if (_molecular)
 	{
 		if (manualGuess)
+		{
+			DEBUG("Using LTE as initial guess for H2" << endl);
 			gas._h2Levelv = s.speciesNv(_inH2) *
 			                _molecular->solveBoltzmanEquations(gas._T);
+		}
 		else
 			gas._h2Levelv = previous->H2Solution.nv;
 	}
