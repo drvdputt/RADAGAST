@@ -59,24 +59,23 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	const auto& indicesX = _hff->indicesX();
 	const auto& indicesExcited = _hff->indicesExcited();
 
-	// Use a solver for the lowest levels (this does assume that the levels are in order of
-	// energy though... maybe this isn't necessary. I think this'll be useful as long as the
-	// lower levels generally have lower indices)
-	// int numLo = indicesX.size();
-	// EMatrix Fvv = Mvv.topLeftCorner(numLo, numLo);
-	// Fvv -= fracDestructionRatev.head(numLo).asDiagonal();
-	// auto f = sourcev.head(numLo);
-	// nv.head(numLo) = Fvv.colPivHouseholderQr().solve(-f);
-
 	// Iterate until converged
 	bool converged = false;
+	double maxDeltaX = 1.e-4 *n;
+	double maxDeltaAll = 1.e-5 * n;
+	double maxFracDelta = 1.e-2;
 	size_t counter{0};
+	double xFrac = 0, eFrac = 0;
 	while (!converged)
 	{
+		counter++;
+
 		// The previous nv, for convergence checking
 		EVector previousNv = nv;
+		EVector deltav = EVector::Zero(nv.size());
 
 		// Sweep over ground state
+		xFrac = 0;
 		for (auto i : indicesX)
 		{
 			// Sum Mij nj, with j running over all other levels. TODO: consider
@@ -85,9 +84,38 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			// over a slice, leading to possible optimization.
 			double creationRate = sourcev(i) + Mvv.row(i) * nv;
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
+			xFrac += nv(i);
+		}
+		/* Renormalize because the algorithm has no sum rule, */
+		nv *= n / nv.sum();
+		xFrac /= n;
+
+		// We will cut this iteration short as long as the ground state has not
+		// converged.
+		bool loopBack = false;
+		for (auto i : indicesX)
+		{
+			deltav(i) = abs(nv(i) - previousNv(i));
+			if (!loopBack && deltav(i) > maxDeltaX)
+			{
+				loopBack = true;
+				break;
+			}
+		}
+		if (loopBack)
+		{
+			if (!(counter % 1000))
+			{
+				DEBUG("Solving h2... " << counter << "iterations" << endl);
+				DEBUG("X fraction = " << xFrac << endl);
+				// DEBUG("h2Levelv = \n" << nv << endl);
+			}
+			continue;
 		}
 
-		// Sweep over the other states
+		// If the ground state has more or less converged, we will also start sweeping
+		// over the other states
+		eFrac = 0;
 		for (auto i : indicesExcited)
 		{
 			double creationRate = sourcev(i);
@@ -95,27 +123,43 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			for (auto j : indicesX)
 				creationRate += Mvv(i, j) * nv(j);
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
+			eFrac += nv(i);
 		}
-		// TODO: if this is still too slow, try the following optimizations:
-
-		// 1. First put all the creation rates in a vector, then try the division (this
-		// makes dealing with zeros a little harder though)
-
-		/* Renormalize because the algorithm has no sum rule, */
 		nv *= n / nv.sum();
+		eFrac /= n;
 
-		EVector deltaNv = (nv - previousNv).array().abs();
-		converged = deltaNv.maxCoeff() < 1e-6 * n;
-		counter++;
+		// Overall convergence check
+
+		// Absolute change
+		bool thresconv = deltav.maxCoeff() < maxDeltaAll;
+
+		// Relative change
+		bool fracconv = true;
+		for (int i = 0; i < nv.size() && fracconv; i++)
+		{
+			double df = 0;
+			// finite/0 means not converged
+			if (previousNv(i) <= 0 && nv(i) > 0)
+				df = 2 * maxFracDelta;
+			else
+				df = abs(nv(i) / previousNv(i) - 1.);
+
+			if (df > maxFracDelta)
+				fracconv = false;
+		}
+
 		if (!(counter % 1000))
 		{
 			DEBUG("Solving h2... " << counter << "iterations" << endl);
-			// DEBUG("h2Levelv = \n" << nv << endl);
+			DEBUG("thresconv = " << thresconv << " fracconv = " << fracconv << endl);
 		}
+
+		converged = thresconv && fracconv;
 	}
 	if (nv.array().isNaN().any())
 		Error::runtime("nan in H2 level solution");
 	DEBUG("Solved H2 in " << counter << " iterations" << endl);
+	DEBUG("Excited fraction = " << eFrac << endl);
 	// DEBUG("h2Levelv = \n" << nv << endl);
 	// EVector explicitNv = NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv,
 	// chooseConsvEq, gas);

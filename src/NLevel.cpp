@@ -213,7 +213,7 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
-		double lowResIntegral = lp.integrateSpectrum(specificIntensity);
+		double lowResIntegral = lp.integrateSpectrum(specificIntensity, spectrumMax);
 // #define REPORT_SPEC_INTEGRAL
 #ifdef REPORT_SPEC_INTEGRAL
 		double highResIntegral = lp.integrateSpectrum(highResSpec);
