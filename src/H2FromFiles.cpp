@@ -104,6 +104,9 @@ void H2FromFiles::readCollisions()
 	// Collision rates with H2, from Lee 2008
 	_qH2ortho = readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat");
 	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
+
+	// Collision rates with H+, from Gerlich 1990
+	_qp = readCollisionFile("dat/h2/coll_rates_Hp.dat");
 }
 
 void H2FromFiles::readDirectDissociation()
@@ -383,11 +386,14 @@ EMatrix H2FromFiles::cvv(const GasStruct& gas) const
 	// speciesNv, which also contains a bunch of other parameters, such as the ortho and
 	// para contributions. I just pick a ratio of 3 here, hardcoded.
 	double nH2 = gas._speciesNv(_inH2);
-	addToCvv(the_cvv, _qH2ortho, T, 0.75 * nH2);
-	addToCvv(the_cvv, _qH2para, T, 0.25 * nH2);
+	addToCvv(the_cvv, _qH2ortho, T, gas._orthoH2 * nH2);
+	addToCvv(the_cvv, _qH2para, T, (1. - gas._orthoH2) * nH2);
 
 	// TODO: test if these are loaded correctly (compare with graph in Lee paper)
 
+	// H+-H2 collisions
+	double np = gas._speciesNv(SpeciesIndex::inp());
+	addToCvv(the_cvv, _qp, T, np);
 	return the_cvv;
 }
 

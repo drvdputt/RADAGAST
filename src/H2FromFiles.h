@@ -204,6 +204,9 @@ private:
 	/** Collisions between H2 and H2. */
 	CollisionData _qH2ortho, _qH2para;
 
+	/** Collision between H+ and H2. */
+	CollisionData _qp;
+
 	/** Dissociation probability for each level. [s-1] */
 	EVector _dissProbv;
 	/** Kinetic energy following dissociation. [erg] */

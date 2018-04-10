@@ -55,8 +55,6 @@ private:
 
 	/** TODO: need collisional dissociation contribution. */
 
-	/** TODO: need collisional dissociation contribution. */
-
 	/** Sink term due to the spontaneous dissociation rate. */
 	EVector spontaneousDissociationSinkv() const;
 
