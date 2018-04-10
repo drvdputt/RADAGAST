@@ -1,5 +1,5 @@
-#ifndef _IONIZATIONBALANCE_H_
-#define _IONIZATIONBALANCE_H_
+#ifndef GASMODULE_GIT_SRC_IONIZATIONBALANCE_H_
+#define GASMODULE_GIT_SRC_IONIZATIONBALANCE_H_
 
 #include "Spectrum.h"
 
@@ -32,4 +32,4 @@ double cooling(double nH, double np, double ne, double T);
 const double THRESHOLD = 3.28984196e15; // Hertz;
 }
 
-#endif /* _IONIZATIONBALANCE_H_ */
+#endif /* GASMODULE_GIT_SRC_IONIZATIONBALANCE_H_ */

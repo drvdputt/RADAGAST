@@ -1,5 +1,5 @@
-#ifndef _PHOTOELECTRICHEATING_H_
-#define _PHOTOELECTRICHEATING_H_
+#ifndef GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
+#define GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
 
 #include "Constants.h"
 #include "GrainInterface.h"
@@ -140,4 +140,4 @@ private:
 	const double _maxWav{1000 * Constant::UM_CM};
 };
 
-#endif /* _PHOTOELECTRICHEATING_H_ */
+#endif /* GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_ */
