@@ -409,7 +409,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 
 	const Array& frequencyv = gi.frequencyv();
 	const Array& emv = gs._emissivityv;
-	const Array& opv = gs._opacityv;
+	Spectrum opv(gi.oFrequencyv(), gs._opacityv);
 
 	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, emv)
 	     << endl;
@@ -436,7 +436,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
-		    << opv[iFreq] << endl;
+		    << opv.evaluate(freq) << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}

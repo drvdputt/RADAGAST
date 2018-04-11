@@ -111,7 +111,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 
 	const Array& emv = emissivityv(s);
 	const Array& opv = opacityv(s, oFrequencyv);
-	const Array& scv = scatteringOpacityv(s);
+	const Array& scv = scatteringOpacityv(s, oFrequencyv);
 
 #ifdef SANITY
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -360,9 +360,9 @@ Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) co
 	return totalOp;
 }
 
-Array GasInterfaceImpl::scatteringOpacityv(const Solution& s) const
+Array GasInterfaceImpl::scatteringOpacityv(const Solution& s, const Array& oFrequencyv) const
 {
-	return Array(_frequencyv.size());
+	return Array(oFrequencyv.size());
 }
 
 double GasInterfaceImpl::cooling(const Solution& s) const

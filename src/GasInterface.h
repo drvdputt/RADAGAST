@@ -64,6 +64,7 @@ public:
 	/** Return the frequency grid used for the specific intensity (the one the user gave at
 	    construction. */
 	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
+	std::valarray<double> oFrequencyv() const { return _oFrequencyv; }
 
 	// USAGE 1: Calculate GasState objects //
 

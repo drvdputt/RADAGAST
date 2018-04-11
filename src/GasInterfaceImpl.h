@@ -115,7 +115,7 @@ public:
 	Array opacityv(const Solution&, const Array& oFrequencyv) const;
 
 	/** A possible scattering opacity */
-	Array scatteringOpacityv(const Solution&) const;
+	Array scatteringOpacityv(const Solution&, const Array& oFrequencyv) const;
 
 	///////////////////////////////////////
 	// HEATING AND COOLING CONTRIBUTIONS //

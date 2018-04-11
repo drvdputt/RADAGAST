@@ -313,9 +313,9 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 
 void FreeFree::addOpacityCoefficientv(double T, const Array& oFrequencyv, Array& opCoeffv) const
 {
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	for (size_t iFreq = 0; iFreq < oFrequencyv.size(); iFreq++)
 	{
-		double nu = _frequencyv[iFreq];
+		double nu = oFrequencyv[iFreq];
 		opCoeffv[iFreq] += opacityCoefficient(nu, T);
 	}
 }
