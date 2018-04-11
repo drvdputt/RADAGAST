@@ -146,15 +146,18 @@ Array NLevel::lineEmissivityv(const Solution& s) const
 	return total;
 }
 
-Array NLevel::opacityv(const Solution& s) const { return lineOpacityv(s); }
-
-Array NLevel::lineOpacityv(const Solution& s) const
+Array NLevel::opacityv(const Solution& s, const Array& oFrequencyv) const
 {
-	Array total(_frequencyv.size());
+	return lineOpacityv(s, oFrequencyv);
+}
+
+Array NLevel::lineOpacityv(const Solution& s, const Array& oFrequencyv) const
+{
+	Array total(oFrequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double factor = lineOpacityFactor(upper, lower, s);
 		LineProfile lp = lineProfile(upper, lower, s);
-		lp.addToSpectrum(_frequencyv, total, factor);
+		lp.addToSpectrum(oFrequencyv, total, factor);
 	});
 	return total;
 }

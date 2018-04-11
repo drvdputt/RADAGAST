@@ -42,7 +42,7 @@ public:
 	    The units are [density^-2][length^-1]. Multiplying with ne*np will give the opacity
 	    in [length-1]. The contributions are added to the current contents of opCoeffv in
 	    [cm-7]. */
-	void addOpacityCoefficientv(double T, Array& opCoeffv) const;
+	void addOpacityCoefficientv(double T, const Array& _oFrequencyv, Array& opCoeffv) const;
 
 	/** Calculate the opacity coefficient for the free-free continuum for a specific
 	    frequency and temperature. The units of the returned coefficient is [cm-7]: opacity

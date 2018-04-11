@@ -42,7 +42,8 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, double T,
-                                         const GasModule::GrainInterface& gi) const
+                                         const GasModule::GrainInterface& gi,
+                                         const Array& oFrequencyv) const
 {
 	Array isrfGuess(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -50,12 +51,13 @@ void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, doub
 		double freq = _frequencyv[iFreq];
 		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
 	}
-	solveBalance(gs, n, T, Spectrum(_frequencyv, isrfGuess), gi);
+	solveBalance(gs, n, T, Spectrum(_frequencyv, isrfGuess), gi, oFrequencyv);
 }
 
 void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Tinit,
                                     const Spectrum& specificIntensity,
-                                    const GasModule::GrainInterface& gi) const
+                                    const GasModule::GrainInterface& gi,
+                                    const Array& oFrequencyv) const
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
@@ -108,7 +110,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 	}
 
 	const Array& emv = emissivityv(s);
-	const Array& opv = opacityv(s);
+	const Array& opv = opacityv(s, oFrequencyv);
 	const Array& scv = scatteringOpacityv(s);
 
 #ifdef SANITY
@@ -333,21 +335,22 @@ Array GasInterfaceImpl::emissivityv(const Solution& s) const
 	return lineEmv + (np_ne(s) / Constant::FPI) * contEmCoeffv;
 }
 
-Array GasInterfaceImpl::opacityv(const Solution& s) const
+Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) const
 {
-	Array lineOp = _atomicLevels->opacityv(s.HSolution);
+	size_t numFreq = oFrequencyv.size();
+	Array lineOp = _atomicLevels->opacityv(s.HSolution, oFrequencyv);
 	if (_molecular)
-		lineOp += _molecular->opacityv(s.H2Solution);
+		lineOp += _molecular->opacityv(s.H2Solution, oFrequencyv);
 
-	Array contOpCoeffv(_frequencyv.size());
-	_freeFree->addOpacityCoefficientv(s.T, contOpCoeffv);
+	Array contOpCoeffv(numFreq);
+	_freeFree->addOpacityCoefficientv(s.T, oFrequencyv, contOpCoeffv);
 
 	double npne = np_ne(s);
 	double nH0 = nAtomic(s);
-	Array totalOp(_frequencyv.size());
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	Array totalOp(numFreq);
+	for (size_t iFreq = 0; iFreq < numFreq; iFreq++)
 	{
-		double ionizOp_iFreq = nH0 * Ionization::crossSection(_frequencyv[iFreq]);
+		double ionizOp_iFreq = nH0 * Ionization::crossSection(oFrequencyv[iFreq]);
 		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
 #ifdef SANITY
 		if (totalOp[iFreq] < 0)

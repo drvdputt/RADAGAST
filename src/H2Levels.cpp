@@ -17,18 +17,18 @@ H2Levels::H2Levels(shared_ptr<const H2FromFiles> hff, const Array& frequencyv)
 
 H2Levels::~H2Levels() = default;
 
-Array H2Levels::opacityv(const Solution& s) const
+Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 {
 	// Start with the line opacity
-	Array totalOpv = lineOpacityv(s);
+	Array totalOpv = lineOpacityv(s, oFrequencyv);
 
-	// Then add the dissociation cross section of each level, for each frequency
-	const Array& freqv = frequencyv();
+	// Then add the dissociation cross section of each level, for each frequency TODO:
+	// integrate/average out over the coarse frequencyv grid (oFrequencyv) here, instead of
+	// just evaluating at the points
 	for (size_t iLv = 0; iLv < _hff->numLv(); iLv++)
-		for (size_t iNu = 0; iNu < freqv.size(); iNu++)
+		for (size_t iNu = 0; iNu < oFrequencyv.size(); iNu++)
 			totalOpv[iNu] += s.nv(iLv) *
-			                 _hff->directDissociationCrossSection(freqv[iNu], iLv);
-
+			                 _hff->directDissociationCrossSection(oFrequencyv[iNu], iLv);
 	return totalOpv;
 }
 

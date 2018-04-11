@@ -1,5 +1,5 @@
-#ifndef _GASSTATE_H_
-#define _GASSTATE_H_
+#ifndef GASMODULE_GIT_SRC_GASSTATE_H_
+#define GASMODULE_GIT_SRC_GASSTATE_H_
 
 #include <string>
 #include <valarray>
@@ -89,4 +89,4 @@ private:
 };
 } /* namespace GasModule */
 
-#endif /* _GASSTATE_H_ */
+#endif /* GASMODULE_GIT_SRC_GASSTATE_H_ */

@@ -84,14 +84,16 @@ public:
 	    of that same temperature. Can be used by the client to manually set the temperature
 	    and calculate some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasModule::GasState&, double n, double T,
-	                       const GasModule::GrainInterface&) const;
+	                       const GasModule::GrainInterface&,
+	                       const Array& oFrequencyv) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
 	    temperature guess, and a Spectrum object containing the radiation field in specific
-	    intensity per frequency units. */
+	    intensity per frequency units. A grid on which the opacity (and emissivity?) will be
+	    discretized (before being stored in the gas state) also needs to be provided. */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
-	                  const Spectrum& specificIntensity,
-	                  const GasModule::GrainInterface&) const;
+	                  const Spectrum& specificIntensity, const GasModule::GrainInterface&,
+	                  const Array& oFrequencyv) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
@@ -110,7 +112,7 @@ public:
 	Array emissivityv(const Solution&) const;
 
 	/** The total opacity at each frequency in 1 / cm */
-	Array opacityv(const Solution&) const;
+	Array opacityv(const Solution&, const Array& oFrequencyv) const;
 
 	/** A possible scattering opacity */
 	Array scatteringOpacityv(const Solution&) const;

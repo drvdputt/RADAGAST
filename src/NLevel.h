@@ -137,8 +137,8 @@ public:
 	/** The opacity alpha_nu, equivalent to kappaRho for dust (cm-1). The default
 	    implementation gives just the line opacity, but subclasses can override it to add
 	    extra contributions, such as absorption cross sections per level. */
-	virtual Array opacityv(const Solution& s) const;
-	Array lineOpacityv(const Solution& s) const;
+	virtual Array opacityv(const Solution& s, const Array& oFrequencyv) const;
+	Array lineOpacityv(const Solution& s, const Array& oFrequencyv) const;
 
 	/** Heating rate due to collisional de-excitation (ergs / s / cm3). */
 	double heating(const Solution& s) const;

@@ -5,13 +5,6 @@
 
 #include <cassert>
 
-namespace
-{
-/* Variable to help with default constructor. This way, the vector reference member can be bound to
-   an empty vector for the default constructor. */
-std::vector<GasModule::GrainInterface::Population> EMPTYPOPV{};
-}
-
 namespace GasModule
 {
 

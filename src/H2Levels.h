@@ -16,7 +16,7 @@ public:
 
 	/** Override the opacity function in NLevel to add the opacity contribution by the
 	    direct dissociation cross section. */
-	Array opacityv(const Solution& s) const override;
+	Array opacityv(const Solution& s, const Array& oFrequencvy) const override;
 
 protected:
 	/** Ovveride the generic implementation of NLevel with an approach better suited for H2.

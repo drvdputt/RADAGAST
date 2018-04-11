@@ -722,16 +722,16 @@ void Testing::runH2(bool write)
 	double G0 = 10;
 
 	// Base grid
-	Array unrefined =
+	Array unrefinedv =
 	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
-	Array specificIntensityv = generateSpecificIntensityv(unrefined, Tc, G0);
-	Spectrum specificIntensity(unrefined, specificIntensityv);
+	Array specificIntensityv = generateSpecificIntensityv(unrefinedv, Tc, G0);
+	Spectrum specificIntensity(unrefinedv, specificIntensityv);
 
 	// Add points for H2 lines
-	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefined);
-	Array frequencyv = improveFrequencyGrid(h2l, unrefined);
+	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefinedv);
+	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
 
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
 	H2Levels h2Levels{h2Data, frequencyv};
@@ -752,8 +752,8 @@ void Testing::runH2(bool write)
 	if (write)
 	{
 		Array emissivityv = h2Levels.emissivityv(s);
-		Array opacityv = h2Levels.opacityv(s);
-		Array lineOp = h2Levels.lineOpacityv(s);
+		Array opacityv = h2Levels.opacityv(s, unrefinedv);
+		Array lineOp = h2Levels.lineOpacityv(s, unrefinedv);
 
 		ofstream h2optical = IOTools::ofstreamFile("h2/opticalProperties.dat");
 		h2optical << "# nu (hz)\tlambda (micron)\temissivity\topacity\tlineOpacity\n";
@@ -770,20 +770,20 @@ void Testing::runH2(bool write)
 
 void Testing::runFromFilesvsHardCoded()
 {
-	Array unrefined =
+	Array unrefinedv =
 	                generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
 	// Hey, at least we'll get a decent frequency grid out of this hack
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefined);
-	FreeBound fb(unrefined);
-	Array frequencyv = improveFrequencyGrid(hl, unrefined);
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefinedv);
+	FreeBound fb(unrefinedv);
+	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(frequencyv, frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(frequencyv, frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
@@ -802,7 +802,7 @@ GasModule::GasInterface Testing::genFullModel()
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {coarsev, frequencyv, "", "8 5"};
+	return {coarsev, coarsev, frequencyv, "", "8 5"};
 }
 
 void Testing::runFullModel()

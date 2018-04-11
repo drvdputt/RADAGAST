@@ -16,13 +16,11 @@ using namespace std;
 namespace GasModule
 {
 GasInterface::GasInterface(const valarray<double>& iFrequencyv,
+                           const valarray<double>& oFrequencyv,
                            const valarray<double>& frequencyv,
                            // const valarray<double>& eFrequencyv,
-                           // const valarray<double>& oFrequencyv,
                            const string& atomChoice, const string& moleculeChoice)
-                : _iFrequencyv{iFrequencyv}, _frequencyv{frequencyv}
-// _eFrequencyv(eFrequencyv),
-// _oFrequencyv(oFrequencyv)
+                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _frequencyv{frequencyv}
 {
 
 	unique_ptr<HydrogenLevels> atomicLevels;
@@ -81,7 +79,8 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 	// specific intensity for a certain frequency.
 	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
-		_pimpl->solveBalance(gasState, n, Tinit, specificIntensity, grainInfo);
+		_pimpl->solveBalance(gasState, n, Tinit, specificIntensity, grainInfo,
+		                     _oFrequencyv);
 	else
 		zeroOpticalProperties(gasState);
 }
@@ -90,7 +89,7 @@ void GasInterface::initializeGasState(GasState& gasState, double n, double T,
                                       const GrainInterface& grainInfo) const
 {
 	if (n > 0)
-		_pimpl->solveInitialGuess(gasState, n, T, grainInfo);
+		_pimpl->solveInitialGuess(gasState, n, T, grainInfo, _oFrequencyv);
 	else
 		zeroOpticalProperties(gasState);
 }
