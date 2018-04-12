@@ -58,6 +58,85 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 	return freqv;
 }
 
+void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
+                              double factor) const
+{
+	double gridMin = *begin(frequencyv);
+	double gridMax = *(end(frequencyv) - 1);
+
+	// Skip points of the line that fall outside of the grid
+	const Array& lineGrid = recommendedFrequencyGrid();
+	auto lineBegin = begin(lineGrid);
+	auto lineEnd = end(lineGrid);
+	while (*lineBegin < gridMin)
+		lineBegin++;
+	while (*(lineEnd - 1) > gridMax)
+		lineEnd--;
+	double lineMin = *lineBegin;
+	double lineMax = *(lineEnd - 1);
+
+	// We will only do the calculation for frequency bins the line overlaps with
+
+	// Find the left side of the bin for the first line point
+	auto gridStart = upper_bound(begin(frequencyv), end(frequencyv), lineMin) - 1;
+	// And the right side of the bin for the last line point (the above code guarantees that
+	// lineMax is smaller than the max of frequencyv)
+	auto gridStop = upper_bound(begin(frequencyv), end(frequencyv), lineMax);
+
+	// The bin edges are defined by the centers between the grid points + the outermost grid
+	// points themselves.
+	//       bin index, . is center, | is grid point
+	//      000111111333
+	// start|--.--|--.--|stop
+	size_t nCenters = distance(gridStart, gridStop);
+	vector<double> binEdges;
+	binEdges.reserve(nCenters);
+
+	binEdges.emplace_back(lineMin); // leftmost point
+	for (auto right = gridStart + 1; right <= gridStop; right++)
+	{
+		auto left = right - 1;
+		binEdges.emplace_back((*right + *left) / 2.); // centers
+	}
+	binEdges.emplace_back(lineMax); // rightmost point
+
+	// Now merge the bin edges and the line points, which will serve as an
+	// integration grid
+	size_t numLinePoints = distance(lineBegin, lineEnd);
+	Array integrationGridv(binEdges.size() + numLinePoints);
+	merge(begin(binEdges), end(binEdges), lineBegin, lineEnd, begin(integrationGridv));
+
+	// Calculate the integrand on this grid
+	Array integrandv(integrationGridv.size());
+	for (size_t i = 0; i < integrandv.size(); i++)
+		integrandv[i] = (*this)(integrationGridv[i]);
+
+	// Go over the bins, and integrate the parts of the line that fall within each bin
+
+	// Start with the distance to the left edge of the first bin (the result will be added
+	// to consecutive grid points 'offset', which, according to our algorithm, are located
+	// at the centers of the bins.)
+	size_t offset = distance(begin(frequencyv), lineBegin);
+	for (auto right = begin(binEdges) + 1; right != end(binEdges); right++, offset++)
+	{
+		// Find the correct integration range
+		double leftBound = *(right - 1);
+		double rightBound = *right;
+		size_t iLeft = TemplatedUtils::index(leftBound, integrationGridv);
+		size_t iRight = TemplatedUtils::index(rightBound, integrationGridv);
+
+		// Integrate over this range
+		double integral = TemplatedUtils::integrate<double>(integrationGridv,
+		                                                    integrandv, iLeft, iRight);
+
+		// Turn this integral into an average over the interval (= the bin)
+		double average = factor * integral / (rightBound - leftBound);
+
+		// Add this average to the correct point of the spectrum
+		binnedSpectrumv[offset] += average;
+	}
+}
+
 void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, double factor) const
 {
 #define OPTIMIZED_LINE_ADD
@@ -306,7 +385,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	}
 	return integral;
 #else
-        Array integrandv(frequencyv.size());
+	Array integrandv(frequencyv.size());
 	for (size_t i = 0; i < frequencyv.size(); i++)
 	{
 		double freq = frequencyv[i];
