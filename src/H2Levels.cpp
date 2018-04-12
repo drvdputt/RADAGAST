@@ -28,6 +28,7 @@ Array H2Levels::opacityv(const Solution& s) const
 		for (size_t iNu = 0; iNu < freqv.size(); iNu++)
 			totalOpv[iNu] += s.nv(iLv) *
 			                 _hff->directDissociationCrossSection(freqv[iNu], iLv);
+
 	return totalOpv;
 }
 
@@ -56,17 +57,25 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	EVector fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
 
 	// Get the indices that cover the electronic ground state
-	const auto& indicesX = _hff->indicesX();
-	const auto& indicesExcited = _hff->indicesExcited();
+	auto indicesX = _hff->indicesX();
+	auto indicesExcited = _hff->indicesExcited();
+
+	// The algorithm apparently works better when the iterations happen from high to low.
+	// While it is not guaranteed that the indices given by the above vector are actually
+	// listed from low to high energies, it is so in practice (because of the way the files
+	// that are read in are organized. Therefore, we reverse the vectors here, and hope for
+	// the best, as currently I'm experiencing oscillations under strong radiation fields.
+	reverse(begin(indicesX), end(indicesX));
+	reverse(begin(indicesExcited), end(indicesExcited));
 
 	// Iterate until converged
 	bool converged = false;
-	double maxDeltaX = 1.e-4 *n;
+	double maxDeltaX = 1.e-4 * n;
 	double maxDeltaAll = 1.e-5 * n;
 	double maxFracDelta = 1.e-2;
 	size_t counter{0};
 	double xFrac = 0, eFrac = 0;
-	while (!converged)
+	while (true)
 	{
 		counter++;
 
@@ -95,11 +104,14 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		bool loopBack = false;
 		for (auto i : indicesX)
 		{
+			// TODO: vectorize this (maybe work with a contiguous 'range' of X
+			// indices, instead of a list
 			deltav(i) = abs(nv(i) - previousNv(i));
 			if (!loopBack && deltav(i) > maxDeltaX)
 			{
+				// DEBUG("index " << i << " delta " << deltav(i) / maxDeltaX << endl);
+				// Do not break here. We might need the whole deltav further down
 				loopBack = true;
-				break;
 			}
 		}
 		if (loopBack)
@@ -131,7 +143,11 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		// Overall convergence check
 
 		// Absolute change
-		bool thresconv = deltav.maxCoeff() < maxDeltaAll;
+		for (auto i : indicesExcited)
+			// Again, this would best be vectorized
+			deltav(i) = nv(i) - previousNv(i);
+
+		bool thresconv = (deltav.array() < maxDeltaAll).all();
 
 		// Relative change
 		bool fracconv = true;
@@ -151,10 +167,14 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		if (!(counter % 1000))
 		{
 			DEBUG("Solving h2... " << counter << "iterations" << endl);
-			DEBUG("thresconv = " << thresconv << " fracconv = " << fracconv << endl);
+			DEBUG("thresconv = " << thresconv << " fracconv = " << fracconv
+			                     << endl);
 		}
 
-		converged = thresconv && fracconv;
+		bool converged = thresconv && fracconv;
+		const int max_iterations = 10000;
+		if (converged || counter > max_iterations)
+			break;
 	}
 	if (nv.array().isNaN().any())
 		Error::runtime("nan in H2 level solution");
