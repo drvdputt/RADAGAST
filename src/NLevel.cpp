@@ -157,7 +157,8 @@ Array NLevel::lineOpacityv(const Solution& s, const Array& oFrequencyv) const
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double factor = lineOpacityFactor(upper, lower, s);
 		LineProfile lp = lineProfile(upper, lower, s);
-		lp.addToSpectrum(oFrequencyv, total, factor);
+		// lp.addToSpectrum(oFrequencyv, total, factor);
+		lp.addToBinned(oFrequencyv, total, factor);
 	});
 	return total;
 }

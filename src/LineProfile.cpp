@@ -74,6 +74,7 @@ void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
 		lineEnd--;
 	double lineMin = *lineBegin;
 	double lineMax = *(lineEnd - 1);
+	size_t numLinePoints = distance(lineBegin, lineEnd);
 
 	// We will only do the calculation for frequency bins the line overlaps with
 
@@ -92,17 +93,16 @@ void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
 	vector<double> binEdges;
 	binEdges.reserve(nCenters);
 
-	binEdges.emplace_back(lineMin); // leftmost point
+	binEdges.emplace_back(*gridStart); // leftmost point
 	for (auto right = gridStart + 1; right <= gridStop; right++)
 	{
 		auto left = right - 1;
 		binEdges.emplace_back((*right + *left) / 2.); // centers
 	}
-	binEdges.emplace_back(lineMax); // rightmost point
+	binEdges.emplace_back(*gridStop); // rightmost point
 
 	// Now merge the bin edges and the line points, which will serve as an
 	// integration grid
-	size_t numLinePoints = distance(lineBegin, lineEnd);
 	Array integrationGridv(binEdges.size() + numLinePoints);
 	merge(begin(binEdges), end(binEdges), lineBegin, lineEnd, begin(integrationGridv));
 
@@ -116,7 +116,7 @@ void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
 	// Start with the distance to the left edge of the first bin (the result will be added
 	// to consecutive grid points 'offset', which, according to our algorithm, are located
 	// at the centers of the bins.)
-	size_t offset = distance(begin(frequencyv), lineBegin);
+	size_t offset = distance(begin(frequencyv), gridStart);
 	for (auto right = begin(binEdges) + 1; right != end(binEdges); right++, offset++)
 	{
 		// Find the correct integration range
