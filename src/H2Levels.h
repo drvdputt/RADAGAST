@@ -50,6 +50,9 @@ public:
 	EVector dissociationSinkv(const Spectrum& specificIntensity) const;
 
 private:
+	/** Average cross section in the interval between nuMin and nuMax. */
+	double avgCrossSection(size_t iLv, double nuMin, double nuMax) const;
+
 	/** Sink term due to direct radiative dissociation. Needs radiation field. */
 	EVector directDissociationSinkv(const Spectrum& specificIntensityv) const;
 

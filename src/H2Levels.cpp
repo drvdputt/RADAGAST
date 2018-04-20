@@ -22,14 +22,47 @@ Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 	// Start with the line opacity
 	Array totalOpv = lineOpacityv(s, oFrequencyv);
 
-	// Then add the dissociation cross section of each level, for each frequency TODO:
-	// integrate/average out over the coarse frequencyv grid (oFrequencyv) here, instead of
-	// just evaluating at the points
-	for (size_t iLv = 0; iLv < _hff->numLv(); iLv++)
-		for (size_t iNu = 0; iNu < oFrequencyv.size(); iNu++)
-			totalOpv[iNu] += s.nv(iLv) *
-			                 _hff->directDissociationCrossSection(oFrequencyv[iNu], iLv);
+	// Then add the dissociation cross section of each level, for each frequency bin in the
+	// opacity grid
+	size_t iMax = oFrequencyv.size() - 1;
+	for (size_t i = 0; i <= iMax; i++)
+	{
+		// 000 11111 22222 333
+		// |--.--|--.--|--.--|
+		//i0     1     2     3
+		double nuMin = i == 0 ? oFrequencyv[0]
+		                      : (oFrequencyv[i] + oFrequencyv[i - 1]) / 2.;
+		double nuMax = i == iMax ? oFrequencyv[iMax]
+		                         : (oFrequencyv[i + 1] + oFrequencyv[i]) / 2.;
+		for (size_t iLv : _levelsWithCrossSectionv)
+		{
+			// for (size_t iNu = 0; iNu < oFrequencyv.size(); iNu++)
+			// totalOpv[iNu] += s.nv(iLv) * _hff->directDissociationCrossSection(
+			// oFrequencyv[iNu], iLv);
+			totalOpv[i] += avgCrossSection(iLv, nuMin, nuMax);
+		}
+	}
 	return totalOpv;
+}
+
+double H2Levels::avgCrossSection(size_t iLv, double nuMin, double nuMax) const
+{
+	double result = 0;
+	for (const Spectrum& cs : _hff->directDissociationCrossSections(iLv))
+	{
+		const Array& cs_nuv = cs.frequencyv();
+		double minFreq = max(cs.freqMin(), nuMin);
+		double maxFreq = min(cs.freqMax(), nuMax);
+		auto iNuMin = TemplatedUtils::index(minFreq, cs_nuv);
+		if (iNuMin > 0)
+			iNuMin--;
+		auto iNuMax = TemplatedUtils::index(maxFreq, cs_nuv);
+		const Array& sigmav = cs.valuev();
+		double integral = TemplatedUtils::integrate<double>(cs_nuv, sigmav, iNuMin,
+		                                                    iNuMax);
+		result += integral / (maxFreq - minFreq);
+	}
+	return result;
 }
 
 EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
