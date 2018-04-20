@@ -21,3 +21,28 @@ double Spectrum::evaluate(double frequency) const
 		return val;
 	}
 }
+
+double Spectrum::average(double minFreq, double maxFreq) const
+{
+	// Find the grid points that lie within the given bounds
+
+	// right of minFreq
+	size_t iNuMin = TemplatedUtils::index(minFreq, _frequencyv);
+	// right of maxFreq (not included)
+	size_t iNuMax = TemplatedUtils::index(maxFreq, _frequencyv);
+
+	// Integration points
+	size_t numFromGrid = iNuMax - iNuMin;
+	Array nuv(numFromGrid + 2);
+	nuv[0] = minFreq;
+	for (size_t i = 0; i < numFromGrid; i++)
+		nuv[1 + i] = _frequencyv[iNuMin + i];
+	nuv[nuv.size() - 1] = maxFreq;
+
+	Array integrandv(nuv.size());
+	for (size_t i = 0; i < nuv.size(); i++)
+		integrandv[i] = evaluate(nuv[i]);
+
+	double integral = TemplatedUtils::integrate<double>(nuv, integrandv);
+	return integral / (maxFreq - minFreq);
+}

@@ -789,7 +789,7 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = generateGeometricGridv(600, Constant::LIGHT / (1e4 * Constant::UM_CM),
+	Array coarsev = generateGeometricGridv(200, Constant::LIGHT / (1e3 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	cout << "Construction model to help with refining frequency grid" << endl;

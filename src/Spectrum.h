@@ -20,8 +20,10 @@ public:
 	bool hasData() const { return _hasData; }
 
 	/** Interpolates the data to the given frequency. */
-
 	double evaluate(double frequency) const;
+
+	/** Calculate the average of the spectrum over a given interval. */
+	double average(double minFreq, double maxFreq) const;
 
 	double freqMax() const { return _freqMax; }
 
