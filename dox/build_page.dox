@@ -4,27 +4,29 @@
 
 @subsection debug_build_subsec Debug build
 
-The Makefile that comes with the repo compiles the code in the parent directory of the repo. During
-the compilation step, all the object files (*.o) will be placed in ../obj. Dependency files (*.d)
-are also generated for each object file; for each *.o file, we let the compiler generate a *.d file
-which described the dependency of the object itself on its inluded headers, as well as any recursive
-dependencies for the headers.
+The Makefile that comes with the repo compiles the code in the parent directory of the repo.
+During the compilation step, all the object files (*.o) will be placed in ../obj. Dependency
+files (*.d) are also generated for each object file; for each *.o file, we let the compiler
+generate a *.d file which described the dependency of the object itself on its inluded headers,
+as well as any recursive dependencies for the headers.
 
-These objects will then be linked into a binary called 'test', which is placed in ../bin. All the
-objects are also placed in an archive at '../lib/libgasmodule.a', allowing it to be linked to other
-codes.
+These objects will then be linked into a binary called 'run', which is placed in ../bin. All the
+objects are also placed in an archive at '../lib/libgasmodule.a', allowing it to be linked to
+other codes.
 
-Note that this debug build will ouput quite a number of debug messages. To build a version suitable
-for inclusion in another code, see the instructions below.
+Note that this debug build will output quite a number of debug messages at runtime. To build a
+version suitable for inclusion in another code, see the instructions below.
 
 @subsection include_build_subsec Include it 'manually'
 
-The simplest way to use the gas module in your code, is to modify the Makefile a bit, build the code
-separately, and then set the correct compiler flags in your project.
+The simplest way to use the gas module in your code, is to modify the Makefile a bit, build the
+code separately, and then set the correct compiler flags in your project.
 
-In the Makefile of the gas module, add the @c -DSILENT preprocessor option to disable all debug
-messages. Add @c -O3 and remove @c -g for optimization. Not sure if this will work, but might be
-useful: adjust the target directories.
+- add the @c -DSILENT preprocessor option to disable all debug messages
+
+- add @c -O3 and remove @c -g for optimization
+
+- Not sure if this will work, but might be useful: adjust the target directories.
 
 To include the gas module in your code and link the result, use this include flag: @c
 -I\<target_dir\>/include, where @c \<target_dir\> is the target directory you specified in the make
@@ -40,12 +42,14 @@ based on the structure of SKIRT in terms of a CMake project.
 In SKIRT, the source code of extra libraries such as cfitsio or voro is included as a subproject, in
 sister directories of the core; so we have SKIRT/core/ SKIRT/fitsio and SKIRT/voro.
 SKIRT/CMakeLists.txt lists all these subdirectories, with an add_subdirectory command for each of
-them. Adding the gas module is straightforward: simply add a directory SKIRT/gasmodule, and put @c
-add_subdirectory(gasmodule) in SKIRT/CMakeLists.txt.
+them. Adding the gas module is straightforward:
 
-In this subdirectory, make a new CMakeLists file, and there put something like this:
+- add a directory SKIRT/gasmodule, and put @c add_subdirectory(gasmodule) in
+SKIRT/CMakeLists.txt.
 
-@code 
+- In this subdirectory, make a new CMakeLists file, and there put something like this:
+
+@code{.unparsed}
 # ------------------------------------------------------------------
 # Builds a library from the GasModule source
 # ------------------------------------------------------------------
@@ -54,16 +58,16 @@ In this subdirectory, make a new CMakeLists file, and there put something like t
 set(TARGET gasmodule)
 
 # source files and their headers
-file(GLOB SOURCES "/Users/drvdputt/GasModule/git/src/*.cpp")
-file(GLOB HEADERS "/Users/drvdputt/GasModule/git/src/*.hpp")
+file(GLOB SOURCES "/path/to/GasModule/git/src/*.cpp")
+file(GLOB HEADERS "/path/to/GasModule/git/src/*.hpp")
 # create the library target
 add_library(${TARGET} STATIC ${SOURCES} ${HEADERS})
 
 # Eigen dependencies
-include_directories(SYSTEM /Users/drvdputt/GasModule/git/eigen3)
+include_directories(SYSTEM /path/to/GasModule/git/eigen3)
 
 # GasModule header-only dependencies
-include_directories(/Users/drvdputt/GasModule/git/include)
+include_directories(/path/to/GasModule/git/include)
 
 # adjust C++ compiler flags to our needs
 include("../../SMILE/build/CompilerFlags.cmake")
@@ -73,12 +77,16 @@ include("../../SMILE/build/CompilerFlags.cmake")
 	
 @endcode
 
-If any of the subprojects make use of the gasmodule (SKIRT/core in our case), put the following in
-their CMakeLists.txt:
+- If any of the subprojects make use of the gasmodule (SKIRT/core in our case), put the
+following in their CMakeLists.txt:
 
-@code
+@code{.unparsed}
+# Link the newly built library
 target_link_libraries(gasmodule)
-include_directories(/Users/drvdputt/GasModule/git/src)
+
+# The interface headers we need to include are in the src directory
+include_directories(/path/to/GasModule/git/src)
+
 @endcode
 */
 
