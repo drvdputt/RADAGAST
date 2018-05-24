@@ -13,7 +13,7 @@ protected:
 	          double workFunction);
 
 public:
-	~GrainType();
+	virtual ~GrainType();
 
 	GasModule::SfcInteractionPar sfcInteractionPar() const { return _sfcInteractionPar; }
 
