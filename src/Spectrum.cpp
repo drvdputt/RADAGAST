@@ -46,3 +46,25 @@ double Spectrum::average(double minFreq, double maxFreq) const
 	double integral = TemplatedUtils::integrate<double>(nuv, integrandv);
 	return integral / (maxFreq - minFreq);
 }
+
+Array Spectrum::binned(Array frequencyv) const
+{
+	Array binnedValuev(frequencyv.size());
+	for (size_t i = 0; i < frequencyv.size(); i++)
+	{
+		// 000 11111 22222 333
+		// |--.--|--.--|--.--|
+		//i0     1     2     3
+		// For the first bin, set the left boundary to freq[0] instead of a halfway point
+		double nuMin = i == 0 ? frequencyv[0]
+		                      : (frequencyv[i] + frequencyv[i - 1]) / 2.;
+		// For the last bin, set the right boundary to freq[n-1] instead of a halfway point
+		double nuMax = i == frequencyv.size() - 1
+		                               ? frequencyv[frequencyv.size() - 1]
+		                               : (frequencyv[i + 1] + frequencyv[i]) / 2.;
+
+		// Take the average over this part of the spectrum
+		binnedValuev[i] = average(nuMin, nuMax);
+	}
+	return binnedValuev;
+}

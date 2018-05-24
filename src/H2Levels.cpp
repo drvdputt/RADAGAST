@@ -22,29 +22,12 @@ Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 	// Start with the line opacity
 	Array totalOpv = lineOpacityv(s, oFrequencyv);
 
-	// Then add the dissociation cross section of each level, for each frequency bin in the
-	// opacity grid
-	for (size_t i = 0; i < oFrequencyv.size(); i++)
+	// Then add the dissociation cross sections of each level
+	for (size_t iLv : _levelsWithCrossSectionv)
 	{
-		// 000 11111 22222 333
-		// |--.--|--.--|--.--|
-		//i0     1     2     3
-		double nuMin = i == 0 ? oFrequencyv[0]
-		                      : (oFrequencyv[i] + oFrequencyv[i - 1]) / 2.;
-		double nuMax = i == oFrequencyv.size() - 1
-		                               ? oFrequencyv[oFrequencyv.size() - 1]
-		                               : (oFrequencyv[i + 1] + oFrequencyv[i]) / 2.;
-		// Go over all the levels
-		for (size_t iLv : _levelsWithCrossSectionv)
-		{
-			const vector<Spectrum>& csv =
-			                _hff->directDissociationCrossSections(iLv);
-			// Go over all the cross sections for this level
-			for (const Spectrum& cs : csv)
-				// Calculate the average of this cross section for the interval
-				// of this bin
-				totalOpv[i] += cs.average(nuMin, nuMax);
-		}
+		const vector<Spectrum>& csv = _hff->directDissociationCrossSections(iLv);
+		for (const Spectrum& cs : csv)
+			totalOpv += cs.binned(oFrequencyv);
 	}
 	return totalOpv;
 }
