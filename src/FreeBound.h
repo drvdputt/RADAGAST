@@ -11,7 +11,7 @@ public:
 	/* Creates an object and reads in the free-bound continuum emission data. The data is
 	   interpolated for every frequency on the grid, and stored for the temperatures contained
 	   in the file. */
-	FreeBound(const Array& frequencyv);
+	FreeBound();
 
 private:
 	/* Function that reads the data. To be called in the constructor*/
@@ -33,9 +33,6 @@ public:
 	void addEmissionCoefficientv(double T, Array& gamma_nuv) const;
 
 private:
-	/* The frequency grid onto which the data will be interpolated */
-	const Array& _frequencyv;
-
 	/* Data to be loaded in constructor body. First index is for frequency, second for
 	   temperature */
 	Table<2> _gammaDaggervv;

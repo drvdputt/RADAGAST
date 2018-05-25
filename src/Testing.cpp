@@ -731,11 +731,11 @@ void Testing::runH2(bool write)
 	Spectrum specificIntensity(unrefinedv, specificIntensityv);
 
 	// Add points for H2 lines
-	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefinedv);
+	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV));
 	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
 
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
-	H2Levels h2Levels{h2Data, frequencyv};
+	H2Levels h2Levels{h2Data};
 
 	// Set the densities
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
@@ -752,7 +752,7 @@ void Testing::runH2(bool write)
 
 	if (write)
 	{
-		Array emissivityv = h2Levels.emissivityv(s);
+		Array emissivityv = h2Levels.emissivityv(s, frequencyv);
 		Array opacityv = h2Levels.opacityv(s, unrefinedv);
 		Array lineOp = h2Levels.lineOpacityv(s, unrefinedv);
 
@@ -776,7 +776,7 @@ void Testing::runFromFilesvsHardCoded()
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
 	// Hey, at least we'll get a decent frequency grid out of this hack
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefinedv);
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5));
 	FreeBound fb(unrefinedv);
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
@@ -796,9 +796,9 @@ GasModule::GasInterface Testing::genFullModel()
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	cout << "Construction model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarsev);
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
 	FreeBound fb(coarsev);
-	H2Levels h2l(make_shared<H2FromFiles>(8, 5), coarsev);
+	H2Levels h2l(make_shared<H2FromFiles>(8, 5));
 
 	Array frequencyv = improveFrequencyGrid(hl, coarsev);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
@@ -815,7 +815,7 @@ void Testing::runFullModel()
 	double Tc = 30000;
 	double G0 = 10;
 	double n = 10;
-	runGasInterfaceImpl(gi, "gasOnly", Tc, G0, n);
+	runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
 }
 
 void Testing::runWithDust(bool write)
@@ -868,5 +868,5 @@ void Testing::runWithDust(bool write)
 		gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv,
 		                            grainInterface);
 	if (write)
-		writeGasState("withDust", gasInterface, gs);
+		writeGasState("withDust/", gasInterface, gs);
 }

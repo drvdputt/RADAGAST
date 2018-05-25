@@ -18,13 +18,12 @@ class HydrogenLevels : public NLevel
 public:
 	/** Work with a shared pointer here, so that a pointer can be given both to the derived
 	    class and the base class. */
-	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp,
-	               const Array& frequencyv);
+	HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp);
 	~HydrogenLevels();
 
 	/** This function returns the line emission spectrum + the continuum emitted by the 2s-1s
 	    two-photon process. */
-	Array emissivityv(const Solution& s) const override;
+	Array emissivityv(const Solution& s, const Array& eFrequencyv) const override;
 
 	/** Returns a vector containing the source terms for the equilibrium equations, such as the
 	    partial recombination rates into each level. Note that this function is separated from
@@ -44,7 +43,7 @@ public:
 
 private:
 	/** This function calculates the two-photon continuum using Nussbaumer \& Smutz (1984). */
-	Array twoPhotonEmissivityv(const Solution& s) const;
+	Array twoPhotonEmissivityv(const Solution& s, const Array& eFrequencyv) const;
 
 	std::shared_ptr<const HydrogenDataProvider> _hdp;
 };

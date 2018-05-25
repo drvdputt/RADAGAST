@@ -73,9 +73,7 @@ public:
 	    up outside of this constructor, and ownership is then transferred using a unique
 	    pointer. */
 	GasInterfaceImpl(std::unique_ptr<HydrogenLevels> atomModel,
-	                 std::unique_ptr<H2Levels> molecularModel, const Array& frequencyv);
-
-	Array frequencyv() const { return _frequencyv; }
+	                 std::unique_ptr<H2Levels> molecularModel);
 
 	~GasInterfaceImpl();
 
@@ -84,8 +82,8 @@ public:
 	    of that same temperature. Can be used by the client to manually set the temperature
 	    and calculate some properties which can be used as an initial guess. */
 	void solveInitialGuess(GasModule::GasState&, double n, double T,
-	                       const GasModule::GrainInterface&,
-	                       const Array& oFrequencyv) const;
+	                       const GasModule::GrainInterface&, const Array& oFrequencyv,
+	                       const Array& eFrequencyv) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
 	    temperature guess, and a Spectrum object containing the radiation field in specific
@@ -93,7 +91,7 @@ public:
 	    discretized (before being stored in the gas state) also needs to be provided. */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
 	                  const Spectrum& specificIntensity, const GasModule::GrainInterface&,
-	                  const Array& oFrequencyv) const;
+	                  const Array& oFrequencyv, const Array& eFrequencyv) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
@@ -109,7 +107,7 @@ public:
 	    calculateDensities(). */
 	/**@{*/
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
-	Array emissivityv(const Solution&) const;
+	Array emissivityv(const Solution&, const Array& eFrequencyv) const;
 
 	/** The total opacity at each frequency in 1 / cm */
 	Array opacityv(const Solution&, const Array& oFrequencyv) const;
@@ -163,9 +161,6 @@ public:
 	inline double nAtomic(const Solution& s) const { return s.speciesNv[_inH]; }
 	/**@}*/
 private:
-	/* To be set in constructor */
-	const Array& _frequencyv;
-
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]
 	int _ine, _inp, _inH, _inH2;
 	std::unique_ptr<ChemistrySolver> _chemSolver;

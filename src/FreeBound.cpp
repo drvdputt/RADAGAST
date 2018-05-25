@@ -10,7 +10,7 @@
 
 using namespace std;
 
-FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
+FreeBound::FreeBound()
 {
 	/* Read the free-bound continuum data from Ercolano and Storey (2006). Adapted from NEBULAR
 	   source code by M. Schirmer (2016). */

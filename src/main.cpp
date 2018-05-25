@@ -37,8 +37,8 @@ int main()
 		// These do a run, with writeout, but the results are not directly comparable to
 		// something in the way that the ones above work.
 		// Testing::runFromFilesvsHardCoded();
-		// Testing::runFullModel();
-		Testing::runWithDust(true);
+		Testing::runFullModel();
+		// Testing::runWithDust(true);
 		// Testing::runH2(false);
 	}
 	catch (const std::exception& ex)

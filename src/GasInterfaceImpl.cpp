@@ -24,11 +24,9 @@ using namespace std;
 constexpr int MAXCHEMISTRYITERATIONS{100};
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
-                                   unique_ptr<H2Levels> molecularModel, const Array& frequencyv)
-                : _frequencyv(frequencyv), _atomicLevels(move(atomModel)),
-                  _molecular(move(molecularModel)),
-                  _freeBound(make_unique<FreeBound>(frequencyv)),
-                  _freeFree(make_unique<FreeFree>(frequencyv))
+                                   unique_ptr<H2Levels> molecularModel)
+                : _atomicLevels(move(atomModel)), _molecular(move(molecularModel)),
+                  _freeBound(make_unique<FreeBound>()), _freeFree(make_unique<FreeFree>())
 {
 	if (_molecular)
 		_chemSolver = make_unique<ChemistrySolver>(make_unique<ChemicalNetwork>());
@@ -43,21 +41,22 @@ GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, double T,
                                          const GasModule::GrainInterface& gi,
-                                         const Array& oFrequencyv) const
+                                         const Array& oFrequencyv,
+                                         const Array& eFrequencyv) const
 {
-	Array isrfGuess(_frequencyv.size());
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	Array isrfGuess(oFrequencyv.size());
+	for (size_t iFreq = 0; iFreq < oFrequencyv.size(); iFreq++)
 	{
-		double freq = _frequencyv[iFreq];
+		double freq = oFrequencyv[iFreq];
 		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
 	}
-	solveBalance(gs, n, T, Spectrum(_frequencyv, isrfGuess), gi, oFrequencyv);
+	solveBalance(gs, n, T, Spectrum(oFrequencyv, isrfGuess), gi, oFrequencyv, eFrequencyv);
 }
 
 void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Tinit,
                                     const Spectrum& specificIntensity,
                                     const GasModule::GrainInterface& gi,
-                                    const Array& oFrequencyv) const
+                                    const Array& oFrequencyv, const Array& eFrequencyv) const
 {
 #ifndef SILENT
 	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
@@ -109,7 +108,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		s = calculateDensities(n, pow(10., logTfinal), specificIntensity, gi, previous);
 	}
 
-	const Array& emv = emissivityv(s);
+	const Array& emv = emissivityv(s, eFrequencyv);
 	const Array& opv = opacityv(s, oFrequencyv);
 	const Array& scv = scatteringOpacityv(s, oFrequencyv);
 
@@ -201,7 +200,6 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	}
 
 	auto solveLevelBalances = [&]() {
-
 		double nH = s.speciesNv(_inH);
 		EVector Hsourcev = _atomicLevels->sourcev(gas);
 		EVector Hsinkv = _atomicLevels->sinkv(gas);
@@ -322,13 +320,13 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	return s;
 }
 
-Array GasInterfaceImpl::emissivityv(const Solution& s) const
+Array GasInterfaceImpl::emissivityv(const Solution& s, const Array& eFrequencyv) const
 {
-	Array lineEmv = _atomicLevels->emissivityv(s.HSolution);
+	Array lineEmv = _atomicLevels->emissivityv(s.HSolution, eFrequencyv);
 	if (_molecular)
-		lineEmv += _molecular->emissivityv(s.H2Solution);
+		lineEmv += _molecular->emissivityv(s.H2Solution, eFrequencyv);
 
-	Array contEmCoeffv(_frequencyv.size());
+	Array contEmCoeffv(eFrequencyv.size());
 	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
 	_freeFree->addEmissionCoefficientv(s.T, contEmCoeffv);
 

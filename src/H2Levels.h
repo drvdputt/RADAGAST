@@ -11,7 +11,7 @@ class H2FromFiles;
 class H2Levels : public NLevel
 {
 public:
-	H2Levels(std::shared_ptr<const H2FromFiles> hff, const Array& frequencyv);
+	H2Levels(std::shared_ptr<const H2FromFiles> hff);
 	~H2Levels();
 
 	/** Override the opacity function in NLevel to add the opacity contribution by the

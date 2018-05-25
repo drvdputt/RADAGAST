@@ -10,17 +10,16 @@
 
 using namespace std;
 
-HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp,
-                               const Array& frequencyv)
-                : NLevel(hdp, frequencyv, Constant::HMASS_CGS), _hdp(hdp)
+HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp)
+                : NLevel(hdp, Constant::HMASS_CGS), _hdp(hdp)
 {
 }
 
 HydrogenLevels::~HydrogenLevels() = default;
 
-Array HydrogenLevels::emissivityv(const Solution& s) const
+Array HydrogenLevels::emissivityv(const Solution& s, const Array& eFrequencyv) const
 {
-	return lineEmissivityv(s) + twoPhotonEmissivityv(s);
+	return lineEmissivityv(s, eFrequencyv) + twoPhotonEmissivityv(s, eFrequencyv);
 }
 
 namespace
@@ -57,7 +56,7 @@ double alpha(int n, int l, double T)
 	else
 		return 0;
 }
-}
+} // namespace
 
 EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 {
@@ -96,7 +95,7 @@ EVector HydrogenLevels::sinkv(const GasStruct& gas) const
 	return EVector::Constant(numLv(), sink);
 }
 
-Array HydrogenLevels::twoPhotonEmissivityv(const Solution& s) const
+Array HydrogenLevels::twoPhotonEmissivityv(const Solution& s, const Array& eFrequencyv) const
 {
 	std::array<size_t, 2> upper_lower = _hdp->twoPhotonIndices();
 
@@ -123,10 +122,10 @@ Array HydrogenLevels::twoPhotonEmissivityv(const Solution& s) const
 	const double beta = 1.53;
 	const double gam = .8;
 
-	Array result(frequencyv().size());
-	for (size_t iFreq = 0; frequencyv()[iFreq] < nu0; iFreq++)
+	Array result(eFrequencyv.size());
+	for (size_t iFreq = 0; eFrequencyv[iFreq] < nu0 && iFreq < eFrequencyv.size(); iFreq++)
 	{
-		double y = frequencyv()[iFreq] / nu0;
+		double y = eFrequencyv[iFreq] / nu0;
 		double y1miny = y * (1 - y);
 		double pow4y1miny_gam = pow(4 * y1miny, gam);
 		double Py = C * (y1miny * (1 - pow4y1miny_gam) +
