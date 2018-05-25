@@ -48,7 +48,8 @@ public:
 	    function to see which options are available. */
 	GasInterface(const std::valarray<double>& iFrequencyv,
 	             const std::valarray<double>& oFrequencyv,
-	             const std::valarray<double>& frequencyv,
+		     const std::valarray<double>& eFrequencyv,
+		     const std::valarray<double>& frequencyv,
 	             /* const std::valarray<double>& eFrequencyv, */
 	             const std::string& atomChoice = "",
 	             const std::string& moleculeChoice = "");
@@ -122,6 +123,7 @@ private:
 
 	std::valarray<double> _iFrequencyv;
 	std::valarray<double> _oFrequencyv;
+	std::valarray<double> _eFrequencyv;
 	std::valarray<double> _frequencyv;
 
 	/* The implementation details, especially those that require the inclusion of other

@@ -17,12 +17,13 @@ namespace GasModule
 {
 GasInterface::GasInterface(const valarray<double>& iFrequencyv,
                            const valarray<double>& oFrequencyv,
+                           const valarray<double>& eFrequencyv,
                            const valarray<double>& frequencyv,
                            // const valarray<double>& eFrequencyv,
                            const string& atomChoice, const string& moleculeChoice)
-                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _frequencyv{frequencyv}
+                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
+                  _eFrequencyv{oFrequencyv}, _frequencyv{frequencyv}
 {
-
 	unique_ptr<HydrogenLevels> atomicLevels;
 
 	// Choose a hydrogen data provider
