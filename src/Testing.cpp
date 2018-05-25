@@ -16,7 +16,6 @@
 #include "SpecialFunctions.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
-#include "Timer.h"
 
 #include <iomanip>
 #include <sstream>
@@ -417,7 +416,9 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency",
+	                "wavelength",
+	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	};
 	out << "#";
@@ -780,10 +781,12 @@ void Testing::runFromFilesvsHardCoded()
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, frequencyv, "hhc",
+	                              "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, frequencyv, "hff2",
+	                              "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
@@ -802,13 +805,17 @@ GasModule::GasInterface Testing::genFullModel()
 	frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {coarsev, coarsev, frequencyv, "", "8 5"};
+	return {coarsev, coarsev, frequencyv, frequencyv, "", "8 5"};
 }
 
 void Testing::runFullModel()
 {
 	cout << "RUN_FULL_MODEL" << endl;
-	runGasInterfaceImpl(genFullModel(), "gasOnly");
+	GasModule::GasInterface gi = genFullModel();
+	double Tc = 30000;
+	double G0 = 10;
+	double n = 10;
+	runGasInterfaceImpl(gi, "gasOnly", Tc, G0, n);
 }
 
 void Testing::runWithDust(bool write)
@@ -817,7 +824,6 @@ void Testing::runWithDust(bool write)
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
-	const Array& frequencyv = gasInterface.frequencyv();
 
 	// Radiation field
 	double Tc{4e3};
@@ -859,11 +865,8 @@ void Testing::runWithDust(bool write)
 
 	// Run
 	GasModule::GasState gs;
-	{
-		Timer t("Update gas state");
 		gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv,
 		                            grainInterface);
-	}
 	if (write)
 		writeGasState("withDust", gasInterface, gs);
 }
