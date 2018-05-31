@@ -63,7 +63,7 @@ NLevel::Solution NLevel::solveBalance(double density, const Spectrum& specificIn
 		   profile can change). Also needs the Cij to calculate collisional
 		   broadening. */
 		s.bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
-#define REPORT_LINE_QUALITY
+// #define REPORT_LINE_QUALITY
 #ifdef REPORT_LINE_QUALITY
 		// Full integral of the line profile, to check the discretization of the output
 		// (emission) grid.
@@ -221,12 +221,13 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
 		double lowResIntegral = lp.integrateSpectrum(specificIntensity, spectrumMax);
-#define REPORT_SPEC_INTEGRAL
+// #define REPORT_SPEC_INTEGRAL
 #ifdef REPORT_SPEC_INTEGRAL
 		auto f = [&](double x) -> double {
 			return lp(x) * specificIntensity.evaluate(x);
 		};
-		size_t many_points = 1e5;
+		// TODO: better use log grid here, and put this in a separate test function
+		size_t many_points = 1e6;
 		double manualIntegral = TemplatedUtils::integrateFunction<double>(
 		                f, specificIntensity.freqMin(), specificIntensity.freqMax(),
 		                many_points);
@@ -287,7 +288,7 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 	// Element wise relative errors
 	// EArray diffv = Mvv * nv - f;
 	// EArray errv = diffv / f.array();
-	// Note that these errors will always be quite big for small components of f
+	// Note tha these errors will always be quite big for small components of f
 	// DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;

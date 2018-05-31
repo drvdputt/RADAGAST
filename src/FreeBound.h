@@ -30,18 +30,19 @@ public:
 	   ([power][density]/[frequency interval]) can be obtained by multiplying this value with
 	   ne_np / 4pi. The contribution at each frequency is added to the current contents of
 	   gamma_nu */
-	void addEmissionCoefficientv(double T, Array& gamma_nuv) const;
-
+	void addEmissionCoefficientv(double T, const Array& eFrequencyv,
+	                             Array& gamma_nuv) const;
 private:
 	/* Data to be loaded in constructor body. First index is for frequency, second for
 	   temperature */
+	Array _frequencyv;
 	Table<2> _gammaDaggervv;
 	/* Vector containing the threshold frequencies, i.e. those of the lines starting with 1. Is
 	   needed for applying equation 1 of Ercolano and Storey 2006 (MNRAS 372, 1875) */
 	Array _thresholdv;
 
 	/* The accompanying log-temperature grid */
-	std::vector<double> _logTemperaturev;
+	Array _logTemperaturev;
 };
 
 #endif /* _FREEBOUND_H_ */

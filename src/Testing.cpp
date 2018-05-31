@@ -777,7 +777,7 @@ void Testing::runFromFilesvsHardCoded()
 
 	// Hey, at least we'll get a decent frequency grid out of this hack
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5));
-	FreeBound fb(unrefinedv);
+	FreeBound fb;
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
@@ -792,12 +792,12 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = generateGeometricGridv(200, Constant::LIGHT / (1e3 * Constant::UM_CM),
+	Array coarsev = generateGeometricGridv(20000, Constant::LIGHT / (1e3 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
-	FreeBound fb(coarsev);
+	FreeBound fb;
 	H2Levels h2l(make_shared<H2FromFiles>(8, 5));
 
 	Array frequencyv = improveFrequencyGrid(hl, coarsev);

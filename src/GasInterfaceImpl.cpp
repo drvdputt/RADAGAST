@@ -327,8 +327,8 @@ Array GasInterfaceImpl::emissivityv(const Solution& s, const Array& eFrequencyv)
 		lineEmv += _molecular->emissivityv(s.H2Solution, eFrequencyv);
 
 	Array contEmCoeffv(eFrequencyv.size());
-	_freeBound->addEmissionCoefficientv(s.T, contEmCoeffv);
-	_freeFree->addEmissionCoefficientv(s.T, contEmCoeffv);
+	_freeBound->addEmissionCoefficientv(s.T, eFrequencyv, contEmCoeffv);
+	_freeFree->addEmissionCoefficientv(s.T, eFrequencyv, contEmCoeffv);
 
 	return lineEmv + (np_ne(s) / Constant::FPI) * contEmCoeffv;
 }
