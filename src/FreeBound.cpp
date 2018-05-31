@@ -14,8 +14,8 @@ using namespace std;
 
 FreeBound::FreeBound()
 {
-	/* Read the free-bound continuum data from Ercolano and Storey (2006). Adapted from NEBULAR
-	   source code by M. Schirmer (2016). */
+	/* Read the free-bound continuum data from Ercolano and Storey (2006). Adapted from
+	   NEBULAR source code by M. Schirmer (2016). */
 
 	// Use vectors first, for flexibility
 	vector<double> fileFrequencyv;
@@ -83,7 +83,7 @@ FreeBound::FreeBound()
 
 	// DEBUG: test the gammanu function to obtain a figure like in the nebular paper
 	Array testFrequencyv = Testing::generateGeometricGridv(
-	                1000, _frequencyv[0], _frequencyv[_frequencyv.size() - 1]);
+	                1000, _frequencyv[0], 1e16);
 
 	Array gammaNuv(testFrequencyv.size());
 	addEmissionCoefficientv(10000., testFrequencyv, gammaNuv);
@@ -193,15 +193,15 @@ void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 		// Skip over zero data, or when we are below the first threshold
 		if (gammaDagger && freq >= _thresholdv[0])
 		{
-			// If the last threshold hasn't been passed yet, check if we have passed the
-			// next (i + 1)
+			// If the last threshold hasn't been passed yet, check if we have passed
+			// the next (i + 1)
 			if (freq < lastThresh)
 			{
 				// This block must only be executed when a new threshold is passed
 				if (freq > _thresholdv[iThreshold + 1])
 				{
-					// find the next threshold of lower frequency
-					// (don't just pick the next one, as this wouldn't work with
+					// find the next threshold of lower frequency (don't
+					// just pick the next one, as this wouldn't work with
 					// very coarse grids)
 					iThreshold = TemplatedUtils::index(freq, _thresholdv) -
 					             1;
@@ -221,30 +221,38 @@ void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 			double gammaNu = gammaDagger / normalizationFactor;
 			gammaDagger_for_T[iFreq] = gammaNu;
 		}
-		// Also add the ionizing freebound continuum, which apparently is not included in
-		// the data used here This is easily calculated using equation 4.21 from Osterbrock
-		// and the Milne relation, since we have an expression for the photoionization
-		// cross-section anyways
-		if (freq > Ionization::THRESHOLD)
-		{
-			double h2 = Constant::PLANCK * Constant::PLANCK;
-			double nu3 = freq * freq * freq;
-			double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS *
-			            Constant::ELECTRONMASS;
-			double c2 = Constant::LIGHT * Constant::LIGHT;
-			double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK *
-			                   (freq - Ionization::THRESHOLD));
-			double u2 = u_nu * u_nu;
-			double a_nu = Ionization::crossSection(freq);
-			double f_u_nu = SpecialFunctions::maxwellBoltzman(
-			                u_nu, T, Constant::ELECTRONMASS);
-			double ionizingContinuum = h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
-			gammaDagger_for_T[iFreq] = ionizingContinuum;
-		}
 	}
 
 	// Put this into a spectrum object to help with putting this on a coarse grid
 	Spectrum gammaDaggerSp(_frequencyv, gammaDagger_for_T);
 	// Add the binned spectrum to the total emission coefficient
-	gamma_nuv += gammaDaggerSp.binned(eFrequencyv);
+	// gamma_nuv += gammaDaggerSp.binned(eFrequencyv);
+
+	// Also add the ionizing freebound continuum, which apparently is not included in
+	// the data used here This is easily calculated using equation 4.21 from Osterbrock
+	// and the Milne relation, since we have an expression for the photoionization
+	// cross-section anyways
+	for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
+	{
+		double freq = eFrequencyv[iFreq];
+		// gamma_nuv[iFreq] += gammaDaggerSp.evaluate(freq);
+		if (freq > Ionization::THRESHOLD)
+			gamma_nuv[iFreq] += ionizingContinuum(T,freq);
+	}
+}
+
+double FreeBound::ionizingContinuum(double T, double frequency)
+{
+	double h2 = Constant::PLANCK * Constant::PLANCK;
+	double nu3 = frequency * frequency * frequency;
+	double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS *
+		Constant::ELECTRONMASS;
+	double c2 = Constant::LIGHT * Constant::LIGHT;
+	double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK *
+			   (frequency - Ionization::THRESHOLD));
+	double u2 = u_nu * u_nu;
+	double a_nu = Ionization::crossSection(frequency);
+	double f_u_nu = SpecialFunctions::maxwellBoltzman(
+		u_nu, T, Constant::ELECTRONMASS);
+	return h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
 }
