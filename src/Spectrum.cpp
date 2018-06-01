@@ -1,5 +1,7 @@
 #include "Spectrum.h"
 
+using namespace std;
+
 Spectrum::Spectrum() : _hasData{false} {}
 
 Spectrum::Spectrum(const Array& frequencyv, const Array& valuev)
@@ -24,24 +26,36 @@ double Spectrum::evaluate(double frequency) const
 
 double Spectrum::average(double minFreq, double maxFreq) const
 {
-	// Find the grid points that lie within the given bounds
-
-	// right of minFreq
-	size_t iNuMin = TemplatedUtils::index(minFreq, _frequencyv);
-	// right of maxFreq (not included)
-	size_t iNuMax = TemplatedUtils::index(maxFreq, _frequencyv);
+	// Integrate over [minFreq, all points inbetween, maxFreq]
 
 	// Integration points
-	size_t numFromGrid = iNuMax - iNuMin;
+	auto iNuMin = lower_bound(begin(_frequencyv), end(_frequencyv), minFreq);
+	auto iNuMax = lower_bound(begin(_frequencyv), end(_frequencyv), maxFreq);
+	size_t numFromGrid = distance(iNuMin, iNuMax);
+
 	Array nuv(numFromGrid + 2);
 	nuv[0] = minFreq;
-	for (size_t i = 0; i < numFromGrid; i++)
-		nuv[1 + i] = _frequencyv[iNuMin + i];
+	size_t i = 0;
+	for (auto nu = iNuMin; nu < iNuMax; nu++)
+	{
+		nuv[1 + i] = *nu;
+		i++;
+	}
 	nuv[nuv.size() - 1] = maxFreq;
 
-	Array integrandv(nuv.size());
-	for (size_t i = 0; i < nuv.size(); i++)
-		integrandv[i] = evaluate(nuv[i]);
+	// Integrand
+	auto iValMin = begin(_valuev) + distance(begin(_frequencyv), iNuMin);
+	auto iValMax = iValMin + numFromGrid;
+
+	Array integrandv(numFromGrid + 2);
+	integrandv[0] = evaluate(minFreq);
+	i = 0;
+	for (auto val = iValMin; val < iValMax; val++)
+	{
+		integrandv[1 + i] = *val;
+		i++;
+	}
+	integrandv[integrandv.size() - 1] = evaluate(maxFreq);
 
 	double integral = TemplatedUtils::integrate<double>(nuv, integrandv);
 	return integral / (maxFreq - minFreq);
@@ -53,12 +67,13 @@ Array Spectrum::binned(Array frequencyv) const
 	for (size_t i = 0; i < frequencyv.size(); i++)
 	{
 		// 000 11111 22222 333
-		// |--.--|--.--|--.--|
+		// |--|--.--|--.--|--|
 		//i0     1     2     3
 		// For the first bin, set the left boundary to freq[0] instead of a halfway point
 		double nuMin = i == 0 ? frequencyv[0]
 		                      : (frequencyv[i] + frequencyv[i - 1]) / 2.;
-		// For the last bin, set the right boundary to freq[n-1] instead of a halfway point
+		// For the last bin, set the right boundary to freq[n-1] instead of a halfway
+		// point
 		double nuMax = i == frequencyv.size() - 1
 		                               ? frequencyv[frequencyv.size() - 1]
 		                               : (frequencyv[i + 1] + frequencyv[i]) / 2.;

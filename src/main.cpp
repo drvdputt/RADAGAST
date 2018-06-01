@@ -28,6 +28,7 @@ int main()
 		// Testing::plotPhotoelectricHeating();
 		// Testing::plotIonizationStuff();
 		// Testing::plotPS64Collisions();
+		Testing::plotInterpolationTests();
 
 		// These have assertions that check correctnes.
 		// Testing::testChemistry();
@@ -37,7 +38,7 @@ int main()
 		// These do a run, with writeout, but the results are not directly comparable to
 		// something in the way that the ones above work.
 		// Testing::runFromFilesvsHardCoded();
-		Testing::runFullModel();
+		// Testing::runFullModel();
 		// Testing::runWithDust(true);
 		// Testing::runH2(false);
 	}

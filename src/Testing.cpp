@@ -544,6 +544,40 @@ void Testing::plotPhotoelectricHeating()
 	}
 }
 
+void Testing::plotInterpolationTests()
+{
+	double mn = 1;
+	double mx = 10;
+
+	Array baseGridv = generateGeometricGridv(100, mn, mx);
+	Array baseFv(baseGridv.size());
+	for (size_t i = 0; i < baseGridv.size(); i++)
+		baseFv[i] = baseGridv[i] * baseGridv[i];
+
+	auto out = IOTools::ofstreamFile("base.dat");
+	for (size_t i = 0; i < baseGridv.size(); i++)
+		out << baseGridv[i] << '\t' << baseFv[i] << endl;
+	out.close();
+
+	Spectrum s(baseGridv, baseFv);
+
+	Array finerGridv = generateGeometricGridv(1000, mn, mx);
+	Array finerFv = s.binned(finerGridv);
+
+	out = IOTools::ofstreamFile("finer.dat");
+	for (size_t i = 0; i < finerGridv.size(); i++)
+		out << finerGridv[i] << '\t' << finerFv[i] << endl;
+	out.close();
+
+	Array coarserGridv = generateGeometricGridv(10, mn, mx);
+	Array coarserFv = s.binned(coarserGridv);
+
+	out = IOTools::ofstreamFile("coarser.dat");
+	for (size_t i = 0; i < coarserGridv.size(); i++)
+		out << coarserGridv[i] << '\t' << coarserFv[i] << endl;
+	out.close();
+}
+
 void Testing::testACollapse()
 {
 	HydrogenFromFiles hff(0);
@@ -865,8 +899,7 @@ void Testing::runWithDust(bool write)
 
 	// Run
 	GasModule::GasState gs;
-		gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv,
-		                            grainInterface);
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
 	if (write)
 		writeGasState("withDust/", gasInterface, gs);
 }
