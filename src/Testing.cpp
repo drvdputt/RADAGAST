@@ -549,10 +549,10 @@ void Testing::plotInterpolationTests()
 	double mn = 1;
 	double mx = 10;
 
-	Array baseGridv = generateGeometricGridv(100, mn, mx);
+	Array baseGridv = generateGeometricGridv(30, mn, mx);
 	Array baseFv(baseGridv.size());
 	for (size_t i = 0; i < baseGridv.size(); i++)
-		baseFv[i] = baseGridv[i] * baseGridv[i];
+		baseFv[i] = exp(-baseGridv[i]*baseGridv[i]);
 
 	auto out = IOTools::ofstreamFile("base.dat");
 	for (size_t i = 0; i < baseGridv.size(); i++)
@@ -566,7 +566,8 @@ void Testing::plotInterpolationTests()
 
 	out = IOTools::ofstreamFile("finer.dat");
 	for (size_t i = 0; i < finerGridv.size(); i++)
-		out << finerGridv[i] << '\t' << finerFv[i] << endl;
+		// out << finerGridv[i] << '\t' << finerFv[i] << endl;
+		out << finerGridv[i] << '\t' << s.evaluate(finerGridv[i]) << endl;
 	out.close();
 
 	Array coarserGridv = generateGeometricGridv(10, mn, mx);

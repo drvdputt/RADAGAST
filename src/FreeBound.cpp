@@ -82,8 +82,7 @@ FreeBound::FreeBound()
 	out.close();
 
 	// DEBUG: test the gammanu function to obtain a figure like in the nebular paper
-	Array testFrequencyv = Testing::generateGeometricGridv(
-	                1000, _frequencyv[0], 1e16);
+	Array testFrequencyv = Testing::generateGeometricGridv(1000, _frequencyv[0], 1e16);
 
 	Array gammaNuv(testFrequencyv.size());
 	addEmissionCoefficientv(10000., testFrequencyv, gammaNuv);
@@ -168,36 +167,49 @@ void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 	double wRight = (logT - _logTemperaturev[iLeft]) /
 	                (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
 
-	/* We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the
-	 * data. */
+	// Interpolate the data for this temperature
+	Array t_interpolated_gammaDaggerv(_frequencyv.size());
+	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	{
+		// If this loop is (to a significant degree) slow, consider transposing the
+		// gammaDaggervv table, to do this loop contiguously
+
+		// Interpolate gamma^dagger linearly in log T space
+		t_interpolated_gammaDaggerv[iFreq] = _gammaDaggervv(iFreq, iLeft) +
+		                                     wRight * (_gammaDaggervv(iFreq, iRight) -
+		                                               _gammaDaggervv(iFreq, iLeft));
+	}
+
+	// Put onto the right frequency grid
+	Spectrum gammaDaggerSp(_frequencyv, t_interpolated_gammaDaggerv);
+	// Think about whether we should pick 'evaluate' or 'binned' here. (if a bin spans over
+	// a of the normalization threshold, we run into trouble...).
+	Array nu_interpolated_gammaDaggerv = gammaDaggerSp.binned(eFrequencyv);
+
+	/* We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of
+	   the data. */
 	double Ttothe3_2 = pow(T, 3. / 2.);
 	double kT = Constant::BOLTZMAN * T;
-	/* "the nearest threshold of lower energy" i.e. the frequency in _thresholdv lower than the
-	   current one. */
+	/* "the nearest threshold of lower energy" i.e. the frequency in _thresholdv lower than
+	   the current one. */
 	size_t iThreshold = 0;
 	double lastThresh = _thresholdv[_thresholdv.size() - 1];
 	double tE = 0;
 
-	Array gammaDagger_for_T(_gammaDaggervv.size(0));
-
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	// Only now apply the exponential factors (important for interpolation quality)
+	for (size_t i = 0; i < eFrequencyv.size(); i++)
 	{
-		// If this loop is slow, consider transposing the gammaDaggervv table
-		double freq = _frequencyv[iFreq];
-
-		// Interpolate gamma^dagger linearly in log T space
-		double gammaDagger = _gammaDaggervv(iFreq, iLeft) +
-		                     wRight * (_gammaDaggervv(iFreq, iRight) -
-		                               _gammaDaggervv(iFreq, iLeft));
+		double freq = eFrequencyv[i];
 
 		// Skip over zero data, or when we are below the first threshold
-		if (gammaDagger && freq >= _thresholdv[0])
+		if (nu_interpolated_gammaDaggerv[i] && freq >= _thresholdv[0])
 		{
 			// If the last threshold hasn't been passed yet, check if we have passed
 			// the next (i + 1)
 			if (freq < lastThresh)
 			{
-				// This block must only be executed when a new threshold is passed
+				// This block must only be executed when a new threshold is
+				// passed
 				if (freq > _thresholdv[iThreshold + 1])
 				{
 					// find the next threshold of lower frequency (don't
@@ -208,8 +220,8 @@ void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 					tE = Constant::PLANCK * _thresholdv[iThreshold];
 				}
 			}
-			// When we have just moved past the last threshold, set the index one last
-			// time
+			// When we have just moved past the last threshold, set the index one
+			// last time
 			else if (iThreshold < _thresholdv.size() - 1)
 			{
 				iThreshold = _thresholdv.size() - 1;
@@ -218,15 +230,11 @@ void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 			double E = Constant::PLANCK * freq;
 
 			double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
-			double gammaNu = gammaDagger / normalizationFactor;
-			gammaDagger_for_T[iFreq] = gammaNu;
+			nu_interpolated_gammaDaggerv[i] /= normalizationFactor;
 		}
 	}
 
-	// Put this into a spectrum object to help with putting this on a coarse grid
-	Spectrum gammaDaggerSp(_frequencyv, gammaDagger_for_T);
-	// Add the binned spectrum to the total emission coefficient
-	// gamma_nuv += gammaDaggerSp.binned(eFrequencyv);
+	gamma_nuv += nu_interpolated_gammaDaggerv;
 
 	// Also add the ionizing freebound continuum, which apparently is not included in
 	// the data used here This is easily calculated using equation 4.21 from Osterbrock
@@ -235,9 +243,8 @@ void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 	for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
 	{
 		double freq = eFrequencyv[iFreq];
-		// gamma_nuv[iFreq] += gammaDaggerSp.evaluate(freq);
 		if (freq > Ionization::THRESHOLD)
-			gamma_nuv[iFreq] += ionizingContinuum(T,freq);
+			gamma_nuv[iFreq] += ionizingContinuum(T, freq);
 	}
 }
 
@@ -245,14 +252,12 @@ double FreeBound::ionizingContinuum(double T, double frequency)
 {
 	double h2 = Constant::PLANCK * Constant::PLANCK;
 	double nu3 = frequency * frequency * frequency;
-	double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS *
-		Constant::ELECTRONMASS;
+	double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS * Constant::ELECTRONMASS;
 	double c2 = Constant::LIGHT * Constant::LIGHT;
 	double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK *
-			   (frequency - Ionization::THRESHOLD));
+	                   (frequency - Ionization::THRESHOLD));
 	double u2 = u_nu * u_nu;
 	double a_nu = Ionization::crossSection(frequency);
-	double f_u_nu = SpecialFunctions::maxwellBoltzman(
-		u_nu, T, Constant::ELECTRONMASS);
+	double f_u_nu = SpecialFunctions::maxwellBoltzman(u_nu, T, Constant::ELECTRONMASS);
 	return h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
 }

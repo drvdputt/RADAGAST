@@ -28,7 +28,7 @@ int main()
 		// Testing::plotPhotoelectricHeating();
 		// Testing::plotIonizationStuff();
 		// Testing::plotPS64Collisions();
-		Testing::plotInterpolationTests();
+		// Testing::plotInterpolationTests();
 
 		// These have assertions that check correctnes.
 		// Testing::testChemistry();
@@ -39,7 +39,7 @@ int main()
 		// something in the way that the ones above work.
 		// Testing::runFromFilesvsHardCoded();
 		// Testing::runFullModel();
-		// Testing::runWithDust(true);
+		Testing::runWithDust(true);
 		// Testing::runH2(false);
 	}
 	catch (const std::exception& ex)
