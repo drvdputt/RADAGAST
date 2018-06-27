@@ -19,11 +19,9 @@ namespace GasModule
 GasInterface::GasInterface(const valarray<double>& iFrequencyv,
                            const valarray<double>& oFrequencyv,
                            const valarray<double>& eFrequencyv,
-                           const valarray<double>& frequencyv,
-                           // const valarray<double>& eFrequencyv,
                            const string& atomChoice, const string& moleculeChoice)
                 : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
-                  _eFrequencyv{eFrequencyv}, _frequencyv{frequencyv}
+                  _eFrequencyv{eFrequencyv}
 {
 	unique_ptr<HydrogenLevels> atomicLevels;
 
@@ -121,10 +119,9 @@ double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) cons
 
 void GasInterface::zeroOpticalProperties(GasState& gs) const
 {
-	Array zerov(_frequencyv.size());
-	gs._emissivityv = zerov;
-	gs._opacityv = zerov;
-	gs._scatteringOpacityv = zerov;
+	gs._emissivityv = Array(_eFrequencyv.size());
+	gs._opacityv = Array(_oFrequencyv.size());
+	gs._scatteringOpacityv = Array(_oFrequencyv.size());
 	gs._temperature = 0;
 	gs._densityv = Array{0, 0, 0, 0};
 }

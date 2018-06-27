@@ -360,7 +360,7 @@ double FreeFree::cooling(double np_ne, double T) const
 {
 	// Constant factor from 1998-Sutherland equation 18
 	constexpr double fk = 1.42554e-27;
-#define CHECK_FREEFREE_INTEGRAL
+// #define CHECK_FREEFREE_INTEGRAL
 #ifdef CHECK_FREEFREE_INTEGRAL
 	// TODO: check if this frequencyv range is ok for this test, and maybe put this in a
 	// separate function.

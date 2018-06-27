@@ -322,7 +322,8 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 
 Array GasInterfaceImpl::emissivityv(const Solution& s, const Array& eFrequencyv) const
 {
-	Array lineEmv = _atomicLevels->emissivityv(s.HSolution, eFrequencyv);
+	Array lineEmv(eFrequencyv.size());
+	lineEmv = _atomicLevels->emissivityv(s.HSolution, eFrequencyv);
 	if (_molecular)
 		lineEmv += _molecular->emissivityv(s.H2Solution, eFrequencyv);
 
@@ -336,7 +337,8 @@ Array GasInterfaceImpl::emissivityv(const Solution& s, const Array& eFrequencyv)
 Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) const
 {
 	size_t numFreq = oFrequencyv.size();
-	Array lineOp = _atomicLevels->opacityv(s.HSolution, oFrequencyv);
+	Array lineOp(numFreq);
+	lineOp += _atomicLevels->opacityv(s.HSolution, oFrequencyv);
 	if (_molecular)
 		lineOp += _molecular->opacityv(s.H2Solution, oFrequencyv);
 
