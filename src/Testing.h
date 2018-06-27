@@ -73,6 +73,10 @@ void plotPS64Collisions();
 /** Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/ */
 void plotPhotoelectricHeating();
 
+/** Interpolate some simple functions, and plot the results. Used for eyeballing correctness of
+    several interpolation routines. */
+void plotInterpolationTests();
+
 /** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
     NIST values between different n. */
 void testACollapse();

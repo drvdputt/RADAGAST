@@ -32,6 +32,9 @@ T integrate(const T1& xContainer, const T2& yContainer, size_t iMin, size_t iMax
 template <typename T, typename T1, typename T2>
 T integrate(const T1& xContainer, const T2& yContainer);
 
+template <typename T>
+T integrateFunction(std::function<T(T)> f, T xMin, T xMax);
+
 template <typename T, typename T1> inline size_t index(T val, const T1& container);
 
 template <typename T> T evaluatePolynomial(T x, const std::vector<T>& coeffv);
@@ -139,6 +142,27 @@ T integrate(const T1& xContainer, const T2& yContainer)
 {
 	return integrate<T, T1, T2>(xContainer, yContainer, size_t{0},
 	                            size_t{xContainer.size() - 1});
+}
+
+/** Integrates a function over an interval, using an equally spaced number of intermediate
+    points. 0 means that only xMin and xMax are used. **/
+template <typename T>
+T integrateFunction(std::function<T(T)> f, T xMin, T xMax, size_t numPoints)
+{
+	// 2 extra points |--.--.--| --> three segments
+	T xDelta = (xMax - xMin) / static_cast<double>(numPoints + 1);
+
+	std::vector<T> xv(2 + numPoints);
+	xv[0] = xMin;
+	for (size_t i = 1; i <= numPoints; i++)
+		xv[i] = xMin + i * xDelta;
+	xv[xv.size() - 1] = xMax;
+
+	std::vector<T> integrandv(xv.size());
+	for (size_t i = 0; i < xv.size(); i++)
+		integrandv[i] = f(xv[i]);
+
+	return integrate<T, std::vector<T>, std::vector<T>>(xv, integrandv);
 }
 
 /** Finds the index of the first element >= val, in the iterable container `container'. If val <

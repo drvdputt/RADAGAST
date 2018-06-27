@@ -5,70 +5,51 @@
 #include "IonizationBalance.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
+#include "Testing.h"
+
 #include <cmath>
 #include <fstream>
 
 using namespace std;
 
-FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
+FreeBound::FreeBound()
 {
-	/* Read the free-bound continuum data from Ercolano and Storey (2006). Adapted from NEBULAR
-	   source code by M. Schirmer (2016). */
+	/* Read the free-bound continuum data from Ercolano and Storey (2006). Adapted from
+	   NEBULAR source code by M. Schirmer (2016). */
+
+	// Use vectors first, for flexibility
 	vector<double> fileFrequencyv;
 	vector<vector<double>> fileGammaDaggervv;
 	vector<double> fileThresholdv;
+	vector<double> fileTemperaturev;
 
-	readData("dat/t3_elec_reformat.ascii", fileFrequencyv, fileThresholdv, _logTemperaturev,
+	readData("dat/t3_elec_reformat.ascii", fileFrequencyv, fileThresholdv, fileTemperaturev,
 	         fileGammaDaggervv);
 
+	// Switch to Array here, because that's what we use everywhere in the code
+	_frequencyv = Array(fileFrequencyv.data(), fileFrequencyv.size());
 	_thresholdv = Array(fileThresholdv.data(), fileThresholdv.size());
+	_logTemperaturev = Array(fileTemperaturev.data(), fileTemperaturev.size());
 
+	// The number of temperatures
 	size_t numcol = _logTemperaturev.size();
-	size_t numrow = fileFrequencyv.size();
+	// The number of frequencies
+	size_t numrow = _frequencyv.size();
 
-	// Now resample this data according to the frequency grid
-	size_t numFreq = _frequencyv.size();
-	_gammaDaggervv.resize(numFreq, numcol);
-
-	DEBUG("frequency range from file: " << fileFrequencyv[0] << " to "
-	                                    << fileFrequencyv.back() << endl);
-
-	DEBUG("frequency range: " << _frequencyv[0] << " to "
-	                          << _frequencyv[_frequencyv.size() - 1] << endl);
-
-	/* Then, apply a linear interpolation across the frequencies (rows) for every temperature
-	   (column) */
-	for (size_t col = 0; col < numcol; col++)
+	// Copy everything into this Table for speed
+	_gammaDaggervv.resize(numrow, numcol);
+	for (size_t row = 0; row < numrow; row++)
 	{
-		// Extract the column
-		vector<double> column;
-		column.reserve(numrow);
-		for (size_t row = 0; row < numrow; row++)
-			column.push_back(fileGammaDaggervv[row][col]);
-
-		// Resample it
-		const vector<double>& column_resampled =
-		                TemplatedUtils::linearResample<vector<double>>(
-		                                column, fileFrequencyv, frequencyv, -1, -1);
-
-		// And copy it over
-		for (size_t row = 0; row < numFreq; row++)
-			_gammaDaggervv(row, col) = column_resampled[row];
+		double* table_row_begin = &_gammaDaggervv(row, 0);
+		copy(fileGammaDaggervv[row].begin(), fileGammaDaggervv[row].end(),
+		     table_row_begin);
 	}
+
 	DEBUG("Constructed FreeBound" << endl);
+// #define DEBUG_CONTINUUM_DATA
 #ifdef DEBUG_CONTINUUM_DATA
-	// DEBUG: print out the table as read from the file
+	// DEBUG: print out the table
 	ofstream out = IOTools::ofstreamFile("freebound/loadedContinuum.dat");
-	for (size_t iNu = 0; iNu < fileGammaDaggervv.size(); iNu++)
-	{
-		for (double d : fileGammaDaggervv[iNu])
-			out << scientific << d << '\t';
-		out << endl;
-	}
-	out.close();
-
-	// DEBUG: print out the interpolated table
-	out = IOTools::ofstreamFile("freebound/interpolatedContinuum.dat");
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
 		for (size_t iT = 0; iT < _gammaDaggervv.size(1); iT++)
@@ -78,7 +59,7 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	out.close();
 
 	// DEBUG: Test the temperature interpolation function (at least a copy pasta of a part)
-	out = IOTools::ofstreamFile("freebound/bi-interpolatedContinuum.dat");
+	out = IOTools::ofstreamFile("freebound/T-interpolatedContinuum.dat");
 	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 	{
 		for (double logT = 2; logT < 5; logT += 0.01)
@@ -101,13 +82,14 @@ FreeBound::FreeBound(const Array& frequencyv) : _frequencyv(frequencyv)
 	out.close();
 
 	// DEBUG: test the gammanu function to obtain a figure like in the nebular paper
+	Array testFrequencyv = Testing::generateGeometricGridv(1000, _frequencyv[0], 1e16);
+
+	Array gammaNuv(testFrequencyv.size());
+	addEmissionCoefficientv(10000., testFrequencyv, gammaNuv);
+
 	out = IOTools::ofstreamFile("freebound/gammanufb.dat");
-	Array gammaNuv(frequencyv.size());
-	addEmissionCoefficientv(10000., gammaNuv);
-	for (size_t iNu = 0; iNu < _frequencyv.size(); iNu++)
-	{
-		out << _frequencyv[iNu] << "\t" << gammaNuv[iNu] / 1.e-40 << endl;
-	}
+	for (size_t iNu = 0; iNu < testFrequencyv.size(); iNu++)
+		out << testFrequencyv[iNu] << "\t" << gammaNuv[iNu] / 1.e-40 << endl;
 	out.close();
 #endif /* DEBUG_CONTINUUM_DATA */
 }
@@ -166,11 +148,12 @@ void FreeBound::readData(string file, vector<double>& fileFrequencyv,
 	DEBUG("Successfully read freebound data in " << file << endl);
 }
 
-void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
+void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv,
+                                        Array& gamma_nuv) const
 {
 	double logT = log10(T);
 
-	if (logT > _logTemperaturev.back() || logT < _logTemperaturev[0])
+	if (logT > _logTemperaturev[_logTemperaturev.size() - 1] || logT < _logTemperaturev[0])
 	{
 		DEBUG("Warning: temperature "
 		      << T << "K is outside of data range for free-bound continuum" << endl);
@@ -184,47 +167,61 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	double wRight = (logT - _logTemperaturev[iLeft]) /
 	                (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
 
-	/* We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of the
-	 * data. */
-	double Ttothe3_2 = pow(T, 3. / 2.);
-	double kT = Constant::BOLTZMAN * T;
-	/* "the nearest threshold of lower energy" i.e. the frequency in _thresholdv lower than the
-	   current one. */
-	size_t iThreshold = 0;
-	double tE = 0;
+	// Interpolate the data for this temperature
+	Array t_interpolated_gammaDaggerv(_frequencyv.size());
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
-		double freq = _frequencyv[iFreq];
+		// If this loop is (to a significant degree) slow, consider transposing the
+		// gammaDaggervv table, to do this loop contiguously
 
 		// Interpolate gamma^dagger linearly in log T space
-		double gammaDagger = _gammaDaggervv(iFreq, iLeft) +
-		                     wRight * (_gammaDaggervv(iFreq, iRight) -
-		                               _gammaDaggervv(iFreq, iLeft));
+		t_interpolated_gammaDaggerv[iFreq] = _gammaDaggervv(iFreq, iLeft) +
+		                                     wRight * (_gammaDaggervv(iFreq, iRight) -
+		                                               _gammaDaggervv(iFreq, iLeft));
+	}
 
-		double lastThresh = _thresholdv[_thresholdv.size() - 1];
+	// Put onto the right frequency grid
+	Spectrum gammaDaggerSp(_frequencyv, t_interpolated_gammaDaggerv);
+	// Think about whether we should pick 'evaluate' or 'binned' here. (if a bin spans over
+	// a of the normalization threshold, we run into trouble...).
+	Array nu_interpolated_gammaDaggerv = gammaDaggerSp.binned(eFrequencyv);
+
+	/* We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of
+	   the data. */
+	double Ttothe3_2 = pow(T, 3. / 2.);
+	double kT = Constant::BOLTZMAN * T;
+	/* "the nearest threshold of lower energy" i.e. the frequency in _thresholdv lower than
+	   the current one. */
+	size_t iThreshold = 0;
+	double lastThresh = _thresholdv[_thresholdv.size() - 1];
+	double tE = 0;
+
+	// Only now apply the exponential factors (important for interpolation quality)
+	for (size_t i = 0; i < eFrequencyv.size(); i++)
+	{
+		double freq = eFrequencyv[i];
+
 		// Skip over zero data, or when we are below the first threshold
-		if (!gammaDagger || freq < _thresholdv[0])
+		if (nu_interpolated_gammaDaggerv[i] && freq >= _thresholdv[0])
 		{
-		}
-		else
-		{
-			// If the last threshold hasn't been passed yet, check if we have passed the
-			// next (i + 1)
+			// If the last threshold hasn't been passed yet, check if we have passed
+			// the next (i + 1)
 			if (freq < lastThresh)
 			{
-				// This block must only be executed when a new threshold is passed
+				// This block must only be executed when a new threshold is
+				// passed
 				if (freq > _thresholdv[iThreshold + 1])
 				{
-					// find the next threshold of lower frequency
-					// (don't just pick the next one, as this wouldn't work with
+					// find the next threshold of lower frequency (don't
+					// just pick the next one, as this wouldn't work with
 					// very coarse grids)
 					iThreshold = TemplatedUtils::index(freq, _thresholdv) -
 					             1;
 					tE = Constant::PLANCK * _thresholdv[iThreshold];
 				}
 			}
-			// When we have just moved past the last threshold, set the index one last
-			// time
+			// When we have just moved past the last threshold, set the index one
+			// last time
 			else if (iThreshold < _thresholdv.size() - 1)
 			{
 				iThreshold = _thresholdv.size() - 1;
@@ -233,28 +230,34 @@ void FreeBound::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 			double E = Constant::PLANCK * freq;
 
 			double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
-			double gammaNu = gammaDagger / normalizationFactor;
-			gamma_nuv[iFreq] += gammaNu;
-		}
-		// Also add the ionizing freebound continuum, which apparently is not included in
-		// the data used here This is easily calculated using equation 4.21 from Osterbrock
-		// and the Milne relation, since we have an expression for the photoionization
-		// cross-section anyways
-		if (freq > Ionization::THRESHOLD)
-		{
-			double h2 = Constant::PLANCK * Constant::PLANCK;
-			double nu3 = freq * freq * freq;
-			double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS *
-			            Constant::ELECTRONMASS;
-			double c2 = Constant::LIGHT * Constant::LIGHT;
-			double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK *
-			                   (freq - Ionization::THRESHOLD));
-			double u2 = u_nu * u_nu;
-			double a_nu = Ionization::crossSection(freq);
-			double f_u_nu = SpecialFunctions::maxwellBoltzman(
-			                u_nu, T, Constant::ELECTRONMASS);
-			double ionizingContinuum = h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
-			gamma_nuv[iFreq] += ionizingContinuum;
+			nu_interpolated_gammaDaggerv[i] /= normalizationFactor;
 		}
 	}
+
+	gamma_nuv += nu_interpolated_gammaDaggerv;
+
+	// Also add the ionizing freebound continuum, which apparently is not included in
+	// the data used here This is easily calculated using equation 4.21 from Osterbrock
+	// and the Milne relation, since we have an expression for the photoionization
+	// cross-section anyways
+	for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
+	{
+		double freq = eFrequencyv[iFreq];
+		if (freq > Ionization::THRESHOLD)
+			gamma_nuv[iFreq] += ionizingContinuum(T, freq);
+	}
+}
+
+double FreeBound::ionizingContinuum(double T, double frequency)
+{
+	double h2 = Constant::PLANCK * Constant::PLANCK;
+	double nu3 = frequency * frequency * frequency;
+	double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS * Constant::ELECTRONMASS;
+	double c2 = Constant::LIGHT * Constant::LIGHT;
+	double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK *
+	                   (frequency - Ionization::THRESHOLD));
+	double u2 = u_nu * u_nu;
+	double a_nu = Ionization::crossSection(frequency);
+	double f_u_nu = SpecialFunctions::maxwellBoltzman(u_nu, T, Constant::ELECTRONMASS);
+	return h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
 }

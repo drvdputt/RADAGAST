@@ -8,10 +8,9 @@
 
 using namespace std;
 
-NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv, double mass)
-                : _ldp(ldp), _frequencyv(frequencyv), _mass(mass), _numLv(_ldp->numLv()),
-                  _ev(_ldp->ev()), _gv(_ldp->gv()), _avv(_ldp->avv()),
-                  _extraAvv(_ldp->extraAvv())
+NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, double mass)
+                : _ldp(ldp), _mass(mass), _numLv(_ldp->numLv()), _ev(_ldp->ev()),
+                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
 {
 	// Do a sanity check: All active transitions must be downward ones in energy
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -70,10 +69,16 @@ NLevel::Solution NLevel::solveBalance(double density, const Spectrum& specificIn
 		// (emission) grid.
 		double maxNorm = 0, minNorm = 1e9;
 		forActiveLinesDo([&](size_t upper, size_t lower) {
+			auto lp = lineProfile(upper, lower, s.T, s.cvv);
+
+			Array lpv(specificIntensity.frequencyv().size());
+			for (size_t i = 0; i < lpv.size(); i++)
+				lpv[i] = lp(specificIntensity.frequencyv()[i]);
+
 			double norm = TemplatedUtils::integrate<double>(
-			                _frequencyv, lineProfile_array(upper, lower, s));
-			DEBUG("lineProfile_array " << upper << " --> " << lower << " has norm "
-			                           << norm << endl);
+			                specificIntensity.frequencyv(), lpv);
+			DEBUG("on the input intensity grid, line  "
+			      << upper << " --> " << lower << " has norm " << norm << endl);
 			maxNorm = max(norm, maxNorm);
 			minNorm = min(norm, minNorm);
 		});
@@ -84,8 +89,8 @@ NLevel::Solution NLevel::solveBalance(double density, const Spectrum& specificIn
 		// Integral over contant spectrum, using the LineProfile class. An integration
 		// grid is chosen internally, and we check the quality of it here (at least for
 		// now.)
-		double minFreq = _frequencyv[0];
-		double maxFreq = _frequencyv[_frequencyv.size() - 1];
+		double minFreq = specificIntensity.freqMin();
+		double maxFreq = specificIntensity.freqMax();
 		Array someFreqs = {minFreq, (minFreq + maxFreq) / 2, maxFreq};
 		Spectrum flat(someFreqs, Array(1, someFreqs.size()));
 		forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -98,7 +103,7 @@ NLevel::Solution NLevel::solveBalance(double density, const Spectrum& specificIn
 		});
 		DEBUG("Max profile norm = " << maxNorm << endl);
 		DEBUG("Min profile norm = " << minNorm << endl);
-#endif
+#endif /* REPORT_LINE_QUALITY */
 #ifdef PRINT_LEVEL_MATRICES
 		DEBUG("Aij" << endl << _avv << endl << endl);
 		DEBUG("BPij" << endl << s.bpvv << endl << endl);
@@ -133,15 +138,18 @@ NLevel::Solution NLevel::solveZero(double T) const
 	return s;
 }
 
-Array NLevel::emissivityv(const Solution& s) const { return lineEmissivityv(s); }
-
-Array NLevel::lineEmissivityv(const Solution& s) const
+Array NLevel::emissivityv(const Solution& s, const Array& eFrequencyv) const
 {
-	Array total(_frequencyv.size());
+	return lineEmissivityv(s, eFrequencyv);
+}
+
+Array NLevel::lineEmissivityv(const Solution& s, const Array& eFrequencyv) const
+{
+	Array total(eFrequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		double factor = lineIntensityFactor(upper, lower, s);
 		LineProfile lp = lineProfile(upper, lower, s);
-		lp.addToSpectrum(_frequencyv, total, factor);
+		lp.addToBinned(eFrequencyv, total, factor);
 	});
 	return total;
 }
@@ -209,29 +217,25 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 	auto maxIt = max_element(begin(v), end(v));
 	double spectrumMax = *maxIt;
 
-	Array highResIv(_frequencyv.size());
-	for (size_t i = 0; i < _frequencyv.size(); i++)
-		highResIv[i] = specificIntensity.evaluate(_frequencyv[i]);
-	Spectrum highResSpec(_frequencyv, highResIv);
-
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
 		double lowResIntegral = lp.integrateSpectrum(specificIntensity, spectrumMax);
 // #define REPORT_SPEC_INTEGRAL
 #ifdef REPORT_SPEC_INTEGRAL
-		double highResIntegral = lp.integrateSpectrum(highResSpec);
+		auto f = [&](double x) -> double {
+			return lp(x) * specificIntensity.evaluate(x);
+		};
+		// TODO: better use log grid here, and put this in a separate test function
+		size_t many_points = 1e6;
+		double manualIntegral = TemplatedUtils::integrateFunction<double>(
+		                f, specificIntensity.freqMin(), specificIntensity.freqMax(),
+		                many_points);
 
-		const Array& lpav = lineProfile_array(upper, lower, T, Cvv);
-		double manualIntegral = TemplatedUtils::integrate<double, Array, Array>(
-		                _frequencyv, lpav * highResIv);
+		double ratio = manualIntegral / lowResIntegral;
 
-		double hrRatio = highResIntegral / lowResIntegral;
-		double mnRatio = manualIntegral / lowResIntegral;
-
-		if (abs(hrRatio - 1.) > 1.e-6 || abs(mnRatio - 1.) > 1.e-6)
-			cout << lowResIntegral << "\t HR: " << hrRatio << "\t MR:" << mnRatio
-			     << endl;
+		if (abs(ratio - 1.) > 1.e-6)
+			cout << lowResIntegral << "\t MR:" << ratio << endl;
 #endif /* REPORT_SPEC_INTEGRAL */
 		BPvv(upper, lower) = lowResIntegral;
 
@@ -284,7 +288,7 @@ EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix&
 	// Element wise relative errors
 	// EArray diffv = Mvv * nv - f;
 	// EArray errv = diffv / f.array();
-	// Note that these errors will always be quite big for small components of f
+	// Note tha these errors will always be quite big for small components of f
 	// DEBUG("The relative errors are:\n" << errv << endl);
 
 	return nv;
@@ -360,18 +364,4 @@ LineProfile NLevel::lineProfile(size_t upper, size_t lower, double T, const EMat
 	double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 
 	return LineProfile(nu0, sigma_nu, halfWidth);
-}
-
-Array NLevel::lineProfile_array(size_t upper, size_t lower, const Solution& s) const
-{
-	return lineProfile_array(upper, lower, s.T, s.cvv);
-}
-
-Array NLevel::lineProfile_array(size_t upper, size_t lower, double T, const EMatrix& Cvv) const
-{
-	Array result(_frequencyv.size());
-	LineProfile lp = lineProfile(upper, lower, T, Cvv);
-	for (size_t n = 0; n < _frequencyv.size(); n++)
-		result[n] = lp(_frequencyv[n]);
-	return result;
 }

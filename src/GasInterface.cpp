@@ -7,6 +7,7 @@
 #include "HydrogenFromFiles.h"
 #include "HydrogenHardcoded.h"
 #include "HydrogenLevels.h"
+#include "Timer.h"
 #include "TwoLevelHardcoded.h"
 
 #include <sstream>
@@ -17,12 +18,11 @@ namespace GasModule
 {
 GasInterface::GasInterface(const valarray<double>& iFrequencyv,
                            const valarray<double>& oFrequencyv,
-                           const valarray<double>& frequencyv,
-                           // const valarray<double>& eFrequencyv,
+                           const valarray<double>& eFrequencyv,
                            const string& atomChoice, const string& moleculeChoice)
-                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _frequencyv{frequencyv}
+                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
+                  _eFrequencyv{eFrequencyv}
 {
-
 	unique_ptr<HydrogenLevels> atomicLevels;
 
 	// Choose a hydrogen data provider
@@ -36,7 +36,7 @@ GasInterface::GasInterface(const valarray<double>& iFrequencyv,
 	else
 		hLevelData = make_shared<HydrogenFromFiles>();
 
-	atomicLevels = make_unique<HydrogenLevels>(hLevelData, _frequencyv);
+	atomicLevels = make_unique<HydrogenLevels>(hLevelData);
 
 	// Level model for the molecule.
 	unique_ptr<H2Levels> molecularLevels;
@@ -60,12 +60,11 @@ GasInterface::GasInterface(const valarray<double>& iFrequencyv,
 			h2LevelData = make_shared<H2FromFiles>(maxJ, maxV);
 		}
 		// Make a level model out of it.
-		molecularLevels = make_unique<H2Levels>(h2LevelData, _frequencyv);
+		molecularLevels = make_unique<H2Levels>(h2LevelData);
 	}
 
 	// Give these level models to the main implementation
-	_pimpl = make_unique<GasInterfaceImpl>(move(atomicLevels), move(molecularLevels),
-	                                       _frequencyv);
+	_pimpl = make_unique<GasInterfaceImpl>(move(atomicLevels), move(molecularLevels));
 }
 
 GasInterface::~GasInterface() = default;
@@ -74,13 +73,16 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
                                   const valarray<double>& specificIntensityv,
                                   const GrainInterface& grainInfo) const
 {
+#ifndef SILENT
+	Timer t("Update gas state");
+#endif
 	// Create a spectrum object which makes it easier to pass around the frequencies and the
 	// values for the specific intensity. It can also be used to easily interpolate the
 	// specific intensity for a certain frequency.
 	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
 		_pimpl->solveBalance(gasState, n, Tinit, specificIntensity, grainInfo,
-		                     _oFrequencyv);
+		                     _oFrequencyv, _eFrequencyv);
 	else
 		zeroOpticalProperties(gasState);
 }
@@ -89,7 +91,8 @@ void GasInterface::initializeGasState(GasState& gasState, double n, double T,
                                       const GrainInterface& grainInfo) const
 {
 	if (n > 0)
-		_pimpl->solveInitialGuess(gasState, n, T, grainInfo, _oFrequencyv);
+		_pimpl->solveInitialGuess(gasState, n, T, grainInfo, _oFrequencyv,
+		                          _eFrequencyv);
 	else
 		zeroOpticalProperties(gasState);
 }
@@ -116,10 +119,9 @@ double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) cons
 
 void GasInterface::zeroOpticalProperties(GasState& gs) const
 {
-	Array zerov(_frequencyv.size());
-	gs._emissivityv = zerov;
-	gs._opacityv = zerov;
-	gs._scatteringOpacityv = zerov;
+	gs._emissivityv = Array(_eFrequencyv.size());
+	gs._opacityv = Array(_oFrequencyv.size());
+	gs._scatteringOpacityv = Array(_oFrequencyv.size());
 	gs._temperature = 0;
 	gs._densityv = Array{0, 0, 0, 0};
 }

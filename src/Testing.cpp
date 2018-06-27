@@ -16,7 +16,6 @@
 #include "SpecialFunctions.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
-#include "Timer.h"
 
 #include <iomanip>
 #include <sstream>
@@ -407,17 +406,19 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Equilibrium temperature: " << gs.temperature() << endl;
 	cout << "Ionized fraction: " << gs.ionizedFraction() << endl;
 
-	const Array& frequencyv = gi.frequencyv();
+	const Array& eFrequencyv = gi.eFrequencyv();
 	const Array& emv = gs._emissivityv;
 	Spectrum opv(gi.oFrequencyv(), gs._opacityv);
 
-	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(frequencyv, emv)
+	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(eFrequencyv, emv)
 	     << endl;
 
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency", "wavelength", "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+	                "frequency",
+	                "wavelength",
+	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
 	                "opacity alpha_nu (cm-1)",
 	};
 	out << "#";
@@ -432,7 +433,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	wavfile << "#wav (micron)" << tab << "freq (Hz)" << endl;
 	for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
 	{
-		double freq = frequencyv[iFreq];
+		double freq = eFrequencyv[iFreq];
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
 		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
@@ -443,8 +444,14 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	out.close();
 	wavfile.close();
 
-	// Print some line intensities relative to Hbeta
+	out = IOTools::ofstreamFile(outputPath + "raw_opacity.dat");
+	for(size_t i = 0; i < gs._opacityv.size(); i++)
+	{
+		out << gi.oFrequencyv()[i] << tab << gs._opacityv[i] << endl;
+	}
+	out.close();
 
+	// Print some line intensities relative to Hbeta
 	double fHalpha = Constant::LIGHT / 656.453e-7;
 	double fHbeta = Constant::LIGHT / 486.264e-7;
 	double fHgamma = Constant::LIGHT / 434.165e-7;
@@ -457,7 +464,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	double fBralpha = Constant::LIGHT / 4052.27e-7;
 
 	auto evaluateSpectrum = [&](double f) {
-		return TemplatedUtils::evaluateLinInterpf<double>(f, frequencyv, emv);
+		return TemplatedUtils::evaluateLinInterpf<double>(f, eFrequencyv, emv);
 	};
 
 	double Hbeta = evaluateSpectrum(fHbeta);
@@ -541,6 +548,41 @@ void Testing::plotPhotoelectricHeating()
 		phr.chargeBalanceTest(G0values[i], gasT, ne, ne);
 		phr.heatingRateTest(G0values[i], gasT, ne);
 	}
+}
+
+void Testing::plotInterpolationTests()
+{
+	double mn = 1;
+	double mx = 10;
+
+	Array baseGridv = generateGeometricGridv(30, mn, mx);
+	Array baseFv(baseGridv.size());
+	for (size_t i = 0; i < baseGridv.size(); i++)
+		baseFv[i] = exp(-baseGridv[i]*baseGridv[i]);
+
+	auto out = IOTools::ofstreamFile("base.dat");
+	for (size_t i = 0; i < baseGridv.size(); i++)
+		out << baseGridv[i] << '\t' << baseFv[i] << endl;
+	out.close();
+
+	Spectrum s(baseGridv, baseFv);
+
+	Array finerGridv = generateGeometricGridv(1000, mn, mx);
+	Array finerFv = s.binned(finerGridv);
+
+	out = IOTools::ofstreamFile("finer.dat");
+	for (size_t i = 0; i < finerGridv.size(); i++)
+		// out << finerGridv[i] << '\t' << finerFv[i] << endl;
+		out << finerGridv[i] << '\t' << s.evaluate(finerGridv[i]) << endl;
+	out.close();
+
+	Array coarserGridv = generateGeometricGridv(10, mn, mx);
+	Array coarserFv = s.binned(coarserGridv);
+
+	out = IOTools::ofstreamFile("coarser.dat");
+	for (size_t i = 0; i < coarserGridv.size(); i++)
+		out << coarserGridv[i] << '\t' << coarserFv[i] << endl;
+	out.close();
 }
 
 void Testing::testACollapse()
@@ -730,11 +772,11 @@ void Testing::runH2(bool write)
 	Spectrum specificIntensity(unrefinedv, specificIntensityv);
 
 	// Add points for H2 lines
-	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV), unrefinedv);
+	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV));
 	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
 
 	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
-	H2Levels h2Levels{h2Data, frequencyv};
+	H2Levels h2Levels{h2Data};
 
 	// Set the densities
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
@@ -751,7 +793,7 @@ void Testing::runH2(bool write)
 
 	if (write)
 	{
-		Array emissivityv = h2Levels.emissivityv(s);
+		Array emissivityv = h2Levels.emissivityv(s, frequencyv);
 		Array opacityv = h2Levels.opacityv(s, unrefinedv);
 		Array lineOp = h2Levels.lineOpacityv(s, unrefinedv);
 
@@ -775,27 +817,29 @@ void Testing::runFromFilesvsHardCoded()
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
 	// Hey, at least we'll get a decent frequency grid out of this hack
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5), unrefinedv);
-	FreeBound fb(unrefinedv);
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5));
+	FreeBound fb;
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc", "none");
+	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc",
+	                              "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2", "none");
+	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2",
+	                              "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = generateGeometricGridv(200, Constant::LIGHT / (1e3 * Constant::UM_CM),
+	Array coarsev = generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	cout << "Construction model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(), coarsev);
-	FreeBound fb(coarsev);
-	H2Levels h2l(make_shared<H2FromFiles>(8, 5), coarsev);
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
+	FreeBound fb;
+	H2Levels h2l(make_shared<H2FromFiles>(8, 5));
 
 	Array frequencyv = improveFrequencyGrid(hl, coarsev);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
@@ -808,7 +852,11 @@ GasModule::GasInterface Testing::genFullModel()
 void Testing::runFullModel()
 {
 	cout << "RUN_FULL_MODEL" << endl;
-	runGasInterfaceImpl(genFullModel(), "gasOnly");
+	GasModule::GasInterface gi = genFullModel();
+	double Tc = 30000;
+	double G0 = 10;
+	double n = 10;
+	runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
 }
 
 void Testing::runWithDust(bool write)
@@ -817,7 +865,6 @@ void Testing::runWithDust(bool write)
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
-	const Array& frequencyv = gasInterface.frequencyv();
 
 	// Radiation field
 	double Tc{4e3};
@@ -847,7 +894,7 @@ void Testing::runWithDust(bool write)
 	temperaturev = {15, 10, 5};
 	// And now I need some absorption efficiencies for every wavelength. Let's try to use
 	// the old photoelectric heating test code.
-	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.frequencyv())};
+	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.iFrequencyv())};
 
 	// TODO: check if the qabsvv has loaded correctly
 
@@ -859,11 +906,7 @@ void Testing::runWithDust(bool write)
 
 	// Run
 	GasModule::GasState gs;
-	{
-		Timer t("Update gas state");
-		gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv,
-		                            grainInterface);
-	}
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
 	if (write)
-		writeGasState("withDust", gasInterface, gs);
+		writeGasState("withDust/", gasInterface, gs);
 }

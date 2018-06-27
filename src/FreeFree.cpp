@@ -4,6 +4,7 @@
 #include "Error.h"
 #include "IOTools.h"
 #include "TemplatedUtils.h"
+#include "Testing.h"
 
 #include <cassert>
 
@@ -20,9 +21,9 @@ namespace
 {
 constexpr double e6 = Constant::ESQUARE * Constant::ESQUARE * Constant::ESQUARE;
 const double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
-}
+} // namespace
 
-FreeFree::FreeFree(const Array& frequencyv) : _frequencyv(frequencyv)
+FreeFree::FreeFree()
 {
 	readFullData();
 	readIntegratedData();
@@ -140,7 +141,6 @@ void FreeFree::readFullData()
 		}
 		getline(input, line);
 	}
-
 #ifdef DEBUG_CONTINUUM_DATA
 	ofstream out = IOTools::ofstreamFile("freefree/gauntff.dat");
 	for (size_t ipu = 0; ipu < np_u; ipu++)
@@ -280,7 +280,8 @@ double FreeFree::integratedGauntFactor(double logg2) const
 	return exp(loggff_integrated_ip);
 }
 
-void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
+void FreeFree::addEmissionCoefficientv(double T, const Array& eFrequencyv,
+                                       Array& gamma_nuv) const
 {
 	// 32pi e^6 / 3mc^3 * sqrt(2pi / 3m)
 	constexpr double c3 = Constant::LIGHT * Constant::LIGHT * Constant::LIGHT;
@@ -292,17 +293,20 @@ void FreeFree::addEmissionCoefficientv(double T, Array& gamma_nuv) const
 	double sqrtkT = sqrt(kT);
 	double logg2 = log10(Constant::RYDBERG / kT);
 
+	// TODO: use an intermediate spectrum object here, and then call its 'binned' function,
+	// if needed. Might be needed for very wide frequency bins, but the current way might be
+	// good enough
 #ifdef DEBUG_CONTINUUM_DATA
 	ofstream out = IOTools::ofstreamFile("freefree/gammanuff.dat");
 #endif
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+	for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
 	{
-		double u = Constant::PLANCK * _frequencyv[iFreq] / kT;
+		double u = Constant::PLANCK * eFrequencyv[iFreq] / kT;
 		double logu = log10(u);
 		double gammaNu = gamma_nu_constantFactor / sqrtkT * exp(-u) *
 		                 gauntFactor(logu, logg2);
 #ifdef DEBUG_CONTINUUM_DATA
-		out << _frequencyv[iFreq] << "\t" << gammaNu / 1.e-40 << endl;
+		out << eFrequencyv[iFreq] << "\t" << gammaNu / 1.e-40 << endl;
 #endif
 		gamma_nuv[iFreq] += gammaNu;
 	}
@@ -356,14 +360,18 @@ double FreeFree::cooling(double np_ne, double T) const
 {
 	// Constant factor from 1998-Sutherland equation 18
 	constexpr double fk = 1.42554e-27;
-#ifdef DEBUG_CONTINUUM_DATA
-	Array gamma_nuv(_frequencyv.size());
-	addEmissionCoefficientv(T, gamma_nuv);
+// #define CHECK_FREEFREE_INTEGRAL
+#ifdef CHECK_FREEFREE_INTEGRAL
+	// TODO: check if this frequencyv range is ok for this test, and maybe put this in a
+	// separate function.
+	Array integrationgridv = Testing::generateGeometricGridv(1000, 1e7, 1e16);
+	Array gamma_nuv(integrationgridv.size());
+	addEmissionCoefficientv(T, integrationgridv, gamma_nuv);
 
 	// emissivity = ne np / 4pi * gamma
 	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
 	double manually_integrated =
-	                np_ne * TemplatedUtils::integrate<double>(_frequencyv, gamma_nuv);
+	                np_ne * TemplatedUtils::integrate<double>(integrationgridv, gamma_nuv);
 #endif
 	// Interpolate and use the frequency integrated gaunt factor
 	double logg2 = log10(Constant::RYDBERG / Constant::BOLTZMAN / T);

@@ -20,7 +20,7 @@ class LevelDataProvider;
 
     Example: To simulate the toy two-level system for CII, create an NLevel object taking a
     TwoLevelHardcoded* as constructor argument. To simulate Hydrogen including its two-photon
-    continuum, create an object of the HydrogenCalculator subclass, using a HydrogenDataProvider
+    continuum, create an object of the HydrogenLevels subclass, using a HydrogenDataProvider
     class of choice.
 
     It contains data members to store all the constants needed for these calculations: The
@@ -56,15 +56,9 @@ public:
 	    made sure that this object exists for the lifetime of this class instance. The
 	    number of levels, energies, multiplicities, and transition coefficients are filled
 	    in immediately using the data provider referred to by this pointer. */
-	NLevel(std::shared_ptr<const LevelDataProvider> ldp, const Array& frequencyv,
-	       double mass);
+	NLevel(std::shared_ptr<const LevelDataProvider> ldp, double mass);
 
 	virtual ~NLevel();
-
-	/** Getter for the frequency grid the calculations are performed on. With the new
-	    specific intensity rework, the input spectrum can have a different grid than this
-	    one. */
-	const Array& frequencyv() const { return _frequencyv; }
 
 	/** Ouputs some properties about the different line transitions taken into account by
 	    this instance of NLevel. The results for the number of lines, their frequencies and
@@ -128,11 +122,11 @@ public:
 	/** The total emitted spectrum by the system of levels. The default implementation gives
 	    just the line emission, but subclasses can override it to add extra contributions,
 	    such as two-photon continua. */
-	virtual Array emissivityv(const Solution& s) const;
+	virtual Array emissivityv(const Solution& s, const Array& eFrequencyv) const;
 
 	/** The spectrum emitted by the line transitions, expressed as the emission coefficient
 	    j_nu f * (erg/cm3/s/Hz). */
-	Array lineEmissivityv(const Solution& s) const;
+	Array lineEmissivityv(const Solution& s, const Array& eFrequencyv) const;
 
 	/** The opacity alpha_nu, equivalent to kappaRho for dust (cm-1). The default
 	    implementation gives just the line opacity, but subclasses can override it to add
@@ -201,15 +195,6 @@ private:
 	    mass of the particle. */
 	LineProfile lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
-	/** Calculates the Voigt profile for a certain line, using the frequency grid supplied
-	    at construction and the temperature and collision rates contained in the Solution
-	    struct. */
-	Array lineProfile_array(size_t upper, size_t lower, const Solution& s) const;
-
-	/** Or when the full solution is not yet known, and hence a Solution object is not yet
-	    available. */
-	Array lineProfile_array(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
-
 protected:
 	/** A number of protected getters are provided, so the subclasses can make use of these
 	    coefficients. */
@@ -241,9 +226,6 @@ private:
 	/* A polymorphic LevelDataProvider. The specific subclass that this data member is
 	   initialized with depends on the subclass. */
 	std::shared_ptr<const LevelDataProvider> _ldp;
-
-	/* Frequency grid */
-	const Array& _frequencyv;
 
 	/* Particle mass (important for line width) */
 	double _mass;

@@ -28,6 +28,7 @@ int main()
 		// Testing::plotPhotoelectricHeating();
 		// Testing::plotIonizationStuff();
 		// Testing::plotPS64Collisions();
+		// Testing::plotInterpolationTests();
 
 		// These have assertions that check correctnes.
 		// Testing::testChemistry();

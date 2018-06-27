@@ -48,8 +48,7 @@ public:
 	    function to see which options are available. */
 	GasInterface(const std::valarray<double>& iFrequencyv,
 	             const std::valarray<double>& oFrequencyv,
-	             const std::valarray<double>& frequencyv,
-	             /* const std::valarray<double>& eFrequencyv, */
+	             const std::valarray<double>& eFrequencyv,
 	             const std::string& atomChoice = "",
 	             const std::string& moleculeChoice = "");
 
@@ -57,14 +56,11 @@ public:
 
 	~GasInterface();
 
-	/** Returns the frequency grid used. This may come in handy later, for example for
-	    situations where the code generates its own frequency points. */
-	std::valarray<double> frequencyv() const { return _frequencyv; }
-
 	/** Return the frequency grid used for the specific intensity (the one the user gave at
 	    construction. */
 	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
 	std::valarray<double> oFrequencyv() const { return _oFrequencyv; }
+	std::valarray<double> eFrequencyv() const { return _eFrequencyv; }
 
 	// USAGE 1: Calculate GasState objects //
 
@@ -122,7 +118,7 @@ private:
 
 	std::valarray<double> _iFrequencyv;
 	std::valarray<double> _oFrequencyv;
-	std::valarray<double> _frequencyv;
+	std::valarray<double> _eFrequencyv;
 
 	/* The implementation details, especially those that require the inclusion of other
 	   files than 'GasState.h' in this header, are hidden behind this pointer. This way, the
