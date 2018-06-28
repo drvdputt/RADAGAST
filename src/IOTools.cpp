@@ -42,3 +42,13 @@ istringstream IOTools::istringstreamNextLine(ifstream& ifs)
 	getline(ifs, line);
 	return istringstream(line);
 }
+
+vector<double> IOTools::allNumbersFromNextLine(const string& line)
+{
+	auto ss = istringstream(line);
+	double i;
+	vector<double> nv;
+	while(ss >> i)
+		nv.emplace_back(i);
+	return nv;
+}

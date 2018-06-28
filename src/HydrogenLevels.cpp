@@ -11,7 +11,7 @@
 using namespace std;
 
 HydrogenLevels::HydrogenLevels(std::shared_ptr<const HydrogenDataProvider> hdp)
-                : NLevel(hdp, Constant::HMASS_CGS), _hdp(hdp)
+                : NLevel(hdp, Constant::HMASS_CGS), _hdp(hdp), _rr(make_unique<HydrogenADF48>())
 {
 }
 
@@ -69,7 +69,7 @@ EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 		for (int l = 0; l < n; l++)
 		{
 			size_t index = _hdp->indexOutput(n, l);
-			result[index] += alpha(n, l, gas._T);
+			result[index] += _rr->alpha(n, l, gas._T);
 		}
 	}
 	double ne = gas._speciesNv(SpeciesIndex::ine());

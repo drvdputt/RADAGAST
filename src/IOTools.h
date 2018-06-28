@@ -3,6 +3,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <vector>
 
 /* Just a few shorthands for often repeated statements */
 
@@ -26,6 +27,8 @@ std::ofstream ofstreamFile(const std::string& file);
 /** Reads in a line from a certain ifstream, and immediately creates an istringstream object so that
     it can be parsed. This function moves the ifstream forward one line. */
 std::istringstream istringstreamNextLine(std::ifstream& ifs);
+
+std::vector<double> allNumbersFromNextLine(const std::string& line);
 }
 
 #endif /* _IOTOOLS_H_ */

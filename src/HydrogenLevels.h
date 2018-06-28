@@ -2,6 +2,7 @@
 #define GASMODULE_GIT_SRC_HYDROGENLEVELS_H_
 
 #include "NLevel.h"
+#include "RecombinationRate.h"
 
 class HydrogenDataProvider;
 
@@ -46,6 +47,7 @@ private:
 	Array twoPhotonEmissivityv(const Solution& s, const Array& eFrequencyv) const;
 
 	std::shared_ptr<const HydrogenDataProvider> _hdp;
+	std::unique_ptr<const RecombinationRate> _rr;
 };
 
 #endif /* GASMODULE_GIT_SRC_HYDROGENLEVELS_H_ */
