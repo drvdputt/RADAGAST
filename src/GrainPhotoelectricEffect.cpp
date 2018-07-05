@@ -467,6 +467,31 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	return Constant::PI * a * a * particleSum + secondTerm;
 }
 
+double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Environment& env,
+                                                          const std::vector<double>& fZ,
+                                                          int Zmin, double Tgrain) const
+{
+	double lambdaG = 0;
+	double kT = env._T * Constant::BOLTZMAN;
+	double kTgrain = Tgrain * Constant::BOLTZMAN;
+	for (int Z = Zmin; Z < Zmin + fZ.size(); Z++)
+	{
+		double Ug = _grainType.ionizationPotential(a, Z);
+		double Vg = sqrt(Constant::ESQUARE) * Ug;
+		for (size_t i = 0; i < env._massv.size(); i++)
+		{
+			double psi = env._chargev[i] * Vg / kT;
+			double eta = psi <= 0 ? 1 - psi : exp(-psi);
+			double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
+			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
+			double S = _grainType.stickingCoefficient(a, Z, env._chargev[i]);
+			lambdaG += env._densityv[i] * vbar * S *
+			                  (2 * kT * ksi - 2 * kTgrain * eta);
+		}
+	}
+	return lambdaG;
+}
+
 double GrainPhotoelectricEffect::yieldFunctionTest() const
 {
 	// Parameters

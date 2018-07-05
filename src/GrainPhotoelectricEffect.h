@@ -123,6 +123,10 @@ private:
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin) const;
 
+	double gasGrainCollisionCooling(double a, const Environment& env,
+	                                const std::vector<double>& fZ, int Zmin,
+	                                double Tgrain) const;
+
 	/* Graintype-specific properties are provided by this object. */
 	const GrainType& _grainType;
 
