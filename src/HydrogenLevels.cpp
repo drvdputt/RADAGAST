@@ -64,7 +64,8 @@ EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 
 	// Now loop over all levels, and add the correct recombination coefficient. If a level
 	// is collapsed, the alpha will be added to the same level multiple times.
-	for (int n = 1; n <= _hdp->nMax(); n++)
+	int nMax = _hdp->nMax();
+	for (int n = 1; n <= nMax; n++)
 	{
 		for (int l = 0; l < n; l++)
 		{
@@ -74,6 +75,20 @@ EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 	}
 	double ne = gas._speciesNv(SpeciesIndex::ine());
 	double np = gas._speciesNv(SpeciesIndex::inp());
+#define TOPOFF
+#ifdef TOPOFF
+	// The recombination coefficients should sum to the total one (the one used for the
+	// ionization balance calculation). Therefore, we calculate here how much we still
+	// need...
+	double total_rr = Ionization::recombinationRateCoeff(gas._T);
+	double topoff = total_rr - result.sum();
+	// ...and add it to the top n-level
+	for (int l = 0; l < nMax; l++)
+	{
+		size_t index = _hdp->indexOutput(nMax, l);
+		result[index] += topoff / nMax / nMax * (2 * l + 1);
+	}
+#endif
 	return result * ne * np;
 }
 
