@@ -61,3 +61,22 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 	}
 	return 0.5 * thermalVelocityH * total;
 }
+
+double GasGrain::simpleGasGrainCool(double Tdust, double Tgas, double nH, double nH2)
+{
+	double lambda_gd = 0;
+
+	double T_factor = sqrt(Tgas) * (Tgas - Tdust);
+
+	// H contribution
+	double Cgd = 3.8e-33; // erg s-1 cm3 K
+	double n2 = nH * nH;
+	lambda_gd += Cgd * T_factor * n2;
+
+	// H2 contribution
+	Cgd = 1.0e-33; // erg s-1 cm3 K
+	n2 = nH2 * nH2;
+	lambda_gd += Cgd * T_factor * n2;
+
+	return lambda_gd;
+}
