@@ -1,5 +1,5 @@
-#ifndef _PHOTOELECTRICHEATING_H_
-#define _PHOTOELECTRICHEATING_H_
+#ifndef GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
+#define GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
 
 #include "Constants.h"
 #include "GrainInterface.h"
@@ -89,8 +89,9 @@ public:
 
 private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
-	    obtain a charge distribution, and then calls heatingRateAZ for every charge Z. */
-	double heatingRateA(double a, const Environment& env, const Array& Qabs) const;
+	    obtain a charge distribution, and then RateAZ for every charge Z. */
+	double heatingRateA(double a, const Environment& env, const Array& Qabs,
+	                    const std::vector<double>& fZ, int Zmax, int Zmin) const;
 
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
 	    immediately autoionize when an electron is captured. */
@@ -123,6 +124,9 @@ private:
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin) const;
 
+	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
+	    area [erg s-1 cm-2], so we need to multipy with the surface area per volume unit
+	    (n_grain * sigma_grain). */
 	double gasGrainCollisionCooling(double a, const Environment& env,
 	                                const std::vector<double>& fZ, int Zmin,
 	                                double Tgrain) const;
@@ -144,4 +148,4 @@ private:
 	const double _maxWav{1000 * Constant::UM_CM};
 };
 
-#endif /* _PHOTOELECTRICHEATING_H_ */
+#endif /* GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_ */

@@ -314,14 +314,10 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 }
 
 double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
-                                              const Array& Qabs) const
+                                              const Array& Qabs, const vector<double>& fZ,
+                                              int Zmax, int Zmin) const
 {
 	double totalHeatingForGrainSize = 0;
-
-	// Get the charge distribution (is normalized to 1)
-	vector<double> fZ;
-	int Zmin, Zmax;
-	chargeBalance(a, env, Qabs, Zmax, Zmin, fZ);
 
 	DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
 
@@ -376,9 +372,26 @@ double GrainPhotoelectricEffect::heatingRate(
 		   algorithm, such as the one proposed in van Hoof (2004) that is used in
 		   Cloudy. */
 		double a{grainPop.sizev()[m]};
+		const auto& Qabsv = grainPop.qAbsvv()[m];
+		double nd = grainPop.densityv()[m];
+
+		// Get the charge distribution (is normalized to 1)
+		vector<double> fZ;
+		int Zmin, Zmax;
+		chargeBalance(a, env, Qabsv, Zmax, Zmin, fZ);
+
+		// Use the charge distribution to calculate the photoelectric heating rate for
+		// this size
 		if (a < 500 * Constant::ANG_CM)
-			total += grainPop.densityv()[m] *
-			         heatingRateA(a, env, grainPop.qAbsvv()[m]);
+			total += nd * heatingRateA(a, env, Qabsv, fZ, Zmax, Zmin);
+
+			// and the cooling by gas-grain collisions
+#define INCLUDEGASGRAINCOOL
+#ifdef INCLUDEGASGRAINCOOL
+		double T = grainPop.temperaturev()[m];
+		double sigma = a * a * Constant::PI;
+		total -= gasGrainCollisionCooling(a, env, fZ, Zmin, T) * nd * sigma;
+#endif
 	}
 	return total;
 }
@@ -480,13 +493,16 @@ double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Enviro
 		double Vg = sqrt(Constant::ESQUARE) * Ug;
 		for (size_t i = 0; i < env._massv.size(); i++)
 		{
+			// Dimensionless
 			double psi = env._chargev[i] * Vg / kT;
 			double eta = psi <= 0 ? 1 - psi : exp(-psi);
 			double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
-			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
 			double S = _grainType.stickingCoefficient(a, Z, env._chargev[i]);
+			// cm s-1
+			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
+			// cm-3 * cm s-1 * erg = cm-2 s-1 erg
 			lambdaG += env._densityv[i] * vbar * S *
-			                  (2 * kT * ksi - 2 * kTgrain * eta);
+			           (2 * kT * ksi - 2 * kTgrain * eta);
 		}
 	}
 	return lambdaG;
@@ -577,7 +593,11 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		                frequencyv, intensityTimesQabs);
 
 		// Calculate and write out the heating efficiency
-		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs);
+		int Zmin, Zmax;
+		vector<double> fZ;
+		chargeBalance(a, env, Qabs, Zmax, Zmin, fZ);
+		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, fZ, Zmin,
+		                                                        Zmax);
 		double totalAbsorbed =
 		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
 		double efficiency = heating / totalAbsorbed;
