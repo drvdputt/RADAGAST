@@ -374,9 +374,9 @@ double GrainPhotoelectricEffect::heatingRate(
 		   calculation. Need to double check this limit, or implement a faster charge
 		   algorithm, such as the one proposed in van Hoof (2004) that is used in
 		   Cloudy. */
-		double a{grainPop.sizev()[m]};
-		const auto& Qabsv = grainPop.qAbsvv()[m];
-		double nd = grainPop.densityv()[m];
+		double a = grainPop.size(m);
+		const Array& Qabsv = grainPop.qAbsv(m);
+		double nd = grainPop.density(m);
 
 		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(), env.specificIntensity.valuev().size());
 

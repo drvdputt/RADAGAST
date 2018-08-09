@@ -106,6 +106,11 @@ public:
 
 		size_t numSizes() const { return _sizev.size(); }
 
+		std::valarray<double> qAbsv(int m) const {return _qAbsvv[m];}
+		double temperature(int m) const {return _temperaturev[m];}
+		double density(int m) const {return _densityv[m];}
+		double size(int m) const {return _sizev[m];}
+
 		void test() const;
 
 	private:
