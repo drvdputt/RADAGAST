@@ -161,6 +161,9 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		double down = chargeDownRate(z + 1);
 		resultfZ[index] = resultfZ[index + 1] * down / up;
 
+		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
+			Error::runtime("invalid value in charge distribution");
+
 		// Similar detection for cutoff
 		if (!passedMaximum && resultfZ[index] < resultfZ[index + 1])
 		{
@@ -374,6 +377,8 @@ double GrainPhotoelectricEffect::heatingRate(
 		double a{grainPop.sizev()[m]};
 		const auto& Qabsv = grainPop.qAbsvv()[m];
 		double nd = grainPop.densityv()[m];
+
+		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(), env.specificIntensity.valuev().size());
 
 		// Get the charge distribution (is normalized to 1)
 		vector<double> fZ;
