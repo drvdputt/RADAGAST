@@ -410,7 +410,31 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 			grainPhotoelectricHeating += gpe.heatingRate(env, *pop);
 		}
 	}
-	return grainPhotoelectricHeating;
+
+	// For gas-grain collisional cooling, calculate the average dust temperature, weighted
+	// by cross section. This will be the expected value of the temperatures a particle
+	// 'experiences' when colliding with a grain.
+	double Tsum = 0;
+	double weight = 0;
+	for (size_t i = 0; i < numPop; i++)
+	{
+		const GasModule::GrainInterface::Population* pop = g.population(i);
+		for (size_t m = 0; m < pop->numSizes(); m++)
+		{
+			double a = pop->size(m);
+			double nd = pop->density(m);
+			double w = Constant::PI * a * a * nd;
+			Tsum += w * pop->temperature(m);
+			weight += w;
+		}
+	}
+	double Tdust = Tsum / weight;
+	double Tgas = s.T;
+	double nH = s.speciesNv[_inH];
+	double nH2 = s.speciesNv[_inH2];
+	double gasGrainCooling = GasGrain::simpleGasGrainCool(Tdust, Tgas, nH, nH2);
+
+	return grainPhotoelectricHeating - gasGrainCooling;
 }
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
