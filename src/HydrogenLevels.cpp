@@ -82,11 +82,14 @@ EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 	// need...
 	double total_rr = Ionization::recombinationRateCoeff(gas._T);
 	double topoff = total_rr - result.sum();
-	// ...and add it to the top n-level
-	for (int l = 0; l < nMax; l++)
+	if (topoff > 0)
 	{
-		size_t index = _hdp->indexOutput(nMax, l);
-		result[index] += topoff / nMax / nMax * (2 * l + 1);
+		// ...and add it to the top n-level
+		for (int l = 0; l < nMax; l++)
+		{
+			size_t index = _hdp->indexOutput(nMax, l);
+			result[index] += topoff / nMax / nMax * (2 * l + 1);
+		}
 	}
 #endif
 	return result * ne * np;
