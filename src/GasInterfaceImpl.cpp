@@ -22,6 +22,7 @@
 using namespace std;
 
 constexpr int MAXCHEMISTRYITERATIONS{100};
+constexpr bool GASGRAINCOOL{true};
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
                                    unique_ptr<H2Levels> molecularModel)
@@ -432,7 +433,8 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 	double Tgas = s.T;
 	double nH = s.speciesNv[_inH];
 	double nH2 = s.speciesNv[_inH2];
-	double gasGrainCooling = GasGrain::simpleGasGrainCool(Tdust, Tgas, nH, nH2);
+	double gasGrainCooling =
+	                GASGRAINCOOL ? GasGrain::simpleGasGrainCool(Tdust, Tgas, nH, nH2) : 0;
 
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
