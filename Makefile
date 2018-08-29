@@ -12,9 +12,12 @@ else
 	CXX=g++
 endif
 
+# The archiver used
+AR=ar
+
 # Options, to be customized by user.
 # Debug build
-OPTFLAGS=-O3 -g -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic #-Wconversion
+OPTFLAGS=-O0 -g -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic #-Wconversion
 # Release build
 release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT
 
@@ -40,8 +43,10 @@ PUBLIC_INCLUDEDIR=$(TARGETDIR)/include
 # Source directories
 # ==================
 
-# Source code
+# Core source code
 SRCDIR=./src
+COREDIR=$(SRCDIR)/core
+MAINDIR=$(SRCDIR)/mains
 
 # Includes
 INCDIR=./include
@@ -49,34 +54,37 @@ EIGENDIR=./eigen3
 GSLDIR=$(HOME)/.local/gsl/include # This is not used, but I might use GSL in the future
 
 # Include flags. Adjust the different paths above.
-INCFLAGS=-I$(INCDIR) -isystem$(GSLDIR) -isystem$(EIGENDIR)
+INCFLAGS=-I$(COREDIR) -I$(INCDIR) -isystem$(GSLDIR) -isystem$(EIGENDIR)
 
 # Source files
 # ============
 
-# Main source
-SOURCES=$(wildcard $(SRCDIR)/*cpp)
-HEADERS=$(wildcard $(SRCDIR)/*h)
+# Core source
+SOURCES=$(wildcard $(COREDIR)/*cpp)
+HEADERS=$(wildcard $(COREDIR)/*h)
+
+# Executable main sources
+MAINS=$(wildcard $(MAINDIR)/*cpp)
 
 # Target files
 # ============
 
 # All the targets will be placed in the parent directory of the repo.
 
+# Make the necessary subdirectories
+OBJ_SUBDIRS=$(patsubst $(SRCDIR)/%, $(OBJDIR)/%, $(MAINDIR) $(COREDIR))
+$(shell mkdir -p $(BINDIR) $(OBJ_SUBDIRS) $(LIBDIR))
+
 # Binary
-$(shell mkdir -p $(BINDIR))
-PROGRAM=$(BINDIR)/run
-TEST=$(BINDIR)/test
+BINARIES=$(patsubst $(MAINDIR)/%.cpp, $(BINDIR)/%, $(MAINS))
 
 # Objects
-$(shell mkdir -p $(OBJDIR) >/dev/null)
-OBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
+COREOBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(SOURCES))
+MAINOBJECTS=$(patsubst $(SRCDIR)/%.cpp, $(OBJDIR)/%.o, $(MAINS))
 
 # Library
-$(shell mkdir -p $(LIBDIR) >/dev/null)
-LIBFILE=$(LIBDIR)/libgasmodule.a
-# The archiver used
-AR=ar
+LIBNAME=gasmodule
+CORELIB=$(LIBDIR)/lib$(LIBNAME).a
 
 # We also make an include directory with symlinks to some headers in the repo. These should be
 # the only headers that a client will ever need to include.
@@ -85,7 +93,7 @@ INTERFACEHEADERS=GasInterface.h GasState.h GrainInterface.h
 INTERFACELINKS=$(patsubst %, $(PUBLIC_INCLUDEDIR)/%, $(INTERFACEHEADERS))
 
 # Dependency files.
-DEPENDS=$(OBJECTS:.o=.d)
+DEPENDS=$(COREOBJECTS:.o=.d)
 
 # Flags that tell to compiler to create dependency files. Each dependencency file is actually
 # contains instructions which fit in a makefile, and they will be included later. We create them
@@ -93,32 +101,34 @@ DEPENDS=$(OBJECTS:.o=.d)
 # after generation.
 DEPFLAGS=-MT $@ -MMD -MP -MF $(OBJDIR)/$*.Td
 
-# Build commands
-# ==============
+# Build commands and dependencies
+# ===============================
+# Cheatsheet:
+# $^ == all prerequisites
+# $< == leftmost prerequisite
+# $@ == target
 
 # All the flags. Do not change. Change the variables above instead.
 CXXFLAGS=$(OPTFLAGS) $(INCFLAGS) $(DEPFLAGS) -std=c++14 -DREPOROOT=\""$(shell pwd)"\"
 
 # The final targets
-all: $(PROGRAM)
-
-release: $(PROGRAM) $(LIBFILE) $(INTERFACELINKS)
+all: $(CORELIB) $(INTERFACELINKS) $(BINARIES)
 
 # Linking step
-$(PROGRAM): $(OBJECTS)
-	$(CXX) -o $@ $^
+$(BINDIR)/%: $(OBJDIR)/mains/%.o $(CORELIB)
+	$(CXX) -o $@ $< -L$(LIBDIR) -l$(LIBNAME)
 
 # Create archive
-$(LIBFILE): $(OBJECTS)
+$(CORELIB): $(COREOBJECTS)
 	$(AR) rcs $@ $^
 
 # Create symlinks to public interface headers (ln -s [target] [link name])
-$(INTERFACELINKS): $(PUBLIC_INCLUDEDIR)/%: $(SRCDIR)/%
+$(INTERFACELINKS): $(PUBLIC_INCLUDEDIR)/%: $(COREDIR)/%
 	ln -sf "$(shell pwd)"/$< $@
 
 # Compiling step + dependency generation
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJDIR)/%.d
-	$(CXX) $(CXXFLAGS) -c -o $@ $<
+	$(CXX) $(CXXFLAGS) -c -o $@ $< 
 	@mv -f $(OBJDIR)/$*.Td $(OBJDIR)/$*.d
 
 # Include the extra rules for all the objects files provided in the .d files. They will now
@@ -132,13 +142,8 @@ $(OBJDIR)/%.d: ;
 .PRECIOUS: $(OBJDIR)/%.d
 
 clean:
-	rm $(OBJDIR)/*.o $(OBJDIR)/*.d $(OBJDIR)/*.Td $(PROGRAM) $(INTERFACELINKS) $(LIBFILE)
+	rm -rf $(OBJDIR)/* $(BINARIES) $(INTERFACELINKS) $(CORELIB)
 
 .PHONY: doc
 doc:
 	(cd dox && doxygen doxygen.conf)
-
-# Test suite
-test: $(TEST)
-$(TEST): $(LIBFILE) test_main/main.cpp
-	$(CXX) $(CXXFLAGS) -I$(SRCDIR) -L$(LIBDIR) -lgasmodule -o $@ test_main/main.cpp

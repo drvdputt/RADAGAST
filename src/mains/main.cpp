@@ -30,11 +30,6 @@ int main()
 		// Testing::plotPS64Collisions();
 		// Testing::plotInterpolationTests();
 
-		// These have assertions that check correctnes.
-		// Testing::testChemistry();
-		// Testing::testACollapse();
-		// Testing::testFromFilesvsHardCoded();
-
 		// These do a run, with writeout, but the results are not directly comparable to
 		// something in the way that the ones above work.
 		// Testing::runFromFilesvsHardCoded();
