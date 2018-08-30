@@ -700,7 +700,8 @@ void Testing::testChemistry()
 
 	cout << "Compare with ionized fraction calculation: " << endl;
 	cout << "f = " << ionizedFraction << endl;
-	Error::fuzzyCheck("testChemistry: ionized fractions" , nv(ip) / (nv(ip) + nv(iH)), ionizedFraction, 0.01);
+	Error::fuzzyCheck("testChemistry: ionized fractions", nv(ip) / (nv(ip) + nv(iH)),
+	                  ionizedFraction, 0.01);
 }
 
 void Testing::testFromFilesvsHardCoded()
@@ -715,12 +716,28 @@ void Testing::testFromFilesvsHardCoded()
 		cout << ff_thing << endl;
 	};
 
+	auto matrixCheck = [&](const EMatrix& a, const EMatrix& b, double tolerance) {
+		// Calculate relative difference element-wise
+		EMatrix relDiff = (a - b).array() / b.array();
+		for (int i = 0; i < relDiff.size(); i++)
+		{
+			// Take out the nans (due to divide by zero)
+			auto* pointer = reldDiff.data() + i;
+			auto value = *pointer;
+			*pointer = isnan(value) ? 0;
+			value;
+		}
+		assert((relDiff.cwiseAbs().array() < tolerance).all());
+	};
+
 	assert(hhc.numLv() == hff.numLv());
+
 
 	cout << "Energy levels:" << endl;
 	EVector evhc = hhc.ev();
 	EVector evff = hff.ev();
 	hc_vs_ff(evhc, evff);
+	matrixCheck(evhc, evff);
 
 	assert(hhc.gv() == hff.gv());
 
