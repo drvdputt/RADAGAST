@@ -228,16 +228,12 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
 {
 	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(27, 5);
+	const Array& lineGrid = recommendedFrequencyGrid(27, 7);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());
 
 	// Merges the two grids, and writes the result to the last argument
 	merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
 	      begin(frequencyv));
-
-	// Temporary override to check if the integration works with only the points generated
-	// for the line
-	frequencyv = lineGrid;
 
 #define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION
@@ -423,7 +419,6 @@ Spectrum testSpectrum(double base)
 
 void test_addToSpectrum()
 {
-	cout << "test_addToSpectrum" << endl;
 	auto lp = testLine();
 
 	double base = 1.;
@@ -445,7 +440,6 @@ void test_addToSpectrum()
 
 void test_integrateSpectrum()
 {
-	cout << "test_integrateSpectrum" << endl;
 	auto lp = testLine();
 
 	// Generate a flat spectrum of value base
@@ -455,6 +449,6 @@ void test_integrateSpectrum()
 	double integral = lp.integrateSpectrum(s);
 	
 	// This integral should be about equal to base, if gridpoints are chosen well
-	double e = 1.e-3;
+	double e = 1.e-2;
 	Error::fuzzyCheck("test value", integral, base, e);
 }

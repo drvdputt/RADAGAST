@@ -445,7 +445,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	wavfile.close();
 
 	out = IOTools::ofstreamFile(outputPath + "raw_opacity.dat");
-	for(size_t i = 0; i < gs._opacityv.size(); i++)
+	for (size_t i = 0; i < gs._opacityv.size(); i++)
 	{
 		out << gi.oFrequencyv()[i] << tab << gs._opacityv[i] << endl;
 	}
@@ -558,7 +558,7 @@ void Testing::plotInterpolationTests()
 	Array baseGridv = generateGeometricGridv(30, mn, mx);
 	Array baseFv(baseGridv.size());
 	for (size_t i = 0; i < baseGridv.size(); i++)
-		baseFv[i] = exp(-baseGridv[i]*baseGridv[i]);
+		baseFv[i] = exp(-baseGridv[i] * baseGridv[i]);
 
 	auto out = IOTools::ofstreamFile("base.dat");
 	for (size_t i = 0; i < baseGridv.size(); i++)
@@ -700,7 +700,7 @@ void Testing::testChemistry()
 
 	cout << "Compare with ionized fraction calculation: " << endl;
 	cout << "f = " << ionizedFraction << endl;
-	assert(abs(nv(ip) / (nv(ip) + nv(iH)) - ionizedFraction) < 0.01);
+	Error::fuzzyCheck("testChemistry: ionized fractions" , nv(ip) / (nv(ip) + nv(iH)), ionizedFraction, 0.01);
 }
 
 void Testing::testFromFilesvsHardCoded()
@@ -822,12 +822,10 @@ void Testing::runFromFilesvsHardCoded()
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
-	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc",
-	                              "none");
+	GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc", "none");
 	runGasInterfaceImpl(gihhc, "hardcoded/");
 
-	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2",
-	                              "none");
+	GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2", "none");
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
