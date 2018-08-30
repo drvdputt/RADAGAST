@@ -114,8 +114,8 @@ void HydrogenFromFiles::readData()
 		                 << A << endl);
 #endif
 		// Zero means two-photon transition, see CHIANTI user guide.
-		_chiantiAvv(upperIndex - 1, lowerIndex - 1) = wavAngstrom > 0 ? A : 0;
-
+		if (wavAngstrom > 0)
+			_chiantiAvv(upperIndex - 1, lowerIndex - 1) = A;
 		getline(wgfa, line);
 	}
 	wgfa.close();
