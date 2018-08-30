@@ -27,6 +27,23 @@ namespace
 {
 vector<double> FILELAMBDAV, FILEAV;
 vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
+
+template <typename Derived>
+void matrixCheck(const Eigen::MatrixBase<Derived>& a, const Eigen::MatrixBase<Derived>& b,
+                 double tolerance)
+{
+	// Calculate relative difference element-wise
+	EMatrix relDiff = (a - b).array() / b.array();
+	for (int i = 0; i < relDiff.size(); i++)
+	{
+		// Take out the nans (due to divide by zero)
+		auto* pointer = relDiff.data() + i;
+		auto value = *pointer;
+		*pointer = isnan(value) ? 0 : value;
+	}
+	assert((relDiff.cwiseAbs().array() < tolerance).all());
+}
+
 } // namespace
 
 void Testing::readQabs(bool car)
@@ -602,17 +619,7 @@ void Testing::testACollapse()
 	cout << nistA << endl;
 	cout << "The element-wise relative difference is " << endl;
 	EMatrix relDiff = (avv - nistA).array() / nistA.array();
-	// Take out all the nan's
-	for (int i = 0; i < relDiff.size(); i++)
-	{
-		auto* pointer = relDiff.data() + i;
-		auto value = *pointer;
-		*pointer = isnan(value) ? 0 : value;
-	}
-	cout << relDiff << endl;
-	// For automated testing, assert the following (maximum allowed error is just slightly
-	// above the value outputted above)
-	assert((relDiff.cwiseAbs().array() < 0.002).all());
+	matrixCheck(avv, nistA, 0.002);
 }
 
 void Testing::plotPS64Collisions()
@@ -716,28 +723,13 @@ void Testing::testFromFilesvsHardCoded()
 		cout << ff_thing << endl;
 	};
 
-	auto matrixCheck = [&](const EMatrix& a, const EMatrix& b, double tolerance) {
-		// Calculate relative difference element-wise
-		EMatrix relDiff = (a - b).array() / b.array();
-		for (int i = 0; i < relDiff.size(); i++)
-		{
-			// Take out the nans (due to divide by zero)
-			auto* pointer = reldDiff.data() + i;
-			auto value = *pointer;
-			*pointer = isnan(value) ? 0;
-			value;
-		}
-		assert((relDiff.cwiseAbs().array() < tolerance).all());
-	};
-
 	assert(hhc.numLv() == hff.numLv());
-
 
 	cout << "Energy levels:" << endl;
 	EVector evhc = hhc.ev();
 	EVector evff = hff.ev();
 	hc_vs_ff(evhc, evff);
-	matrixCheck(evhc, evff);
+	matrixCheck(evhc, evff, 0.01);
 
 	assert(hhc.gv() == hff.gv());
 
@@ -745,11 +737,13 @@ void Testing::testFromFilesvsHardCoded()
 	EMatrix avvhc = hhc.avv();
 	EMatrix avvff = hff.avv();
 	hc_vs_ff(avvhc, avvff);
+	matrixCheck(avvhc, avvff, 0.01);
 
 	cout << "Extra A:" << endl;
 	EMatrix eavvhc = hhc.extraAvv();
 	EMatrix eavvff = hff.extraAvv();
 	hc_vs_ff(eavvhc, eavvff);
+	matrixCheck(eavvhc, eavvff, 0.01);
 
 	double T = 1e4;
 	double ne = 1e4;
