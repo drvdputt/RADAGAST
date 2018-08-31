@@ -77,14 +77,6 @@ void plotPhotoelectricHeating();
     several interpolation routines. */
 void plotInterpolationTests();
 
-/** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
-    NIST values between different n. */
-void testACollapse();
-
-/** Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
-    HydrogenFromFiles. */
-void testFromFilesvsHardCoded();
-
 /** Test the H2 implementation. */
 void runH2(bool write);
 

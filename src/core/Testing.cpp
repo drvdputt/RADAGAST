@@ -28,21 +28,6 @@ namespace
 vector<double> FILELAMBDAV, FILEAV;
 vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
 
-template <typename Derived>
-void matrixCheck(const Eigen::MatrixBase<Derived>& a, const Eigen::MatrixBase<Derived>& b,
-                 double tolerance)
-{
-	// Calculate relative difference element-wise
-	EMatrix relDiff = (a - b).array() / b.array();
-	for (int i = 0; i < relDiff.size(); i++)
-	{
-		// Take out the nans (due to divide by zero)
-		auto* pointer = relDiff.data() + i;
-		auto value = *pointer;
-		*pointer = isnan(value) ? 0 : value;
-	}
-	assert((relDiff.cwiseAbs().array() < tolerance).all());
-}
 
 } // namespace
 
@@ -602,26 +587,6 @@ void Testing::plotInterpolationTests()
 	out.close();
 }
 
-void Testing::testACollapse()
-{
-	HydrogenFromFiles hff(0);
-	EMatrix avv = hff.avv().array();
-	cout << hff.avv() << endl;
-	cout << "Compare this with values directly from NIST below:" << endl;
-	EMatrix nistA(5, 5);
-	// clang-format off
-	nistA << 0, 0, 0, 0, 0,
-		4.6986e+08, 0, 0, 0, 0,
-		5.5751e+07, 4.4101e+07, 0, 0, 0,
-		1.2785e+07, 8.4193e+06, 8.9860e+06, 0, 0,
-		4.1250e+06, 2.5304e+06, 2.2008e+06, 2.6993e+06, 0;
-	// clang-format on
-	cout << nistA << endl;
-	cout << "The element-wise relative difference is " << endl;
-	EMatrix relDiff = (avv - nistA).array() / nistA.array();
-	matrixCheck(avv, nistA, 0.002);
-}
-
 void Testing::plotPS64Collisions()
 {
 	const double T = 10000;
@@ -672,55 +637,6 @@ void Testing::plotPS64Collisions()
 		}
 		out.close();
 	}
-}
-
-
-void Testing::testFromFilesvsHardCoded()
-{
-	HydrogenHardcoded hhc;
-	HydrogenFromFiles hff(2);
-
-	auto hc_vs_ff = [&](auto hc_thing, auto ff_thing) {
-		cout << "Hardcoded" << endl;
-		cout << hc_thing << endl;
-		cout << "From files" << endl;
-		cout << ff_thing << endl;
-	};
-
-	assert(hhc.numLv() == hff.numLv());
-
-	cout << "Energy levels:" << endl;
-	EVector evhc = hhc.ev();
-	EVector evff = hff.ev();
-	hc_vs_ff(evhc, evff);
-	matrixCheck(evhc, evff, 0.01);
-
-	assert(hhc.gv() == hff.gv());
-
-	cout << "A coefficients:" << endl;
-	EMatrix avvhc = hhc.avv();
-	EMatrix avvff = hff.avv();
-	hc_vs_ff(avvhc, avvff);
-	matrixCheck(avvhc, avvff, 0.01);
-
-	cout << "Extra A:" << endl;
-	EMatrix eavvhc = hhc.extraAvv();
-	EMatrix eavvff = hff.extraAvv();
-	hc_vs_ff(eavvhc, eavvff);
-	matrixCheck(eavvhc, eavvff, 0.01);
-
-	double T = 1e4;
-	double ne = 1e4;
-	double np = 1e4;
-	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
-	speciesNv(SpeciesIndex::inp()) = np;
-	speciesNv(SpeciesIndex::ine()) = ne;
-	GasStruct gas(T, speciesNv);
-
-	cout << "Collisions:" << endl;
-	EMatrix cvvhc = hhc.cvv(gas);
-	EMatrix cvvff = hff.cvv(gas);
-	hc_vs_ff(cvvhc, cvvff);
 }
 
 void Testing::runH2(bool write)
