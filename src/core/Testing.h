@@ -81,8 +81,6 @@ void plotInterpolationTests();
     NIST values between different n. */
 void testACollapse();
 
-void testChemistry();
-
 /** Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded and
     HydrogenFromFiles. */
 void testFromFilesvsHardCoded();

@@ -674,42 +674,6 @@ void Testing::plotPS64Collisions()
 	}
 }
 
-void Testing::testChemistry()
-{
-	const double T = 10000;
-	Array frequencyv = generateGeometricGridv(200, 1e11, 1e16);
-	Array specificIntensityv = generateSpecificIntensityv(frequencyv, 25000, 10);
-	Spectrum specificIntensity(frequencyv, specificIntensityv);
-
-	ChemistrySolver cs(make_unique<ChemicalNetwork>());
-
-	// Formation and dissociation rates should come from somewhere else
-	double kform = 0;
-	double kdiss = 0;
-
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, specificIntensity, kdiss, kform);
-	cout << "Rate coeff: ionization, recombination, dissociation" << endl << kv << endl;
-
-	int ie = SpeciesIndex::index("e-");
-	int ip = SpeciesIndex::index("H+");
-	int iH = SpeciesIndex::index("H");
-	int iH2 = SpeciesIndex::index("H2");
-
-	EVector n0v(4);
-	n0v(ie) = 0;
-	n0v(ip) = 0;
-	n0v(iH) = 100;
-	n0v(iH2) = 0;
-
-	EVector nv = cs.solveBalance(kv, n0v);
-	double ionizedFraction =
-	                Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
-
-	cout << "Compare with ionized fraction calculation: " << endl;
-	cout << "f = " << ionizedFraction << endl;
-	Error::fuzzyCheck("testChemistry: ionized fractions", nv(ip) / (nv(ip) + nv(iH)),
-	                  ionizedFraction, 0.01);
-}
 
 void Testing::testFromFilesvsHardCoded()
 {
