@@ -5,7 +5,17 @@
 
 namespace Error
 {
+	static inline void runtime(std::string message);
+	template <typename T> void equalCheck(std::string variable_names, T value1, T value2);
+	template <typename T> void rangeCheck(std::string variable, T value, T min, T max);
+	static inline void fuzzyCheck(std::string variable, double value, double reference,
+	                       double precision);
+}
 
+#include "TemplatedUtils.h"
+
+namespace Error
+{
 /** Prints a message to stderr and aborts. */
 static inline void runtime(std::string message)
 {
@@ -30,7 +40,7 @@ template <typename T> void equalCheck(std::string variable_names, T value1, T va
     max. */
 template <typename T> void rangeCheck(std::string variable, T value, T min, T max)
 {
-	if (value <= min || value >= max)
+	if (!TemplatedUtils::inRange(value, min, max))
 	{
 		std::cerr << "Range error: " << variable << " = " << value
 		          << ". Should be between " << min << " and " << max << std::endl;
@@ -39,14 +49,16 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 }
 
 /** Throws an error if @c value and @c reference are equal up to a factor @c precision */
-inline void fuzzyCheck(std::string variable, double value, double reference, double precision)
+
+static inline void fuzzyCheck(std::string variable, double value, double reference, double precision)
 {
-	double minus = reference * (1 - precision);
-	double plus = reference * (1 + precision);
-	double mn = std::min(minus, plus);
-	double mx = std::max(minus, plus);
-	rangeCheck<double>(variable, value, mn, mx);
+	if (!TemplatedUtils::equalWithinTolerance<double>(value, reference, precision))
+	{
+		std::cerr << variable << " " << value << " is not within" << precision
+		          << " precision of reference value " << reference << std::endl;
+		abort();
+	}
 }
 
-}/* namespace Error */
+} /* namespace Error */
 #endif /* GASMODULE_GIT_SRC_ERROR_H_ */

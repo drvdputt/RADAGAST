@@ -115,8 +115,12 @@ CXXFLAGS=$(OPTFLAGS) $(INCFLAGS) $(DEPFLAGS) -std=c++14 -DREPOROOT=\""$(shell pw
 all: $(CORELIB) $(INTERFACELINKS) $(BINARIES)
 
 # Linking step
+# Make an exception for tests, as these need the list of objects
+$(BINDIR)/test: $(BINDIR)/%: $(OBJDIR)/mains/%.o $(COREOBJECTS)
+	$(CXX) -o $@ $^
+# The rest of the binaries can be linked to the library file
 $(BINDIR)/%: $(OBJDIR)/mains/%.o $(CORELIB)
-	$(CXX) -o $@ $< -L$(LIBDIR) -l$(LIBNAME)
+	$(CXX) -o $@ $< -l$(LIBNAME) -L$(LIBDIR)
 
 # Create archive
 $(CORELIB): $(COREOBJECTS)
