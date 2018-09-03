@@ -25,17 +25,17 @@ int main()
 	try
 	{
 		// These output graphable data which can be used to check correctness.
-		// Testing::plotPhotoelectricHeating();
-		// Testing::plotIonizationStuff();
-		// Testing::plotPS64Collisions();
-		// Testing::plotInterpolationTests();
+		Testing::plotPhotoelectricHeating();
+		Testing::plotIonizationStuff();
+		Testing::plotPS64Collisions();
+		Testing::plotInterpolationTests();
 
 		// These do a run, with writeout, but the results are not directly comparable to
 		// something in the way that the ones above work.
-		// Testing::runFromFilesvsHardCoded();
-		// Testing::runFullModel();
+		Testing::runFromFilesvsHardCoded();
+		Testing::runFullModel();
 		Testing::runWithDust(true);
-		// Testing::runH2(false);
+		Testing::runH2(false);
 	}
 	catch (const std::exception& ex)
 	{
