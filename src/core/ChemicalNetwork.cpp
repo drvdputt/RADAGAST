@@ -5,6 +5,7 @@
 
 ChemicalNetwork::ChemicalNetwork() : _numSpecies{SpeciesIndex::size()} {}
 
+ChemicalNetwork::~ChemicalNetwork() = default;
 void ChemicalNetwork::addReaction(const std::string& reactionName,
                                   const std::vector<std::string>& reactantNamev,
                                   const Array& reactantStoichv,

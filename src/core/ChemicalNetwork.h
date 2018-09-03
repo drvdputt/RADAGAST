@@ -19,6 +19,10 @@ protected:
 	    subclass). */
 	ChemicalNetwork();
 
+public:
+	virtual ~ChemicalNetwork();
+
+protected:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Each reaction is given a number, and the reaction is added to the reaction
 	    index using the given name as a key. */
