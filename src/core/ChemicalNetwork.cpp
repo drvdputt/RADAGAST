@@ -33,7 +33,7 @@ int ChemicalNetwork::reactionIndex(const std::string& reactionName) const
 EMatrix ChemicalNetwork::reactantStoichvv() const
 {
 	EMatrix r(_numSpecies, _reactionv.size());
-	for (int j = 0; j < _reactionv.size(); j++)
+	for (size_t j = 0; j < _reactionv.size(); j++)
 	{
 		// Each column represents a reaction
 		r.col(j) = _reactionv[j]._rv;
@@ -44,7 +44,7 @@ EMatrix ChemicalNetwork::reactantStoichvv() const
 EMatrix ChemicalNetwork::productStoichvv() const
 {
 	EMatrix p(_numSpecies, _reactionv.size());
-	for (int j = 0; j < _reactionv.size(); j++)
+	for (size_t j = 0; j < _reactionv.size(); j++)
 	{
 		// Each column represents a reaction
 		p.col(j) = _reactionv[j]._pv;
