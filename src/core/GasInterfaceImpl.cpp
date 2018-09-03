@@ -1,5 +1,4 @@
 #include "GasInterfaceImpl.h"
-#include "ChemicalNetwork.h"
 #include "ChemistrySolver.h"
 #include "Constants.h"
 #include "DebugMacros.h"
@@ -14,6 +13,7 @@
 #include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
+#include "SimpleHydrogenNetwork.h"
 #include "SpecialFunctions.h"
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
@@ -30,7 +30,8 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
                   _freeBound(make_unique<FreeBound>()), _freeFree(make_unique<FreeFree>())
 {
 	if (_molecular)
-		_chemSolver = make_unique<ChemistrySolver>(make_unique<ChemicalNetwork>());
+		_chemSolver = make_unique<ChemistrySolver>(
+		                make_unique<SimpleHydrogenNetwork>());
 
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");

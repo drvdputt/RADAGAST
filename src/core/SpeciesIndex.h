@@ -1,6 +1,9 @@
 #ifndef GASMODULE_GIT_SRC_SPECIESINDEX_H_
 #define GASMODULE_GIT_SRC_SPECIESINDEX_H_
 
+#include "Array.h"
+#include "EigenAliases.h"
+
 #include <map>
 #include <string>
 #include <vector>
@@ -34,6 +37,14 @@ public:
 
 	/** The number of species. */
 	static size_t size();
+
+	/** Translates a list of species names (e.g. {'H', 'H+'}), plus corresponding
+	    coefficients (e.g. {1, 1}) to a vector the size of the total number of species in
+	    the simulation. The coefficients for the species not listed by the user are given
+	    coefficient zero. In other words: translate the string for each species to unit
+	    vector, and take a linear combination. */
+	static EVector makeFullCoefficientv(const std::vector<std::string>& namev,
+	                                    const Array& coefficientv);
 };
 
 #endif /* GASMODULE_GIT_SRC_SPECIESINDEX_H_ */

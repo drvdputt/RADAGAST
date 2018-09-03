@@ -1,8 +1,8 @@
 #include "doctest.h"
 
-#include "ChemicalNetwork.h"
 #include "ChemistrySolver.h"
 #include "IonizationBalance.h"
+#include "SimpleHydrogenNetwork.h"
 #include "SpeciesIndex.h"
 #include "Testing.h"
 
@@ -13,7 +13,7 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	Array specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, 25000, 10);
 	Spectrum specificIntensity(frequencyv, specificIntensityv);
 
-	ChemistrySolver cs(std::make_unique<ChemicalNetwork>());
+	ChemistrySolver cs(std::make_unique<SimpleHydrogenNetwork>());
 
 	// Formation and dissociation rates should come from somewhere else
 	double kform = 0;
@@ -42,3 +42,7 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	std::cout << "f = " << ionizedFraction << std::endl;
 	CHECK(TemplatedUtils::equalWithinTolerance(nv(ip) / (nv(ip) + nv(iH)), ionizedFraction, 0.00));
 }
+
+// TEST_CASE("single species which dissolves into nothing")
+// {
+// }

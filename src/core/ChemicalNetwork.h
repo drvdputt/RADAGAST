@@ -14,21 +14,11 @@
     SimpleChemicalNetwork. */
 class ChemicalNetwork
 {
-public:
-	/** Sets up a chemical network with a fixed set of reactions, added in the
-	    constructor. */
+protected:
+	/** Sets up a chemical network with a fixed set of reactions (depending on the
+	    subclass). */
 	ChemicalNetwork();
 
-	/** Calculates the rate coefficients for each reaction. They still have to be multiplied
-	    with the densities of the reaction products, so watch out. The unit varies, but
-	    multiplying with the correct densities (for example *np*ne for radiative
-	    recombination) will amount to cm-3 s-1 as expected. Some of the arguments are rates
-	    which have been calculated somewhere else. This function simply fills them in into
-	    the right spot of the k-vector. */
-	EVector rateCoeffv(double T, const Spectrum& specificIntensity,
-	                   double kDissFromH2Levels, double kH2FormationGrain) const;
-
-private:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Each reaction is given a number, and the reaction is added to the reaction
 	    index using the given name as a key. */
@@ -38,7 +28,21 @@ private:
 	                 const std::vector<std::string>& productNamev,
 	                 const Array& productStoichv);
 
+	void addConserved(const std::vector<std::string>& speciesNamev, const Array& coefficientv);
+
 public:
+	/** Calculates the rate coefficients for each reaction. They still have to be multiplied
+	    with the densities of the reaction products, so watch out. The unit varies, but
+	    multiplying with the correct densities (for example *np*ne for radiative
+	    recombination) will amount to cm-3 s-1 as expected. Some of the arguments are rates
+	    which have been calculated somewhere else. This function simply fills them in into
+	    the right spot of the k-vector. This function can only be implemented if the exact
+	    physical meaning behind the reactions is known, which this class is oblivious to.
+	    Hence, it must be implemented in a subclass. */
+	virtual EVector rateCoeffv(double T, const Spectrum& specificIntensity,
+	                           double kDissFromH2Levels,
+	                           double kH2FormationGrain) const = 0;
+
 	/** Look up the index of a reaction. You'll need to look into the source code for the
 	    names though... */
 	int reactionIndex(const std::string& reactionName) const;
@@ -62,6 +66,10 @@ public:
 	    calculated in this way from the initial guess of the chemical abundances. */
 	EMatrix conservationCoeffvv() const;
 
+	int numReactions() const { return _reactionv.size(); }
+	int numConserved() const { return _conservationv.size(); }
+	int numSpecies() const { return _numSpecies; }
+
 private:
 	size_t _numSpecies;
 
@@ -80,7 +88,7 @@ private:
 	} Reaction;
 
 	std::vector<Reaction> _reactionv;
-	int _numReactions;
+	std::vector<EVector> _conservationv;
 };
 
 #endif /* GASMODULE_GIT_SRC_CHEMICALNETWORK_H_ */
