@@ -81,7 +81,8 @@ EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv
 
 	/* These equations are of the form CONSERV_COEFF * DENSITY - CONSTANT = 0. _cvv is indexed
 	   on (conserved quantity, species). */
-	fv.tail(_numConserved) = _conservEqvv * nv - conservedQuantityv;
+	if (_numConserved > 0)
+		fv.tail(_numConserved) = _conservEqvv * nv - conservedQuantityv;
 
 	return fv;
 }
@@ -210,7 +211,9 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 
 		// Split up the rest of the implementation
 		EVector deltaxv;
-		if (!countToRemove)
+		// if (!countToRemove)
+		// Temporarily disable the other loop
+		if (true)
 		{
 			/* If no equations/species need to be removed, simply take a
 			   Newton-Raphson step. */
