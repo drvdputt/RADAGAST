@@ -17,7 +17,7 @@ AR=ar
 
 # Options, to be customized by user.
 # Debug build
-OPTFLAGS=-O0 -g -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic #-Wconversion
+OPTFLAGS=-O0 -g -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic #-Wconversion
 # Release build
 release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT
 
@@ -55,6 +55,10 @@ GSLDIR=$(HOME)/.local/gsl/include # This is not used, but I might use GSL in the
 
 # Include flags. Adjust the different paths above.
 INCFLAGS=-I$(COREDIR) -I$(INCDIR) -isystem$(GSLDIR) -isystem$(EIGENDIR)
+
+# Linker flags (not that leaving out -lgslcblas will link, but it's a lazy link an will crash at
+# runtime)
+LNKFLAGS=-L/usr/local/lib -lgsl -lgslcblas
 
 # Source files
 # ============
@@ -117,10 +121,10 @@ all: $(CORELIB) $(INTERFACELINKS) $(BINARIES)
 # Linking step
 # Make an exception for tests, as these need the list of objects
 $(BINDIR)/test: $(BINDIR)/%: $(OBJDIR)/mains/%.o $(COREOBJECTS)
-	$(CXX) -o $@ $^
+	$(CXX) $(LNKFLAGS) -o $@ $^
 # The rest of the binaries can be linked to the library file
 $(BINDIR)/%: $(OBJDIR)/mains/%.o $(CORELIB)
-	$(CXX) -o $@ $< -l$(LIBNAME) -L$(LIBDIR)
+	$(CXX) $(LNKFLAGS) -o $@ $< -l$(LIBNAME) -L$(LIBDIR)
 
 # Create archive
 $(CORELIB): $(COREOBJECTS)
