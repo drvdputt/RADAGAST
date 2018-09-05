@@ -53,7 +53,6 @@ public:
 	    used. */
 	const ChemicalNetwork* chemicalNetwork() const { return _cn.get(); }
 
-private:
 	/** Evaluates the function of which the root needs to be found. This is a combination of
 	    net rates being zero, and conservation equations. */
 	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv,
@@ -64,9 +63,9 @@ private:
 	    total rates, this can be calculated analytically. */
 	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const;
 
+private:
 	/** Calculates the density factor for the reaction r. Multiplying the reaction rate
 	    coefficient with this factor gives the total reaction rate. */
-
 	double densityProduct(const EVector& nv, size_t r) const;
 
 	/** Calculates the derivative of the density factor for reaction r, derived to the

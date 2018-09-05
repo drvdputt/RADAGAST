@@ -124,6 +124,7 @@ TEST_CASE("Combine and dissociate")
 	EVector n0v(2);
 	n0v << nH0, nH20;
 
+	double eps = 1.e-15;
 	SUBCASE("balance")
 	{
 		double kform = 1.;
@@ -137,11 +138,10 @@ TEST_CASE("Combine and dissociate")
 
 		// General algorithm
 		EVector nv = cs.solveBalance(kv, n0v);
-		CHECK(nv(0) == nH_exact);
+		CHECK(nv(0) <= nH_exact + eps);
+		CHECK(nv(0) >= nH_exact - eps);
 		CHECK(nv(1) == nH2_exact);
 	}
-
-	double eps = 1.e-16;
 	SUBCASE("only formation")
 	{
 		double kform = 1.;

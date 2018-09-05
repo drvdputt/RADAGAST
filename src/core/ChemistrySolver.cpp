@@ -5,7 +5,7 @@
 #include <algorithm>
 #include <iostream>
 
-//#include <gsl/gsl_multiroots.h>
+#include <gsl/gsl_multiroots.h>
 
 constexpr int MAXNEWTONRAPHSONITERATIONS{100};
 
@@ -33,31 +33,127 @@ ChemistrySolver::ChemistrySolver(std::unique_ptr<const ChemicalNetwork> cn) : _c
 
 ChemistrySolver::~ChemistrySolver() = default;
 
+struct system_params
+{
+	const EVector* rateCoeffv;
+	const EVector* conservedQuantityv;
+	const ChemistrySolver* solver_instance;
+};
+
+int system_f(const gsl_vector* x, void* p, gsl_vector* f)
+{
+	auto* params = static_cast<struct system_params*>(p);
+
+	// View the gsl vector as an eigen vector
+	Eigen::Map<EVector> nv(x->data, x->size);
+
+	// Calculate Fv using eigen library
+	EVector fv = params->solver_instance->evaluateFv(nv, *params->rateCoeffv,
+	                                                 *params->conservedQuantityv);
+
+	// View the resulting eigen vector as a gsl vector, and copy the results
+	gsl_vector_view f_view = gsl_vector_view_array(fv.data(), fv.size());
+	gsl_vector_memcpy(f, &f_view.vector);
+	return GSL_SUCCESS;
+}
+
+int system_df(const gsl_vector* x, void* p, gsl_matrix* J)
+{
+	auto* params = static_cast<system_params*>(p);
+	Eigen::Map<EVector> nv(x->data, x->size);
+
+	// Calculate Jvv using this member function
+	EMatrix Jvv = params->solver_instance->evaluateJvv(nv, *params->rateCoeffv);
+
+	// Remember that Eigen works column major, while gsl matrices are indexed row major. So
+	// we start by taking a view of the transpose. Should be square though, so the size
+	// arguments actually doesn't matter.
+	gsl_matrix_view J_view_transposed =
+	                gsl_matrix_view_array(Jvv.data(), Jvv.cols(), Jvv.rows());
+	gsl_matrix_transpose_memcpy(J, &J_view_transposed.matrix);
+	return GSL_SUCCESS;
+}
+
+int system_fdf(const gsl_vector* x, void* p, gsl_vector* f, gsl_matrix* J)
+{
+	auto* params = static_cast<system_params*>(p);
+	Eigen::Map<EVector> nv(x->data, x->size);
+	EVector fv = params->solver_instance->evaluateFv(nv, *params->rateCoeffv,
+	                                                 *params->conservedQuantityv);
+	EMatrix Jvv = params->solver_instance->evaluateJvv(nv, *params->rateCoeffv);
+	gsl_vector_view f_view = gsl_vector_view_array(fv.data(), fv.size());
+	gsl_vector_memcpy(f, &f_view.vector);
+	gsl_matrix_view J_view_transposed =
+	                gsl_matrix_view_array(Jvv.data(), Jvv.cols(), Jvv.rows());
+	gsl_matrix_transpose_memcpy(J, &J_view_transposed.matrix);
+	return GSL_SUCCESS;
+}
+
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
 	EVector conservedQuantityv = _conservEqvv * n0v;
-	EVector result = newtonRaphson(
-	                [&](const EVector& nv) { return evaluateJvv(nv, rateCoeffv); },
-	                [&](const EVector& nv) {
-		                return evaluateFv(nv, rateCoeffv, conservedQuantityv);
-	                },
-	                n0v);
-	return result;
+	// EVector result = newtonRaphson(
+	//                 [&](const EVector& nv) { return evaluateJvv(nv, rateCoeffv); },
+	//                 [&](const EVector& nv) {
+	// 	                return evaluateFv(nv, rateCoeffv, conservedQuantityv);
+	//                 },
+	//                 n0v);
+	// return result;
 
-	//	// Use GSL
-	//	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_newton;
-	//	gsl_multiroot_fdfsolver* s = gsl_multiroot_fdfsolver_alloc(T, _numSpecies);
-	//
-	//	inf (* f) (const gsl_vector* x, void* params, gsl_vector* f);
-	//
+	// Use GSL
+	// const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_newton;
+	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_hybridsj;
+	gsl_multiroot_fdfsolver* s = gsl_multiroot_fdfsolver_alloc(T, _numSpecies);
 
-	return EVector::Zero(_numSpecies);
+	gsl_multiroot_function_fdf fdf; // = some lambda function / function pointer
+	// -> this type: int (* fdf) (const gsl_vector * x, void * params, gsl_vector * f, gsl_matrix * J)
+	// store results in f and J, take arguments via params (typically a struct)
+	struct system_params params = {&rateCoeffv, &conservedQuantityv, this};
+
+	fdf.f = &system_f;
+	fdf.df = &system_df;
+	fdf.fdf = &system_fdf;
+	fdf.n = _numSpecies;
+	fdf.params = &params;
+
+	gsl_vector_const_view initial_guess_view =
+	                gsl_vector_const_view_array(n0v.data(), n0v.size());
+	gsl_multiroot_fdfsolver_set(s, &fdf, &initial_guess_view.vector);
+
+	double epsabs = 1.e-17;
+	double epsrel = 1.e-32;
+	// solve here, using maximum 100 iterations
+	for (size_t i = 0; i < 100; i++)
+	{
+		gsl_multiroot_fdfsolver_iterate(s);
+		gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
+		gsl_vector* dx = gsl_multiroot_fdfsolver_dx(s);
+		gsl_vector* f = gsl_multiroot_fdfsolver_f(s);
+		int testDelta = gsl_multiroot_test_delta(dx,x, epsabs, epsrel);
+		int testResidual = gsl_multiroot_test_residual(f, epsabs);
+		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
+		{
+			std::cout << i << " iterations for chemistry" << std::endl;
+			break;
+		}
+	}
+
+	// Copy the solution
+	gsl_vector* solution = gsl_multiroot_fdfsolver_root(s);
+	EVector solutionv(Eigen::Map<EVector>(solution->data, solution->size));
+
+	// Free when done
+	gsl_multiroot_fdfsolver_free(s);
+
+	return solutionv;
 }
 
 EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv,
                                     const EVector& conservedQuantityv) const
 {
-	EVector fv(_numSpecies + _numConserved);
+	// EVector fv(_numSpecies + _numConserved);
+	// Replace instead of add equations
+	EVector fv(_numSpecies);
 
 	//-------------------------------------------------------------------//
 	// TOP PART: EQUILIBRIUM EQUATIONS (A.K.A. NET_STOICH * RATE = ZERO) //
@@ -91,7 +187,9 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 {
 	/* The elements are d f_i / d n_j, so the jacobian should have (dimension of f, dimension of
 	   nv). */
-	EMatrix jvv(_numSpecies + _numConserved, _numSpecies);
+	// EMatrix jvv(_numSpecies + _numConserved, _numSpecies);
+	// Replace equations
+	EMatrix jvv(_numSpecies, _numSpecies);
 
 	// For every column (= derivative with respect to a different density)
 	for (size_t jDeriv = 0; jDeriv < _numSpecies; jDeriv++)
@@ -108,6 +206,8 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 
 		/* Fill in the bottom part of the column (= conservation part) These equations are
 		   simply linear, therefore the derivative is equal to the coefficient. */
+
+		// Now overwrites some equations with conservations equations
 		jvv.col(jDeriv).tail(_numConserved) = _conservEqvv.col(jDeriv);
 	}
 	return jvv;
@@ -263,7 +363,6 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			   elements that are in the reduced on will evolve when a newton raphson
 			   step is taken using these two functions. */
 			auto funcReducedJvv = [&](const EVector& reducedXv) -> EMatrix {
-
 				// Evaluate the full jacobian for this modified density vector
 				EMatrix wholeJfvv = functionJvv(fullXvWithConstants(reducedXv));
 
@@ -289,7 +388,6 @@ EVector ChemistrySolver::newtonRaphson(std::function<EMatrix(const EVector& xv)>
 			};
 
 			auto funcReducedFv = [&](const EVector& reducedXv) -> EVector {
-
 				// Evaluate the full residual
 				EVector wholefv = functionFv(fullXvWithConstants(reducedXv));
 
