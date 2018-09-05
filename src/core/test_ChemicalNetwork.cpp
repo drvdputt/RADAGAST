@@ -97,27 +97,75 @@ TEST_CASE("single species with creation and destruction")
 	}
 }
 
-// TEST_CASE("Combine and dissociate")
-// {
-// 	// two species (e.g. H and H2), two reactions
-// 	EMatrix r(2,2);
-// 	EMatrix p(2,2);
+TEST_CASE("Combine and dissociate")
+{
+	// two species (e.g. H and H2), two reactions
+	EMatrix r(2,2);
+	EMatrix p(2,2);
 
-// 	// combination
-// 	r.col(0) << 2, 0; // 2 H consumed
-// 	p.col(0) << 0, 1; // 1 H2 produced
+	// combination
+	r.col(0) << 2, 0; // 2 H consumed
+	p.col(0) << 0, 1; // 1 H2 produced
 
-// 	// dissociation
-// 	r.col(1) << 0, 1; // 1 H2 consumed
-// 	p.col(1) << 2, 0; // 2 H2 produced
+	// dissociation
+	r.col(1) << 0, 1; // 1 H2 consumed
+	p.col(1) << 2, 0; // 2 H2 produced
 
-// 	// conservation equation
-// 	// 1 equation, 2 species
-// 	EMatrix c(1, 2);
-// 	c << 1, 2; // 1 * nH + 2 * nH2 is conserved (number of protons)
+	// conservation equation
+	// 1 equation, 2 species
+	EMatrix c(1, 2);
+	c << 1, 2; // 1 * nH + 2 * nH2 is conserved (number of protons)
 
-// 	ChemistrySolver cs(r, p, c);
+	ChemistrySolver cs(r, p, c);
 
-// 	SUBCASE("balance")
-// 	{
-		
+	double nH0 = 10;
+	double nH20 = 20;
+	double Ntotal = nH0 + 2 * nH20;
+	EVector n0v(2);
+	n0v << nH0, nH20;
+
+	SUBCASE("balance")
+	{
+		double kform = 1.;
+		double kdiss = 0.2;
+		EVector kv(2);
+		kv << kform, kdiss;
+
+		// Exact solution
+		double nH_exact = (kdiss / 2 - std::sqrt(kdiss * kdiss / 4 + 2 * kdiss * kform * Ntotal)) / (-2 * kform);
+		double nH2_exact = (Ntotal - nH_exact) / 2;
+
+		// General algorithm
+		EVector nv = cs.solveBalance(kv, n0v);
+		CHECK(nv(0) == nH_exact);
+		CHECK(nv(1) == nH2_exact);
+	}
+
+	double eps = 1.e-16;
+	SUBCASE("only formation")
+	{
+		double kform = 1.;
+		double kdiss = 0;
+		EVector kv(2);
+		kv << kform, kdiss;
+
+		EVector nv = cs.solveBalance(kv, n0v);
+		// All H should disappear, and be transformed into H2
+		CHECK(nv(0) >= 0.);
+		CHECK(nv(0) < eps);
+		CHECK(nv(1) == Ntotal / 2.);
+	}
+	SUBCASE("only dissociation")
+	{
+		double kform = 0;
+		double kdiss = 1.;
+		EVector kv(2);
+		kv << kform, kdiss;
+
+		EVector nv = cs.solveBalance(kv, n0v);
+		// All H2 should disappear, and be transformed into H
+		CHECK(nv(0) == Ntotal);
+		CHECK(nv(1) >= 0.);
+		CHECK(nv(1) < eps);
+	}
+}
