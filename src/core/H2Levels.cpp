@@ -34,7 +34,7 @@ Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 
 EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                      const EVector& sourcev, const EVector& sinkv,
-                                     int chooseConsvEq, const GasStruct& gas) const
+                                     int /* chooseConsvEq */, const GasStruct& gas) const
 {
 	// Initial guess
 	EVector nv;
@@ -72,7 +72,6 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	reverse(begin(indicesExcited), end(indicesExcited));
 
 	// Iterate until converged
-	bool converged = false;
 	double maxDeltaX = 1.e-4 * n;
 	double maxDeltaAll = 1.e-5 * n;
 	double maxFracDelta = 1.e-2;
@@ -237,7 +236,7 @@ double H2Levels::dissociationHeating(const Solution& s) const
 	return s.nv.dot(EVector{p * k});
 }
 
-double H2Levels::dissociationCooling(const Solution& s) const { return 0.0; }
+double H2Levels::dissociationCooling(const Solution&) const { return 0.0; }
 
 EVector H2Levels::dissociationSinkv(const Spectrum& specificIntensity) const
 {

@@ -258,7 +258,7 @@ EMatrix NLevel::netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const
 
 EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
                                    const EVector& sourcev, const EVector& sinkv,
-                                   int chooseConsvEq, const GasStruct& gas) const
+                                   int chooseConsvEq, const GasStruct&) const
 {
 	// Initialize Mij as Aji + PBji + Cji
 	// = arrival rate in level i from level j

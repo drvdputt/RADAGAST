@@ -362,7 +362,7 @@ Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) co
 	return totalOp;
 }
 
-Array GasInterfaceImpl::scatteringOpacityv(const Solution& s, const Array& oFrequencyv) const
+Array GasInterfaceImpl::scatteringOpacityv(const Solution&, const Array& oFrequencyv) const
 {
 	return Array(oFrequencyv.size());
 }
