@@ -19,6 +19,8 @@
 #include "TemplatedUtils.h"
 #include "Testing.h"
 
+#include <gsl/gsl_roots.h>
+
 using namespace std;
 
 constexpr int MAXCHEMISTRYITERATIONS{100};
@@ -53,6 +55,34 @@ void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, doub
 		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
 	}
 	solveBalance(gs, n, T, Spectrum(oFrequencyv, isrfGuess), gi, oFrequencyv, eFrequencyv);
+}
+
+struct heating_f_params
+{
+	const GasInterfaceImpl* gasInterfacePimpl;
+	double n;
+	const Spectrum* specificIntensity;
+	const GasModule::GrainInterface* grainInterface;
+	GasInterfaceImpl::Solution* solution_storage;
+	bool use_previous_solution;
+};
+
+double heating_f(double logT, void* params)
+{
+	auto* p = static_cast<struct heating_f_params*>(params);
+
+	// Refresh the solution stored somewhere, with optimization based on the current
+	// solution
+	GasInterfaceImpl::Solution& s = *p->solution_storage;
+	const GasInterfaceImpl::Solution* previous =
+	                p->use_previous_solution ? p->solution_storage : nullptr;
+
+	s = p->gasInterfacePimpl->calculateDensities(p->n, pow(10., logT),
+	                                             *p->specificIntensity, *p->grainInterface,
+	                                             previous);
+
+	return p->gasInterfacePimpl->heating(s, *p->grainInterface) -
+	       p->gasInterfacePimpl->cooling(s);
 }
 
 void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Tinit,
@@ -106,8 +136,32 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double Ti
 		                evaluateThermalBalance, logTinit, logTtolerance, logTmax,
 		                logTmin);
 
+		const gsl_root_fsolver_type* T = gsl_root_fsolver_bisection;
+		gsl_root_fsolver* s = gsl_root_fsolver_alloc(T);
+
+		gsl_function F;
+		struct heating_f_params p = {this, n, &specificIntensity, &gi, &s, false};
+		F.function = &heating_f;
+		F.params = &p;
+		gsl_root_fsolver_set(s, heating_f, logTmin, logTmax);
+
+		// loop here
+		bool converged = false;
+
+		double root = 0;
+		int test_interval = 0;
+		while (!test_interval == GSL_SUCCESS)
+		{
+			gsl_root_fsolver_iterate(s);
+			root = gsl_root_fsolver_root(s);
+			double lower = gsl_root_fsolver_x_lower(s);
+			double upper = gsl_root_fsolver_x_upper(s);
+			test_interval = gsl_root_test_interval(lower, upper, epsabs, epsrel);
+		}
+		gsl_root_fsolver_free(s);
+
 		// Evaluate the densities for one last time, using the final temperature.
-		s = calculateDensities(n, pow(10., logTfinal), specificIntensity, gi, previous);
+		s = calculateDensities(nf, pow(10., root), specificIntensity, gi, previous);
 	}
 
 	const Array& emv = emissivityv(s, eFrequencyv);
