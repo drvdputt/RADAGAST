@@ -51,14 +51,14 @@ MAINDIR=$(SRCDIR)/mains
 # Includes
 INCDIR=./include
 EIGENDIR=./eigen3
-GSLDIR=$(HOME)/.local/gsl/include # This is not used, but I might use GSL in the future
+GSLDIR=/usr/lib/x86_64-linux-gnu
 
 # Include flags. Adjust the different paths above.
-INCFLAGS=-I$(COREDIR) -I$(INCDIR) -isystem$(GSLDIR) -isystem$(EIGENDIR)
+INCFLAGS=-I$(COREDIR) -I$(INCDIR) -I$(GSLDIR)/include -isystem$(EIGENDIR)
 
 # Linker flags (not that leaving out -lgslcblas will link, but it's a lazy link an will crash at
 # runtime)
-LNKFLAGS=-L/usr/local/lib -lgsl -lgslcblas
+LNKFLAGS=-L$(GSLDIR)/lib -lgsl -lgslcblas -lm
 
 # Source files
 # ============
@@ -121,10 +121,10 @@ all: $(CORELIB) $(INTERFACELINKS) $(BINARIES)
 # Linking step
 # Make an exception for tests, as these need the list of objects
 $(BINDIR)/test: $(BINDIR)/%: $(OBJDIR)/mains/%.o $(COREOBJECTS)
-	$(CXX) $(LNKFLAGS) -o $@ $^
+	$(CXX) -o $@ $^ $(LNKFLAGS)
 # The rest of the binaries can be linked to the library file
 $(BINDIR)/%: $(OBJDIR)/mains/%.o $(CORELIB)
-	$(CXX) $(LNKFLAGS) -o $@ $< -l$(LIBNAME) -L$(LIBDIR)
+	$(CXX) -o $@ $< -L$(LIBDIR) -l$(LIBNAME) $(LNKFLAGS)
 
 # Create archive
 $(CORELIB): $(COREOBJECTS)
