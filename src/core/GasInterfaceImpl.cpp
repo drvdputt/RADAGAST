@@ -82,8 +82,9 @@ double heating_f(double logT, void* params)
 	                                             *p->specificIntensity, *p->grainInterface,
 	                                             previous);
 
-	return p->gasInterfacePimpl->heating(s, *p->grainInterface) -
-	       p->gasInterfacePimpl->cooling(s);
+	double heat = p->gasInterfacePimpl->heating(s, *p->grainInterface);
+	double cool = p->gasInterfacePimpl->cooling(s);
+	return heat - cool;
 }
 
 void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*unused Tinit*/,
@@ -144,14 +145,19 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		struct heating_f_params p = {this, n, &specificIntensity, &gi, &s, false};
 		F.function = &heating_f;
 		F.params = &p;
-		gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
 
-		double root = 0;
+		// Iterate once to initialize the solution
+		gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
+		gsl_root_fsolver_iterate(solver);
+
+		// Then, start using the current solution as an initial guess of the next one
+		p.use_previous_solution = true;
+
+		gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
 		int test_interval = GSL_CONTINUE;
 		while (test_interval != GSL_SUCCESS)
 		{
 			gsl_root_fsolver_iterate(solver);
-			root = gsl_root_fsolver_root(solver);
 			double lower = gsl_root_fsolver_x_lower(solver);
 			double upper = gsl_root_fsolver_x_upper(solver);
 			test_interval = gsl_root_test_interval(lower, upper, logTtolerance,
@@ -423,20 +429,20 @@ double GasInterfaceImpl::cooling(const Solution& s) const
 {
 	double lineCool = lineCooling(s);
 	double contCool = continuumCooling(s);
-	DEBUG("cooling: line / cont = " << lineCool << " / " << contCool << endl);
 	return lineCool + contCool;
 }
 
 double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterface& g) const
 {
-	return heating(s) + grainHeating(s, g);
+	double gasHeat = heating(s);
+	double grainHeat = grainHeating(s, g);
+	return gasHeat + grainHeat;
 }
 
 double GasInterfaceImpl::heating(const Solution& s) const
 {
 	double lineHeat = lineHeating(s);
 	double contHeat = continuumHeating(s);
-	DEBUG("heating: line / cont = " << lineHeat << " / " << contHeat << endl);
 	return lineHeat + contHeat;
 }
 
@@ -482,12 +488,22 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 			weight += w;
 		}
 	}
-	double Tdust = Tsum / weight;
-	double Tgas = s.T;
-	double nH = s.speciesNv[_inH];
-	double nH2 = s.speciesNv[_inH2];
-	double gasGrainCooling =
-	                GASGRAINCOOL ? GasGrain::simpleGasGrainCool(Tdust, Tgas, nH, nH2) : 0;
+
+	// Cooling of the gas by collisions with the dust particles. This is a recipe that does
+	// not depend on the grain present, except for the average temperature (it probably
+	// assumes some average population, see coefficient in Krumholz et al. (2011)). Only do
+	// this if there is dust, cause otherwise we dont have a dust temperature of course.
+	double gasGrainCooling = 0;
+	if (numPop > 0)
+	{
+		double Tdust = Tsum / weight;
+		double Tgas = s.T;
+		double nH = s.speciesNv[_inH];
+		double nH2 = s.speciesNv[_inH2];
+		gasGrainCooling = GASGRAINCOOL ? GasGrain::simpleGasGrainCool(Tdust, Tgas, nH,
+		                                                              nH2)
+		                               : 0;
+	}
 
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
