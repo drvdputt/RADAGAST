@@ -114,7 +114,7 @@ array<size_t, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
 
 EMatrix HydrogenHardcoded::cvv(const GasStruct& gas) const
 {
-	double T = T;
+	double T = gas._T;
 	const int index2p = 2;
 	const int index2s = 1;
 	EMatrix Cvv = EMatrix::Zero(NLV, NLV);
