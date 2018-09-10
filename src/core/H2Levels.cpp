@@ -76,8 +76,8 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	double maxDeltaAll = 1.e-5 * n;
 	double maxFracDelta = 1.e-2;
 	size_t counter{0};
-	double xFrac = 0, eFrac = 0;
-	while (true)
+	const int max_iterations = 2001;
+	while (counter < max_iterations)
 	{
 		counter++;
 
@@ -86,7 +86,6 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		EVector deltav = EVector::Zero(nv.size());
 
 		// Sweep over ground state
-		xFrac = 0;
 		for (auto i : indicesX)
 		{
 			// Sum Mij nj, with j running over all other levels. TODO: consider
@@ -95,11 +94,9 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			// over a slice, leading to possible optimization.
 			double creationRate = sourcev(i) + Mvv.row(i) * nv;
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
-			xFrac += nv(i);
 		}
 		/* Renormalize because the algorithm has no sum rule, */
 		nv *= n / nv.sum();
-		xFrac /= n;
 
 		// We will cut this iteration short as long as the ground state has not
 		// converged.
@@ -121,7 +118,6 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			if (!(counter % 1000))
 			{
 				DEBUG("Solving h2... " << counter << "iterations" << endl);
-				DEBUG("X fraction = " << xFrac << endl);
 				// DEBUG("h2Levelv = \n" << nv << endl);
 			}
 			continue;
@@ -129,7 +125,6 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 
 		// If the ground state has more or less converged, we will also start sweeping
 		// over the other states
-		eFrac = 0;
 		for (auto i : indicesExcited)
 		{
 			double creationRate = sourcev(i);
@@ -137,17 +132,15 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 			for (auto j : indicesX)
 				creationRate += Mvv(i, j) * nv(j);
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
-			eFrac += nv(i);
 		}
 		nv *= n / nv.sum();
-		eFrac /= n;
 
 		// Overall convergence check
 
 		// Absolute change
 		for (auto i : indicesExcited)
 			// Again, this would best be vectorized
-			deltav(i) = nv(i) - previousNv(i);
+			deltav(i) = abs(nv(i) - previousNv(i));
 
 		bool thresconv = (deltav.array() < maxDeltaAll).all();
 
@@ -174,14 +167,12 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 		}
 
 		bool converged = thresconv && fracconv;
-		const int max_iterations = 10000;
-		if (converged || counter > max_iterations)
+		if (converged)
 			break;
 	}
 	if (nv.array().isNaN().any())
 		Error::runtime("nan in H2 level solution");
 	DEBUG("Solved H2 in " << counter << " iterations" << endl);
-	DEBUG("Excited fraction = " << eFrac << endl);
 	// DEBUG("h2Levelv = \n" << nv << endl);
 	// EVector explicitNv = NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv,
 	// chooseConsvEq, gas);
