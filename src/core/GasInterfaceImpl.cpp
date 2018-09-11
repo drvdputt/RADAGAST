@@ -246,18 +246,10 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	// Package some gas parameters
 	GasStruct gas(T, s.speciesNv);
 
-	// Initial guess for the H2 solution
-	if (_molecular)
-	{
-		if (manualGuess)
-		{
-			DEBUG("Using LTE as initial guess for H2" << endl);
-			gas._h2Levelv = s.speciesNv(_inH2) *
-			                _molecular->solveBoltzmanEquations(gas._T);
-		}
-		else
+	// Initial guess for the H2 solution (if no initial guess is provided, the method will
+	// make its own)
+	if (_molecular && !manualGuess)
 			gas._h2Levelv = previous->H2Solution.nv;
-	}
 
 	auto solveLevelBalances = [&]() {
 		double nH = s.speciesNv(_inH);

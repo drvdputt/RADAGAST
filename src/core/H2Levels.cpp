@@ -36,23 +36,6 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
                                      const EVector& sourcev, const EVector& sinkv,
                                      int /* chooseConsvEq */, const GasStruct& gas) const
 {
-	// Initial guess
-	EVector nv;
-	if (gas._h2Levelv.size() == 0)
-	{
-		// DEBUG("Using LTE as initial guess for H2" << endl);
-		// nv = n * solveBoltzmanEquations(gas._T);
-		// TODO: experiment with this instead of LTE as initial condition
-		DEBUG("Using ground state as initial guess for H2" << endl);
-		nv = EVector::Zero(numLv());
-		nv(0) = n / 2;
-		nv(1) = n / 2;
-	}
-	else if (gas._h2Levelv.size() == numLv())
-		nv = gas._h2Levelv;
-	else
-		Error::runtime("Wrong size for initial guess vector!");
-
 	// This should stay constant during the calculation
 	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
 
@@ -64,6 +47,23 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	// Get the indices that cover the electronic ground state
 	auto indicesX = _hff->indicesX();
 	auto indicesExcited = _hff->indicesExcited();
+
+	// Initial guess
+	EVector nv;
+	if (gas._h2Levelv.size() == 0)
+	{
+		// DEBUG("Using LTE as initial guess for H2" << endl);
+		// nv = n * solveBoltzmanEquations(gas._T);
+		// TODO: experiment with this instead of LTE as initial condition
+		DEBUG("Using ground state as initial guess for H2" << endl);
+		nv = EVector::Zero(numLv());
+		nv.head(4) = EVector::Constant(4, n / 4);
+	}
+	else if (gas._h2Levelv.size() == numLv())
+		nv = gas._h2Levelv;
+	else
+		Error::runtime("The _h2levelv in the gas struct should be empty, or be of the "
+		               "right size already.");
 
 	// The algorithm apparently works better when the iterations happen from high to low.
 	// While it is not guaranteed that the indices given by the above vector are actually
