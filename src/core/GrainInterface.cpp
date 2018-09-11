@@ -50,7 +50,7 @@ GrainInterface::Population::Population(const Array& sizev, const Array& densityv
 	Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
 }
 
-GrainInterface::Population::Population(Population&& other) = default;
+GrainInterface::Population::Population(Population&&) = default;
 
 GrainInterface::Population::~Population() = default;
 
