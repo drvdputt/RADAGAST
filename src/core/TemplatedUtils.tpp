@@ -6,7 +6,7 @@ namespace TemplatedUtils
 /** Return true if min <= value <= max. */
 template <typename T> bool inRange(T value, T min, T max)
 {
-	return value >= min || value <= max;
+	return value >= min && value <= max;
 }
 
 template <typename T> bool equalWithinTolerance(T value, T reference, T precision)
