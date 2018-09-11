@@ -29,19 +29,17 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	int iH2 = SpeciesIndex::index("H2");
 
 	EVector n0v(SpeciesIndex::size());
-	n0v(ie) = 0;
-	n0v(ip) = 0;
-	n0v(iH) = 100;
+	n0v(ie) = 50;
+	n0v(ip) = 50;
+	n0v(iH) = 50;
 	n0v(iH2) = 0;
-
 	EVector nv = cs.solveBalance(kv, n0v);
-	double ionizedFraction =
-	                Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
-
-	std::cout << "Compare with ionized fraction calculation: " << std::endl;
-	std::cout << "f = " << ionizedFraction << std::endl;
-	CHECK(TemplatedUtils::equalWithinTolerance(nv(ip) / (nv(ip) + nv(iH)), ionizedFraction,
-	                                           0.00));
+	double f_network = nv(ip) / (nv(ip) + nv(iH));
+	double f_exact = Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
+	CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(f_exact, f_network, 1e-6),
+	              "exact ionization rate = "
+	                              << f_exact << " while the one from chemical network is "
+	                              << f_network << " (species vector is " << nv << ")");
 }
 
 TEST_CASE("single species with creation and destruction")
@@ -86,7 +84,8 @@ TEST_CASE("single species with creation and destruction")
 
 	SUBCASE("only destruction, should tend to zero") { CHECK(solve(0, 1.) == 0.); }
 
-	SUBCASE("only creation, should go to infinity, technically") {
+	SUBCASE("only creation, should go to infinity, technically")
+	{
 		double solution = solve(0., 1.);
 		WARN_MESSAGE(std::isinf(solve(0, 1.)), "solution is " << solution);
 	}
@@ -95,8 +94,8 @@ TEST_CASE("single species with creation and destruction")
 TEST_CASE("Combine and dissociate")
 {
 	// two species (e.g. H and H2), two reactions
-	EMatrix r(2,2);
-	EMatrix p(2,2);
+	EMatrix r(2, 2);
+	EMatrix p(2, 2);
 
 	// combination
 	r.col(0) << 2, 0; // 2 H consumed
@@ -128,7 +127,9 @@ TEST_CASE("Combine and dissociate")
 		kv << kform, kdiss;
 
 		// Exact solution
-		double nH_exact = (kdiss / 2 - std::sqrt(kdiss * kdiss / 4 + 2 * kdiss * kform * Ntotal)) / (-2 * kform);
+		double nH_exact = (kdiss / 2 -
+		                   std::sqrt(kdiss * kdiss / 4 + 2 * kdiss * kform * Ntotal)) /
+		                  (-2 * kform);
 		double nH2_exact = (Ntotal - nH_exact) / 2;
 
 		// General algorithm
