@@ -40,11 +40,13 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 	EVector nv;
 	if (gas._h2Levelv.size() == 0)
 	{
-		DEBUG("Using LTE as initial guess for H2" << endl);
+		// DEBUG("Using LTE as initial guess for H2" << endl);
 		// nv = n * solveBoltzmanEquations(gas._T);
 		// TODO: experiment with this instead of LTE as initial condition
+		DEBUG("Using ground state as initial guess for H2" << endl);
 		nv = EVector::Zero(numLv());
-		nv(1) = n;
+		nv(0) = n / 2;
+		nv(1) = n / 2;
 	}
 	else if (gas._h2Levelv.size() == numLv())
 		nv = gas._h2Levelv;

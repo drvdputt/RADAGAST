@@ -26,7 +26,7 @@ std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
 
 // UTILITY FUNCTIONS //
 
-Array generateGeometricGridv(size_t nPoints, double min, double max);
+Array generateGeometricGridv(size_t nPoints = 200, double min = 1e11, double max = 1e16);
 
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 

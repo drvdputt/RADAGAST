@@ -28,7 +28,7 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	int iH = SpeciesIndex::index("H");
 	int iH2 = SpeciesIndex::index("H2");
 
-	EVector n0v(4);
+	EVector n0v(SpeciesIndex::size());
 	n0v(ie) = 0;
 	n0v(ip) = 0;
 	n0v(iH) = 100;
@@ -43,11 +43,6 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	CHECK(TemplatedUtils::equalWithinTolerance(nv(ip) / (nv(ip) + nv(iH)), ionizedFraction,
 	                                           0.00));
 }
-
-// class SingleSpecies : public ChemicalNetwork
-// {
-// SingleSpecies()
-// {
 
 TEST_CASE("single species with creation and destruction")
 {
