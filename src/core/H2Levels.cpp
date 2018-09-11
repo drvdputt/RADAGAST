@@ -75,8 +75,8 @@ EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatri
 
 	// Iterate until converged
 	double maxDeltaX = 1.e-4 * n;
-	double maxDeltaAll = 1.e-5 * n;
-	double maxFracDelta = 1.e-2;
+	double maxDeltaAll = 1.e-6 * n;
+	double maxFracDelta = 1.e-6;
 	size_t counter{0};
 	const int max_iterations = 2001;
 	while (counter < max_iterations)
