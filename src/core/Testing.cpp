@@ -329,14 +329,14 @@ Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, do
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
-	ofstream out = IOTools::ofstreamFile("testing/isrf.txt");
-	for (size_t b = 0; b < I_nu.size(); b++)
-		out << frequencyv[b] << '\t' << I_nu[b] << '\n';
-	out.close();
-	out = IOTools::ofstreamFile("testing/isrfUV.txt");
-	for (size_t b = 0; b < isrfUV.size(); b++)
-		out << frequenciesUV[b] << '\t' << isrfUVbis[b] << '\n';
-	out.close();
+	// ofstream out = IOTools::ofstreamFile("testing/isrf.txt");
+	// for (size_t b = 0; b < I_nu.size(); b++)
+	// 	out << frequencyv[b] << '\t' << I_nu[b] << '\n';
+	// out.close();
+	// out = IOTools::ofstreamFile("testing/isrfUV.txt");
+	// for (size_t b = 0; b < isrfUV.size(); b++)
+	// 	out << frequenciesUV[b] << '\t' << isrfUVbis[b] << '\n';
+	// out.close();
 	return I_nu;
 }
 

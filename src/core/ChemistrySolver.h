@@ -72,32 +72,6 @@ private:
 	    density of species j. */
 	double densityProductDerivative(const EVector& nv, int r, int j) const;
 
-	/** Finds the root of a multivariate, multi-component function using the Newton-Raphson
-	    iteration method. The dimension of the function equals the number of equations of
-	    the form \f$ f_i(x_j) = 0 \f$. Each of these components is a function of the
-	    variables x_j. The first argument should point to a function which can take a vector
-	    of arbitrary x_j, and calculate a vector containing the f_j. The second argument
-	    should be a function which calculates tha jacobian, the matrix of which each column
-	    is the derivative with respect to one of the x_j. The third argument is an initial
-	    guess for the x-vector. Any conserved quantities described by the equations in the
-	    f-vector will remain constant (at least I think so) during the calculation.
-	    Therefore, it might be important that these are already of the correct value in the
-	    initial guess. Practical example: the total number of protons will not change while
-	    different estimates for the chemical equilibrium are explored. In practice, the
-	    algorithm repeatedly solves \f$ J . x = - f \f$. */
-	EVector newtonRaphson(std::function<EMatrix(const EVector& xv)> jacobianfvv,
-	                      std::function<EVector(const EVector& xv)> functionv,
-	                      const EVector& x0v) const;
-
-	/** Calculate the \f$ \delta x \f$ for a single Newton-Raphson step. Some modifications
-	    are applied to the 'raw' solution preventing \f$x\f$ from becoming negative. */
-	EVector newtonRaphsonStep(const EMatrix& currentJvv, const EMatrix& currentFv,
-	                          std::function<EVector(const EVector& xv)> functionv,
-	                          const EVector& currentXv) const;
-
-	/** It might be better to use a third party solver such as the multidimensional root
-	    finding in GSL, or the unsupported nonlinear solver of Eigen. Or maybe SUNDIALS. */
-
 	// DESIGN NOTE:
 	/** The calculation of the rate coefficients can be delegated to another object, as the
 	    arguments required to calculate them could be anything from the rest of the
