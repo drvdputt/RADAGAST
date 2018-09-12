@@ -45,74 +45,18 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-NLevel::Solution NLevel::solveBalance(double density, const Spectrum& specificIntensity,
-                                      const EVector& sourcev, const EVector& sinkv,
-                                      const GasStruct& gas) const
+EMatrix NLevel::totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas, EMatrix* cvv_p) const
 {
-	Solution s;
-	s.n = density;
-	s.T = gas._T;
-	s.bpvv = EMatrix::Zero(_numLv, _numLv);
-	s.cvv = EMatrix::Zero(_numLv, _numLv);
-	s.nv = EVector::Zero(_numLv);
-
-	if (density > 0)
-	{
-		s.cvv = _ldp->cvv(gas);
-		/* Calculate BijPij (needs to be redone at each temperature because the line
-		   profile can change). Also needs the Cij to calculate collisional
-		   broadening. */
-		s.bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
-// #define REPORT_LINE_QUALITY
-#ifdef REPORT_LINE_QUALITY
-		// Full integral of the line profile, to check the discretization of the output
-		// (emission) grid.
-		double maxNorm = 0, minNorm = 1e9;
-		forActiveLinesDo([&](size_t upper, size_t lower) {
-			auto lp = lineProfile(upper, lower, s.T, s.cvv);
-
-			Array lpv(specificIntensity.frequencyv().size());
-			for (size_t i = 0; i < lpv.size(); i++)
-				lpv[i] = lp(specificIntensity.frequencyv()[i]);
-
-			double norm = TemplatedUtils::integrate<double>(
-			                specificIntensity.frequencyv(), lpv);
-			DEBUG("on the input intensity grid, line  "
-			      << upper << " --> " << lower << " has norm " << norm << endl);
-			maxNorm = max(norm, maxNorm);
-			minNorm = min(norm, minNorm);
-		});
-		DEBUG("Max profile norm = " << maxNorm << endl);
-		DEBUG("Min profile norm = " << minNorm << endl);
-		maxNorm = 0;
-		minNorm = 1e9; // any large number will do
-		// Integral over contant spectrum, using the LineProfile class. An integration
-		// grid is chosen internally, and we check the quality of it here (at least for
-		// now.)
-		double minFreq = specificIntensity.freqMin();
-		double maxFreq = specificIntensity.freqMax();
-		Array someFreqs = {minFreq, (minFreq + maxFreq) / 2, maxFreq};
-		Spectrum flat(someFreqs, Array(1, someFreqs.size()));
-		forActiveLinesDo([&](size_t upper, size_t lower) {
-			auto lp = lineProfile(upper, lower, s);
-			double norm = lp.integrateSpectrum(flat);
-			DEBUG("LineProfile " << upper << " --> " << lower << " has norm "
-			                     << norm << endl);
-			maxNorm = max(norm, maxNorm);
-			minNorm = min(norm, minNorm);
-		});
-		DEBUG("Max profile norm = " << maxNorm << endl);
-		DEBUG("Min profile norm = " << minNorm << endl);
-#endif /* REPORT_LINE_QUALITY */
+	EMatrix cvv = _ldp->cvv(gas);
+	if (cvv_p)
+		*cvv_p = cvv;
+	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
 #ifdef PRINT_LEVEL_MATRICES
-		DEBUG("Aij" << endl << _avv << endl << endl);
-		DEBUG("BPij" << endl << s.bpvv << endl << endl);
-		DEBUG("Cij" << endl << s.cvv << endl << endl);
+	DEBUG("Aij" << endl << _avv << endl << endl);
+	DEBUG("BPij" << endl << bpvv << endl << endl);
+	DEBUG("Cij" << endl << cvv << endl << endl);
 #endif
-		// Calculate Fij and bi and solve F.n = b
-		s.nv = solveRateEquations(s.n, s.bpvv, s.cvv, sourcev, sinkv, 0, gas);
-	}
-	return s;
+	return _avv + _extraAvv + bpvv + cvv;
 }
 
 NLevel::Solution NLevel::solveLTE(double density, const Spectrum& specificIntensity,
@@ -123,7 +67,6 @@ NLevel::Solution NLevel::solveLTE(double density, const Spectrum& specificIntens
 	s.T = gas._T;
 	s.nv = density * solveBoltzmanEquations(gas._T);
 	s.cvv = _ldp->cvv(gas);
-	s.bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, s.cvv);
 	return s;
 }
 
@@ -134,7 +77,6 @@ NLevel::Solution NLevel::solveZero(double T) const
 	s.T = T;
 	s.nv = EVector::Zero(_numLv);
 	s.cvv = EMatrix::Zero(_numLv, _numLv);
-	s.bpvv = EMatrix::Zero(_numLv, _numLv);
 	return s;
 }
 
@@ -249,49 +191,6 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 		BPvv(lower, upper) = _gv(upper) / _gv(lower) * BPvv(upper, lower);
 	});
 	return BPvv;
-}
-
-EMatrix NLevel::netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const
-{
-	return _avv.transpose() + _extraAvv.transpose() + BPvv.transpose() + Cvv.transpose();
-}
-
-EVector NLevel::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-                                   const EVector& sourcev, const EVector& sinkv,
-                                   int chooseConsvEq, const GasStruct&) const
-{
-	// Initialize Mij as Aji + PBji + Cji
-	// = arrival rate in level i from level j
-	EMatrix Mvv = netTransitionRate(BPvv, Cvv);
-
-	// See equation for Fij in gasphysics document
-	// Subtract departure rate from level i to all other levels
-	EMatrix departureDiagonal = Mvv.colwise().sum().asDiagonal();
-	Mvv -= departureDiagonal; // Fij
-	Mvv -= sinkv.asDiagonal(); // Fij - diag[d_i]
-	EVector f(-sourcev); // -f_i
-
-	// Replace row by a conservation equation
-	Mvv.row(chooseConsvEq) = EVector::Ones(Mvv.cols());
-	f(chooseConsvEq) = n;
-
-#ifdef PRINT_LEVEL_MATRICES
-	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << f << endl << endl);
-#endif
-	// Call the linear solver for the system sum_j (Fij - diag[d_i]) * n_j = -f_i
-	EVector nv = Mvv.colPivHouseholderQr().solve(f);
-	// DEBUG("nv" << endl << nv << endl);
-
-	// Put populations = 0 if they were negative due to precision issues
-	nv = nv.array().max(0);
-
-	// Element wise relative errors
-	// EArray diffv = Mvv * nv - f;
-	// EArray errv = diffv / f.array();
-	// Note tha these errors will always be quite big for small components of f
-	// DEBUG("The relative errors are:\n" << errv << endl);
-
-	return nv;
 }
 
 EVector NLevel::solveBoltzmanEquations(double T) const

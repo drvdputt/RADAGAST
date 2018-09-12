@@ -12,50 +12,48 @@
 struct GasStruct;
 class LevelDataProvider;
 
-/** This class contains a generic implementation for calculating the statistical equilibrium of
-    a system with a certain amount of levels (private part), and some properties that result
-    from it (public part). NLevel can be used as-is, if this generic (lines only) implementation
-    is sufficient, or a subclass of NLevel can be used if extra effects are desired. (e.g. the
-    subclass HydrogenLevels provides some extensions to add the two-photon continuum.)
+/** This class contains a generic implementation for calculating the transitions rates
+    determining the statistical equilibrium of a system with a certain amount of levels, and
+    some properties that can be derived from the solution. NLevel can be used as-is, if this
+    generic (lines only) implementation is sufficient, or a subclass of NLevel can be used if
+    extra effects are desired. (e.g. the subclass HydrogenLevels provides some extensions to add
+    the two-photon continuum.)
 
-    Example: To simulate the toy two-level system for CII, create an NLevel object taking a
-    TwoLevelHardcoded* as constructor argument. To simulate Hydrogen including its two-photon
-    continuum, create an object of the HydrogenLevels subclass, using a HydrogenDataProvider
-    class of choice.
+    Examples: 
+    
+    - To simulate the toy two-level system for CII, create an NLevel object taking a
+      TwoLevelHardcoded* as constructor argument.
+    
+    - To simulate Hydrogen including its two-photon continuum, create an object of the
+      HydrogenLevels subclass, using a HydrogenDataProvider class of choice.
 
-    It contains data members to store all the constants needed for these calculations: The
-    number of levels, the energies of these levels and their degeneracies, and the spontaneous
-    transition rates between them. Since an object of this clas is to be reused many times, or
-    by multiple threads at the same time, this class is designed to be stateless: notice how
-    almost all of the methods are const.
+    This class stores information about a system of energy levels: the number of levels, the
+    energies of these levels and their degeneracies, and the spontaneous transition rates
+    between them.
 
-    However, the calculation of the statisitical equilibrium does need some non-constant
-    variables such as the temperature, population densities or the current collision rates.
-    These are stored into an object of the type NLevel::Solution, a struct defined in this
-    class. A Solution object can be obtained by calling the solveBalance function. By giving
-    this object to one of the public functions (e.g. emissivityv), various properties that
-    depend on the densities, temperature, collision rates... can be calculated.
-
-    All of the necessary data for the equilibrium calculation is obtained through a class called
-    LevelDataProvider. The latter is an abstract class, and the type of atom/molecule that is
-    simulated by the implementation in NLevel class will depend on the subclass of
-    LevelDataProvider that is used. Each subclass of NLevel will determine what kind of
-    LevelDataProvider is used during construction. Some functions of LevelDataProvider are
-    called during construction of the NLevel object to set the various constants. In contrast,
-    the functions of the LevelDataProvider for the collision coefficients are called at every
-    invocation of solveBalance, as these depend on the temperature and collision partner
-    densities.
-
-    Subclasses are allowed to override some of the implementations in this class, but they must
-    use these same data members. That's why a set of protected getters is provided. */
+    However, the calculation of the statistical equilibrium and derived properties such as the
+    line spectrum does need some non-constant variables such as the temperature, the current
+    population densities or the current collision rates. These are stored into an object of the
+    type NLevel::Solution, a struct defined in this class. Various properties that depend on the
+    densities, temperature, collision rates... can be calculated by passing such an instance
+    around. */
 class NLevel
 {
 public:
-	/** A subclass needs to pass a pointer to a LevelDataProvider object, or the caller can
-	    provide one if the generic implementation is sufficient. Of course, it needs to be
-	    made sure that this object exists for the lifetime of this class instance. The
-	    number of levels, energies, multiplicities, and transition coefficients are filled
-	    in immediately using the data provider referred to by this pointer. */
+	/** All of the necessary data is obtained through a class called LevelDataProvider. The
+	    latter is an abstract class, and the type of atom/molecule that is simulated by the
+	    implementation in NLevel class will depend on the subclass/configuration of the
+	    LevelDataProvider instance that is used. Some subclasses of NLevel have extra
+	    features, which need more advanced information. This will be made clear in their
+	    constructor, either by requiring extra arguments, or by requiring a specific
+	    subclass of LevelDataProvider. Constant data is extracted from the LevelDataProvider
+	    at construction. In contrast, the functions of the LevelDataProvider for the
+	    collision coefficients are called at every calculation of the transition matrix, as
+	    these depend on the temperature and collision partner densities.
+
+	    Additionally, the mass of the particle is needed. It determines the thermal velocity
+	    of the particle described by this NLevel system, and hence the thermal broadening of
+	    the lines. */
 	NLevel(std::shared_ptr<const LevelDataProvider> ldp, double mass);
 
 	virtual ~NLevel();
@@ -65,14 +63,20 @@ public:
 	    their natural width are returned by reference. */
 	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
 
-	/** Variables which are changed at every invocation of solveBalance or throughout the
-	    calculation, will be passed around using this struct (instead of storing them as
-	    members, which is not threadsafe. Note that Solution objects are not interchangeable
-	    between NLevel instances, as the number of levels and their properties can be
-	    different. Ideally, we'd want a mechanism so that Solutions can only be used with
-	    the object that created them. (Store pointer to parent?). This breaks abstraction a
-	    bit. Maybe there are other approaches, but right now we do no checking as that would
-	    be tedious. */
+	/** Construct the rate matrix T_ij for the given radiation field and gas properties.
+	    This is the sum of the spontaneous (Aij), induced (Bij) and collisional (Cij)
+	    transitions. The collision data are obtained from the LevelDataProvider, while the
+	    induced transitions rates (B coefficients * line power) are derived from the given
+	    specific intensity. Optionally, the collision coefficients can be returned
+	    separately by pointer, so they don't have to be calculated again later. [s-1] */
+	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity,
+	                               const GasStruct& gas, EMatrix* cvv_p = nullptr) const;
+
+	/** Note that Solution objects are not interchangeable between NLevel instances, as the
+	    number of levels and their properties can be different. Ideally, we'd want a
+	    mechanism so that Solutions can only be used with the object that created them.
+	    (Store pointer to parent?). This breaks abstraction a bit. Maybe there are other
+	    approaches, but right now we do no checking as that would be tedious. */
 	typedef struct Solution
 	{
 		/* The total density and temperature of the ensemble of atoms/molecules for
@@ -82,36 +86,10 @@ public:
 		/* The density of each level population (cm-3) */
 		EVector nv;
 
-		/* The induced radiative transition rates and collisional transition rates for
-		   this configuration. These are needed to calculate for example the line
-		   broadening. */
-		EMatrix bpvv, cvv;
+		/* The collisional transition rates for this configuration. These are needed to
+		   calculate for example the line broadening. */
+		EMatrix cvv;
 	} Solution;
-
-	/** Calculates the level populations for a certain electron temperature and isrf. The
-	    temperature, and the densities of the gas species are needed to determine the
-	    collisional transition rates and recombination rates. A struct of the type Solution
-	    is returned, with all of its members correctly filled in. The collision and
-	    recombination data to perform the calculation are obtained from the
-	    LevelDataProvider, while the induced transitions rates (B coefficients * line power)
-	    are derived from the given specific intensity.
-
-	    External processes can influence the level balance by their contribution to the sink
-	    and source terms. Examples are: level-specific formation (think in the chemical
-	    network), ionization from specific levels, dissociation from specific levels... Some
-	    knowledge about the nature of the levels will be necessary. Subclasses of NLevel can
-	    provide an interface to whatever that knowledge may be (usually a mapping from
-	    quantum numbers to level index), but the general NLevel implementation will remain
-	    completely oblivious. It is up to the client to correctly construct the source and
-	    sink terms using this information.
-
-	    More specifically, this function calculates all the matrices for the statistical
-	    equilibrium equations, and then calls @c solveRateEquations() do the actual
-	    calculation. This function should be generic, while the latter is allowed to have a
-	    specialized implementation per subclass. */
-	Solution solveBalance(double density, const Spectrum& specificIntensity,
-	                      const EVector& sourcev, const EVector& sinkv,
-	                      const GasStruct& gas) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
 	Solution solveLTE(double density, const Spectrum& specificIntensity,
@@ -143,29 +121,15 @@ public:
 	/** Return the number of levels in the solution */
 	size_t numLv() const { return _numLv; }
 
-protected:
-	/** Following the notation of the gasPhysics document, construct the rate matrix M_ij =
-	    A_ji + B_ji * P_ji + C_ji. Set up F and b using M_ij and the external source term
-	    ne*np*alpha_i, due to recombination. Returns the solution as a vector [cm-3].
-
-	    This is a basic implementation which calls a linear solver from the Eigen library. I
-	    have make this a virtual function, to make it possible for subclasses to have more
-	    specialized algorithm, based on beforehand knowledge about the coefficients. For the
-	    H2 model for example, the calculation can be done faster and more precisely by using
-	    an iterative approach based on the fact that there is no transition data between and
-	    within the electronically excited levels. */
-	virtual EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-	                                   const EVector& sourcev, const EVector& sinkv,
-	                                   int chooseConsvEq, const GasStruct& gas) const;
-
-public:
 	EVector solveBoltzmanEquations(double T) const;
 
 private:
 	/** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from
-	    the Aij) and Pij is the line power (isrf integrated over the line profile). The
-	    units of Bij and Pij are often different in the literature and other codes, but
-	    their product should always have units [s-1]. */
+	    the Aij) and Pij is the line power, i.e. the radiation field integrated over the
+	    line profile. The temperature and collsional coefficients are needed, because these
+	    influence the shape of the line profile. The units of Bij and Pij are often
+	    different in the literature and other codes (it depends on the units used for the
+	    radiation field), but their product should always have units [s-1]. */
 	EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
 	                                const EMatrix& Cvv) const;
 
@@ -209,15 +173,6 @@ protected:
 
 	EMatrix extraAvv() const { return _extraAvv; }
 	double extraAvv(size_t upper, size_t lower) const { return _extraAvv(upper, lower); }
-
-	/** Creates the matrix Mij as defined in my notes (basically, Mij = Aji + BPji + Cji). I
-	    reused this formula once, so I put it into a function. Here's some help on how to
-	    interpret the elements: Mij tells you how much stuff arrives in level i, that
-	    originates from level j. Doing the multiplication Mij nj gives you the total arrival
-	    rate in each level. Doing the reduction sum_j Mji give you the factional departure
-	    rate from level i (i.e. the sum of what arrives all levels, originating from level i
-	    --> total decay rate). */
-	EMatrix netTransitionRate(const EMatrix& BPvv, const EMatrix& Cvv) const;
 
 private:
 	/** Variables which are the same for all invocations of solveBalance are stored as

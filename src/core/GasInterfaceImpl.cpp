@@ -13,6 +13,7 @@
 #include "HydrogenLevels.h"
 #include "IOTools.h"
 #include "IonizationBalance.h"
+#include "LevelSolver.h"
 #include "SimpleHydrogenNetwork.h"
 #include "SpecialFunctions.h"
 #include "SpeciesIndex.h"
@@ -246,19 +247,26 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	// Package some gas parameters
 	GasStruct gas(T, s.speciesNv);
 
-	// Initial guess for the H2 solution (if no initial guess is provided, the method will
+	// Initial guess for the H2 solution (if no initial guess is provided, the solver will
 	// make its own)
 	if (_molecular && !manualGuess)
 			gas._h2Levelv = previous->H2Solution.nv;
 
 	auto solveLevelBalances = [&]() {
 		double nH = s.speciesNv(_inH);
-		EVector Hsourcev = _atomicLevels->sourcev(gas);
-		EVector Hsinkv = _atomicLevels->sinkv(gas);
+		if (nH <= 0)
+			s.HSolution = _atomicLevels->solveZero(T);
+		else
+		{
+			s.HSolution.n = nH;
+			s.HSolution.T = T;
+			EMatrix Htransitionvv = _atomicLevels->totalTransitionRatesvv(specificIntensity, gas, &s.HSolution.cvv);
+			EVector Hsourcev = _atomicLevels->sourcev(gas);
+			EVector Hsinkv = _atomicLevels->sinkv(gas);
+			DEBUG("Solving levels nH = " << nH << endl);
+			s.HSolution.nv = LevelSolver::statisticalEquilibrium_eigen(nH, Htransitionvv, Hsourcev, Hsinkv);
+		}
 
-		DEBUG("Solving levels nH = " << nH << endl);
-		s.HSolution = _atomicLevels->solveBalance(nH, specificIntensity, Hsourcev,
-		                                          Hsinkv, gas);
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
