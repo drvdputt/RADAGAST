@@ -69,8 +69,8 @@ public:
 	    induced transitions rates (B coefficients * line power) are derived from the given
 	    specific intensity. Optionally, the collision coefficients can be returned
 	    separately by pointer, so they don't have to be calculated again later. [s-1] */
-	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity,
-	                               const GasStruct& gas, EMatrix* cvv_p = nullptr) const;
+	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas,
+	                               EMatrix* cvv_p = nullptr) const;
 
 	/** Note that Solution objects are not interchangeable between NLevel instances, as the
 	    number of levels and their properties can be different. Ideally, we'd want a
@@ -92,8 +92,7 @@ public:
 	} Solution;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. */
-	Solution solveLTE(double density, const Spectrum& specificIntensity,
-	                  const GasStruct& gas) const;
+	Solution solveLTE(double density, const GasStruct& gas) const;
 
 	Solution solveZero(double T) const;
 

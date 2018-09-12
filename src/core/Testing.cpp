@@ -680,8 +680,10 @@ void Testing::runH2(bool write)
 	EVector sourcev = EVector::Zero(h2Levels.numLv());
 	EVector sinkv = h2Levels.dissociationSinkv(specificIntensity);
 	GasStruct gas(T, speciesNv);
-	NLevel::Solution s = h2Levels.solveBalance(nH2, specificIntensity, sourcev, sinkv, gas);
-
+	EMatrix cvv;
+	EMatrix Tvv = h2Levels.totalTransitionRatesvv(specificIntensity, gas, &cvv);
+	// use solver here
+	#error use solver here
 	if (write)
 	{
 		Array emissivityv = h2Levels.emissivityv(s, frequencyv);

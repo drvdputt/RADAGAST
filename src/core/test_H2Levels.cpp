@@ -3,6 +3,7 @@
 #include "GasStruct.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
+#include "LevelSolver.h"
 #include "SpeciesIndex.h"
 #include "Testing.h"
 
@@ -30,8 +31,10 @@ TEST_CASE("H2-specific algorithm")
 
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		NLevel::Solution s0 = h2l.solveBalance(n, specificIntensity, zerov, zerov, gas);
+		EMatrix Tvv = h2l.totalTransitionRatesvv(specificIntensity, gas);
+		EVector n0v = LevelSolver::statisticEquilibrium_iterative(n, Tvv, zerov, zerov);
 		NLevel::Solution sLTE = h2l.solveLTE(n, specificIntensity, gas);
+		EVector nLTEv = sLTE.nv;
 
 		// This test seems to work reasonable for the first three levels
 		for (size_t i = 0; i < std::min<int>(3, s0.nv.size()); i++)

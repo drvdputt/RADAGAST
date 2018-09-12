@@ -45,12 +45,13 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-EMatrix NLevel::totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas, EMatrix* cvv_p) const
+EMatrix NLevel::totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas,
+                                       EMatrix* cvv_p) const
 {
 	EMatrix cvv = _ldp->cvv(gas);
 	if (cvv_p)
 		*cvv_p = cvv;
-	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, s.T, s.cvv);
+	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, cvv);
 #ifdef PRINT_LEVEL_MATRICES
 	DEBUG("Aij" << endl << _avv << endl << endl);
 	DEBUG("BPij" << endl << bpvv << endl << endl);
@@ -59,8 +60,7 @@ EMatrix NLevel::totalTransitionRatesvv(const Spectrum& specificIntensity, const 
 	return _avv + _extraAvv + bpvv + cvv;
 }
 
-NLevel::Solution NLevel::solveLTE(double density, const Spectrum& specificIntensity,
-                                  const GasStruct& gas) const
+NLevel::Solution NLevel::solveLTE(double density, const GasStruct& gas) const
 {
 	NLevel::Solution s;
 	s.n = density;

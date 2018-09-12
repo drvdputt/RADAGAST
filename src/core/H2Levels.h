@@ -24,7 +24,7 @@ protected:
 	    I might be interesting to see this with my own eyes. */
 	EVector solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
 	                           const EVector& sourcev, const EVector& sinkv,
-	                           int chooseConsvEq, const GasStruct& gas) const override;
+	                           int chooseConsvEq, const GasStruct& gas) const;
 
 public:
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon
