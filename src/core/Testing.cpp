@@ -27,8 +27,6 @@ namespace
 {
 vector<double> FILELAMBDAV, FILEAV;
 vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
-
-
 } // namespace
 
 void Testing::readQabs(bool car)
@@ -676,14 +674,8 @@ void Testing::runH2(bool write)
 	speciesNv(SpeciesIndex::inp()) = np;
 	speciesNv(SpeciesIndex::inH()) = nH;
 
-	// Calculate the source and sink terms for the level calculation
-	EVector sourcev = EVector::Zero(h2Levels.numLv());
-	EVector sinkv = h2Levels.dissociationSinkv(specificIntensity);
 	GasStruct gas(T, speciesNv);
-	EMatrix cvv;
-	EMatrix Tvv = h2Levels.totalTransitionRatesvv(specificIntensity, gas, &cvv);
-	// use solver here
-	#error use solver here
+	NLevel::Solution s = h2l.customSolution(nH2, gas, specificIntensity);
 	if (write)
 	{
 		Array emissivityv = h2Levels.emissivityv(s, frequencyv);

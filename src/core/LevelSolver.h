@@ -1,7 +1,7 @@
 #ifndef GASMODULE_GIT_SRC_LEVELSOLVER_H_
 #define GASMODULE_GIT_SRC_LEVELSOLVER_H_
 
-#include NLevel
+#include "EigenAliases.h"
 
 namespace LevelSolver
 {
@@ -25,11 +25,34 @@ namespace LevelSolver
     precisely by using an iterative approach based on the fact that there is no transition data
     between and within the electronically excited levels. */
 EVector statisticalEquilibrium(double totalDensity, const EMatrix& totalTransitionRatesvv,
-                               const EVector& sourcev, const EVector& sinkv);
+                               const EVector& sourcev, const EVector& sinkv,
+                               int replaceByConvervationEq = 0);
 
+/** Solves the statistical equilibrium by looping over the levels one by one, similar to the
+    cloudy implementation of H2. This method can be faster than a full matrix inversion when
+    there is a large set of levels between which no transitions occur. For H2 for example, the
+    electronically excited levels only have transition data with respect to the electronic
+    ground state (X) levels, while the X levels also have transition data between them.
+
+    Therefore, this method takes two ranges of indices as extra arguments:
+
+    - fullyConnectedIndices: These indices are connected (with transition coefficients) to each
+      other, and to each other level (even the unConnectedIndices).
+
+    - unConnectedIndices: These indices are not connected to each other, and their populations
+      only depends on the fullyConnectedIndices.
+
+    In practice, when updating one of the fully connected levels, the populations of all levels
+    are included in the calculation. Conversely, when one of the unconnected levels is updated,
+    only the fully connected levels' populations is used, as the levels within this set are
+    assumed to have no transitions between them.
+
+    TODO: diagram */
 EVector statisticalEquilibrium_iterative(double totalDensity,
                                          const EMatrix& totalTransitionRatesvv,
-                                         const EVector& sourcev, const EVector& sinkv, const EVector& initialGuessv);
+                                         const EVector& sourcev, const EVector& sinkv,
+                                         const EVector& initialGuessv,
+                                         int fullyConnectedCutoff = -1);
 
 } /* namespace LevelSolver */
 

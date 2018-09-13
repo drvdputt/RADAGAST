@@ -264,22 +264,14 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 			EVector Hsourcev = _atomicLevels->sourcev(gas);
 			EVector Hsinkv = _atomicLevels->sinkv(gas);
 			DEBUG("Solving levels nH = " << nH << endl);
-			s.HSolution.nv = LevelSolver::statisticalEquilibrium_eigen(nH, Htransitionvv, Hsourcev, Hsinkv);
+			s.HSolution.nv = LevelSolver::statisticalEquilibrium(nH, Htransitionvv, Hsourcev, Hsinkv);
 		}
 
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
-			// TODO: the source term should contain the 'formation pumping'
-			// contributions. When H2 is formed on grain surfaces, it can be
-			// released from the grain in an excited state. The simplest way is
-			// assuming a fixed distribution. In that case, the source vector is
-			// this distribution scaled with the total grain H2 formation rate.
-			EVector H2sourcev = EVector::Zero(_molecular->numLv());
-			EVector H2sinkv = _molecular->dissociationSinkv(specificIntensity);
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
-			s.H2Solution = _molecular->solveBalance(nH2, specificIntensity,
-			                                        H2sourcev, H2sinkv, gas);
+			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity);
 
 			// Save this, to be used as an initial condition later
 			gas._h2Levelv = s.H2Solution.nv;

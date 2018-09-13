@@ -3,6 +3,7 @@
 #include "DebugMacros.h"
 #include "GasStruct.h"
 #include "H2FromFiles.h"
+#include "LevelSolver.h"
 #include "TemplatedUtils.h"
 
 using namespace std;
@@ -32,153 +33,38 @@ Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 	return totalOpv;
 }
 
-EVector H2Levels::solveRateEquations(double n, const EMatrix& BPvv, const EMatrix& Cvv,
-                                     const EVector& sourcev, const EVector& sinkv,
-                                     int /* chooseConsvEq */, const GasStruct& gas) const
+NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
+                                          const Spectrum& specificIntensity) const
 {
-	// This should stay constant during the calculation
-	const EMatrix Mvv = netTransitionRate(BPvv, Cvv);
+	NLevel::Solution s;
+	s.n = n;
+	s.T = gas._T;
+	EMatrix Tvv = totalTransitionRatesvv(specificIntensity, gas, &s.cvv);
+	// TODO: the source term should contain the 'formation pumping' contributions. When H2
+	// is formed on grain surfaces, it can be released from the grain in an excited state.
+	// The simplest way is assuming a fixed distribution. In that case, the source vector is
+	// this distribution scaled with the total grain H2 formation rate.
+	EVector sourcev = EVector::Zero(numLv());
+	EVector sinkv = dissociationSinkv(specificIntensity);
 
-	// Fractional destruction rate (in s-1) stays constant when populations are adjusted
-	// (sum over the row indices by doing a colwise reduction. Need to transpose because
-	// summing each column gives a row vector, while sinkv is column one.
-	EVector fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
-
-	// Get the indices that cover the electronic ground state
-	auto indicesX = _hff->indicesX();
-	auto indicesExcited = _hff->indicesExcited();
-
-	// Initial guess
-	EVector nv;
+	EVector initialGuessv;
 	if (gas._h2Levelv.size() == 0)
 	{
 		// DEBUG("Using LTE as initial guess for H2" << endl);
 		// nv = n * solveBoltzmanEquations(gas._T);
 		// TODO: experiment with this instead of LTE as initial condition
 		DEBUG("Using ground state as initial guess for H2" << endl);
-		nv = EVector::Zero(numLv());
-		nv.head(4) = EVector::Constant(4, n / 4);
+		initialGuessv = EVector::Zero(numLv());
+		initialGuessv.head(4) = EVector::Constant(4, n / 4);
 	}
 	else if (gas._h2Levelv.size() == numLv())
-		nv = gas._h2Levelv;
+		initialGuessv = gas._h2Levelv;
 	else
 		Error::runtime("The _h2levelv in the gas struct should be empty, or be of the "
 		               "right size already.");
 
-	// The algorithm apparently works better when the iterations happen from high to low.
-	// While it is not guaranteed that the indices given by the above vector are actually
-	// listed from low to high energies, it is so in practice (because of the way the files
-	// that are read in are organized. Therefore, we reverse the vectors here, and hope for
-	// the best, as currently I'm experiencing oscillations under strong radiation fields.
-	reverse(begin(indicesX), end(indicesX));
-	reverse(begin(indicesExcited), end(indicesExcited));
-
-	// Iterate until converged
-	double maxDeltaX = 1.e-4 * n;
-	double maxDeltaAll = 1.e-6 * n;
-	double maxFracDelta = 1.e-6;
-	size_t counter{0};
-	const int max_iterations = 2001;
-	while (counter < max_iterations)
-	{
-		counter++;
-
-		// The previous nv, for convergence checking
-		EVector previousNv = nv;
-		EVector deltav = EVector::Zero(nv.size());
-
-		// Sweep over ground state
-		for (auto i : indicesX)
-		{
-			// Sum Mij nj, with j running over all other levels. TODO: consider
-			// making the assumption that the X states are contigous in the eigen
-			// index space. In that case, I can simply do a matrix operation here,
-			// over a slice, leading to possible optimization.
-			double creationRate = sourcev(i) + Mvv.row(i) * nv;
-			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
-		}
-		/* Renormalize because the algorithm has no sum rule, */
-		nv *= n / nv.sum();
-
-		// We will cut this iteration short as long as the ground state has not
-		// converged.
-		bool loopBack = false;
-		for (auto i : indicesX)
-		{
-			// TODO: vectorize this (maybe work with a contiguous 'range' of X
-			// indices, instead of a list
-			deltav(i) = abs(nv(i) - previousNv(i));
-			if (!loopBack && deltav(i) > maxDeltaX)
-			{
-				// DEBUG("index " << i << " delta " << deltav(i) / maxDeltaX << endl);
-				// Do not break here. We might need the whole deltav further down
-				loopBack = true;
-			}
-		}
-		if (loopBack)
-		{
-			if (!(counter % 1000))
-			{
-				DEBUG("Solving h2... " << counter << "iterations" << endl);
-				// DEBUG("h2Levelv = \n" << nv << endl);
-			}
-			continue;
-		}
-
-		// If the ground state has more or less converged, we will also start sweeping
-		// over the other states
-		for (auto i : indicesExcited)
-		{
-			double creationRate = sourcev(i);
-			// Only sum over the ground state here
-			for (auto j : indicesX)
-				creationRate += Mvv(i, j) * nv(j);
-			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
-		}
-		nv *= n / nv.sum();
-
-		// Overall convergence check
-
-		// Absolute change
-		for (auto i : indicesExcited)
-			// Again, this would best be vectorized
-			deltav(i) = abs(nv(i) - previousNv(i));
-
-		bool thresconv = (deltav.array() < maxDeltaAll).all();
-
-		// Relative change
-		bool fracconv = true;
-		for (int i = 0; i < nv.size() && fracconv; i++)
-		{
-			double df = 0;
-			// finite/0 means not converged
-			if (previousNv(i) <= 0 && nv(i) > 0)
-				df = 2 * maxFracDelta;
-			else
-				df = abs(nv(i) / previousNv(i) - 1.);
-
-			if (df > maxFracDelta)
-				fracconv = false;
-		}
-
-		if (!(counter % 1000))
-		{
-			DEBUG("Solving h2... " << counter << "iterations" << endl);
-			DEBUG("thresconv = " << thresconv << " fracconv = " << fracconv
-			                     << endl);
-		}
-
-		bool converged = thresconv && fracconv;
-		if (converged)
-			break;
-	}
-	if (nv.array().isNaN().any())
-		Error::runtime("nan in H2 level solution");
-	DEBUG("Solved H2 in " << counter << " iterations" << endl);
-	// DEBUG("h2Levelv = \n" << nv << endl);
-	// EVector explicitNv = NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv,
-	// chooseConsvEq, gas);
-	return nv;
+	s.nv = LevelSolver::statisticalEquilibrium_iterative(n, Tvv, sourcev, sinkv, initialGuessv);
+	return s;
 }
 
 double H2Levels::dissociationRate(const NLevel::Solution& s,

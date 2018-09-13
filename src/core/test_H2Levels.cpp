@@ -31,10 +31,9 @@ TEST_CASE("H2-specific algorithm")
 
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		EMatrix Tvv = h2l.totalTransitionRatesvv(specificIntensity, gas);
-		EVector n0v = LevelSolver::statisticEquilibrium_iterative(n, Tvv, zerov, zerov);
-		NLevel::Solution sLTE = h2l.solveLTE(n, specificIntensity, gas);
-		EVector nLTEv = sLTE.nv;
+
+		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
+		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
 
 		// This test seems to work reasonable for the first three levels
 		for (size_t i = 0; i < std::min<int>(3, s0.nv.size()); i++)
@@ -61,7 +60,7 @@ TEST_CASE("H2-specific algorithm")
 		const GasStruct gas(T, speciesNv);
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		NLevel::Solution s0 = h2l.solveBalance(n, specificIntensity, zerov, zerov, gas);
+		NLevel::Solution s0 = h2l.customSolution(n,gas,specificIntensity);
 		EVector nv = s0.nv;
 		// Check if some individual levels are indeed 0
 		for (size_t i = 1; i < std::min<int>(5, nv.size()); i++)
