@@ -19,26 +19,26 @@ AR=ar
 # Debug build
 OPTFLAGS=-O0 -g -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic #-Wconversion
 # Release build
-release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT
+release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT -Wno-sign-compare
 
 # Target directories (this group of directories might be relocatable, but I have never tested
 # this)
 # ==================
 
-TARGETDIR=$(shell pwd)/..
+PREFIX?=$(shell pwd)/..
 
 # Binary target
-BINDIR=$(TARGETDIR)/bin
+BINDIR=$(PREFIX)/bin
 
 # Objects and dependency files
-OBJDIR=$(TARGETDIR)/obj
+OBJDIR=$(PREFIX)/obj
 
 # Archive the objects that will be created into a library, for easy linking by the client code.
-LIBDIR=$(TARGETDIR)/lib
+LIBDIR=$(PREFIX)/lib
 
 # Symlink the headers describing the public interface, to have a clear and minimal include path
 # for the client code.
-PUBLIC_INCLUDEDIR=$(TARGETDIR)/include
+PUBLIC_INCLUDEDIR=$(PREFIX)/include
 
 # Source directories
 # ==================
@@ -116,7 +116,7 @@ DEPFLAGS=-MT $@ -MMD -MP -MF $(OBJDIR)/$*.Td
 CXXFLAGS=$(OPTFLAGS) $(INCFLAGS) $(DEPFLAGS) -std=c++14 -DREPOROOT=\""$(shell pwd)"\"
 
 # The final targets
-all: $(CORELIB) $(INTERFACELINKS) $(BINARIES)
+all release: $(CORELIB) $(INTERFACELINKS) $(BINARIES)
 
 # Linking step
 # Make an exception for tests, as these need the list of objects
@@ -150,7 +150,7 @@ $(OBJDIR)/%.d: ;
 .PRECIOUS: $(OBJDIR)/%.d
 
 clean:
-	rm -rf $(OBJDIR)/* $(BINARIES) $(INTERFACELINKS) $(CORELIB)
+	rm -rf $(OBJDIR)/* $(BINDIR)/* $(PUBLIC_INCLUDEDIR)/* $(LIBDIR)/*
 
 .PHONY: doc
 doc:
