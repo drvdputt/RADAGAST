@@ -108,22 +108,25 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 
 		// If the ground state has more or less converged, we will also start sweeping
 		// over the other states. Since theres no dependence between the excited states,
-		// we can do this in a block operation (instead of 1 by 1).
-		for (int i = startE; i < stopE; i++)
-		{
-			double creationRate = sourcev(i);
-			// Only sum over the ground state here
-			creationRate += Mvv.row(i).segment(startX, numX) *
-			                nv.segment(startX, numX);
-			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
-		}
+		// we can do this in a block operation (instead of 1 by 1). We use the auto
+		// keyword here to work with Eigen expressions, which delays the evaluation
+		// without having to put everything on one line.
+
+		// Creation rates for all E levels, coming only from the ground state populations.
+		auto rateFromXintoEv = Mvv.block(startE, startX, numE, numX) *
+		                       nv.segment(startX, numX);
+		// Total creation rate
+		auto creationRateEv = sourcev.segment(startE, numE) + rateFromXintoEv;
+
+		// Expression for the new populations. Only use this expression if the creation
+		// rate is positive.
+		auto newPopEv = creationRateEv.array() /
+		                fracDestructionRatev.segment(startE, numE).array();
+		nv.segment(startE, numE) = (creationRateEv.array() > 0).select(newPopEv, 0);
 		nv *= totalDensity / nv.sum();
 
 		// Overall convergence check
-
-		// Absolute change
 		auto deltaEv = (nv - previousNv).segment(startE, numE);
-
 		bool thresconv = (deltaEv.array().abs() < maxDeltaAll).all() &&
 		                 (deltaXv.array().abs() < maxDeltaAll).all();
 
