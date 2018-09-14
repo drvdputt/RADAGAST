@@ -63,7 +63,11 @@ NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
 		Error::runtime("The _h2levelv in the gas struct should be empty, or be of the "
 		               "right size already.");
 
-	s.nv = LevelSolver::statisticalEquilibrium_iterative(n, Tvv, sourcev, sinkv, initialGuessv);
+	// int fullyConnectedCutoff = _hff->startOfExcitedIndices();
+	// s.nv = LevelSolver::statisticalEquilibrium_iterative(
+	//                 n, Tvv, sourcev, sinkv, initialGuessv, fullyConnectedCutoff);
+	s.nv = LevelSolver::statisticalEquilibrium_iterative(n, Tvv, sourcev, sinkv,
+	                                                     initialGuessv);
 	return s;
 }
 

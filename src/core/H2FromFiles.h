@@ -131,15 +131,17 @@ public:
 	/** Retrieve the index of a level with these quantum numbers. */
 	size_t indexOutput(ElectronicState eState, int j, int v) const;
 
-	/** Get a list of all the indices that correspond levels of the electronic ground (X)
-	    state. */
-	std::vector<size_t> indicesX() const { return _indicesX; }
+	/** Get the index pointing to the first (index-wise, not energy-wise) electronically
+	excited level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels
+	of the ground state X, while @c startOfExcitedIndices() @f$ <= i <= @f$ @c numLv() point
+	to levels of any of the electronically excited states. */
+	size_t startOfExcitedIndices() const { return _startOfExcitedIndices; }
 
-	/** Get a list of all the indices that correspond levels of any of the electronic
-	    excited states. */
-	std::vector<size_t> indicesExcited() const { return _indicesExcited; }
-
+	/** The spontaneous dissociation probability per unit time from each level. [s-1] */
 	EVector dissociationProbabilityv() const { return _dissProbv; }
+
+	/** The average kinetic energy resulting from a spontaneous dissociation from each
+	    level. [erg] */
 	EVector dissociationKineticEnergyv() const { return _dissKinEv; }
 
 	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
@@ -174,11 +176,7 @@ private:
 
 	/* The total number of levels (equivalent to _levelv.size()) */
 	size_t _numL{0};
-
-	/* List of levels that belong to the electronic ground state, and any of the excited
-	   states, respectively. */
-	std::vector<size_t> _indicesX;
-	std::vector<size_t> _indicesExcited;
+	size_t _startOfExcitedIndices{0};
 
 	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
 	   vector above. Function below shows how adding a level works. */
@@ -188,10 +186,6 @@ private:
 		size_t newIndex = _levelv.size();
 		_levelv.emplace_back(eState, j, v, e);
 		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, newIndex});
-		if (eState == ElectronicState::X)
-			_indicesX.emplace_back(newIndex);
-		else
-			_indicesExcited.emplace_back(newIndex);
 	}
 
 	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our

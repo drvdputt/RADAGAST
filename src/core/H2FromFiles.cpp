@@ -53,6 +53,7 @@ void H2FromFiles::readLevels()
 {
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
+	_startOfExcitedIndices = _levelv.size();
 	if (BLEVELS)
 		readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
 	if (CLEVELS)
