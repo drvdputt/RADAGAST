@@ -60,10 +60,12 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 
 	// Get the indices that cover the electronic ground state. If this information is not
 	// given, treat all levels as fully connected.
-	int Xstart = 0;
-	int Xstop = fullyConnectedCutoff != -1 ? fullyConnectedCutoff : numLv;
-	int Estart = Xstop + 1;
-	int Estop = numLv;
+	int startX = 0;
+	int stopX = fullyConnectedCutoff != -1 ? fullyConnectedCutoff : numLv;
+	int numX = stopX - startX;
+	int startE = stopX;
+	int stopE = numLv;
+	int numE = stopE - startE;
 
 	// The algorithm apparently works better when the iterations happen from high to low
 	// energies, so we go backwards in our loops.
@@ -80,15 +82,11 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 
 		// The previous nv, for convergence checking
 		EVector previousNv = nv;
-		EVector deltav = EVector::Zero(nv.size());
 
 		// Sweep over ground state
-		for (int i = Xstart; i < Xstop; i++)
+		for (int i = startX; i < stopX; i++)
 		{
-			// Sum Mij nj, with j running over all other levels. TODO: consider
-			// making the assumption that the X states are contigous in the eigen
-			// index space. In that case, I can simply do a matrix operation here,
-			// over a slice, leading to possible optimization.
+			// Sum Mij nj, with j running over all other levels.
 			double creationRate = sourcev(i) + Mvv.row(i) * nv;
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
 		}
@@ -97,20 +95,8 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 
 		// We will cut this iteration short as long as the ground state has not
 		// converged.
-		bool loopBack = false;
-		for (int i = Xstart; i < Xstop; i++)
-		{
-			// TODO: vectorize this (maybe work with a contiguous 'range' of X
-			// indices, instead of a list
-			deltav(i) = abs(nv(i) - previousNv(i));
-			if (!loopBack && deltav(i) > maxDeltaX)
-			{
-				// DEBUG("index " << i << " delta " << deltav(i) / maxDeltaX << std::endl);
-				// Do not break here. We might need the whole deltav further down
-				loopBack = true;
-			}
-		}
-		if (loopBack)
+		auto deltaXv = nv.segment(startX, numX) - previousNv.segment(startX, numX);
+		if ((deltaXv.array().abs() > maxDeltaX).any())
 		{
 			if (!(counter % 1000))
 			{
@@ -121,14 +107,14 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		}
 
 		// If the ground state has more or less converged, we will also start sweeping
-		// over the other states
-		for (int i = Estart; i < Estop; i++)
+		// over the other states. Since theres no dependence between the excited states,
+		// we can do this in a block operation (instead of 1 by 1).
+		for (int i = startE; i < stopE; i++)
 		{
 			double creationRate = sourcev(i);
 			// Only sum over the ground state here
-			for (int j = Xstart; j < Xstop; j++)
-				creationRate += Mvv(i, j) * nv(j);
-			
+			creationRate += Mvv.row(i).segment(startX, numX) *
+			                nv.segment(startX, numX);
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
 		}
 		nv *= totalDensity / nv.sum();
@@ -136,11 +122,10 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		// Overall convergence check
 
 		// Absolute change
-		for (int i = Estart; i < Estop; i++)
-			// Again, this would best be vectorized
-			deltav(i) = abs(nv(i) - previousNv(i));
+		auto deltaEv = (nv - previousNv).segment(startE, numE);
 
-		bool thresconv = (deltav.array() < maxDeltaAll).all();
+		bool thresconv = (deltaEv.array().abs() < maxDeltaAll).all() &&
+		                 (deltaXv.array().abs() < maxDeltaAll).all();
 
 		// Relative change
 		bool fracconv = true;
@@ -150,8 +135,8 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 			// finite/0 means not converged
 			if (previousNv(i) <= 0 && nv(i) > 0)
 				df = 2 * maxFracDelta;
-			else
-				df = abs(nv(i) / previousNv(i) - 1.);
+
+			df = abs(nv(i) / previousNv(i) - 1.);
 
 			if (df > maxFracDelta)
 				fracconv = false;
@@ -172,7 +157,5 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		Error::runtime("nan in H2 level solution");
 	DEBUG("Solved H2 in " << counter << " iterations" << std::endl);
 	// DEBUG("h2Levelv = \n" << nv << std::endl);
-	// EVector explicitNv = NLevel::solveRateEquations(n, BPvv, Cvv, sourcev, sinkv,
-	// chooseConsvEq, gas);
 	return nv;
 }
