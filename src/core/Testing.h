@@ -32,6 +32,8 @@ std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 
 Array freqToWavGrid(const Array& frequencyv);
 
+Array defaultCoarseFrequencyv();
+
 /** Inserts frequency points into a vector of frequencies, given a number of points per line, a
     power for the subgrid per line, and a center and characteristic with per line. */
 void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower,
@@ -58,6 +60,7 @@ void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& o
 void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi,
                    const GasModule::GasState& gs);
 
+void plotHeatingCurve_main();
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
                       const Spectrum& specificIntensity, double n);
 
@@ -88,12 +91,18 @@ void runFromFilesvsHardCoded();
     grid. */
 GasModule::GasInterface genFullModel();
 
+GasModule::GasInterface genHonlyModel();
+
 /** Run the model with the maximum number of levels, and iterate until the temperature
     converges. */
 void runFullModel();
 
 /** A test run for the model with a fixed dust model included. */
 void runWithDust(bool write=true);
+
+void plotHlines();
+
+void plotH2lines();
 } // namespace Testing
 
 #endif /* GASMODULE_GIT_SRC_TESTING_H_ */
