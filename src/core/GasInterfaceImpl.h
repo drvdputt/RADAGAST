@@ -99,7 +99,6 @@ public:
 	                            const GasModule::GrainInterface&,
 	                            const GasInterfaceImpl::Solution* previous = nullptr) const;
 
-public:
 	/** @name Properties of final state
 
 	    These function calculate the properties which depend on the state of the gas. They
