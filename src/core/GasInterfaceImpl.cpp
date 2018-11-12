@@ -250,7 +250,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	// Initial guess for the H2 solution (if no initial guess is provided, the solver will
 	// make its own)
 	if (_molecular && !manualGuess)
-			gas._h2Levelv = previous->H2Solution.nv;
+		gas._h2Levelv = previous->H2Solution.nv;
 
 	auto solveLevelBalances = [&]() {
 		double nH = s.speciesNv(_inH);
@@ -260,11 +260,13 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 		{
 			s.HSolution.n = nH;
 			s.HSolution.T = T;
-			EMatrix Htransitionvv = _atomicLevels->totalTransitionRatesvv(specificIntensity, gas, &s.HSolution.cvv);
+			EMatrix Htransitionvv = _atomicLevels->totalTransitionRatesvv(
+			                specificIntensity, gas, &s.HSolution.cvv);
 			EVector Hsourcev = _atomicLevels->sourcev(gas);
 			EVector Hsinkv = _atomicLevels->sinkv(gas);
 			DEBUG("Solving levels nH = " << nH << endl);
-			s.HSolution.nv = LevelSolver::statisticalEquilibrium(nH, Htransitionvv, Hsourcev, Hsinkv);
+			s.HSolution.nv = LevelSolver::statisticalEquilibrium(nH, Htransitionvv,
+			                                                     Hsourcev, Hsinkv);
 		}
 
 		if (_molecular)
