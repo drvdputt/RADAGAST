@@ -485,6 +485,19 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
 }
 
+void Testing::plotHeatingCurve_main()
+{
+	Array frequencyv = generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
+						  Constant::LIGHT / (0.005 * Constant::UM_CM));
+	double Tc = 30000;
+	double g0 = 1e0;
+	double n = 1000;
+	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
+	GasModule::GasInterface gi{frequencyv,frequencyv,frequencyv, "", "none"};
+	string outputPath = "heatingcurve/";
+	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensity, n);
+}
+
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
                                const Spectrum& specificIntensity, double n)
 {
@@ -737,13 +750,28 @@ GasModule::GasInterface Testing::genFullModel()
 	return {coarsev, coarsev, frequencyv, "", "8 5"};
 }
 
+GasModule::GasInterface Testing::genHonlyModel()
+{
+	Array coarsev = defaultCoarseFrequencyv();
+
+	cout << "Construction model to help with refining frequency grid" << endl;
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
+	FreeBound fb;
+
+	Array frequencyv = improveFrequencyGrid(hl, coarsev);
+	frequencyv = improveFrequencyGrid(fb, frequencyv);
+
+	cout << "Constructing new model using the improved frequency grid" << endl;
+	return {coarsev, coarsev, frequencyv, "", "none"};
+}
+
 void Testing::runFullModel()
 {
 	cout << "RUN_FULL_MODEL" << endl;
-	GasModule::GasInterface gi = genFullModel();
-	double Tc = 30000;
-	double G0 = 10;
-	double n = 10;
+	GasModule::GasInterface gi = genHonlyModel();
+	double Tc = 40000;
+	double G0 = 100;
+	double n = 1000;
 	runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
 }
 
