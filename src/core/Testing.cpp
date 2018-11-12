@@ -219,6 +219,12 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 	return wavelengthv;
 }
 
+Array Testing::defaultCoarseFrequencyv() {
+	Array coarsev = generateGeometricGridv(100, Constant::LIGHT / (1e3 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+	return coarsev;
+}
+
 Array Testing::freqToWavGrid(const Array& frequencyv)
 {
 	size_t numWav = frequencyv.size();
@@ -716,8 +722,7 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array coarsev = defaultCoarseFrequencyv();
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
@@ -793,3 +798,20 @@ void Testing::runWithDust(bool write)
 	if (write)
 		writeGasState("withDust/", gasInterface, gs);
 }
+
+// void Testing::plotHlines()
+// {
+// 	HydrogenFromFiles hdata{};
+// 	HydrogenLevels hlevels{make_shared<HydrogenDataProvider>(hdata)};
+// 	double Tc = 30000;
+// 	double g0 = 1e0;
+// 	double n = 1000;
+// 	Array frequencyv = defaultCoarseFrequencyv();
+// 	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
+// 	NLevel::Solution s;
+// 	s.n = n;
+// 	s.nv = EVector::Zero(SpeciesIndex::size());
+// 	s.nv(SpeciesIndex::inH()) = n;
+// 	EMatrix Tvv = hlevels.totalTransitionRatesvv(specificIntensity,const GasStruct& gas,EMatrix* cvv_p[=nullptr])
+// 	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
+// }
