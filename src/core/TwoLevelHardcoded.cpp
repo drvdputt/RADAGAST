@@ -36,20 +36,23 @@ EMatrix TwoLevelHardcoded::extraAvv() const { return EMatrix::Zero(2, 2); }
 
 EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const
 {
-	double T = gas._T;
 	EMatrix Cvv = EMatrix::Zero(2, 2);
+	double ne = gas._speciesNv(SpeciesIndex::ine());
+	if (ne > 0)
+	{
+		/* Need separate contributions for number of protons and electrons. Toy
+		   implementation below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf
+		   is actually for electron collisions only. */
+		double beta = 8.629e-6;
 
-	/* Need separate contributions for number of protons and electrons. Toy implementation
-	   below, inspired by https://www.astro.umd.edu/~jph/N-level.pdf is actually for
-	   electron collisions only, but let's treat all collision partners this way for now. */
-	double beta = 8.629e-6;
+		/* Also take some values from the bottom of page 4. Gamma = 2.15 at 10000 K and
+		   1.58 at 1000 K. Do a linear interpolation. */
+		double T = gas._T;
+		double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
 
-	/* Also take some values from the bottom of page 4. Gamma = 2.15 at 10000 K and 1.58 at
-	   1000 K. Do a linear interpolation. */
-	double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
-
-	Cvv(1, 0) = beta / sqrt(T) * bigUpsilon10 / the_gv(1);
-	Cvv(0, 1) = Cvv(1, 0) * the_gv(1) / the_gv(0) *
-	            exp(-(the_ev(1) - the_ev(0)) / Constant::BOLTZMAN / T);
+		Cvv(1, 0) += beta / sqrt(T) * bigUpsilon10 / the_gv(1) * ne;
+		Cvv(0, 1) += Cvv(1, 0) * the_gv(1) / the_gv(0) *
+		             exp(-(the_ev(1) - the_ev(0)) / Constant::BOLTZMAN / T);
+	}
 	return Cvv;
 }
