@@ -414,10 +414,48 @@ Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) co
 	return totalOp;
 }
 
-Array GasInterfaceImpl::scatteringOpacityv(const Solution&, const Array& oFrequencyv) const
+Array GasInterfaceImpl::scatteringOpacityv(const Solution& s, const Array& oFrequencyv) const
 {
 	return Array(oFrequencyv.size());
 }
+
+Array GasInterfaceImpl::radiativeRecombinationEmissivityv(const Solution& s,
+                                                          const Array& eFrequencyv) const
+{
+	Array rrEmv(eFrequencyv.size());
+	_freeBound->addEmissionCoefficientv(s.T, eFrequencyv, rrEmv);
+	return rrEmv;
+}
+
+Array GasInterfaceImpl::freeFreeEmissivityv(const Solution& s, const Array& eFrequencyv) const
+{
+	Array ffEmv(eFrequencyv.size());
+	_freeFree->addEmissionCoefficientv(s.T, eFrequencyv, ffEmv);
+	return ffEmv;
+}
+
+Array GasInterfaceImpl::lineEmissivityv(const Solution& s, const Array& eFrequencyv) const
+{
+	Array lineEmv(eFrequencyv.size());
+	lineEmv = _atomicLevels->emissivityv(s.HSolution, eFrequencyv);
+	if (_molecular)
+		lineEmv += _molecular->emissivityv(s.H2Solution, eFrequencyv);
+	return lineEmv;
+}
+
+Array GasInterfaceImpl::ionizationOpacityv(const Solution& s, const Array& oFrequencyv) const
+{
+	Array cs(oFrequencyv.size());
+	for (size_t iFreq = 0; iFreq < oFrequencyv.size(); iFreq++)
+		cs[iFreq] = s.speciesNv(SpeciesIndex::inH()) *
+		            Ionization::crossSection(oFrequencyv[iFreq]);
+	return cs;
+}
+
+// Array& GasInterfaceImpl::dissociationOpacityv(const Solution& s, const Array& oFrequencyv) const {
+// 	Array cs(eFrequencyv.size());
+
+// }
 
 double GasInterfaceImpl::cooling(const Solution& s) const
 {

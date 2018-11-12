@@ -115,6 +115,14 @@ public:
 	/** A possible scattering opacity */
 	Array scatteringOpacityv(const Solution&, const Array& oFrequencyv) const;
 
+	Array radiativeRecombinationEmissivityv(const Solution&, const Array& eFrequencyv) const;
+
+	Array freeFreeEmissivityv(const Solution&, const Array& eFrequencyv) const;
+
+	Array lineEmissivityv(const Solution&, const Array& eFrequencyv) const;
+
+	Array ionizationOpacityv(const Solution&, const Array& eFrequencyv) const;
+
 	///////////////////////////////////////
 	// HEATING AND COOLING CONTRIBUTIONS //
 	///////////////////////////////////////
