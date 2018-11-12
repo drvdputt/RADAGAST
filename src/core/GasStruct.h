@@ -2,6 +2,7 @@
 #define GASMODULE_GIT_SRC_GASSTRUCT_H_
 
 #include "EigenAliases.h"
+#include "SpeciesIndex.h"
 
 /** A struct containing a bunch of parameters about the gas that are frequently passed around,
     such as temperature, the density vector, and the specific intensity of the ambient radiation
@@ -30,8 +31,14 @@
     reference as much as possible. */
 typedef struct GasStruct
 {
-GasStruct(double T, const EVector& speciesNv) : _T{T}, _speciesNv{speciesNv} {}
-	// Naturally, these values are needed in many functions
+	/** Default constructor, which just provides safe parameters for a vacuum. T - 0 can
+	    create nans, so we pick a random constant T here. */
+	GasStruct() : _T{500}, _speciesNv{EVector::Zero(SpeciesIndex::size())} {}
+
+	/** Package the temperature and the species vector into one objects, as these are
+	    typically needed together. */
+	GasStruct(double T, const EVector& speciesNv) : _T{T}, _speciesNv{speciesNv} {}
+
 	double _T;
 	EVector _speciesNv;
 
