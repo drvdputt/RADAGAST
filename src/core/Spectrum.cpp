@@ -14,7 +14,7 @@ Spectrum::Spectrum(const Array& frequencyv, const Array& valuev)
 
 double Spectrum::evaluate(double frequency) const
 {
-	if (frequency > _freqMax || frequency < _freqMin)
+	if (frequency > _freqMax || frequency < _freqMin || !_hasData)
 		return 0;
 	else
 	{
@@ -82,4 +82,12 @@ Array Spectrum::binned(Array frequencyv) const
 		binnedValuev[i] = average(nuMin, nuMax);
 	}
 	return binnedValuev;
+}
+
+double Spectrum::valMax() const
+{
+	if (!_hasData)
+		return 0;
+	auto maxIt = std::max_element(std::begin(_valuev), std::end(_valuev));
+	return *maxIt;
 }

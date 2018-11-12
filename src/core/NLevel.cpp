@@ -155,10 +155,7 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
                                         const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
-	const Array& v = specificIntensity.valuev();
-	auto maxIt = max_element(begin(v), end(v));
-	double spectrumMax = *maxIt;
-
+	double spectrumMax = specificIntensity.valMax();
 	forActiveLinesDo([&](size_t upper, size_t lower) {
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);

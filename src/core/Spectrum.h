@@ -36,8 +36,9 @@ public:
 	Array binned(Array frequencyv) const;
 
 	double freqMax() const { return _freqMax; }
-
 	double freqMin() const { return _freqMin; }
+	double valMax() const;
+	double valMin() const;
 
 	Array frequencyv() const { return _frequencyv; }
 	Array valuev() const { return _valuev; }
