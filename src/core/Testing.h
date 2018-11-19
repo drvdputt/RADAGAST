@@ -1,15 +1,17 @@
 #ifndef GASMODULE_GIT_SRC_TESTING_H_
 #define GASMODULE_GIT_SRC_TESTING_H_
 
+#include "Array.h"
+#include "Constants.h"
 #include "GasInterface.h"
-#include "Spectrum.h"
 
 #include <string>
 #include <vector>
 
+class FreeBound;
 class GasInterfaceImpl;
 class NLevel;
-class FreeBound;
+class Spectrum;
 
 namespace Testing
 {
@@ -23,6 +25,10 @@ void readQabs(bool car);
 Array generateQabsv(double a, const Array& frequencyv);
 
 std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
+
+// USEFUL CONSTANTS //
+constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);
+constexpr double defaultMaxFreq = Constant::LIGHT / (0.005 * Constant::UM_CM);
 
 // UTILITY FUNCTIONS //
 
@@ -98,7 +104,7 @@ GasModule::GasInterface genHonlyModel();
 void runFullModel();
 
 /** A test run for the model with a fixed dust model included. */
-void runWithDust(bool write=true);
+void runWithDust(bool write = true);
 
 void plotHlines();
 

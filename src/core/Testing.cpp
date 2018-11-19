@@ -219,9 +219,9 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 	return wavelengthv;
 }
 
-Array Testing::defaultCoarseFrequencyv() {
-	Array coarsev = generateGeometricGridv(100, Constant::LIGHT / (1e3 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+Array Testing::defaultCoarseFrequencyv()
+{
+	Array coarsev = generateGeometricGridv(100, defaultMinFreq, defaultMaxFreq);
 	return coarsev;
 }
 
@@ -487,13 +487,14 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 
 void Testing::plotHeatingCurve_main()
 {
-	Array frequencyv = generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
-						  Constant::LIGHT / (0.005 * Constant::UM_CM));
+	Array frequencyv =
+	                generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
+	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 	double Tc = 30000;
 	double g0 = 1e0;
 	double n = 1000;
 	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
-	GasModule::GasInterface gi{frequencyv,frequencyv,frequencyv, "", "none"};
+	GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv, "", "none"};
 	string outputPath = "heatingcurve/";
 	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensity, n);
 }
