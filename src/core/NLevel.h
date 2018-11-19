@@ -59,8 +59,9 @@ public:
 	virtual ~NLevel();
 
 	/** Ouputs some properties about the different line transitions taken into account by
-	    this instance of NLevel. The results for the number of lines, their frequencies and
-	    their natural width are returned by reference. */
+	    this instance of NLevel. The results for the number of lines, their frequencies
+	    [s-1] and their natural widths (decay rate [s-1] / 4 pi) are returned by
+	    reference. */
 	void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
 
 	/** Construct the rate matrix T_ij for the given radiation field and gas properties.
