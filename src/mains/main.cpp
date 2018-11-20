@@ -29,13 +29,14 @@ int main()
 		Testing::plotIonizationStuff();
 		Testing::plotPS64Collisions();
 		Testing::plotInterpolationTests();
+		Testing::plotHeatingCurve_main();
 
 		// These do a run, with writeout, but the results are not directly comparable to
 		// something in the way that the ones above work.
 		Testing::runFromFilesvsHardCoded();
 		Testing::runFullModel();
 		Testing::runWithDust(true);
-		Testing::runH2(false);
+		Testing::runH2(true);
 	}
 	catch (const std::exception& ex)
 	{
