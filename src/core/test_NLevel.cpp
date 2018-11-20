@@ -17,6 +17,7 @@ TEST_CASE("Test NLevel implementation using two level system")
 	Spectrum specificIntensity;
 
 	NLevel nlv{std::make_shared<TwoLevelHardcoded>(twolv), Constant::HMASS_CGS * 12};
+	CHECK(nlv.numLv() == 2);
 
 	SUBCASE("lineInfo")
 	{
@@ -42,11 +43,35 @@ TEST_CASE("Test NLevel implementation using two level system")
 		CHECK(cvv == twolv.cvv(gas));
 	}
 
-	SUBCASE("LTE")
+	SUBCASE("Test functions that need solution using LTE ")
 	{
 		NLevel::Solution s = nlv.solveLTE(1, gas);
-		Array eFrequencyv = Testing::generateGeometricGridv();
+
+		// Deliberately use very low resolution
+		Array eFrequencyv = Testing::generateGeometricGridv(5, Testing::defaultMinFreq,
+		                                                    Testing::defaultMaxFreq);
+
 		Array emissivityv = nlv.emissivityv(s, eFrequencyv);
 		Array opacityv = nlv.opacityv(s, eFrequencyv);
+		Array lineEmv = nlv.lineEmissivityv(s, eFrequencyv);
+		Array lineOpv = nlv.lineOpacityv(s, eFrequencyv);
+
+		// Since we are working with the base class, there should be only line emission
+		for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
+		{
+			CHECK(emissivityv[iFreq] == lineEmv[iFreq]);
+			CHECK(opacityv[iFreq] == lineOpv[iFreq]);
+		}
+
+		// For each frequency, the ratio should be equal to the emissivity/opacity
+		// factor of the line
+		Array em_op = lineEmv / lineOpv;
+		WARN_MESSAGE(em_op[0] == 1,
+		             "Check ratio of emissivity/opacity here, not implemented yet");
+
+		// heating - cooling should be zero in LTE
+		double heat = nlv.heating(s);
+		double cool = nlv.cooling(s);
+		CHECK(heat - cool == 0);
 	}
 }
