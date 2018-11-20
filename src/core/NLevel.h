@@ -19,11 +19,11 @@ class LevelDataProvider;
     extra effects are desired. (e.g. the subclass HydrogenLevels provides some extensions to add
     the two-photon continuum.)
 
-    Examples: 
-    
+    Examples:
+
     - To simulate the toy two-level system for CII, create an NLevel object taking a
       TwoLevelHardcoded* as constructor argument.
-    
+
     - To simulate Hydrogen including its two-photon continuum, create an object of the
       HydrogenLevels subclass, using a HydrogenDataProvider class of choice.
 
