@@ -1,6 +1,6 @@
 #include "doctest.h"
 
-#include "Error.h"
+#include "DoctestUtils.h"
 #include "HydrogenFromFiles.h"
 #include "LineProfile.h"
 #include "NLevel.h"
@@ -47,7 +47,7 @@ TEST_CASE("Test line profile addition to spectrum")
 	{
 		double linevalue = factor * lp(frequencyv[i]);
 		double manual = base + linevalue;
-		Error::fuzzyCheck("test value", spectrumv[i], manual, e);
+		DoctestUtils::checkTolerance("test value", spectrumv[i], manual, e);
 	}
 }
 
@@ -63,7 +63,7 @@ TEST_CASE("Test line profile integration over spectrum")
 
 	// This integral should be about equal to base, if gridpoints are chosen well
 	double e = 1.e-2;
-	Error::fuzzyCheck("test value", integral, base, e);
+	DoctestUtils::checkTolerance("test value", integral, base, e);
 }
 
 TEST_CASE("H line profile normalizations")

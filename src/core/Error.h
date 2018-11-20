@@ -8,12 +8,9 @@ namespace Error
 	static inline void runtime(std::string message);
 	template <typename T> void equalCheck(std::string variable_names, T value1, T value2);
 	template <typename T> void rangeCheck(std::string variable, T value, T min, T max);
-	static inline void fuzzyCheck(std::string variable, double value, double reference,
-	                       double precision);
 }
 
 #include "TemplatedUtils.h"
-
 namespace Error
 {
 /** Prints a message to stderr and aborts. */
@@ -44,18 +41,6 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 	{
 		std::cerr << "Range error: " << variable << " = " << value
 		          << ". Should be between " << min << " and " << max << std::endl;
-		abort();
-	}
-}
-
-/** Throws an error if @c value and @c reference are equal up to a factor @c precision */
-
-static inline void fuzzyCheck(std::string variable, double value, double reference, double precision)
-{
-	if (!TemplatedUtils::equalWithinTolerance<double>(value, reference, precision))
-	{
-		std::cerr << variable << " " << value << " is not within" << precision
-		          << " precision of reference value " << reference << std::endl;
 		abort();
 	}
 }
