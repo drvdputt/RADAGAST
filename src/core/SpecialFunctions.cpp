@@ -210,6 +210,16 @@ double SpecialFunctions::planck(double nu, double T)
 	       expm1(Constant::PLANCK * nu / Constant::BOLTZMAN / T);
 }
 
+double SpecialFunctions::lorentz(double x, double gamma)
+{
+	return gamma / (x * x + gamma * gamma) / Constant::PI;
+}
+
+double SpecialFunctions::inverse_lorentz(double l, double gamma)
+{
+	return std::sqrt(gamma / Constant::PI / l - gamma * gamma);
+}
+
 SpecialFunctions::LookupTable2D::LookupTable2D(std::function<double(double, double)> ff)
                 : _ff{ff}
 {

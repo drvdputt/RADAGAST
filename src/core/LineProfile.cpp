@@ -1,5 +1,7 @@
 #include "LineProfile.h"
 #include "Constants.h"
+#include "DebugMacros.h"
+#include "IOTools.h"
 #include "SpecialFunctions.h"
 #include "TemplatedUtils.h"
 
@@ -7,13 +9,13 @@
 
 using namespace std;
 
-LineProfile::LineProfile(double center, double sigma_gauss, double halfWidth_lorenz)
+LineProfile::LineProfile(double center, double sigma_gauss, double halfWidth_lorentz)
                 : _center{center}, _sigma_gauss{sigma_gauss},
-                  _halfWidth_lorenz(halfWidth_lorenz)
+                  _halfWidth_lorentz(halfWidth_lorentz)
 
 {
 	_one_sqrt2sigma = M_SQRT1_2 / _sigma_gauss;
-	_a = _halfWidth_lorenz * _one_sqrt2sigma;
+	_a = _halfWidth_lorentz * _one_sqrt2sigma;
 }
 
 double LineProfile::operator()(double nu) const
@@ -32,15 +34,17 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 	// Because then this is the center
 	int iCenter = numPoints / 2;
 
-	// We will space the points according to a power law.
-	double spacingPower = 2.5;
-	// double total_distance = 1.e-6 * _center;
-	double total_distance = width * (_halfWidth_lorenz + _sigma_gauss) / 2;
-	double w = total_distance / pow(iCenter, spacingPower);
+	// We will space the points based on height difference, by using the inverse of the
+	// Lorentz function
+	double untilFactor = 1e-6;
+	double yMax = SpecialFunctions::lorentz(0, _halfWidth_lorentz);
 
 	// Fill in the values
 	Array freqv(numPoints);
 	freqv[iCenter] = _center;
+
+	double y = yMax;
+	double yStepFactor = pow(untilFactor, 1. / iCenter);
 	// Example: iCenter = 2
 	// frequency index:
 	// 0 1 2 3 4
@@ -49,8 +53,9 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 	// So i must include iCenter --> use <=
 	for (int i = 1; i <= iCenter; i++)
 	{
-		double d = w * pow(i, spacingPower);
-
+		// double d = w * pow(i, spacingPower);
+		y *= yStepFactor;
+		double d = SpecialFunctions::inverse_lorentz(y, _halfWidth_lorentz);
 		// This is safe because we forced the number of points to be odd
 		freqv[iCenter + i] = _center + d;
 		freqv[iCenter - i] = _center - d;
@@ -225,7 +230,8 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 #endif /* OPTIMIZED_LINE_ADD */
 }
 
-double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
+double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax,
+                                      bool debug) const
 {
 	const Array& spectrumGrid = spectrum.frequencyv();
 	const Array& lineGrid = recommendedFrequencyGrid(27, 7);
@@ -234,6 +240,15 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	// Merges the two grids, and writes the result to the last argument
 	merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
 	      begin(frequencyv));
+
+	if (debug)
+	{
+		auto f = IOTools::ofstreamFile("recommended_points_plot.dat");
+		for (double nu : lineGrid)
+			f << nu << ' ' << spectrum.evaluate(nu) << ' ' << (*this)(nu)
+			  << std::endl;
+		f.close();
+	}
 
 #define OPTIMIZED_LINE_INTEGRATION
 #ifdef OPTIMIZED_LINE_INTEGRATION

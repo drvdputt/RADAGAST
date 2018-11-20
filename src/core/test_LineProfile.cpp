@@ -59,7 +59,7 @@ TEST_CASE("Test line profile integration over spectrum")
 	double base = 4.;
 	auto s = testSpectrum(base);
 
-	double integral = lp.integrateSpectrum(s);
+	double integral = lp.integrateSpectrum(s, 0, true);
 
 	// This integral should be about equal to base, if gridpoints are chosen well
 	double e = 1.e-2;
@@ -96,7 +96,7 @@ TEST_CASE("H line profile normalizations")
 		double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 
 		LineProfile lp(nu0, sigma_nu, halfWidth);
-		double norm = lp.integrateSpectrum(flat);
+		double norm = lp.integrateSpectrum(flat, 0, true);
 		std::cout << "H line nr " << i << std::endl;
 		bool line_norm_ok = TemplatedUtils::equalWithinTolerance(norm, 1., rtol);
 		WARN_MESSAGE(line_norm_ok, "norm of H line nr " << i << " is " << norm);

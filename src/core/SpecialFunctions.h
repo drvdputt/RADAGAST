@@ -24,6 +24,15 @@ double maxwellBoltzman(double v, double T, double m);
     The result is the specific intensity in cgs: erg / s / cm^2 / sr / Hz. */
 double planck(double nu, double T);
 
+/** The standard form of a Lorentzian profile, a.k.a. Cauchy distribution. x is the excursion,
+    and gamma is the width parameter. For the specific case of a line profile, x should be the
+    frequency difference (nu - nu0), and gamma should be the half width the line (total decay
+    rate / 4 pi). */
+double lorentz(double x, double gamma);
+
+/** For a certain value of the Lorentz profile, return the corresponding (positive) x */
+double inverse_lorentz(double l, double gamma);
+
 class LookupTable2D
 {
 public:

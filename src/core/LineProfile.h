@@ -7,7 +7,7 @@
 class LineProfile
 {
 public:
-	LineProfile(double center, double sigma_gauss, double halfWidth_lorenz);
+	LineProfile(double center, double sigma_gauss, double halfWidth_lorentz);
 	// Evaluate the line profile at the given value (frequency) x
 	double operator()(double nu) const;
 	double center() const { return _center; }
@@ -33,14 +33,14 @@ public:
 	    calculation (for example when calculation the line integral over the same spectrum
 	    for many different lines). This maximum is used to guess when the calculation can be
 	    cut off. */
-	double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0) const;
+	double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0, bool debug=false) const;
 
 private:
 	/** Generates a number of points around the line center, spaced according to a power
-	    law, within a distance _halfWidth_lorenz * width of the center. */
+	    law, within a distance _halfWidth_lorentz * width of the center. */
 	Array recommendedFrequencyGrid(int numPoints = 27, double width = 5) const;
 
-	double _center, _sigma_gauss, _halfWidth_lorenz;
+	double _center, _sigma_gauss, _halfWidth_lorentz;
 	double _one_sqrt2sigma;
 	double _a;
 };
