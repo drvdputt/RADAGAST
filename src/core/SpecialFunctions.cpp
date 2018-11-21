@@ -220,6 +220,11 @@ double SpecialFunctions::inverse_lorentz(double l, double gamma)
 	return std::sqrt(gamma / Constant::PI / l - gamma * gamma);
 }
 
+double SpecialFunctions::lorentz_percentile(double p , double gamma)
+{
+	return gamma * std::tan(Constant::PI * (p - .5));
+}
+
 double SpecialFunctions::gauss(double x, double sigma)
 {
 	double x_sigma = x / sigma;

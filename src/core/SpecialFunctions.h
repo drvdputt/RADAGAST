@@ -33,6 +33,9 @@ double lorentz(double x, double gamma);
 /** For a certain value of the Lorentz profile, return the corresponding (positive) x */
 double inverse_lorentz(double l, double gamma);
 
+/** The inverse cumulative distribution a.k.a. percentile function of the lorentz profile */
+double lorentz_percentile(double p, double gamma);
+
 double gauss(double x, double sigma);
 double inverse_gauss(double g, double sigma);
 

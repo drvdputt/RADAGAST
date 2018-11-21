@@ -16,6 +16,14 @@ LineProfile testLine()
 	return LineProfile(c, sg, hwl);
 }
 
+LineProfile mostlyGaussianLine()
+{
+	double c = 4.;
+	double sg = 0.2;
+	double hwl = 0.01;
+	return LineProfile(c, sg, hwl);
+}
+
 Spectrum testSpectrum(double base)
 {
 	size_t numFreq = 100;
@@ -53,27 +61,38 @@ TEST_CASE("Test line profile addition to spectrum")
 
 TEST_CASE("Test line profile integration over spectrum")
 {
-	auto lp = testLine();
-
 	// Generate a flat spectrum of value base
 	double base = 4.;
 	auto s = testSpectrum(base);
 
-	double integral = lp.integrateSpectrum(s, 0, true);
+	SUBCASE("mixed guassian/lorentzian line")
+	{
+		auto lp = testLine();
+		double integral = lp.integrateSpectrum(s, 0, "line-integration-points.dat");
+		// This integral should be about equal to base, if gridpoints are chosen well
+		double e = 1.e-2;
+		DoctestUtils::checkTolerance("test value", integral, base, e);
+	}
 
-	// This integral should be about equal to base, if gridpoints are chosen well
-	double e = 1.e-2;
-	DoctestUtils::checkTolerance("test value", integral, base, e);
+	SUBCASE("mostly gaussian line")
+	{
+		auto lp = mostlyGaussianLine();
+		double integral = lp.integrateSpectrum(s, 0, "line-integration-points.dat");
+		// This integral should be about equal to base, if gridpoints are chosen well
+		double e = 1.e-2;
+		DoctestUtils::checkTolerance("test value", integral, base, e);
+	}
 }
 
 TEST_CASE("H line profile normalizations")
 {
 	// For each H line, make a line profile object and integrate it over a flat spectrum
 	// here to check the normalization
-	double rtol = .1;
+	double rtol = .01;
 
 	// Gather info about H lines
-	NLevel hl(std::make_shared<HydrogenFromFiles>(), Constant::HMASS_CGS);
+	auto hff = std::make_shared<HydrogenFromFiles>();
+	NLevel hl(hff, Constant::HMASS_CGS);
 	int numLines;
 	Array lineFreqv;
 	Array naturalLineWidthv;
@@ -86,19 +105,27 @@ TEST_CASE("H line profile normalizations")
 	// Array someFreqs = Testing::defaultCoarseFrequencyv();
 	Spectrum flat(someFreqs, Array(1, someFreqs.size()));
 
-	for (int i = 3; i < numLines; i++)
+	// Test the Lyman alpha line and another line
+	for (int i : {0, 5})
 	{
 		double nu0 = lineFreqv[i];
 		double halfWidth = naturalLineWidthv[i];
 
-		// Choose a gaussian broadening of 100 K (0 causes nan)
-		double thermalVelocity = sqrt(Constant::BOLTZMAN * 10000 / Constant::HMASS_CGS);
-		double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
+		// Try different gaussian broadenings
+		for (double T : {1, 10, 100, 1000, 10000})
+		{
+			double thermalVelocity =
+			                sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
+			double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 
-		LineProfile lp(nu0, sigma_nu, halfWidth);
-		double norm = lp.integrateSpectrum(flat, 0, true);
-		std::cout << "H line nr " << i << std::endl;
-		bool line_norm_ok = TemplatedUtils::equalWithinTolerance(norm, 1., rtol);
-		WARN_MESSAGE(line_norm_ok, "norm of H line nr " << i << " is " << norm);
+			LineProfile lp(nu0, sigma_nu, halfWidth);
+			double norm = lp.integrateSpectrum(flat, 0, "h-line-integration-points.dat");
+			std::cout << "H line nr " << i << std::endl;
+			bool line_norm_ok =
+			                TemplatedUtils::equalWithinTolerance(norm, 1., rtol);
+			WARN_MESSAGE(line_norm_ok, "norm of H line nr " << i << " is " << norm
+			                                                << " at " << T
+			                                                << " Kelvin");
+		}
 	}
 }

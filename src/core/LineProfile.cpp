@@ -25,7 +25,7 @@ double LineProfile::operator()(double nu) const
 	return SpecialFunctions::voigt(_a, x) / Constant::SQRT2PI / _sigma_gauss;
 }
 
-Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
+Array LineProfile::recommendedFrequencyGrid(int numPoints) const
 {
 	// Odd numbers of points make this easier
 	if (!(numPoints % 2))
@@ -34,32 +34,71 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints, double width) const
 	// Because then this is the center
 	int iCenter = numPoints / 2;
 
-	// We will space the points based on height difference, by using the inverse of the
-	// Lorentz function
-	double untilFactor = 1e-6;
-	double yMax = SpecialFunctions::lorentz(0, _halfWidth_lorentz);
+	double fwhmGauss = 2.35 * _sigma_gauss;
+	double fwhmLorentz = 2 * _halfWidth_lorentz;
+	// Approximation from wikipedia (actual source was is 404)
+	double fwhmVoigt = 0.5346 * fwhmLorentz + std::sqrt(0.2166 * fwhmLorentz * fwhmLorentz +
+	                                                    fwhmGauss * fwhmGauss);
+
+	double yMax = (*this)(_center);
+	// With 2.33 sigma, we get about 0.99 of the gaussian
+	double xMax = std::max(2.6 * _sigma_gauss,
+	                       SpecialFunctions::lorentz_percentile(0.995, _halfWidth_lorentz));
+	double yMin = (*this)(_center + xMax);
+	double linearStep = (yMax - yMin) / (iCenter + 1); // +1 to avoid stepping below 0
 
 	// Fill in the values
 	Array freqv(numPoints);
 	freqv[iCenter] = _center;
 
 	double y = yMax;
-	double yStepFactor = pow(untilFactor, 1. / iCenter);
+	// double yStepFactor = pow(untilFactor, 1. / iCenter);f
+	double x = 0;
+	double previousx = 0;
 	// Example: iCenter = 2
 	// frequency index:
 	// 0 1 2 3 4
 	// i:
 	// 2 1 0 1 2
 	// So i must include iCenter --> use <=
-	for (int i = 1; i <= iCenter; i++)
+	int i = 0;
+	// Within the fwhm, use this fancy algorithm
+	for (i = 1; i <= iCenter / 2; i++)
 	{
-		// double d = w * pow(i, spacingPower);
-		y *= yStepFactor;
-		double d = SpecialFunctions::inverse_lorentz(y, _halfWidth_lorentz);
+		previousx = x;
+
+		// Assume a gaussian. We want to go down a fixed step in the vertical direction.
+		x = SpecialFunctions::inverse_gauss(y - linearStep, _sigma_gauss);
+
+		// If drop was too big, scale down
+		double nexty = (*this)(_center + x);
+		while (y - nexty > linearStep)
+		{
+			x -= (x - previousx) / 4;
+			nexty = (*this)(_center + x);
+		}
+		// Do the next step starting from a new y position
+		nexty = y - linearStep;
+		y = nexty;
+
 		// This is safe because we forced the number of points to be odd
-		freqv[iCenter + i] = _center + d;
-		freqv[iCenter - i] = _center - d;
+		freqv[iCenter + i] = _center + x;
+		freqv[iCenter - i] = _center - x;
+
+		if (x > fwhmVoigt / 2)
+			break;
 	}
+	// Outside the FWHM, or when having used half of the points, continue linearly, to make
+	// sure we get to the end
+	int left = iCenter - i;
+	double step = (xMax - x) / left;
+	for (; i <= iCenter; i++)
+	{
+		x += step;
+		freqv[iCenter + i] = _center + x;
+		freqv[iCenter - i] = _center - x;
+	}
+	// std::cout << "added " << left << " linear points" << std::endl;
 	return freqv;
 }
 
@@ -231,22 +270,31 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 }
 
 double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax,
-                                      bool debug) const
+                                      std::string debug) const
 {
+// #define TRIVIAL
+#ifdef TRIVIAL
+	return spectrum.evaluate(_center);
+#endif
 	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(27, 7);
+	const Array& lineGrid = recommendedFrequencyGrid(27);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());
 
 	// Merges the two grids, and writes the result to the last argument
 	merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
 	      begin(frequencyv));
 
-	if (debug)
+	// TODO: Temporary override
+	frequencyv = lineGrid;
+
+	if (!debug.empty())
 	{
-		auto f = IOTools::ofstreamFile("recommended_points_plot.dat");
-		for (double nu : lineGrid)
-			f << nu << ' ' << spectrum.evaluate(nu) << ' ' << (*this)(nu)
-			  << std::endl;
+		auto f = IOTools::ofstreamFile(debug);
+		for (double nu : frequencyv)
+			f << std::setprecision(17) << nu << ' '
+			  << SpecialFunctions::lorentz(nu - _center, _halfWidth_lorentz) << ' '
+			  << SpecialFunctions::gauss(nu - _center, _sigma_gauss) << ' '
+			  << (*this)(nu) << std::endl;
 		f.close();
 	}
 

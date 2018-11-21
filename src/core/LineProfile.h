@@ -33,12 +33,14 @@ public:
 	    calculation (for example when calculation the line integral over the same spectrum
 	    for many different lines). This maximum is used to guess when the calculation can be
 	    cut off. */
-	double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0, bool debug=false) const;
+	double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0, std::string debug="") const;
 
 private:
-	/** Generates a number of points around the line center, spaced according to a power
-	    law, within a distance _halfWidth_lorentz * width of the center. */
-	Array recommendedFrequencyGrid(int numPoints = 27, double width = 5) const;
+	/** Generates a number of points around the line center. For the central points, it is
+	    attemped keep the vertical spacing more or less constant. For the wings, a linear
+	    spacing is used. This had been confirmed to work when the line is mostly
+	    Gaussian. */
+	Array recommendedFrequencyGrid(int numPoints = 27) const;
 
 	double _center, _sigma_gauss, _halfWidth_lorentz;
 	double _one_sqrt2sigma;
