@@ -21,7 +21,7 @@ LineProfile::LineProfile(double center, double sigma_gauss, double halfWidth_lor
 double LineProfile::operator()(double nu) const
 {
 	double x = (nu - _center) * _one_sqrt2sigma;
-	// Note that the normalization factor is 1 / sqrt(2 pi sigma)
+	// Note that the normalization factor is 1 / sqrt(2 pi) sigma
 	return SpecialFunctions::voigt(_a, x) / Constant::SQRT2PI / _sigma_gauss;
 }
 
