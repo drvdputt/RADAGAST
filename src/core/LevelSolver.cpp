@@ -157,7 +157,11 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 			break;
 	}
 	if (nv.array().isNaN().any())
-		Error::runtime("nan in H2 level solution");
+	{
+		// TODO: warn about this
+		// Error::runtime("nan in H2 level solution");
+		nv = (nv.array().isNaN()).select(0, nv);
+	}
 	DEBUG("Solved H2 in " << counter << " iterations" << std::endl);
 	// DEBUG("h2Levelv = \n" << nv << std::endl);
 	return nv;
