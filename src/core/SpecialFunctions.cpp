@@ -220,6 +220,17 @@ double SpecialFunctions::inverse_lorentz(double l, double gamma)
 	return std::sqrt(gamma / Constant::PI / l - gamma * gamma);
 }
 
+double SpecialFunctions::gauss(double x, double sigma)
+{
+	double x_sigma = x / sigma;
+	return exp(-x_sigma * x_sigma / 2) / sigma / Constant::SQRT2PI;
+}
+
+double SpecialFunctions::inverse_gauss(double g, double sigma)
+{
+	return sigma * std::sqrt(-2 * std::log(Constant::SQRT2PI * sigma * g));
+}
+
 SpecialFunctions::LookupTable2D::LookupTable2D(std::function<double(double, double)> ff)
                 : _ff{ff}
 {
