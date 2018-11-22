@@ -68,7 +68,7 @@ TEST_CASE("Test line profile integration over spectrum")
 	SUBCASE("mixed guassian/lorentzian line")
 	{
 		auto lp = testLine();
-		double integral = lp.integrateSpectrum(s, 0, "line-integration-points.dat");
+		double integral = lp.integrateSpectrum(s, 0, "guasslorentz-points.dat");
 		// This integral should be about equal to base, if gridpoints are chosen well
 		double e = 1.e-2;
 		DoctestUtils::checkTolerance("test value", integral, base, e, true);
@@ -77,7 +77,7 @@ TEST_CASE("Test line profile integration over spectrum")
 	SUBCASE("mostly gaussian line")
 	{
 		auto lp = mostlyGaussianLine();
-		double integral = lp.integrateSpectrum(s, 0, "line-integration-points.dat");
+		double integral = lp.integrateSpectrum(s, 0, "gauss-points.dat");
 		// This integral should be about equal to base, if gridpoints are chosen well
 		double e = 1.e-2;
 		DoctestUtils::checkTolerance("test value", integral, base, e);
@@ -119,8 +119,7 @@ TEST_CASE("H line profile normalizations")
 			double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 
 			LineProfile lp(nu0, sigma_nu, halfWidth);
-			double norm = lp.integrateSpectrum(flat, 0, "h-line-integration-points.dat");
-			std::cout << "H line nr " << i << std::endl;
+			double norm = lp.integrateSpectrum(flat);
 			bool line_norm_ok =
 			                TemplatedUtils::equalWithinTolerance(norm, 1., rtol);
 			WARN_MESSAGE(line_norm_ok, "norm of H line nr " << i << " is " << norm
