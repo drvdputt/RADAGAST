@@ -71,7 +71,7 @@ TEST_CASE("Test line profile integration over spectrum")
 		double integral = lp.integrateSpectrum(s, 0, "line-integration-points.dat");
 		// This integral should be about equal to base, if gridpoints are chosen well
 		double e = 1.e-2;
-		DoctestUtils::checkTolerance("test value", integral, base, e);
+		DoctestUtils::checkTolerance("test value", integral, base, e, true);
 	}
 
 	SUBCASE("mostly gaussian line")

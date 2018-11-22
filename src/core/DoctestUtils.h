@@ -3,24 +3,46 @@
 
 #include "TemplatedUtils.h"
 
+#include <sstream>
+
+/** Here are some wrappers around some of the doctest assertion macros. Frequently used checks
+    are defined here, with some standardized, readable failure messages. */
 namespace DoctestUtils
 {
 
-inline void checkRange(std::string quantityName, double value, double min, double max)
+inline void checkRange(std::string quantityName, double value, double min, double max,
+                       bool warn = false)
 {
 	bool inRange = TemplatedUtils::inRange(value, min, max);
-	CHECK_MESSAGE(inRange, quantityName << " = " << value << ". Should be between " << min
-	                                    << " and " << max);
+	if (!inRange)
+	{
+		std::stringstream ss;
+		ss << quantityName << " = " << value << ". Should be between " << min << " and "
+		   << max;
+		std::string message = ss.str();
+		if (warn)
+			WARN_MESSAGE(inRange, message);
+		else
+			CHECK_MESSAGE(inRange, message);
+	}
 }
 
 inline void checkTolerance(std::string quantityName, double value, double reference,
-                           double precision)
+                           double precision, bool warn = false)
 {
 	bool withinTolerance = TemplatedUtils::equalWithinTolerance<double>(value, reference,
 	                                                                    precision);
-	CHECK_MESSAGE(withinTolerance,
-	              quantityName << " " << value << " is not within " << precision
-	                           << " precision of reference value " << reference);
+	if (!withinTolerance)
+	{
+		std::stringstream ss;
+		ss << quantityName << " " << value << " is not within " << precision
+		   << " precision of reference value " << reference;
+		std::string message = ss.str();
+		if (warn)
+			WARN_MESSAGE(withinTolerance, message);
+		else
+			CHECK_MESSAGE(withinTolerance, message);
+	}
 }
 
 } // namespace DoctestUtils
