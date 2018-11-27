@@ -97,7 +97,8 @@ public:
 	    class until equilibrium is found. */
 	Solution calculateDensities(double n, double T, const Spectrum& specificIntensityv,
 	                            const GasModule::GrainInterface&,
-	                            const GasInterfaceImpl::Solution* previous = nullptr) const;
+	                            const GasInterfaceImpl::Solution* previous = nullptr,
+	                            double h2FormationOverride = -1) const;
 
 	/** @name Properties of final state
 
@@ -114,7 +115,8 @@ public:
 	/** A possible scattering opacity */
 	Array scatteringOpacityv(const Solution&, const Array& oFrequencyv) const;
 
-	Array radiativeRecombinationEmissivityv(const Solution&, const Array& eFrequencyv) const;
+	Array radiativeRecombinationEmissivityv(const Solution&,
+	                                        const Array& eFrequencyv) const;
 
 	Array freeFreeEmissivityv(const Solution&, const Array& eFrequencyv) const;
 

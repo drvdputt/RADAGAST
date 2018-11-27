@@ -195,7 +195,8 @@ GasInterfaceImpl::Solution
 GasInterfaceImpl::calculateDensities(double nHtotal, double T,
                                      const Spectrum& specificIntensity,
                                      const GasModule::GrainInterface& gi,
-                                     const GasInterfaceImpl::Solution* previous) const
+                                     const GasInterfaceImpl::Solution* previous,
+				     double h2FormationOverride) const
 {
 	Solution s;
 
@@ -311,6 +312,9 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 		{
 			// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
 			double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
+			if (h2FormationOverride >= 0)
+				kFormH2 = h2FormationOverride;
+
 			double kDissH2Levels = _molecular->dissociationRate(
 			                s.H2Solution, s.specificIntensity);
 
