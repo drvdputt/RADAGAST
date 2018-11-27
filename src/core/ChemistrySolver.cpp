@@ -123,7 +123,7 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 		int testResidual = gsl_multiroot_test_residual(f, epsabs);
 		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
 		{
-			std::cout << i << " iterations for chemistry" << std::endl;
+			// std::cout << i << " iterations for chemistry" << std::endl;
 			break;
 		}
 	}
