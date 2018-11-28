@@ -4,6 +4,7 @@
 #include "EigenAliases.h"
 
 #include <memory>
+#include <vector>
 
 class ChemicalNetwork;
 
@@ -56,12 +57,14 @@ public:
 	/** Evaluates the function of which the root needs to be found. This is a combination of
 	    net rates being zero, and conservation equations. */
 	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv,
-	                   const EVector& conservedQuantityv) const;
+	                   const EVector& conservedQuantityv,
+	                   const std::vector<size_t>& replaceByConservationv) const;
 
 	/** Evaluates the jacobian of the function above, i.e. each column is the derivative of
 	    Fv with respect to one of the densities. Thanks to the power law prescription of the
 	    total rates, this can be calculated analytically. */
-	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const;
+	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv,
+	                    const std::vector<size_t>& replaceByConservationv) const;
 
 private:
 	/** Calculates the density factor for the reaction r. Multiplying the reaction rate
