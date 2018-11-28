@@ -31,6 +31,8 @@ ChemistrySolver::ChemistrySolver(std::unique_ptr<const ChemicalNetwork> cn) : _c
 
 ChemistrySolver::~ChemistrySolver() = default;
 
+namespace
+{
 struct system_params
 {
 	const EVector* rateCoeffv;
@@ -86,6 +88,7 @@ int system_fdf(const gsl_vector* x, void* p, gsl_vector* f, gsl_matrix* J)
 	gsl_matrix_transpose_memcpy(J, &J_view_transposed.matrix);
 	return GSL_SUCCESS;
 }
+} /* namespace */
 
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
