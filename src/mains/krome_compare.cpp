@@ -23,6 +23,18 @@ int main()
 		intensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
 	Spectrum specificIntensity(frequencyv, intensityv);
 
+	// Write out the radiation field in eV / cm2 / sr / hz
+	Array ev = Constant::PLANCK * frequencyv * Constant::ERG_EV;
+	Array iv = intensityv * Constant::ERG_EV;
+	std::ofstream radf("photobinj.dat");
+	radf << "# Emid (eV)\tJ (eV / cm2 / sr)\n";
+	for (int i = 0; i < nPhotoBins; i++)
+	{
+		double j = iv[i];
+		radf << ev[i] << '\t' << j << '\n';
+	}
+	radf.close();
+
 	// Set a fixed H2 formation rate
 	double kGrainH2 = 1e-12;
 
@@ -35,13 +47,15 @@ int main()
 
 	// No grains, we will manually override the h2 formation rate instead
 	GasModule::GrainInterface gri{};
-	
+
 	std::string outfname = "equilibrium_densities";
 	std::ofstream outfile(outfname);
+	outfile << "T e H H2 H+ heat cool";
 	for (double T = 10; T < 100000; T *= 1.1)
 	{
 
-		GasInterfaceImpl::Solution s = pimpl->calculateDensities(n, T, specificIntensity, gri, nullptr, kGrainH2);
+		GasInterfaceImpl::Solution s = pimpl->calculateDensities(
+		                n, T, specificIntensity, gri, nullptr, kGrainH2);
 		double heat = pimpl->heating(s, gri);
 		double cool = pimpl->cooling(s);
 		outfile << T;
@@ -57,7 +71,3 @@ int main()
 	outfile.close();
 	std::cout << "wrote to " << outfname << std::endl;
 }
-
-			
-	
-	
