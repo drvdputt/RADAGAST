@@ -51,7 +51,7 @@ public:
 
 private:
 	/** Sink term due to direct radiative dissociation. Needs radiation field. [s-1] */
-	EVector directDissociationSinkv(const Spectrum& specificIntensityv) const;
+	EVector directDissociationSinkv(const Spectrum& specificIntensity) const;
 
 	/** TODO: need collisional dissociation contribution. */
 
