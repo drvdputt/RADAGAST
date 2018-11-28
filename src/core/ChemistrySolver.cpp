@@ -162,8 +162,8 @@ EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv
 	// BOTTOM PART: CONSERVATION EQUATIONS //
 	//-------------------------------------//
 
-	/* These equations are of the form CONSERV_COEFF * DENSITY - CONSTANT = 0. _cvv is indexed
-	   on (conserved quantity, species). */
+	/* These equations are of the form CONSERV_COEFF * DENSITY - CONSTANT = 0. _cvv is
+	   indexed on (conserved quantity, species). */
 	if (_numConserved > 0)
 		fv.tail(_numConserved) = _conservEqvv * nv - conservedQuantityv;
 
@@ -172,8 +172,8 @@ EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv
 
 EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const
 {
-	/* The elements are d f_i / d n_j, so the jacobian should have (dimension of f, dimension of
-	   nv). */
+	/* The elements are d f_i / d n_j, so the jacobian should have (dimension of f,
+	   dimension of nv). */
 	// EMatrix jvv(_numSpecies + _numConserved, _numSpecies);
 	// Replace equations
 	EMatrix jvv(_numSpecies, _numSpecies);
@@ -205,8 +205,8 @@ double ChemistrySolver::densityProduct(const EVector& nv, size_t r) const
 	double densityProduct = 1;
 	for (size_t s = 0; s < _numSpecies; s++)
 	{
-		/* If the species in involved in this reaction (stoich on left side > 0), calculate
-		   the density to the power of its stoichiometry in the reaction. */
+		/* If the species in involved in this reaction (stoich on left side > 0),
+		   calculate the density to the power of its stoichiometry in the reaction. */
 		double stoichRs = _rStoichvv(s, r);
 		if (stoichRs)
 			densityProduct *= pow(nv(s), stoichRs);
