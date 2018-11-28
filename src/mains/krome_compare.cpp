@@ -50,7 +50,7 @@ int main()
 
 	std::string outfname = "equilibrium_densities";
 	std::ofstream outfile(outfname);
-	outfile << "T e H H2 H+ heat cool";
+	outfile << "# T e H H2 H+ heat cool";
 	for (double T = 10; T < 100000; T *= 1.1)
 	{
 
