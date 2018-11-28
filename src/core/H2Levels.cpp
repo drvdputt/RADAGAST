@@ -96,16 +96,27 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	// used in chemical network (it will multiply by the density again. TODO: need separate
 	// rates for H2g and H2*
 	double nH2 = s.nv.sum();
+
 	if (nH2 > 0)
-		return dissociationSinkv(specificIntensity).dot(s.nv) / s.nv.sum();
+	{
+		EVector directv = directDissociationSinkv(specificIntensity);
+		EVector solomonv = spontaneousDissociationSinkv();
+		double directFractional = directv.dot(s.nv) / nH2;
+		double solomonFractional = solomonv.dot(s.nv) / nH2;
+		DEBUG("Dissociation: direct rate:" << directFractional << " spontaneous rate: "
+		                                   << solomonFractional << '\n');
+		return directFractional + solomonFractional;
+	}
 	else
 	{
 		// We need to return something nonzero here, otherwise the chemistry will have
 		// no dissociation coefficient, maxing out the H2.
 
-		// Just pick the one for the ground state? Or maybe LTE? TODO: choose
-		EVector lteRatios = solveBoltzmanEquations(s.T);
-		return dissociationSinkv(specificIntensity).dot(lteRatios);
+		// Just pick the one for the ground state? Or maybe LTE? TODO: make the
+		// chemistry solver more robust, so that this fake dissociation rate isn't
+		// necessary.
+		EVector ltePopulationFractionv = solveBoltzmanEquations(s.T);
+		return dissociationSinkv(specificIntensity).dot(ltePopulationFractionv);
 	}
 #endif
 }
@@ -123,7 +134,9 @@ double H2Levels::dissociationCooling(const Solution&) const { return 0.0; }
 
 EVector H2Levels::dissociationSinkv(const Spectrum& specificIntensity) const
 {
-	return directDissociationSinkv(specificIntensity) + spontaneousDissociationSinkv();
+	EVector directv = directDissociationSinkv(specificIntensity);
+	EVector solomonv = spontaneousDissociationSinkv();
+	return directv + solomonv;
 }
 
 EVector H2Levels::directDissociationSinkv(const Spectrum& specificIntensity) const
