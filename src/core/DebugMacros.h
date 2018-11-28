@@ -2,6 +2,7 @@
 #define GASMODULE_GIT_SRC_DEBUGMACROS_H_
 
 #include <iostream>
+#include <ios>
 
 /* #define SANITY */
 
@@ -21,7 +22,7 @@
 #define DEBUG(x)                                                                               \
 	do                                                                                     \
 	{                                                                                      \
-		std::cout << x;                                                                \
+		std::cout << std::scientific << x;                                            \
 	} while (0)
 #endif
 
