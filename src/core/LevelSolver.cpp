@@ -71,9 +71,9 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 	// energies, so we go backwards in our loops.
 
 	// Iterate until converged
-	double maxDeltaX = 1.e-4 * totalDensity;
-	double maxDeltaAll = 1.e-6 * totalDensity;
-	double maxFracDelta = 1.e-6;
+	double maxDeltaX = 1.e-3 * totalDensity;
+	double maxDeltaAll = 1.e-3 * totalDensity;
+	double maxFracDelta = 1.e-3;
 	size_t counter{0};
 	const int max_iterations = 2001;
 	while (counter < max_iterations)
