@@ -107,10 +107,9 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	// We will replace the equations of the smallest Fv by the conservation equations.
 	// Possibly for every step.
 	std::vector<size_t> iSmallestv(_numConserved);
-	auto fv = evaluateFv(n0v, rateCoeffv, conservedQuantityv, std::vector<size_t>{});
-	gsl_sort_smallest_index(iSmallestv.data(), _numConserved, &fv[0], 1, _numSpecies);
 
-	// Conserved quantities are supplied to the functions via this struct
+	// Conserved quantities and rate coefficients are supplied to the functions via this
+	// struct
 	struct system_params params = {&rateCoeffv, &conservedQuantityv, &iSmallestv, this};
 
 	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_hybridsj;
@@ -134,6 +133,10 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	size_t i = 0;
 	for (; i < 1000; i++)
 	{
+		// Check which of the time derivatives are the smallest, and write into
+		// iSmallestv. Remember that the params struct has a pointer to iSmallestv.
+		auto fv = evaluateFv(n0v, rateCoeffv, conservedQuantityv, std::vector<size_t>{});
+		gsl_sort_smallest_index(iSmallestv.data(), _numConserved, &fv[0], 1, _numSpecies);
 		gsl_multiroot_fdfsolver_iterate(s);
 		gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
 		gsl_vector* dx = gsl_multiroot_fdfsolver_dx(s);
@@ -141,9 +144,7 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs, epsrel);
 		int testResidual = gsl_multiroot_test_residual(f, epsabs);
 		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
-		{
 			break;
-		}
 	}
 
 	gsl_vector* solution = gsl_multiroot_fdfsolver_root(s);
@@ -155,9 +156,10 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 
 	gsl_multiroot_fdfsolver_free(s);
 #else
-	// ODE_METHOD
-
+	// ode integration or minimization method
 #endif
+	if (solutionv.array().isNaN().any())
+		Error::runtime("NaN in chemistry solution");
 	return solutionv;
 }
 
