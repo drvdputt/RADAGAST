@@ -134,9 +134,29 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	for (; i < 1000; i++)
 	{
 		// Check which of the time derivatives are the smallest, and write into
-		// iSmallestv. Remember that the params struct has a pointer to iSmallestv.
-		auto fv = evaluateFv(n0v, rateCoeffv, conservedQuantityv, std::vector<size_t>{});
-		gsl_sort_smallest_index(iSmallestv.data(), _numConserved, &fv[0], 1, _numSpecies);
+		// iSmallestv. Remember that the params struct has a pointer to iSmallestv. The
+		// equations with the smallest (closest to zero) f will then be replaced by the
+		// conservation equations. Note that these conservation equations provide
+		// crucial constraints, the solution won't behave well without them.
+		//
+		// The reason that I specifically choose to replace the equations with the
+		// smallest f, can be illustrated as follows: The H derivative has contributions
+		// by H+ recombination and H ionization (fast) and H2 formation and dissociation
+		// (slow). If the conservation equations are satisfied (= 0) and we use them to
+		// overwrite the H2 equation, then our only knowledge about the formation /
+		// dissociation balance is in the H equation. Since these rates are so much
+		// smaller than the ones relating to ionization, we effectively lose this
+		// information due to precision reasons.
+		//
+		// If instead we replace the equations with the smallest residual by the
+		// conservation equations, then those that are already zero will be replaced
+		// first. So once the H equation has been satisfied (= 0), H2 equation will come
+		// into play, which only consists of H2 formation and dissociation.
+
+		// Pass an empty vector here, to just get the time derivatives
+		EArray fv = evaluateFv(n0v, rateCoeffv, conservedQuantityv, {}).array().abs();
+		gsl_sort_smallest_index(iSmallestv.data(), _numConserved, &fv(0), 1,
+		                        _numSpecies);
 		gsl_multiroot_fdfsolver_iterate(s);
 		gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
 		gsl_vector* dx = gsl_multiroot_fdfsolver_dx(s);
