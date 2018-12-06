@@ -81,32 +81,29 @@ TEST_CASE("H2-specific algorithm")
 	// TODO: This is not working as expected. Of course, the above examples do not depend
 	// on radiation field. I need a way to check that the effect on radiation on level
 	// populations is hanled correctly.
-	// SUBCASE("Blackbody radiation, should also go to LTE?")
-	// {
-	// 	double n = 1;
-	// 	double T = 250;
-	// 	speciesNv(SpeciesIndex::ine()) = 0;
-	// 	speciesNv(SpeciesIndex::inp()) = 0;
-	// 	speciesNv(SpeciesIndex::inH()) = 0;
-	// 	speciesNv(SpeciesIndex::inH2()) = n;
-	// 	const GasStruct gas(T, speciesNv);
-	// 	Array specificIntensityv(frequencyv.size());
-	// 	for (size_t i = 0; i < frequencyv.size(); i++)
-	// 		specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
-	// 	Spectrum specificIntensity(frequencyv, specificIntensityv);
-	// 	NLevel::Solution s0 = h2l.solveBalance(n, specificIntensity, zerov, zerov, gas);
-	// 	NLevel::Solution sLTE = h2l.solveLTE(n, specificIntensity, gas);
-	// 	for (size_t i = 0; i < std::min<int>(4, s0.nv.size()); i++)
-	// 	{
-	// 		CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(s0.nv(i), sLTE.nv(i),
-	// 		                                                   epsFrac),
-	// 		              "level " << i << " from solver: " << s0.nv(i)
-	// 		                       << ", from LTE:" << sLTE.nv(i));
-	// 	}
+	SUBCASE("Blackbody radiation, no collisions, should also go to LTE?")
+	{
+		double n = 1;
+		double T = 250;
+		speciesNv(SpeciesIndex::ine()) = 0;
+		speciesNv(SpeciesIndex::inp()) = 0;
+		speciesNv(SpeciesIndex::inH()) = 0;
+		speciesNv(SpeciesIndex::inH2()) = n;
+		const GasStruct gas(T, speciesNv);
+		Array specificIntensityv(frequencyv.size());
+		for (size_t i = 0; i < frequencyv.size(); i++)
+			specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
+		Spectrum specificIntensity(frequencyv, specificIntensityv);
 
-	// 	// Check if the total density is correct
-	// 	double eps = 1e-15;
-	// 	CHECK(TemplatedUtils::equalWithinTolerance(s0.nv.sum(), n, eps));
-	// 	CHECK(TemplatedUtils::equalWithinTolerance(sLTE.nv.sum(), n, eps));
-	// }
+		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
+		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
+		for (size_t i = 0; i < std::min<int>(4, s0.nv.size()); i++)
+			DoctestUtils::checkTolerance("level pop vs LTE", s0.nv(i), sLTE.nv(i),
+			                             epsFrac, true);
+
+		// Check if the total density is correct
+		double eps = 1e-15;
+		DoctestUtils::checkTolerance("s0.nv.sum() vs n", s0.nv.sum(), n, eps);
+		DoctestUtils::checkTolerance("sLTE.nv.sum() vs n", sLTE.nv.sum(), n, eps);
+	}
 }
