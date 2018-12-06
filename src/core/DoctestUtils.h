@@ -1,6 +1,7 @@
 #ifndef GASMODULE_GIT_SRC_DOCTESTUTILS_H_
 #define GASMODULE_GIT_SRC_DOCTESTUTILS_H_
 
+#include "doctest.h"
 #include "TemplatedUtils.h"
 
 #include <sstream>

@@ -1,6 +1,5 @@
-#include "doctest.h"
-
 #include "ChemistrySolver.h"
+#include "DoctestUtils.h"
 
 TEST_CASE("single species with creation and destruction")
 {
@@ -43,12 +42,6 @@ TEST_CASE("single species with creation and destruction")
 	}
 
 	SUBCASE("only destruction, should tend to zero") { CHECK(solve(0, 1.) == 0.); }
-
-	SUBCASE("only creation, should go to infinity, technically")
-	{
-		double solution = solve(0., 1.);
-		WARN_MESSAGE(std::isinf(solve(0, 1.)), "solution is " << solution);
-	}
 }
 
 TEST_CASE("Combine and dissociate")
@@ -63,7 +56,7 @@ TEST_CASE("Combine and dissociate")
 
 	// dissociation
 	r.col(1) << 0, 1; // 1 H2 consumed
-	p.col(1) << 2, 0; // 2 H2 produced
+	p.col(1) << 2, 0; // 2 H produced
 
 	// conservation equation
 	// 1 equation, 2 species
@@ -72,15 +65,45 @@ TEST_CASE("Combine and dissociate")
 
 	ChemistrySolver cs(r, p, c);
 
-	double nH0 = 10;
-	double nH20 = 20;
+	// Try different initial conditions (TEST_CASE is restarted for every subcase)
+	double nH0;
+	double nH20;
+	SUBCASE("start with only H")
+	{
+		nH0 = 30;
+		nH20 = 0;
+	}
+	SUBCASE("start with only H2")
+	{
+		nH0 = 0;
+		nH20 = 15;
+	}
+	SUBCASE("start with both H and H2")
+	{
+		nH0 = 10;
+		nH20 = 10;
+	}
+	SUBCASE("small large")
+	{
+		nH0 = 1e-10;
+		nH20 = 1000;
+	}
+	SUBCASE("large small")
+	{
+		nH0 = 1e6;
+		nH20 = 1e-6;
+	}
+	CAPTURE(nH0);
+	CAPTURE(nH20);
+
+	// For each of these subcases, we do the following tests
 	double Ntotal = nH0 + 2 * nH20;
 	EVector n0v(2);
 	n0v << nH0, nH20;
 
-	double eps = 1.e-15;
-	SUBCASE("balance")
-	{
+	{ // Both formation and destruction
+		double eps = 1.e-15;
+		std::cout << "balance for " << nH0 << " " << nH20 << std::endl;
 		double kform = 1.;
 		double kdiss = 0.2;
 		EVector kv(2);
@@ -94,12 +117,13 @@ TEST_CASE("Combine and dissociate")
 
 		// General algorithm
 		EVector nv = cs.solveBalance(kv, n0v);
-		CHECK(nv(0) <= nH_exact + eps);
-		CHECK(nv(0) >= nH_exact - eps);
+		DoctestUtils::checkTolerance("nH (should be analytic solution)", nv(0),
+		                             nH_exact, eps);
 		CHECK(nv(1) == nH2_exact);
 	}
-	SUBCASE("only formation")
-	{
+
+	{ // Only formation
+		double eps = 1.e-10;
 		double kform = 1.;
 		double kdiss = 0;
 		EVector kv(2);
@@ -107,12 +131,12 @@ TEST_CASE("Combine and dissociate")
 
 		EVector nv = cs.solveBalance(kv, n0v);
 		// All H should disappear, and be transformed into H2
-		CHECK(nv(0) >= 0.);
-		CHECK(nv(0) < eps);
-		CHECK(nv(1) == Ntotal / 2.);
+		DoctestUtils::checkRange("nH (should disappear)", nv(0), 0., eps);
+		DoctestUtils::checkTolerance("nH2", nv(1), Ntotal / 2., eps);
 	}
-	SUBCASE("only dissociation")
-	{
+
+	{ // Only dissociation
+		double eps = 1.e-15;
 		double kform = 0;
 		double kdiss = 1.;
 		EVector kv(2);
@@ -120,8 +144,7 @@ TEST_CASE("Combine and dissociate")
 
 		EVector nv = cs.solveBalance(kv, n0v);
 		// All H2 should disappear, and be transformed into H
+		DoctestUtils::checkRange("nH2 (should disappear)", nv(1), 0., eps);
 		CHECK(nv(0) == Ntotal);
-		CHECK(nv(1) >= 0.);
-		CHECK(nv(1) < eps);
 	}
 }
