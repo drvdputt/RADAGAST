@@ -1,5 +1,4 @@
-#include "doctest.h"
-
+#include "DoctestUtils.h"
 #include "GasStruct.h"
 #include "H2FromFiles.h"
 #include "H2Levels.h"
@@ -10,6 +9,7 @@
 TEST_CASE("H2-specific algorithm")
 {
 	H2FromFiles hff(15, 3);
+	EVector ev = hff.ev();
 	H2Levels h2l(std::make_shared<const H2FromFiles>(hff));
 
 	double T = 500;
@@ -37,22 +37,21 @@ TEST_CASE("H2-specific algorithm")
 
 		// This test seems to work reasonable for the first three levels
 		for (size_t i = 0; i < std::min<int>(3, s0.nv.size()); i++)
-		{
-			CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(s0.nv(i), sLTE.nv(i),
-			                                                   epsFrac),
-			              "level " << i << " from solver: " << s0.nv(i)
-			                       << ", from LTE:" << sLTE.nv(i));
-		}
+			DoctestUtils::checkTolerance("level " + std::to_string(i) +
+			                                             " from solver vs LTE",
+			                             s0.nv(i), sLTE.nv(i), epsFrac);
 
 		// Check if the total density is correct
 		double eps = 1e-15;
-		CHECK(TemplatedUtils::equalWithinTolerance(s0.nv.sum(), n, eps));
-		CHECK(TemplatedUtils::equalWithinTolerance(sLTE.nv.sum(), n, eps));
+		DoctestUtils::checkTolerance("sum of s0.nv", s0.nv.sum(), n, eps);
+		DoctestUtils::checkTolerance("sum of sLTE.nv", sLTE.nv.sum(), n, eps);
 	}
 
 	SUBCASE("no radiation, low density, should go to ground state")
 	{
 		double n = 1e-12;
+		double eps = 1e-12;
+
 		speciesNv(SpeciesIndex::ine()) = 0;
 		speciesNv(SpeciesIndex::inp()) = 0;
 		speciesNv(SpeciesIndex::inH()) = 0;
@@ -60,20 +59,26 @@ TEST_CASE("H2-specific algorithm")
 		const GasStruct gas(T, speciesNv);
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		NLevel::Solution s0 = h2l.customSolution(n,gas,specificIntensity);
+		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
 		EVector nv = s0.nv;
-		// Check if some individual levels are indeed 0
-		for (size_t i = 1; i < std::min<int>(5, nv.size()); i++)
-			WARN_MESSAGE(nv(i) == 0, "nv(" << i << ") = " << nv(i));
 
-		// Check if almost all density is in lowest (two) level(s) (ortho-para)
-		double eps = 1e-12;
-		CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(nv(0) + nv(1), n, eps),
-		              "nv(0) = " << nv(0) << " while n = " << n);
-		CHECK((nv.tail(nv.size() - 1).array() < eps).all());
+		// Check if some individual levels are indeed close to 0
+		for (size_t i = 2; i < std::min<int>(5, nv.size()); i++)
+			DoctestUtils::checkRange("level " + std::to_string(i), nv(i), 0,
+			                         n * eps);
+
+		// Check if almost all density is in lowest (two) level(s) (ortho+para)
+		DoctestUtils::checkTolerance("ground level(s)", nv(0) + nv(1), n, eps);
+
+		CAPTURE("ground level (energy "
+		        << ev(0) << ") " << nv(0) << " \n level 1 (energy " << ev(1) << ") "
+		        << nv(1) << " \n level 3 (energy " << ev(3) << ") " << nv(3) << "\n");
+
+		// Check if all but the lowest two level populations are small compared to total
+		CHECK((nv.tail(nv.size() - 2).array() < eps * n).all());
 	}
 
-	// TODO: This is not working as expected. Of course, the above examples do not depends
+	// TODO: This is not working as expected. Of course, the above examples do not depend
 	// on radiation field. I need a way to check that the effect on radiation on level
 	// populations is hanled correctly.
 	// SUBCASE("Blackbody radiation, should also go to LTE?")
