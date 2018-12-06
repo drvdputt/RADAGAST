@@ -8,7 +8,7 @@ class LineProfile
 {
 public:
 	LineProfile(double center, double sigma_gauss, double halfWidth_lorentz);
-	// Evaluate the line profile at the given value (frequency) x
+	// Evaluate the line profile at the given value (usually frequency [Hz-1])
 	double operator()(double nu) const;
 	double center() const { return _center; }
 

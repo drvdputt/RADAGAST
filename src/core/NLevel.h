@@ -139,11 +139,13 @@ private:
 	    elements of the lower triangle of the level matrix. */
 	void forActiveLinesDo(std::function<void(size_t ini, size_t fin)> thing) const;
 
-	/** Calculates the intensity of a specific line [erg / s / cm2]. Multiplying with the
-	    line profile will yield the specific intensity. */
+	/** Calculates the integrated emission coefficient of a specific line [erg s-1 cm-3
+	    sr-1]. Multiplying with the line profile [Hz-1] will yield the specific intensity
+	    [erg s-1 cm-3 sr-1 Hz-1]. */
 	double lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const;
 
-	/** Computes the opacity of a line, not yet multiplied with the line profile. */
+	/** Computes the integrated opacity of a line [cm-1 Hz]. TMultiplying with the line
+	    profile [Hz-1] will yield the opacity [cm-1] at each frequency. */
 	double lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const;
 
 	/** Return a line profile object that can be used to calculate the (normalized to 1)
