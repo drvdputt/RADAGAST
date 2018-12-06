@@ -35,7 +35,7 @@ TEST_CASE("H2-specific algorithm")
 		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
 		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
 
-		// This test seems to work reasonable for the first three levels
+		// This test seems to work reasonably for the first three levels
 		for (size_t i = 0; i < std::min<int>(3, s0.nv.size()); i++)
 			DoctestUtils::checkTolerance("level " + std::to_string(i) +
 			                                             " from solver vs LTE",
