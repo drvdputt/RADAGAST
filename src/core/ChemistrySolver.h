@@ -75,6 +75,8 @@ private:
 	    density of species j. */
 	double densityProductDerivative(const EVector& nv, int r, int j) const;
 
+	std::vector<size_t> chooseEquationsToReplace(const EVector& nv) const;
+
 	// DESIGN NOTE:
 	/** The calculation of the rate coefficients can be delegated to another object, as the
 	    arguments required to calculate them could be anything from the rest of the

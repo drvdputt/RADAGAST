@@ -104,13 +104,16 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	// Fix the conserved quantities using the initial condition
 	EVector conservedQuantityv = _conservEqvv * n0v;
 
-	// We will replace the equations of the smallest Fv by the conservation equations.
-	// Possibly for every step.
-	std::vector<size_t> iSmallestv(_numConserved);
+	// We will need to replace some of the equations by conservation equations. Numerical
+	// stability can be improved by choosing the equations that need to be replaced
+	// dynamically. The 2006 meudon paper (section 7) recommends that, for each atom's
+	// conservation equation, the equation for the species that is most abundant containing
+	// this specific atom is replaced.
+	std::vector<size_t> iToReplacev(0);
 
 	// Conserved quantities and rate coefficients are supplied to the functions via this
 	// struct
-	struct system_params params = {&rateCoeffv, &conservedQuantityv, &iSmallestv, this};
+	struct system_params params = {&rateCoeffv, &conservedQuantityv, &iToReplacev, this};
 
 	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_hybridsj;
 	gsl_multiroot_fdfsolver* s = gsl_multiroot_fdfsolver_alloc(T, _numSpecies);
@@ -127,50 +130,49 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	                gsl_vector_const_view_array(n0v.data(), n0v.size());
 	gsl_multiroot_fdfsolver_set(s, &fdf, &initial_guess_view.vector);
 
-	double epsabs = 1.e-17;
+	double epsabs = 1.e-32;
 	double epsrel = 1.e-17;
 	// solve here, using maximum 100 iterations
 	size_t i = 0;
-	for (; i < 1000; i++)
+	gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
+	iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
+	for (; i < 100; i++)
 	{
-		// Check which of the time derivatives are the smallest, and write into
-		// iSmallestv. Remember that the params struct has a pointer to iSmallestv. The
-		// equations with the smallest (closest to zero) f will then be replaced by the
-		// conservation equations. Note that these conservation equations provide
-		// crucial constraints, the solution won't behave well without them.
-		//
-		// The reason that I specifically choose to replace the equations with the
-		// smallest f, can be illustrated as follows: The H derivative has contributions
-		// by H+ recombination and H ionization (fast) and H2 formation and dissociation
+		// Remember that the params struct has a pointer to iToReplacev. The reason
+		// (numerical stability) that we need to dynamically choose these indices can be
+		// illustraed using a practical example: The H derivative has contributions by
+		// H+ recombination and H ionization (fast) and H2 formation and dissociation
 		// (slow). If the conservation equations are satisfied (= 0) and we use them to
 		// overwrite the H2 equation, then our only knowledge about the formation /
 		// dissociation balance is in the H equation. Since these rates are so much
 		// smaller than the ones relating to ionization, we effectively lose this
-		// information due to precision reasons.
-		//
-		// If instead we replace the equations with the smallest residual by the
-		// conservation equations, then those that are already zero will be replaced
-		// first. So once the H equation has been satisfied (= 0), H2 equation will come
-		// into play, which only consists of H2 formation and dissociation.
+		// information due to precision reasons. By carefully choosing which equations
+		// we replace by conservation constraints, we can mitigate problems like this.
 
-		// Pass an empty vector here, to just get the time derivatives
-		EArray fv = evaluateFv(n0v, rateCoeffv, conservedQuantityv, {}).array().abs();
-		gsl_sort_smallest_index(iSmallestv.data(), _numConserved, &fv(0), 1,
-		                        _numSpecies);
-		gsl_multiroot_fdfsolver_iterate(s);
-		gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
+		int iterationStatus = gsl_multiroot_fdfsolver_iterate(s);
+		if (iterationStatus == GSL_EBADFUNC)
+			Error::runtime("Inf or NaN encountered by GSL");
+		if (iterationStatus == GSL_ENOPROG)
+			iToReplacev = chooseEquationsToReplace(
+			                Eigen::Map<EVector>(x->data, x->size));
+		// Error::runtime("GSL not making progress");
+
+		x = gsl_multiroot_fdfsolver_root(s);
+
 		gsl_vector* dx = gsl_multiroot_fdfsolver_dx(s);
 		gsl_vector* f = gsl_multiroot_fdfsolver_f(s);
 		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs, epsrel);
 		int testResidual = gsl_multiroot_test_residual(f, epsabs);
 		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
+		{
 			break;
+		}
+		else if (i == 99)
+			Error::runtime("Not converged");
 	}
 
-	gsl_vector* solution = gsl_multiroot_fdfsolver_root(s);
-
 	// Copy the solution
-	EVector solutionv(Eigen::Map<EVector>(solution->data, solution->size));
+	EVector solutionv(Eigen::Map<EVector>(x->data, x->size));
 	auto f = evaluateFv(solutionv, rateCoeffv, conservedQuantityv, std::vector<size_t>{});
 	DEBUG(i << " iterations for chemistry\nResidual:\n" << f << '\n');
 
@@ -181,6 +183,43 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	if (solutionv.array().isNaN().any())
 		Error::runtime("NaN in chemistry solution");
 	return solutionv;
+}
+
+std::vector<size_t> ChemistrySolver::chooseEquationsToReplace(const EVector& nv) const
+{
+	std::vector<size_t> equationsToReplacev(_numConserved);
+	auto iFirst = equationsToReplacev.begin();
+	for (int c = 0; c < _numConserved; c++)
+	{
+		auto iCurrent = iFirst + c;
+
+		// Look at the individual contributions to the conserved quantity (element-wise)
+		// Example:
+
+		// species: e- H+ H H2
+		// e conservation: 1 0 1 2
+		// p conservation: 0 1 1 2
+		// contribution = conservation * species density
+		EArray contributionv = _conservEqvv.row(c).cwiseProduct(nv.transpose());
+
+		// Do an argsort to sort the species by the contribution size
+		std::vector<size_t> speciesIndexv = TemplatedUtils::argsort(
+		                &contributionv(0), contributionv.size());
+
+		// Start with the biggest contribution, and go to the next equation (c) when a
+		// candidate has been chosen
+		for (auto is = speciesIndexv.rbegin(); is != speciesIndexv.rend(); is++)
+		{
+			// If not already there, choose current candidate index, and move on to
+			// the next conservation equation (c)
+			if (std::find(iFirst, iCurrent, *is) == iCurrent)
+			{
+				*iCurrent = *is;
+				break;
+			}
+		}
+	}
+	return equationsToReplacev;
 }
 
 EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv,

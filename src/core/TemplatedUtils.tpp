@@ -1,7 +1,24 @@
 #include "Error.h"
 
+#include <numeric>
+
 namespace TemplatedUtils
 {
+
+template <typename T> std::vector<size_t> argsort(const T* begin, size_t size)
+{
+	// https://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
+
+	// We will sort a vector of indices based on the given range of values
+	std::vector<size_t> iv(size);
+	std::iota(std::begin(iv), std::end(iv), 0);
+
+	// Sort in-place using a lambda which simply compares the values of the given container
+	std::sort(std::begin(iv), std::end(iv),
+	          [&](size_t i1, size_t i2) { return begin[i1] < begin[i2]; });
+
+	return iv;
+}
 
 /** Return true if min <= value <= max. */
 template <typename T> bool inRange(T value, T min, T max)
