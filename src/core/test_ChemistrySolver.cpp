@@ -122,7 +122,7 @@ TEST_CASE("Combine and dissociate")
 		EVector nv = cs.solveBalance(kv, n0v);
 		DoctestUtils::checkTolerance("nH (should be analytic solution)", nv(0),
 		                             nH_exact, eps);
-		CHECK(nv(1) == nH2_exact);
+		DoctestUtils::checkTolerance("nH2 and nH2_exact", nv(1), nH2_exact, eps);
 	}
 
 	{ // Only formation
