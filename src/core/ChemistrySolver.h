@@ -59,15 +59,35 @@ public:
 
 	/** Evaluates the function of which the root needs to be found. This is a combination of
 	    net rates being zero, and conservation equations. */
-	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv,
-	                   const EVector& conservedQuantityv,
-	                   const std::vector<size_t>& replaceByConservationv) const;
+	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv) const;
 
 	/** Evaluates the jacobian of the function above, i.e. each column is the derivative of
 	    Fv with respect to one of the densities. Thanks to the power law prescription of the
 	    total rates, this can be calculated analytically. */
-	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv,
-	                    const std::vector<size_t>& replaceByConservationv) const;
+	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const;
+
+	/** Evaluates the deviation of the conserved quantities from their starting values
+	    (second argument), for the current densities (first argument). */
+	EVector evaluateQv(const EVector& nv, const EVector& conservedQuantitivy) const;
+
+	/** Return the coefficient matrix of the conservation equations. Each row represents a
+	conservation equations, with linear coefficient for each species, indicating how much
+	this species contributes to the conserved quantity. If you multiply this matrix with the
+	density vector, then you get the values of the conserved quantities corresponding to
+	those densities. Because Qv (see above) is a linear function of the densities, this
+	coefficient matrix also happens to be the jacobian of the conservation equations. */
+	EMatrix conservEqvv() const { return _conservEqvv; }
+
+	/** The function we want to minimize, where Fv is the time derivative vector (see
+	    evaluateFv without conservation equations), and Qv is the deviation from
+	    conservation (C * n - q), with q = C * n0, and C the conservation equation
+	    coefficient matrix. */
+	double toMinimizeFunction(const EVector& Fv, const EVector& Qv) const;
+
+	/** The gradient of the above function, given Fv, its jacobian Jvv, and Qv (the jacobian
+	    of Qv is simply Cv, since it's a linear function of n. */
+	EVector toMinimizeGradientv(const EVector& Fv, const EMatrix& Jvv,
+	                            const EVector& Qv) const;
 
 private:
 	/** Solves the chemistry by trying to find the root of the time derivatives. */

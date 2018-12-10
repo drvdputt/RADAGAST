@@ -41,7 +41,10 @@ TEST_CASE("single species with creation and destruction")
 		CHECK(solve(c, d) == c / d);
 	}
 
-	SUBCASE("only destruction, should tend to zero") { CHECK(solve(0, 1.) == 0.); }
+	double eps = 1e-15;
+	double onlyDestruction = solve(0, 1.);
+	DoctestUtils::checkRange("single species, only destruction, should tend to zero",
+	                         onlyDestruction, 0, eps);
 }
 
 TEST_CASE("Combine and dissociate")
@@ -136,7 +139,7 @@ TEST_CASE("Combine and dissociate")
 	}
 
 	{ // Only dissociation
-		double eps = 1.e-15;
+		double eps = 1.e-10;
 		double kform = 0;
 		double kdiss = 1.;
 		EVector kv(2);
@@ -145,6 +148,6 @@ TEST_CASE("Combine and dissociate")
 		EVector nv = cs.solveBalance(kv, n0v);
 		// All H2 should disappear, and be transformed into H
 		DoctestUtils::checkRange("nH2 (should disappear)", nv(1), 0., eps);
-		CHECK(nv(0) == Ntotal);
+		DoctestUtils::checkTolerance("nH2 (should equal total)", nv(0), Ntotal, eps);
 	}
 }
