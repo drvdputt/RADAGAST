@@ -150,6 +150,9 @@ double multimin_f(const gsl_vector* x, void* p)
 	auto thisp = params->solver_instance;
 	EVector Fv = thisp->evaluateFv(nv, *params->rateCoeffv);
 	EVector Qv = thisp->evaluateQv(nv, *params->conservedQuantityv);
+
+	DEBUG("multimin function\n" << Fv << '\n');
+
 	return thisp->toMinimizeFunction(nv, *params->conservedQuantityv);
 }
 
@@ -164,6 +167,9 @@ void multimin_df(const gsl_vector* x, void* p, gsl_vector* g)
 	EMatrix Jvv = thisp->evaluateJvv(nv, *params->rateCoeffv);
 
 	EVector Gv = thisp->toMinimizeGradientv(Fv, Jvv, Qv);
+
+	DEBUG("multimin gradient\n" << Gv << '\n');
+
 	gsl_vector_view g_view = gsl_vector_view_array(Gv.data(), Gv.size());
 	gsl_vector_memcpy(g, &g_view.vector);
 }
@@ -296,8 +302,12 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 
 	// Copy the solution
 	EVector solutionv(Eigen::Map<EVector>(x->data, x->size));
-	auto Fv = evaluateFv(solutionv, rateCoeffv);
-	DEBUG(i << " iterations for chemistry\nResidual:\n" << Fv << '\n');
+	EVector Fv = evaluateFv(solutionv, rateCoeffv);
+	EVector Qv = evaluateQv(solutionv, conservedQuantityv);
+	DEBUG(i << "multiroot iterations for chemistry\nResidual:\n"
+	        << Fv << "\nConservation\n"
+	        << Qv << "\nSolution\n"
+	        << solutionv << "\n");
 
 	gsl_multiroot_fdfsolver_free(s);
 	if (solutionv.array().isNaN().any())
@@ -336,17 +346,26 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 	int i = 0;
 	for (; i < maxIt; i++)
 	{
-		gsl_multimin_fdfminimizer_iterate(m);
+		int iterationStatus = gsl_multimin_fdfminimizer_iterate(m);
+		if (iterationStatus == GSL_ENOPROG)
+		{
+			DEBUG("No progress!\n");
+			break;
+		}
 		minimum = gsl_multimin_fdfminimizer_minimum(m);
-		int testGradient = gsl_multimin_test_gradient(g, g_epsabs);
 		bool testMinimum = minimum < epsabs_f2;
 		int testGradient = gsl_multimin_test_gradient(g, epsabs_g);
 		if (testGradient == GSL_SUCCESS && testMinimum)
 			break;
 	}
-	DEBUG(i << "iterations to find minimum\n");
 
 	EVector solutionv(Eigen::Map<EVector>(x->data, x->size));
+	EVector Fv = evaluateFv(solutionv, rateCoeffv);
+	EVector Qv = evaluateQv(solutionv, conservedQuantityv);
+	DEBUG(i << "multimin iterations for chemistry\nResidual:\n"
+	        << Fv << "\nConservation\n"
+	        << Qv << "\nSolution\n"
+	        << solutionv << "\n");
 
 	gsl_multimin_fdfminimizer_free(m);
 	return solutionv;
