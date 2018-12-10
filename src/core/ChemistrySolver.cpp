@@ -56,7 +56,7 @@ int multiroot_f(const gsl_vector* x, void* p, gsl_vector* f)
 	}
 
 	// if (fv.array().isNaN().any())
-		// Error::runtime("nan in fv!");
+	// Error::runtime("nan in fv!");
 	DEBUG("function\n" << fv << '\n');
 
 	// View the resulting eigen vector as a gsl vector, and copy the results
