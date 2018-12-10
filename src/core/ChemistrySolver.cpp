@@ -150,10 +150,12 @@ double multimin_f(const gsl_vector* x, void* p)
 	auto thisp = params->solver_instance;
 	EVector Fv = thisp->evaluateFv(nv, *params->rateCoeffv);
 	EVector Qv = thisp->evaluateQv(nv, *params->conservedQuantityv);
-
-	DEBUG("multimin function\n" << Fv << '\n');
-
-	return thisp->toMinimizeFunction(nv, *params->conservedQuantityv);
+	double f = thisp->toMinimizeFunction(Fv, Qv);
+	// DEBUG("multimin x\n" << nv << "\n");
+	// DEBUG("multimin function " << f << "\n");
+	// DEBUG(Fv << '\n');
+	// DEBUG("multimin Qv\n" << Qv << '\n');
+	return f;
 }
 
 void multimin_df(const gsl_vector* x, void* p, gsl_vector* g)
