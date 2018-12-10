@@ -259,6 +259,8 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 	// solve here, using maximum 100 iterations
 	size_t i = 0;
 	gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
+	gsl_vector* dx = gsl_multiroot_fdfsolver_dx(s);
+	gsl_vector* f = gsl_multiroot_fdfsolver_f(s);
 	int maxIt = 100;
 	for (; i < maxIt; i++)
 	{
@@ -282,10 +284,6 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 		iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
 		// Error::runtime("GSL not making progress");
 
-		x = gsl_multiroot_fdfsolver_root(s);
-
-		gsl_vector* dx = gsl_multiroot_fdfsolver_dx(s);
-		gsl_vector* f = gsl_multiroot_fdfsolver_f(s);
 		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs, epsrel);
 		int testResidual = gsl_multiroot_test_residual(f, epsabs);
 		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
@@ -294,8 +292,8 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 
 	// Copy the solution
 	EVector solutionv(Eigen::Map<EVector>(x->data, x->size));
-	auto f = evaluateFv(solutionv, rateCoeffv);
-	DEBUG(i << " iterations for chemistry\nResidual:\n" << f << '\n');
+	auto Fv = evaluateFv(solutionv, rateCoeffv);
+	DEBUG(i << " iterations for chemistry\nResidual:\n" << Fv << '\n');
 
 	gsl_multiroot_fdfsolver_free(s);
 	if (solutionv.array().isNaN().any())
