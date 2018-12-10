@@ -330,7 +330,9 @@ double ChemistrySolver::densityProductDerivative(const EVector& nv, int r, int j
 	else
 	{
 		// Derivative of the n_j factor
-		double densityProductDerivative = stoichRj * pow(nv(j), stoichRj - 1);
+		double densityProductDerivative = 1;
+		if (stoichRj > 1)
+			densityProductDerivative *= stoichRj * pow(nv(j), stoichRj - 1);
 
 		// The rest of the factors
 		for (size_t s = 0; s < _numSpecies; s++)
