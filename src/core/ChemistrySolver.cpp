@@ -10,8 +10,14 @@
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_sort.h>
 
-namespace /* Stuff for GSL */
+namespace
 {
+// Precision
+constexpr double epsabs_f = 1e-30;
+constexpr double epsabs_x = 1e-30;
+constexpr double epsrel_x = 1e-15;
+
+// Stuff for GSL
 struct multiroot_params
 {
 	const EVector* rateCoeffv;
@@ -254,8 +260,6 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 	                gsl_vector_const_view_array(n0v.data(), n0v.size());
 	gsl_multiroot_fdfsolver_set(s, &fdf, &initial_guess_view.vector);
 
-	double epsabs = 1.e-30;
-	double epsrel = 1.e-15;
 	// solve here, using maximum 100 iterations
 	size_t i = 0;
 	gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
@@ -284,8 +288,8 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 		iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
 		// Error::runtime("GSL not making progress");
 
-		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs, epsrel);
-		int testResidual = gsl_multiroot_test_residual(f, epsabs);
+		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs_x, epsrel_x);
+		int testResidual = gsl_multiroot_test_residual(f, epsabs_f);
 		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
 			break;
 	}
@@ -319,13 +323,12 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 
 	gsl_vector_const_view initial_guess_view =
 	                gsl_vector_const_view_array(n0v.data(), n0v.size());
-	double step_size = 0.01 * n0v.maxCoeff();
+	double step_size = epsabs_x;
 	double tol = 0.1;
 	gsl_multimin_fdfminimizer_set(m, &fdf, &initial_guess_view.vector, step_size, tol);
 
-	double f_epsabs = 1e-30;
-	double x_epsabs = 1e-17;
-	double g_epsabs = f_epsabs / x_epsabs;
+	double epsabs_f2 = epsabs_f * epsabs_f;
+	double epsabs_g = epsabs_f2 / epsabs_x;
 	int maxIt = 100;
 	gsl_vector* x = gsl_multimin_fdfminimizer_x(m);
 	double minimum = gsl_multimin_fdfminimizer_minimum(m);
@@ -336,7 +339,9 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 		gsl_multimin_fdfminimizer_iterate(m);
 		minimum = gsl_multimin_fdfminimizer_minimum(m);
 		int testGradient = gsl_multimin_test_gradient(g, g_epsabs);
-		if (testGradient == GSL_SUCCESS)
+		bool testMinimum = minimum < epsabs_f2;
+		int testGradient = gsl_multimin_test_gradient(g, epsabs_g);
+		if (testGradient == GSL_SUCCESS && testMinimum)
 			break;
 	}
 	DEBUG(i << "iterations to find minimum\n");
