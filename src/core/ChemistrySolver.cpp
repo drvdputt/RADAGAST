@@ -333,7 +333,7 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 
 	gsl_vector_const_view initial_guess_view =
 	                gsl_vector_const_view_array(n0v.data(), n0v.size());
-	double step_size = epsabs_x;
+	double step_size = n0v.norm();
 	double tol = 0.1;
 	gsl_multimin_fdfminimizer_set(m, &fdf, &initial_guess_view.vector, step_size, tol);
 
@@ -343,10 +343,12 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 	gsl_vector* x = gsl_multimin_fdfminimizer_x(m);
 	double minimum = gsl_multimin_fdfminimizer_minimum(m);
 	gsl_vector* g = gsl_multimin_fdfminimizer_gradient(m);
+	gsl_vector* dx = gsl_multimin_fdfminimizer_dx(m);
 	int i = 0;
 	for (; i < maxIt; i++)
 	{
 		int iterationStatus = gsl_multimin_fdfminimizer_iterate(m);
+		// DEBUG("Step\n" << Eigen::Map<EVector>(dx->data, dx->size) << '\n');
 		if (iterationStatus == GSL_ENOPROG)
 		{
 			DEBUG("No progress!\n");
