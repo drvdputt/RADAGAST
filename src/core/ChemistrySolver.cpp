@@ -55,10 +55,6 @@ int multiroot_f(const gsl_vector* x, void* p, gsl_vector* f)
 			fv(replaceByConservationv[c]) = conservationFv(c);
 	}
 
-	// if (fv.array().isNaN().any())
-	// Error::runtime("nan in fv!");
-	DEBUG("function\n" << fv << '\n');
-
 	// View the resulting eigen vector as a gsl vector, and copy the results
 	gsl_vector_view f_view = gsl_vector_view_array(fv.data(), fv.size());
 	gsl_vector_memcpy(f, &f_view.vector);
@@ -118,7 +114,6 @@ int multiroot_fdf(const gsl_vector* x, void* p, gsl_vector* f, gsl_matrix* J)
 			jvv.row(replaceByConservationv[c]) = conservationJvv.row(c);
 		}
 	}
-	DEBUG("jacobian\n" << jvv << '\n');
 
 	gsl_vector_view f_view = gsl_vector_view_array(fv.data(), fv.size());
 	gsl_vector_memcpy(f, &f_view.vector);
@@ -151,10 +146,6 @@ double multimin_f(const gsl_vector* x, void* p)
 	EVector Fv = thisp->evaluateFv(nv, *params->rateCoeffv);
 	EVector Qv = thisp->evaluateQv(nv, *params->conservedQuantityv);
 	double f = thisp->toMinimizeFunction(Fv, Qv);
-	// DEBUG("multimin x\n" << nv << "\n");
-	// DEBUG("multimin function " << f << "\n");
-	// DEBUG(Fv << '\n');
-	// DEBUG("multimin Qv\n" << Qv << '\n');
 	return f;
 }
 
@@ -169,8 +160,6 @@ void multimin_df(const gsl_vector* x, void* p, gsl_vector* g)
 	EMatrix Jvv = thisp->evaluateJvv(nv, *params->rateCoeffv);
 
 	EVector Gv = thisp->toMinimizeGradientv(Fv, Jvv, Qv);
-
-	DEBUG("multimin gradient\n" << Gv << '\n');
 
 	gsl_vector_view g_view = gsl_vector_view_array(Gv.data(), Gv.size());
 	gsl_vector_memcpy(g, &g_view.vector);
@@ -221,12 +210,14 @@ ChemistrySolver::~ChemistrySolver() = default;
 
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
-#define MULTIROOT
-#ifdef MULTIROOT
-	return solveMultiroot(rateCoeffv, n0v);
-#else
-	return solveMultimin(rateCoeffv, n0v);
-#endif
+	EVector nv = n0v;
+	// First, use the multiroot method, which intentionally uses a slightly modified kv to
+	// prevent the jacobian from becoming singular (resulting in weird steps)
+	nv = solveMultiroot(rateCoeffv, nv);
+	// Then, use the minimization algorithm which does use the correct coefficients to go to
+	// the real solution
+	nv = solveMultimin(rateCoeffv, nv);
+	return nv;
 }
 
 EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector& n0v) const
@@ -291,7 +282,10 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 		if (iterationStatus == GSL_EBADFUNC)
 			Error::runtime("Inf or NaN encountered by GSL");
 		if (iterationStatus == GSL_ENOPROG)
+		{
+			DEBUG("No progress! breaking...\n");
 			break;
+		}
 
 		iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
 		// Error::runtime("GSL not making progress");
@@ -345,7 +339,7 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 	gsl_vector* x = gsl_multimin_fdfminimizer_x(m);
 	double minimum = gsl_multimin_fdfminimizer_minimum(m);
 	gsl_vector* g = gsl_multimin_fdfminimizer_gradient(m);
-	gsl_vector* dx = gsl_multimin_fdfminimizer_dx(m);
+	// gsl_vector* dx = gsl_multimin_fdfminimizer_dx(m);
 	int i = 0;
 	for (; i < maxIt; i++)
 	{
@@ -353,7 +347,7 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 		// DEBUG("Step\n" << Eigen::Map<EVector>(dx->data, dx->size) << '\n');
 		if (iterationStatus == GSL_ENOPROG)
 		{
-			DEBUG("No progress!\n");
+			DEBUG("No progress! breaking...\n");
 			break;
 		}
 		minimum = gsl_multimin_fdfminimizer_minimum(m);
