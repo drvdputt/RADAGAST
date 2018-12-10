@@ -228,9 +228,9 @@ EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv
 {
 	EVector fv(_numSpecies);
 
-	//-------------------------------------------------------------------//
-	// TOP PART: EQUILIBRIUM EQUATIONS (A.K.A. NET_STOICH * RATE = ZERO) //
-	//-------------------------------------------------------------------//
+	//---------------------------------------------------------//
+	// EQUILIBRIUM EQUATIONS (A.K.A. NET_STOICH * RATE = ZERO) //
+	//---------------------------------------------------------//
 
 	// The total rate of each reaction, a.k.a. k(T) multiplied with the correct density
 	// factor n_s ^ R_s,r (see notes).
@@ -242,9 +242,9 @@ EVector ChemistrySolver::evaluateFv(const EVector& nv, const EVector& rateCoeffv
 	   matrix (indexed on species, reaction) and the rate vector (indexed on reaction). */
 	fv = _netStoichvv * kTotalv;
 
-	//-------------------------------------//
-	// BOTTOM PART: CONSERVATION EQUATIONS //
-	//-------------------------------------//
+	//------------------------//
+	// CONSERVATION EQUATIONS //
+	//------------------------//
 
 	/* These equations are of the form CONSERV_COEFF * DENSITY - CONSTANT = 0. _cvv is
 	   indexed on (conserved quantity, species). */
@@ -283,26 +283,25 @@ EMatrix ChemistrySolver::evaluateJvv(const EVector& nv, const EVector& rateCoeff
 		for (int r = 0; r < _numReactions; r++)
 			kDerivativev(r) =
 			                rateCoeffv(r) * densityProductDerivative(nv, r, jDeriv);
-
 		jvv.col(jDeriv) = _netStoichvv * kDerivativev;
-
-		// Now overwrite some rows with conservation equations. These equations are
-		// simply linear, therefore the derivative is equal to the coefficient.
-		// jvv.col(jDeriv).tail(_numConserved) = _conservEqvv.col(jDeriv);
-		if (replaceByConservationv.size() > 0)
-		{
-			Error::equalCheck<int>("number of conservation equations and list of "
-			                       "indices to "
-			                       "replace",
-			                       _numConserved, replaceByConservationv.size());
-
-			// Replace the rows listed in replaceByConservationv
-			for (int i = 0; i < replaceByConservationv.size(); i++)
-				jvv.col(jDeriv)(replaceByConservationv[i]) =
-				                _conservEqvv.col(jDeriv)[i];
-			// fv.tail(_numConserved) = subFv;
-		}
 	}
+
+	// Now overwrite some rows with conservation equations. These equations are
+	// simply linear, therefore the derivative is equal to the coefficient.
+	// jvv.col(jDeriv).tail(_numConserved) = _conservEqvv.col(jDeriv);
+	if (replaceByConservationv.size() > 0)
+	{
+		Error::equalCheck<int>("number of conservation equations and list of "
+		                       "indices to "
+		                       "replace",
+		                       _numConserved, replaceByConservationv.size());
+
+		// Replace the rows listed in replaceByConservationv
+		for (int c = 0; c < replaceByConservationv.size(); c++)
+			jvv.row(replaceByConservationv[c]) = _conservEqvv.row(c);
+	}
+
+	std::cout << "jacobian\n" << jvv << std::endl;
 	return jvv;
 }
 
