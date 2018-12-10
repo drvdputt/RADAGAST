@@ -6,8 +6,59 @@
 #include <algorithm>
 #include <iostream>
 
+#include <gsl/gsl_multimin.h>
 #include <gsl/gsl_multiroots.h>
 #include <gsl/gsl_sort.h>
+
+namespace /* Stuff for GSL */
+{
+struct multiroot_params
+{
+	const EVector* rateCoeffv;
+	const EVector* conservedQuantityv;
+	const std::vector<size_t>* replaceByConservationv;
+	const ChemistrySolver* solver_instance;
+};
+
+int multiroot_f(const gsl_vector* x, void* p, gsl_vector* f)
+{
+	auto* params = static_cast<struct multiroot_params*>(p);
+
+	// View the gsl vector as an eigen vector
+	Eigen::Map<EVector> nv(x->data, x->size);
+
+	if (nv.array().isNaN().any())
+		Error::runtime("x is nan");
+
+	// Calculate Fv using eigen library
+	EVector fv = params->solver_instance->evaluateFv(nv, *params->rateCoeffv,
+	                                                 *params->conservedQuantityv,
+	                                                 *params->replaceByConservationv);
+
+	// View the resulting eigen vector as a gsl vector, and copy the results
+	gsl_vector_view f_view = gsl_vector_view_array(fv.data(), fv.size());
+	gsl_vector_memcpy(f, &f_view.vector);
+	return GSL_SUCCESS;
+}
+
+int multiroot_df(const gsl_vector* x, void* p, gsl_matrix* J)
+{
+	auto* params = static_cast<multiroot_params*>(p);
+	Eigen::Map<EVector> nv(x->data, x->size);
+
+	// Calculate Jvv using this member function
+	EMatrix Jvv = params->solver_instance->evaluateJvv(nv, *params->rateCoeffv,
+	                                                   *params->replaceByConservationv);
+
+	// Remember that Eigen works column major, while gsl matrices are indexed row major. So
+	// we start by taking a view of the transpose. Should be square though, so the size
+	// arguments actually doesn't matter.
+	gsl_matrix_view J_view_transposed =
+	                gsl_matrix_view_array(Jvv.data(), Jvv.cols(), Jvv.rows());
+	gsl_matrix_transpose_memcpy(J, &J_view_transposed.matrix);
+	return GSL_SUCCESS;
+}
+} /* namespace */
 
 ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv,
                                  const EMatrix& productStoichvv,
@@ -33,55 +84,9 @@ ChemistrySolver::ChemistrySolver(std::unique_ptr<const ChemicalNetwork> cn) : _c
 
 ChemistrySolver::~ChemistrySolver() = default;
 
-namespace
+int multiroot_fdf(const gsl_vector* x, void* p, gsl_vector* f, gsl_matrix* J)
 {
-struct system_params
-{
-	const EVector* rateCoeffv;
-	const EVector* conservedQuantityv;
-	const std::vector<size_t>* replaceByConservationv;
-	const ChemistrySolver* solver_instance;
-};
-
-int system_f(const gsl_vector* x, void* p, gsl_vector* f)
-{
-	auto* params = static_cast<struct system_params*>(p);
-
-	// View the gsl vector as an eigen vector
-	Eigen::Map<EVector> nv(x->data, x->size);
-
-	// Calculate Fv using eigen library
-	EVector fv = params->solver_instance->evaluateFv(nv, *params->rateCoeffv,
-	                                                 *params->conservedQuantityv,
-	                                                 *params->replaceByConservationv);
-
-	// View the resulting eigen vector as a gsl vector, and copy the results
-	gsl_vector_view f_view = gsl_vector_view_array(fv.data(), fv.size());
-	gsl_vector_memcpy(f, &f_view.vector);
-	return GSL_SUCCESS;
-}
-
-int system_df(const gsl_vector* x, void* p, gsl_matrix* J)
-{
-	auto* params = static_cast<system_params*>(p);
-	Eigen::Map<EVector> nv(x->data, x->size);
-
-	// Calculate Jvv using this member function
-	EMatrix Jvv = params->solver_instance->evaluateJvv(nv, *params->rateCoeffv,
-	                                                   *params->replaceByConservationv);
-
-	// Remember that Eigen works column major, while gsl matrices are indexed row major. So
-	// we start by taking a view of the transpose. Should be square though, so the size
-	// arguments actually doesn't matter.
-	gsl_matrix_view J_view_transposed =
-	                gsl_matrix_view_array(Jvv.data(), Jvv.cols(), Jvv.rows());
-	gsl_matrix_transpose_memcpy(J, &J_view_transposed.matrix);
-	return GSL_SUCCESS;
-}
-
-int system_fdf(const gsl_vector* x, void* p, gsl_vector* f, gsl_matrix* J)
-{
-	auto* params = static_cast<system_params*>(p);
+	auto* params = static_cast<multiroot_params*>(p);
 	Eigen::Map<EVector> nv(x->data, x->size);
 	EVector fv = params->solver_instance->evaluateFv(nv, *params->rateCoeffv,
 	                                                 *params->conservedQuantityv,
@@ -95,12 +100,27 @@ int system_fdf(const gsl_vector* x, void* p, gsl_vector* f, gsl_matrix* J)
 	gsl_matrix_transpose_memcpy(J, &J_view_transposed.matrix);
 	return GSL_SUCCESS;
 }
-} /* namespace */
 
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
-#define ROOT_METHOD
-#ifdef ROOT_METHOD
+#define MULTIROOT
+#ifdef MULTIROOT
+	return solveMultiroot(rateCoeffv, n0v);
+#else
+	return solveMultimin(rateCoeffv, n0v);
+#endif
+}
+
+EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector& n0v) const
+{
+	// Hack to prevent singular jacobian? Find smallest nonzero element.
+	double smallest = rateCoeffv.maxCoeff();
+	for (int i = 0; i < rateCoeffv.size(); i++)
+		if (rateCoeffv(i) > 0)
+			smallest = std::min(smallest, rateCoeffv(i));
+	// Replace the zeros by something very small
+	EVector kv = (rateCoeffv.array() > 0).select(rateCoeffv, smallest * 1e-15);
+
 	// Fix the conserved quantities using the initial condition
 	EVector conservedQuantityv = _conservEqvv * n0v;
 
@@ -109,19 +129,19 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	// dynamically. The 2006 meudon paper (section 7) recommends that, for each atom's
 	// conservation equation, the equation for the species that is most abundant containing
 	// this specific atom is replaced.
-	std::vector<size_t> iToReplacev(0);
+	std::vector<size_t> iToReplacev = chooseEquationsToReplace(n0v);
 
 	// Conserved quantities and rate coefficients are supplied to the functions via this
 	// struct
-	struct system_params params = {&rateCoeffv, &conservedQuantityv, &iToReplacev, this};
+	struct multiroot_params params = {&kv, &conservedQuantityv, &iToReplacev, this};
 
 	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_hybridsj;
 	gsl_multiroot_fdfsolver* s = gsl_multiroot_fdfsolver_alloc(T, _numSpecies);
 
 	gsl_multiroot_function_fdf fdf;
-	fdf.f = &system_f;
-	fdf.df = &system_df;
-	fdf.fdf = &system_fdf;
+	fdf.f = &multiroot_f;
+	fdf.df = &multiroot_df;
+	fdf.fdf = &multiroot_fdf;
 	fdf.n = _numSpecies;
 	fdf.params = &params;
 
@@ -130,13 +150,13 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	                gsl_vector_const_view_array(n0v.data(), n0v.size());
 	gsl_multiroot_fdfsolver_set(s, &fdf, &initial_guess_view.vector);
 
-	double epsabs = 1.e-32;
-	double epsrel = 1.e-17;
+	double epsabs = 1.e-30;
+	double epsrel = 1.e-15;
 	// solve here, using maximum 100 iterations
 	size_t i = 0;
 	gsl_vector* x = gsl_multiroot_fdfsolver_root(s);
-	iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
-	for (; i < 100; i++)
+	int maxIt = 100;
+	for (; i < maxIt; i++)
 	{
 		// Remember that the params struct has a pointer to iToReplacev. The reason
 		// (numerical stability) that we need to dynamically choose these indices can be
@@ -153,8 +173,13 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 		if (iterationStatus == GSL_EBADFUNC)
 			Error::runtime("Inf or NaN encountered by GSL");
 		if (iterationStatus == GSL_ENOPROG)
-			iToReplacev = chooseEquationsToReplace(
-			                Eigen::Map<EVector>(x->data, x->size));
+		{
+			// iToReplacev = chooseEquationsToReplace(
+			// Eigen::Map<EVector>(x->data, x->size));
+			maxIt++;
+		}
+
+		iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
 		// Error::runtime("GSL not making progress");
 
 		x = gsl_multiroot_fdfsolver_root(s);
@@ -167,8 +192,6 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 		{
 			break;
 		}
-		else if (i == 99)
-			Error::runtime("Not converged");
 	}
 
 	// Copy the solution
@@ -177,12 +200,14 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	DEBUG(i << " iterations for chemistry\nResidual:\n" << f << '\n');
 
 	gsl_multiroot_fdfsolver_free(s);
-#else
-	// ode integration or minimization method
-#endif
 	if (solutionv.array().isNaN().any())
 		Error::runtime("NaN in chemistry solution");
 	return solutionv;
+}
+
+EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector& n0v) const
+{
+	return n0v;
 }
 
 std::vector<size_t> ChemistrySolver::chooseEquationsToReplace(const EVector& nv) const

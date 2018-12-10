@@ -54,6 +54,9 @@ public:
 	    used. */
 	const ChemicalNetwork* chemicalNetwork() const { return _cn.get(); }
 
+	// The following two functions are public so they can be called from the f, df and fdf
+	// functions that GSL uses (see implementation file).
+
 	/** Evaluates the function of which the root needs to be found. This is a combination of
 	    net rates being zero, and conservation equations. */
 	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv,
@@ -67,6 +70,12 @@ public:
 	                    const std::vector<size_t>& replaceByConservationv) const;
 
 private:
+	/** Solves the chemistry by trying to find the root of the time derivatives. */
+	EVector solveMultiroot(const EVector& rateCoeffv, const EVector& n0v) const;
+
+	/** Solves the chemistry by minimizing a function. */
+	EVector solveMultimin(const EVector& rateCoeffv, const EVector& n0v) const;
+
 	/** Calculates the density factor for the reaction r. Multiplying the reaction rate
 	    coefficient with this factor gives the total reaction rate. */
 	double densityProduct(const EVector& nv, size_t r) const;
