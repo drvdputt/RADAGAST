@@ -277,23 +277,21 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 		// smaller than the ones relating to ionization, we effectively lose this
 		// information due to precision reasons. By carefully choosing which equations
 		// we replace by conservation constraints, we can mitigate problems like this.
+		iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
 
 		int iterationStatus = gsl_multiroot_fdfsolver_iterate(s);
-		if (iterationStatus == GSL_EBADFUNC)
-			Error::runtime("Inf or NaN encountered by GSL");
+		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs_x, epsrel_x);
+		int testResidual = gsl_multiroot_test_residual(f, epsabs_f);
+
+		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
+			break;
 		if (iterationStatus == GSL_ENOPROG)
 		{
 			DEBUG("No progress! breaking...\n");
 			break;
 		}
-
-		iToReplacev = chooseEquationsToReplace(Eigen::Map<EVector>(x->data, x->size));
-		// Error::runtime("GSL not making progress");
-
-		int testDelta = gsl_multiroot_test_delta(dx, x, epsabs_x, epsrel_x);
-		int testResidual = gsl_multiroot_test_residual(f, epsabs_f);
-		if (testDelta == GSL_SUCCESS && testResidual == GSL_SUCCESS)
-			break;
+		if (iterationStatus == GSL_EBADFUNC)
+			Error::runtime("Inf or NaN encountered by GSL");
 	}
 
 	// Copy the solution
@@ -344,15 +342,16 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 	for (; i < maxIt; i++)
 	{
 		int iterationStatus = gsl_multimin_fdfminimizer_iterate(m);
+		minimum = gsl_multimin_fdfminimizer_minimum(m);
+		bool testMinimum = minimum < epsabs_f2;
+		int testGradient = gsl_multimin_test_gradient(g, epsabs_g);
+
 		// DEBUG("Step\n" << Eigen::Map<EVector>(dx->data, dx->size) << '\n');
 		if (iterationStatus == GSL_ENOPROG)
 		{
 			DEBUG("No progress! breaking...\n");
 			break;
 		}
-		minimum = gsl_multimin_fdfminimizer_minimum(m);
-		bool testMinimum = minimum < epsabs_f2;
-		int testGradient = gsl_multimin_test_gradient(g, epsabs_g);
 		if (testGradient == GSL_SUCCESS && testMinimum)
 			break;
 	}
