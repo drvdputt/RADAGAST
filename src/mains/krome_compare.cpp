@@ -51,11 +51,13 @@ int main()
 	std::string outfname = "equilibrium_densities";
 	std::ofstream outfile(outfname);
 	outfile << "# T e H H2 H+ heat cool";
-	for (double T = 10; T < 100000; T *= 1.1)
+	GasInterfaceImpl::Solution s;
+	GasInterfaceImpl::Solution* sp = nullptr;
+	for (double T = 1000; T < 100000; T *= 1.05)
 	{
-
-		GasInterfaceImpl::Solution s = pimpl->calculateDensities(
-		                n, T, specificIntensity, gri, nullptr, kGrainH2);
+		s = pimpl->calculateDensities(n, T, specificIntensity, gri, sp, kGrainH2);
+		// Uncomment this to re-use the previous solution as an initial guess
+		// sp = &s;
 		double heat = pimpl->heating(s, gri);
 		double cool = pimpl->cooling(s);
 		outfile << T;
@@ -68,6 +70,23 @@ int main()
 		outfile << '\n';
 		std::cout << "T = " << T << std::endl;
 	}
+	for (double T = 100000; T > 10; T /= 1.05)
+	{
+		s = pimpl->calculateDensities(n, T, specificIntensity, gri, sp, kGrainH2);
+		sp = &s;
+		double heat = pimpl->heating(s, gri);
+		double cool = pimpl->cooling(s);
+		outfile << T;
+		for (const std::string& name : {"e-", "H", "H2", "H+"})
+		{
+			int i = SpeciesIndex::index(name);
+			outfile << " " << s.speciesNv[i];
+		}
+		outfile << " " << heat << " " << cool;
+		outfile << '\n';
+		std::cout << "T = " << T << std::endl;
+	}
+
 	outfile.close();
 	std::cout << "wrote to " << outfname << std::endl;
 }
