@@ -278,7 +278,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	return spectrum.evaluate(_center);
 #endif
 	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(27);
+	const Array& lineGrid = recommendedFrequencyGrid(15);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());
 
 	// Merges the two grids, and writes the result to the last argument
