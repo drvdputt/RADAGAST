@@ -122,7 +122,7 @@ TEST_CASE("H line profile normalizations")
 			double norm = lp.integrateSpectrum(flat);
 			bool line_norm_ok =
 			                TemplatedUtils::equalWithinTolerance(norm, 1., rtol);
-			WARN_MESSAGE(line_norm_ok, "norm of H line nr " << i << " is " << norm
+			CHECK_MESSAGE(line_norm_ok, "norm of H line nr " << i << " is " << norm
 			                                                << " at " << T
 			                                                << " Kelvin");
 		}
