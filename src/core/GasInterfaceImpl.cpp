@@ -233,8 +233,9 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 	}
 	if (manualGuess)
 	{
-		double iniNH2 = nHtotal / 4;
-		double iniAtomAndIon = nHtotal / 2;
+		double molfrac = 0.1;
+		double iniAtomAndIon = nHtotal * (1 - molfrac);
+		double iniNH2 = nHtotal * molfrac / 2;
 		double guessF = Ionization::solveBalance(iniAtomAndIon, T, specificIntensity);
 		s.speciesNv = EVector(SpeciesIndex::size());
 		s.speciesNv(_ine) = guessF * iniAtomAndIon;
