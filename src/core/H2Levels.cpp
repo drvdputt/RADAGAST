@@ -50,12 +50,12 @@ NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
 	EVector initialGuessv;
 	if (gas._h2Levelv.size() == 0)
 	{
-		// DEBUG("Using LTE as initial guess for H2" << endl);
-		// nv = n * solveBoltzmanEquations(gas._T);
+		DEBUG("Using LTE as initial guess for H2" << endl);
+		initialGuessv = n * solveBoltzmanEquations(gas._T);
 		// TODO: experiment with this instead of LTE as initial condition
-		DEBUG("Using ground state as initial guess for H2" << endl);
-		initialGuessv = EVector::Zero(numLv());
-		initialGuessv.head(4) = EVector::Constant(4, n / 4);
+		// DEBUG("Using ground state as initial guess for H2" << endl);
+		// initialGuessv = EVector::Zero(numLv());
+		// initialGuessv.head(4) = EVector::Constant(4, n / 4);
 	}
 	else if (gas._h2Levelv.size() == numLv())
 		initialGuessv = gas._h2Levelv;
