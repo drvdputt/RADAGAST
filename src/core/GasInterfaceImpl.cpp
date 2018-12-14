@@ -364,7 +364,7 @@ GasInterfaceImpl::calculateDensities(double nHtotal, double T,
 		// Or if it is negligible compared to the norm (or sum maybe?)
 		double norm = s.speciesNv.norm();
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
-		                changev.abs() <= 0.01 * previousAbundancev.array() ||
+		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
 		                s.speciesNv.array() < 1.e-99 * norm;
 		counter++;
 		DEBUG("Chemistry: " << counter << endl
