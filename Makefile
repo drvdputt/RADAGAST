@@ -141,7 +141,7 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJDIR)/%.d
 
 # Include the extra rules for all the objects files provided in the .d files. They will now
 # depend on the correct headers.
-include $(DEPENDS)
+-include $(DEPENDS)
 
 # Do nothing if the .d files don't exist yet
 $(OBJDIR)/%.d: ;
