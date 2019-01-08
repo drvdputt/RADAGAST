@@ -830,17 +830,69 @@ void Testing::runWithDust(bool write)
 
 // void Testing::plotHlines()
 // {
-// 	HydrogenFromFiles hdata{};
-// 	HydrogenLevels hlevels{make_shared<HydrogenDataProvider>(hdata)};
-// 	double Tc = 30000;
-// 	double g0 = 1e0;
-// 	double n = 1000;
-// 	Array frequencyv = defaultCoarseFrequencyv();
-// 	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
-// 	NLevel::Solution s;
-// 	s.n = n;
-// 	s.nv = EVector::Zero(SpeciesIndex::size());
-// 	s.nv(SpeciesIndex::inH()) = n;
-// 	EMatrix Tvv = hlevels.totalTransitionRatesvv(specificIntensity,const GasStruct& gas,EMatrix* cvv_p[=nullptr])
-// 	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
+//	HydrogenFromFiles hdata{};
+//	HydrogenLevels hlevels{make_shared<HydrogenDataProvider>(hdata)};
+//	double Tc = 30000;
+//	double g0 = 1e0;
+//	double n = 1000;
+//	Array frequencyv = defaultCoarseFrequencyv();
+//	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
+//	NLevel::Solution s;
+//	s.n = n;
+//	s.nv = EVector::Zero(SpeciesIndex::size());
+//	s.nv(SpeciesIndex::inH()) = n;
+//	EMatrix Tvv = hlevels.totalTransitionRatesvv(specificIntensity,const GasStruct& gas,EMatrix* cvv_p[=nullptr])
+//	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
 // }
+
+void Testing::runMRNDust(bool write)
+{
+	cout << "RUN_MRN_DUST" << endl;
+
+	// Gas model
+	GasModule::GasInterface gasInterface = genFullModel();
+
+	// Radiation field
+	double Tc{4e3};
+	double G0{1e2};
+	Array specificIntensityv =
+			generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
+
+	// Gas density
+	double nHtotal{1000};
+	double Tinit{8000};
+
+	double amin = 50 * Constant::ANG_CM;
+	double amax = 0.24 * Constant::UM_CM;
+
+	bool carb = false;// carb or sil
+	double log10norm = carb ? -25.13 : -25.11;
+	double C = pow(10., log10norm);
+	auto mrnDens = [&](double a) { return C * nHtotal * pow(a, -3.5); };
+
+	size_t numSizes = 50;
+	Array bin_edges = generateGeometricGridv(numSizes+1, amin, amax);
+	Array sizev(numSizes);
+	Array densityv(numSizes);
+	Array temperaturev(numSizes);
+	for (size_t i = 0; i < numSizes - 1; i++)
+	{
+		double bin_width = bin_edges[i + 1] - bin_edges[i];
+		sizev[i] = (bin_edges[i+1] + bin_edges[i]) / 2;
+		densityv[i] = mrnDens(sizev[i]) * bin_width;
+		temperaturev[i] = 10;
+	}
+
+	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.iFrequencyv())};
+
+	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
+	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
+				qAbsvv);
+	GasModule::GrainInterface grainInterface(move(grainPopv));
+
+	// Run
+	GasModule::GasState gs;
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
+	if (write)
+		writeGasState("withDust/", gasInterface, gs);
+}

@@ -37,6 +37,7 @@ int main()
 		Testing::runFullModel();
 		Testing::runWithDust(true);
 		Testing::runH2(true);
+		Testing::runMRNDust(true);
 	}
 	catch (const std::exception& ex)
 	{
