@@ -865,12 +865,12 @@ void Testing::runMRNDust(bool write)
 	double amin = 50 * Constant::ANG_CM;
 	double amax = 0.24 * Constant::UM_CM;
 
-	bool carb = false;// carb or sil
+	bool carb = true;// carb or sil
 	double log10norm = carb ? -25.13 : -25.11;
 	double C = pow(10., log10norm);
 	auto mrnDens = [&](double a) { return C * nHtotal * pow(a, -3.5); };
 
-	size_t numSizes = 50;
+	size_t numSizes = 100;
 	Array bin_edges = generateGeometricGridv(numSizes+1, amin, amax);
 	Array sizev(numSizes);
 	Array densityv(numSizes);
