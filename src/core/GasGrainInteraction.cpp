@@ -1,5 +1,6 @@
 #include "GasGrainInteraction.h"
 #include "Constants.h"
+#include "Error.h"
 #include "GrainInterface.h"
 #include "GrainType.h"
 
@@ -56,7 +57,9 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 			                    0.2 * Tgas / 100. + 0.08 * (Tgas * Tgas / 10000.)};
 
 			// factor n_d * sigma_d * epsilon_H2 * S_h
-			total += nd * sigmad * epsilon / oneOverStick;
+			double contribution = nd * sigmad * epsilon / oneOverStick;
+			if (!std::isnan(contribution))
+				total += contribution;
 		}
 	}
 	return 0.5 * thermalVelocityH * total;
