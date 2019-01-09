@@ -30,7 +30,7 @@ double WD01::eMin(double a, int Z)
 	// WD01 eq 7
 	double e2_a{Constant::ESQUARE / a};
 	double Emin = Z >= 0 ? 0
-	                     : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
+			     : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
 	return Emin;
 #endif
 }
@@ -43,13 +43,13 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
 	{
 		// use the same expression for carbonaceous and silicate
 		ip_v += workFunction(carbonaceous) +
-		        (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
+			(Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
 	}
 	// For negatively charged grains, different expressions are used for car and sil
 	else if (carbonaceous)
 	{
 		ip_v += workFunction(carbonaceous) -
-		        e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
+			e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
 	}
 	else // if silicate
 	{
@@ -71,8 +71,8 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
 	double Emin2 = Emin * Emin;
 	return 6 / Ediff3 *
 	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
+		(Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+		Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
@@ -99,16 +99,17 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	// Calculate y1 from grain properties and eq 13, 14
 	// double imaginaryRefIndex = 1; // should be wavelength-dependent
 	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
-	const double la = 100 *
-	                  Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
-	double beta = a / la;
-	const double le = 10 * Constant::ANG_CM;
-	double alpha = beta + a / le;
+	constexpr double la = 100 *
+			  Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
+	constexpr double le = 10 * Constant::ANG_CM;
 
-	double alpha2 = alpha * alpha;
+	double beta = a / la;
+	double alpha = beta + a / le;
 	double beta2 = beta * beta;
+	double alpha2 = alpha * alpha;
+
 	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
-	            (beta2 - 2. * beta - 2. * expm1(-beta));
+		    (beta2 - 2. * beta - 2. * expm1(-beta));
 
 	// Calculate y0 from eq 9, 16, 17
 	double thetaOverW = hnuDiff;
@@ -200,5 +201,5 @@ double WD01::lambdaTilde(double tau, double ksi)
 double WD01::thetaKsi(double ksi)
 {
 	// Note that this is an approximation. The exact soluation is actually a root of an equation
-	return ksi > 0 ? ksi / (1. + 1. / sqrt(ksi)) : 0;
+	return ksi > 0. ? ksi / (1. + 1. / sqrt(ksi)) : 0.;
 }

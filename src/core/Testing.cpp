@@ -125,22 +125,22 @@ Array Testing::generateQabsv(double a, const Array& frequencyv)
 	{
 		size_t a_index = TemplatedUtils::index(a, FILEAV);
 		double normalDistance = (a - FILEAV[a_index - 1]) /
-		                        (FILEAV[a_index] - FILEAV[a_index - 1]);
+					(FILEAV[a_index] - FILEAV[a_index - 1]);
 		// interpolate the values from the file for a specific grain size
 		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
 			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
-			                         QABSVV[i][a_index] * normalDistance;
+						 QABSVV[i][a_index] * normalDistance;
 	}
 #ifdef EXACTGRID
 	return QabsWavFromFileForA;
 #endif
 	QabsWav = TemplatedUtils::linearResample<vector<double>>(
-	                QabsWavFromFileForA, FILELAMBDAV, wavelengthv, -1, -1);
+			QabsWavFromFileForA, FILELAMBDAV, wavelengthv, -1, -1);
 // #define PLOT_QABS
 #ifdef PLOT_QABS
 	stringstream filename;
 	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
-	         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
+		 << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 	ofstream qabsfile = IOTools::ofstreamFile(filename.str());
 	for (size_t i = 0; i < frequencyv.size(); i++)
 		qabsfile << frequencyv[i] * Constant::CM_UM << '\t' << QabsWav[i] << endl;
@@ -170,7 +170,7 @@ Array Testing::improveFrequencyGrid(const NLevel& boundBound, const Array& oldPo
 
 	double lineWindowFactor = 1.;
 	double thermalFactor = sqrt(Constant::BOLTZMAN * 50000 / Constant::HMASS_CGS) /
-	                       Constant::LIGHT;
+			       Constant::LIGHT;
 	naturalWidthv = lineWindowFactor * (naturalWidthv + lineFreqv * thermalFactor);
 
 	vector<double> gridVector(begin(oldPoints), end(oldPoints));
@@ -235,7 +235,7 @@ Array Testing::freqToWavGrid(const Array& frequencyv)
 }
 
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
-                                  Array lineFreqv, Array freqWidthv)
+				  Array lineFreqv, Array freqWidthv)
 {
 	// Function that inserts a point, but only if the neighbouring points are not
 	// too close (distance smaller than the resolution argument)
@@ -318,7 +318,7 @@ Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, do
 
 	// Integrate over the UV only
 	double UVdensity = Constant::FPI / Constant::LIGHT *
-	                   TemplatedUtils::integrate<double>(frequenciesUV, isrfUV);
+			   TemplatedUtils::integrate<double>(frequenciesUV, isrfUV);
 	double currentG0 = UVdensity / Constant::HABING;
 
 	// Rescale to _G0
@@ -328,30 +328,30 @@ Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, do
 
 	// Integrate over the UV only
 	double UVdensitybis = Constant::FPI / Constant::LIGHT *
-	                      TemplatedUtils::integrate<double>(frequenciesUV, isrfUVbis);
+			      TemplatedUtils::integrate<double>(frequenciesUV, isrfUVbis);
 	cout << "Normalized spectrum uv = " << UVdensitybis << " ("
 	     << UVdensitybis / Constant::HABING << " habing)" << endl;
 
 	// Write out the ISRF
 	// ofstream out = IOTools::ofstreamFile("testing/isrf.txt");
 	// for (size_t b = 0; b < I_nu.size(); b++)
-	// 	out << frequencyv[b] << '\t' << I_nu[b] << '\n';
+	//	out << frequencyv[b] << '\t' << I_nu[b] << '\n';
 	// out.close();
 	// out = IOTools::ofstreamFile("testing/isrfUV.txt");
 	// for (size_t b = 0; b < isrfUV.size(); b++)
-	// 	out << frequenciesUV[b] << '\t' << isrfUVbis[b] << '\n';
+	//	out << frequenciesUV[b] << '\t' << isrfUVbis[b] << '\n';
 	// out.close();
 	return I_nu;
 }
 
 Array Testing::freqToWavSpecificIntensity(const Array& frequencyv,
-                                          const Array& specificIntensity_nu)
+					  const Array& specificIntensity_nu)
 {
 	Array I_lambda(frequencyv.size());
 	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
 		I_lambda[I_lambda.size() - iFreq - 1] = specificIntensity_nu[iFreq] *
-		                                        frequencyv[iFreq] * frequencyv[iFreq] /
-		                                        Constant::LIGHT;
+							frequencyv[iFreq] * frequencyv[iFreq] /
+							Constant::LIGHT;
 	return I_lambda;
 }
 
@@ -369,8 +369,8 @@ void Testing::plotIonizationStuff()
 		double sigmaTheoretical;
 		if (freq > tr)
 			sigmaTheoretical = A0 * pow(tr / freq, 4.) *
-			                   exp(4 - 4 * atan(eps) / eps) /
-			                   (1 - exp(-2 * Constant::PI / eps));
+					   exp(4 - 4 * atan(eps) / eps) /
+					   (1 - exp(-2 * Constant::PI / eps));
 		else
 			sigmaTheoretical = 0;
 		out << freq << "\t" << sigma << "\t" << sigmaTheoretical << "\t"
@@ -388,15 +388,15 @@ void Testing::plotIonizationStuff()
 	{
 		double T = kT_eV / Constant::BOLTZMAN / Constant::ERG_EV;
 		double cool = Ionization::cooling(n * (1 - f), f * n, f * n, T) /
-		              Constant::RYDBERG;
+			      Constant::RYDBERG;
 		out << kT_eV << "\t" << cool << endl;
 	}
 	out.close();
 }
 
 void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
-                                  const std::string& outputPath, double Tc, double G0, double n,
-                                  double expectedTemperature)
+				  const std::string& outputPath, double Tc, double G0, double n,
+				  double expectedTemperature)
 {
 	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
@@ -407,7 +407,7 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
 }
 
 void Testing::writeGasState(const string& outputPath, const GasModule::GasInterface& gi,
-                            const GasModule::GasState& gs)
+			    const GasModule::GasState& gs)
 {
 	cout << "Equilibrium temperature: " << gs.temperature() << endl;
 	cout << "Ionized fraction: " << gs.ionizedFraction() << endl;
@@ -422,10 +422,10 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
-	                "frequency",
-	                "wavelength",
-	                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
-	                "opacity alpha_nu (cm-1)",
+			"frequency",
+			"wavelength",
+			"intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+			"opacity alpha_nu (cm-1)",
 	};
 	out << "#";
 	int i = 0;
@@ -488,8 +488,8 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 void Testing::plotHeatingCurve_main()
 {
 	Array frequencyv =
-	                generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+			generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
+					       Constant::LIGHT / (0.005 * Constant::UM_CM));
 	double Tc = 30000;
 	double g0 = 1e0;
 	double n = 1000;
@@ -500,7 +500,7 @@ void Testing::plotHeatingCurve_main()
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                               const Spectrum& specificIntensity, double n)
+			       const Spectrum& specificIntensity, double n)
 {
 	const string tab = "\t";
 	const int samples = 200;
@@ -517,7 +517,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	{
 		GasModule::GrainInterface gri{};
 		GasInterfaceImpl::Solution s =
-		                gi.calculateDensities(n, T, specificIntensity, gri);
+				gi.calculateDensities(n, T, specificIntensity, gri);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -536,7 +536,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	output.close();
 
 	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
-	                                                specificIntensity.valuev());
+							specificIntensity.valuev());
 
 	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
 	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
@@ -559,7 +559,7 @@ void Testing::plotPhotoelectricHeating()
 	vector<int> pickValues{0, 1, 2, 3, 4};
 
 	unique_ptr<GrainType> grainType{
-	                GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLabel::CAR)};
+			GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLabel::CAR)};
 	GrainPhotoelectricEffect phr(*grainType);
 	phr.yieldFunctionTest();
 
@@ -625,7 +625,7 @@ void Testing::plotPS64Collisions()
 	for (int n : std::array<int, 2>{4, 5})
 	{
 		ofstream out = IOTools::ofstreamFile("ps64/t" + to_string(n) + "l_q" +
-		                                     to_string(n) + "l.dat");
+						     to_string(n) + "l.dat");
 		for (int li = 0; li < n; li++)
 		{
 			size_t nliIndex = hff.indexOutput(n, li);
@@ -674,8 +674,8 @@ void Testing::runH2(bool write)
 
 	// Base grid
 	Array unrefinedv =
-	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
+			generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
+					       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
 	Array specificIntensityv = generateSpecificIntensityv(unrefinedv, Tc, G0);
 	Spectrum specificIntensity(unrefinedv, specificIntensityv);
@@ -708,9 +708,9 @@ void Testing::runH2(bool write)
 		for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
 		{
 			h2optical << frequencyv[iFreq] << tab
-			          << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM
-			          << tab << emissivityv[iFreq] << tab << opacityv[iFreq] << tab
-			          << lineOp[iFreq] << endl;
+				  << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM
+				  << tab << emissivityv[iFreq] << tab << opacityv[iFreq] << tab
+				  << lineOp[iFreq] << endl;
 		}
 	}
 }
@@ -718,8 +718,8 @@ void Testing::runH2(bool write)
 void Testing::runFromFilesvsHardCoded()
 {
 	Array unrefinedv =
-	                generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
-	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
+			generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
+					       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
 	// Hey, at least we'll get a decent frequency grid out of this hack
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5));
@@ -787,7 +787,7 @@ void Testing::runWithDust(bool write)
 	double Tc{4e3};
 	double G0{1e2};
 	Array specificIntensityv =
-	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
+			generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
 	// Gas density
 	double nHtotal{1000};
@@ -818,7 +818,7 @@ void Testing::runWithDust(bool write)
 	// Construct grain info using list of population objects
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
 	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
-	                        qAbsvv);
+				qAbsvv);
 	GasModule::GrainInterface grainInterface(move(grainPopv));
 
 	// Run
