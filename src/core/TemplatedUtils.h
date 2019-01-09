@@ -10,6 +10,8 @@ namespace TemplatedUtils
 {
 template <typename T, typename T1> std::vector<size_t> argsort(const T1& container);
 
+template <typename T, typename T1> bool contains(const T& value, const T1& container);
+
 template <typename T> bool inRange(T value, T min, T max);
 
 template <typename T> bool equalWithinTolerance(T value, T reference, T precision);

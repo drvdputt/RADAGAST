@@ -5,6 +5,7 @@
 namespace TemplatedUtils
 {
 
+/** Return the index permutation required to sort the given data */
 template <typename T> std::vector<size_t> argsort(const T* begin, size_t size)
 {
 	// https://stackoverflow.com/questions/1577475/c-sorting-and-keeping-track-of-indexes
@@ -18,6 +19,13 @@ template <typename T> std::vector<size_t> argsort(const T* begin, size_t size)
 	          [&](size_t i1, size_t i2) { return begin[i1] < begin[i2]; });
 
 	return iv;
+}
+
+/** Return true if value is found in container. */
+template <typename T, typename T1> bool contains(const T& value, const T1& container)
+{
+	return std::find(std::begin(container), std::end(container), value) !=
+	       std::end(container);
 }
 
 /** Return true if min <= value <= max. */
