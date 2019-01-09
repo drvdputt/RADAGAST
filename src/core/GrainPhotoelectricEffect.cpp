@@ -17,6 +17,8 @@ using namespace std;
 GrainPhotoelectricEffect::GrainPhotoelectricEffect(const GrainType& grainType)
                 : _grainType{grainType}
 {
+	// TODO: Possible optimization: precalculate everyting that only depends on a /
+	// graintype, then do the charge balance for this grain size only.
 }
 
 int GrainPhotoelectricEffect::minimumCharge(double a) const
@@ -239,11 +241,12 @@ double GrainPhotoelectricEffect::rateIntegral(
 	Array pdIntegrandv;
 	if (Z < 0)
 		pdIntegrandv.resize(numFreq);
+
+	Array hnuv = Constant::PLANCK * frequencyv;
 	for (size_t iFreq = 0; iFreq < numFreq; iFreq++)
 	{
-		double hnu = Constant::PLANCK * frequencyv[iFreq];
-
 		// No contribution below the photoelectric threshold
+		double hnu = hnuv[iFreq];
 		if (hnu > hnu_pet)
 		{
 			// Quantities dependent on nu
@@ -387,7 +390,7 @@ double GrainPhotoelectricEffect::heatingRate(
 
 		// Use the charge distribution to calculate the photoelectric heating rate for
 		// this size
-		if (a < 500 * Constant::ANG_CM)
+		if (a < 2000 * Constant::ANG_CM)
 			total += nd * heatingRateA(a, env, Qabsv, fZ, Zmax, Zmin);
 
 			// and the cooling by gas-grain collisions
