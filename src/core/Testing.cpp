@@ -875,7 +875,7 @@ void Testing::runMRNDust(bool write)
 	Array sizev(numSizes);
 	Array densityv(numSizes);
 	Array temperaturev(numSizes);
-	for (size_t i = 0; i < numSizes - 1; i++)
+	for (size_t i = 0; i < numSizes; i++)
 	{
 		double bin_width = bin_edges[i + 1] - bin_edges[i];
 		sizev[i] = (bin_edges[i+1] + bin_edges[i]) / 2;
