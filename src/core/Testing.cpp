@@ -887,12 +887,16 @@ void Testing::runMRNDust(bool write)
 
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
 	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
-				qAbsvv);
+	                        qAbsvv);
 	GasModule::GrainInterface grainInterface(move(grainPopv));
 
-	// Run
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
+
 	if (write)
-		writeGasState("withDust/", gasInterface, gs);
+	{
+		writeGasState("MRNDust/", gasInterface, gs);
+		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
+		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", I_nu, nHtotal);
+	}
 }
