@@ -68,7 +68,7 @@ int main()
 		}
 		outfile << " " << heat << " " << cool;
 		outfile << '\n';
-		std::cout << "T = " << T << std::endl;
+		std::cout << "T = " << T << '\n';
 	}
 	for (double T = 100000; T > 10; T /= 1.05)
 	{
@@ -84,9 +84,9 @@ int main()
 		}
 		outfile << " " << heat << " " << cool;
 		outfile << '\n';
-		std::cout << "T = " << T << std::endl;
+		std::cout << "T = " << T << '\n';
 	}
 
 	outfile.close();
-	std::cout << "wrote to " << outfname << std::endl;
+	std::cout << "wrote to " << outfname << '\n';
 }
