@@ -69,6 +69,9 @@ struct heating_f_params
 	bool use_previous_solution;
 };
 
+/* Function that will be used by the GSL search algorithm to find the equilibrium temperature.
+   The state of the system will be updated every time the algorithm calls this function (and
+   stored via the pointer suppied in the heating_f_params struct). */
 double heating_f(double logT, void* params)
 {
 	auto* p = static_cast<struct heating_f_params*>(params);
@@ -112,32 +115,6 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		const double logTmax = log10(Tmax);
 		const double logTmin = log10(Tmin);
 		const double logTtolerance = 1.e-3;
-
-		// double logTinit = log10(Tinit);
-
-		/* Lambda function that will be used by the search algorithm. The state of the
-		   system will be updated every time the algorithm calls this function. The
-		   return value indicates whether the temperature should increase (there is net
-		   heating so we need a higher temperature leading to more cooling) or decrease
-		   (there is net cooling so we need a lower temperature leading to less
-		   cooling). */
-		// int counter = 0;
-		// const Solution* previous = nullptr;
-		// function<int(double)> evaluateThermalBalance = [&](double logT) -> int {
-		// 	counter++;
-		// 	s = calculateDensities(n, pow(10., logT), specificIntensity, gi,
-		// 	                       previous);
-		// 	previous = &s;
-		// 	double netPowerIn = heating(s, gi) - cooling(s);
-		// 	DEBUG("Cycle " << counter << ": logT = " << logT
-		// 	               << "; netHeating = " << netPowerIn << endl
-		// 	               << endl);
-		// 	return (netPowerIn > 0) - (netPowerIn < 0);
-		// };
-
-		// double logTfinal = TemplatedUtils::binaryIntervalSearch<double>(
-		//                 evaluateThermalBalance, logTinit, logTtolerance, logTmax,
-		//                 logTmin);
 
 		const gsl_root_fsolver_type* T = gsl_root_fsolver_bisection;
 		gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
