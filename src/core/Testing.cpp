@@ -505,19 +505,22 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	const string tab = "\t";
 	const int samples = 200;
 
-	double T = 10;
-	double factor = pow(1000000. / 10., 1. / samples);
-
 	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
 	output << "# 0temperature 1net 2heat 3cool"
 	       << " 4lineNet 5lineHeat 6lineCool"
 	       << " 7continuumNet 8continuumHeat 9continuumCool"
 	       << " 10ionizedFrac" << endl;
-	for (int N = 0; N < samples; N++, T *= factor)
+
+	double T = 10;
+	double factor = pow(1000000. / 10., 1. / samples);
+	GasModule::GrainInterface gri{};
+	GasInterfaceImpl::Solution s =
+	                gi.calculateDensities(n, T, specificIntensity, gri, nullptr);
+
+	for (int N = 1; N < samples; N++, T *= factor)
 	{
-		GasModule::GrainInterface gri{};
-		GasInterfaceImpl::Solution s =
-		                gi.calculateDensities(n, T, specificIntensity, gri);
+
+		s = gi.calculateDensities(n, T, specificIntensity, gri, &s);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
