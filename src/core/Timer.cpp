@@ -10,5 +10,5 @@ Timer::~Timer()
 {
 	auto _f = std::chrono::high_resolution_clock::now();
 	auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(_f - _i);
-	std::cout << _phrase << " completed in " << duration.count() << " ms." << std::endl;
+	std::cout << _phrase << " completed in " << duration.count() << " ms.\n";
 }
