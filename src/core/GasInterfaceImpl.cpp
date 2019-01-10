@@ -170,12 +170,10 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 	gs = GasModule::GasState(emv, opv, scv, s.T, densityv, h2form, grainHeat);
 }
 
-GasInterfaceImpl::Solution
-GasInterfaceImpl::calculateDensities(double nHtotal, double T,
-                                     const Spectrum& specificIntensity,
-                                     const GasModule::GrainInterface& gi,
-                                     const GasInterfaceImpl::Solution* previous,
-				     double h2FormationOverride) const
+GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
+                double nHtotal, double T, const Spectrum& specificIntensity,
+                const GasModule::GrainInterface& gi, const GasInterfaceImpl::Solution* previous,
+                double h2FormationOverride) const
 {
 	Solution s;
 
