@@ -195,11 +195,11 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	// Decide how to do the initial guess; manual, or using the previous state.
 	bool manualGuess = true;
 
-	// If a previous solution is available (pointer is nonzero)
+	// If a previous solution is available (pointer is nonzero), then check if we want to use it
 	if (previous)
 	{
 		double fT = T / previous->T;
-		if (fT > 0.2 && fT < 5)
+		if (fT > 0.75 && fT < 1.5)
 		{
 			DEBUG("Using previous speciesNv as initial guess" << std::endl);
 			s.speciesNv = previous->speciesNv;
