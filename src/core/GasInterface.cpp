@@ -73,9 +73,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
                                   const valarray<double>& specificIntensityv,
                                   const GrainInterface& grainInfo) const
 {
-#ifndef SILENT
 	Timer t("Update gas state");
-#endif
 	// Create a spectrum object which makes it easier to pass around the frequencies and the
 	// values for the specific intensity. It can also be used to easily interpolate the
 	// specific intensity for a certain frequency.
