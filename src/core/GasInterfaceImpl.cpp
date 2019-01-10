@@ -116,7 +116,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		const double logTmin = log10(Tmin);
 		const double logTtolerance = 1.e-3;
 
-		const gsl_root_fsolver_type* T = gsl_root_fsolver_bisection;
+		const gsl_root_fsolver_type* T = gsl_root_fsolver_brent;
 		gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
 
 		gsl_function F;
@@ -133,6 +133,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 
 		gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
 		int test_interval = GSL_CONTINUE;
+		int counter = 0;
 		while (test_interval != GSL_SUCCESS)
 		{
 			gsl_root_fsolver_iterate(solver);
@@ -140,6 +141,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 			double upper = gsl_root_fsolver_x_upper(solver);
 			test_interval = gsl_root_test_interval(lower, upper, logTtolerance,
 			                                       logTtolerance);
+			counter++;
 		}
 		gsl_root_fsolver_free(solver);
 		// Remember that s gets updated through the pointer given to the function
