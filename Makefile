@@ -51,7 +51,12 @@ MAINDIR=$(SRCDIR)/mains
 # Includes
 INCDIR=./include
 EIGENDIR=./eigen3
-GSLDIR=/usr/lib/x86_64-linux-gnu
+ifeq ($(OS), Darwin) # assumming gsl installed via homebrew
+	GSLDIR=/usr/local
+endif
+
+# another possible location
+GSLDIR ?= /usr/lib/x86_64-linux-gnu
 
 # Include flags. Adjust the different paths above.
 INCFLAGS=-I$(COREDIR) -I$(INCDIR) -I$(GSLDIR)/include -isystem$(EIGENDIR)
