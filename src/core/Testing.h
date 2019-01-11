@@ -99,6 +99,8 @@ GasModule::GasInterface genFullModel();
 
 GasModule::GasInterface genHonlyModel();
 
+GasModule::GrainInterface genMRNDust(double nHtotal, const Array& frequencyv);
+
 /** Run the model with the maximum number of levels, and iterate until the temperature
     converges. */
 void runFullModel();

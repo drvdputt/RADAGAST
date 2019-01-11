@@ -848,23 +848,8 @@ void Testing::runWithDust(bool write)
 //	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
 // }
 
-void Testing::runMRNDust(bool write)
+GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequencyv)
 {
-	cout << "RUN_MRN_DUST\n";
-
-	// Gas model
-	GasModule::GasInterface gasInterface = genFullModel();
-
-	// Radiation field
-	double Tc{4e3};
-	double G0{1e2};
-	Array specificIntensityv =
-	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
-
-	// Gas density
-	double nHtotal{1000};
-	double Tinit{8000};
-
 	double amin = 50 * Constant::ANG_CM;
 	double amax = 0.24 * Constant::UM_CM;
 
@@ -886,12 +871,31 @@ void Testing::runMRNDust(bool write)
 		temperaturev[i] = 10;
 	}
 
-	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.iFrequencyv())};
-
+	vector<Array> qAbsvv{qAbsvvForTesting(sizev, frequencyv)};
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
 	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
 	                        qAbsvv);
 	GasModule::GrainInterface grainInterface(move(grainPopv));
+	return grainInterface;
+}
+
+void Testing::runMRNDust(bool write)
+{
+	cout << "RUN_MRN_DUST\n";
+
+	// Gas model
+	GasModule::GasInterface gasInterface = genFullModel();
+	double nHtotal{1000};
+	double Tinit{8000};
+
+	// Dust model
+	auto grainInterface = genMRNDust(nHtotal, gasInterface.iFrequencyv());
+
+	// Radiation field
+	double Tc{4e3};
+	double G0{1e2};
+	Array specificIntensityv =
+	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
