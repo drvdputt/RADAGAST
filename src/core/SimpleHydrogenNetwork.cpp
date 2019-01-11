@@ -1,4 +1,5 @@
 #include "SimpleHydrogenNetwork.h"
+#include "DebugMacros.h"
 #include "IonizationBalance.h"
 #include "SpeciesIndex.h"
 
@@ -47,5 +48,8 @@ EVector SimpleHydrogenNetwork::rateCoeffv(double T, const Spectrum& specificInte
 	/* The rate of this reaction is twice the H2 formation rate. See comment in constructor
 	   implementation. */
 	k(reactionIndex("half H2 formation")) = 2 * kH2FormationGrain;
+
+	DEBUG("0 photo-ion; 1 coll-ion; 2 rad-rec; 3 dissoc; 4 H2form\n" << k << '\n');
+
 	return k;
 }

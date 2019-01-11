@@ -296,8 +296,6 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 			double kDissH2Levels = _molecular->dissociationRate(
 			                s.H2Solution, s.specificIntensity);
 
-			DEBUG("Formation rate per H " << kFormH2 << endl);
-			DEBUG("Dissociation rate per H2 " << kDissH2Levels << endl);
 			if (kDissH2Levels < 0)
 				Error::runtime("negative dissociation rate!");
 
