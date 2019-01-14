@@ -272,15 +272,12 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 
 	int counter = 0;
 	bool stopCriterion = false;
+	EVector previousAbundancev = s.speciesNv;
+	double previousHeating = 0;
 	while (!stopCriterion)
 	{
-		/* Use the current guess for the chemical abundances to calculate our first set
-		   of level populations. */
-
 		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
 		solveLevelBalances();
-
-		EVector previousAbundancev = s.speciesNv;
 
 		if (previousAbundancev.array().isNaN().any())
 			Error::runtime("Nan in chemistry solution!");
@@ -341,14 +338,24 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
 		                s.speciesNv.array() < 1.e-99 * norm;
+
+		double netHeating = heating(s) - cooling(s);
+		bool heatingConverged = TemplatedUtils::equalWithinTolerance(
+		                netHeating, previousHeating, 1e-2);
 		counter++;
-		DEBUG("Chemistry: " << counter << endl
-		                    << s.speciesNv << endl
+		DEBUG("Chemistry: " << counter << '\n'
+		                    << s.speciesNv << '\n'
 		                    << "convergence: \n"
-		                    << convergedv << endl);
+		                    << convergedv << '\n');
+		DEBUG("Net heat: " << netHeating << " previous: " << previousHeating << '\n');
+
+		previousAbundancev = s.speciesNv;
+		previousHeating = netHeating;
+
+		bool allQuantitiesConverged = convergedv.all() && heatingConverged;
 
 		// Currently, the implementation without molecules does not need iteration.
-		stopCriterion = !_molecular || convergedv.all() ||
+		stopCriterion = !_molecular || allQuantitiesConverged ||
 		                counter > MAXCHEMISTRYITERATIONS;
 	}
 	return s;
