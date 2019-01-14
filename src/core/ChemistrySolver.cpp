@@ -217,7 +217,9 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 	// Then, use the minimization algorithm which does use the correct coefficients to go to
 	// the real solution
 	nv = solveMultimin(rateCoeffv, nv);
-	return nv;
+
+	// Remove negative densities (and hope everything is still normalized)
+	return (nv.array() < 0).select(0, nv);
 }
 
 EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector& n0v) const
