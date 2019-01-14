@@ -509,7 +509,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	output << "# 0temperature 1net 2heat 3cool"
 	       << " 4lineNet 5lineHeat 6lineCool"
 	       << " 7continuumNet 8continuumHeat 9continuumCool"
-	       << " 10ionizedFrac" << endl;
+	       << "10e- 11H+ 12H 13H2 \n";
 
 	double T = 10;
 	double factor = pow(1000000. / 10., 1. / samples);
@@ -517,10 +517,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	GasInterfaceImpl::Solution s =
 	                gi.calculateDensities(n, T, specificIntensity, gri, nullptr);
 
-	for (int N = 1; N < samples; N++, T *= factor)
-	{
-
-		s = gi.calculateDensities(n, T, specificIntensity, gri, &s);
+	auto outputCooling = [&](double t) {
+		s = gi.calculateDensities(n, t, specificIntensity, gri, &s);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -532,10 +530,19 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		double netLine = lHeat - lCool;
 		double netCont = cHeat - cCool;
 
-		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
+		output << t << tab << netHeating << tab << heat << tab << cool << tab << netLine
 		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
-		       << cCool << tab << gi.f(s) << endl;
-	}
+		       << cCool;
+		for (int i = 0; i < s.speciesNv.size(); i++)
+			output << tab << s.speciesNv(i);
+		output << '\n';
+	};
+
+	for (int N = 1; N < samples; N++, T *= factor)
+		outputCooling(T);
+	for (int N = samples; N > 1; N--, T /= factor)
+		outputCooling(T);
+
 	output.close();
 
 	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
