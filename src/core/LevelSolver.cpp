@@ -70,13 +70,16 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 	// The algorithm apparently works better when the iterations happen from high to low
 	// energies, so we go backwards in our loops.
 
-	// Iterate until converged
+	// Convergence criteria. For the ground state levels, we demand that a certain absolute
+	// precision is reached. For the excited levels, a fractional convergence criterium
+	// suffices.
 	double maxDeltaX = 1.e-3 * totalDensity;
-	double maxDeltaAll = 1.e-3 * totalDensity;
 	double maxFracDelta = 1.e-3;
+
+	bool converged = false;
 	size_t counter{0};
 	const int max_iterations = 2001;
-	while (counter < max_iterations)
+	while (!converged && counter < max_iterations)
 	{
 		counter++;
 
@@ -125,36 +128,28 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		nv.segment(startE, numE) = (creationRateEv.array() > 0).select(newPopEv, 0);
 		nv *= totalDensity / nv.sum();
 
-		// Overall convergence check
-		auto deltaEv = (nv - previousNv).segment(startE, numE);
-		bool thresconv = (deltaEv.array().abs() < maxDeltaAll).all() &&
-		                 (deltaXv.array().abs() < maxDeltaAll).all();
-
-		// Relative change
+		// Overall convergence check (relative change), also check for changes from 0 to
+		// not 0;
 		bool fracconv = true;
 		for (int i = 0; i < nv.size() && fracconv; i++)
 		{
-			double df = 0;
 			// finite/0 means not converged
 			if (previousNv(i) <= 0 && nv(i) > 0)
-				df = 2 * maxFracDelta;
-
-			df = abs(nv(i) / previousNv(i) - 1.);
-
-			if (df > maxFracDelta)
 				fracconv = false;
+			else
+			{
+				double df = abs(nv(i) / previousNv(i) - 1.);
+				if (df > maxFracDelta)
+					fracconv = false;
+			}
 		}
 
 		if (!(counter % 1000))
 		{
 			DEBUG("Solving h2... " << counter << "iterations" << std::endl);
-			DEBUG("thresconv = " << thresconv << " fracconv = " << fracconv
-			                     << std::endl);
 		}
 
-		bool converged = thresconv && fracconv;
-		if (converged)
-			break;
+		converged = fracconv;
 	}
 	if (nv.array().isNaN().any())
 	{
@@ -162,7 +157,11 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		// Error::runtime("nan in H2 level solution");
 		nv = (nv.array().isNaN()).select(0, nv);
 	}
-	DEBUG("Solved H2 in " << counter << " iterations" << std::endl);
+	DEBUG("Solved H2 in " << counter << " iterations");
+	if (converged)
+		DEBUG("\n");
+	else
+		DEBUG(" (not converged)\n");
 	// DEBUG("h2Levelv = \n" << nv << std::endl);
 	return nv;
 }
