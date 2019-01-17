@@ -864,31 +864,44 @@ void Testing::runWithDust(bool write)
 
 GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequencyv)
 {
+	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
+
 	double amin = 50 * Constant::ANG_CM;
 	double amax = 0.24 * Constant::UM_CM;
 
-	bool carb = true; // carb or sil
-	double log10norm = carb ? -25.13 : -25.11;
-	double C = pow(10., log10norm);
-	auto mrnDens = [&](double a) { return C * nHtotal * pow(a, -3.5); };
-
+	// Shared properties
 	size_t numSizes = 100;
 	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
 	Array sizev(numSizes);
-	Array densityv(numSizes);
 	Array temperaturev(numSizes);
 	for (size_t i = 0; i < numSizes; i++)
 	{
-		double bin_width = bin_edges[i + 1] - bin_edges[i];
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		densityv[i] = mrnDens(sizev[i]) * bin_width;
-		temperaturev[i] = 10;
+		temperaturev[i] = 15;
 	}
 
-	vector<Array> qAbsvv{qAbsvvForTesting(sizev, frequencyv)};
-	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
-	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
-	                        qAbsvv);
+	// Properties that differ between car and sil
+	auto addMRNCarOrSil = [&](bool car) {
+		double log10norm = car ? -25.13 : -25.11;
+		double C = pow(10., log10norm);
+		Array densityv(numSizes);
+		for (size_t i = 0; i < numSizes; i++)
+		{
+			double bin_width = bin_edges[i + 1] - bin_edges[i];
+			densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+		}
+		auto label = car ? GasModule::GrainTypeLabel::CAR
+		                 : GasModule::GrainTypeLabel::SIL;
+		const auto& qabsvv = qAbsvvForTesting(car, sizev, frequencyv);
+		grainPopv->emplace_back(label, sizev, densityv, temperaturev, qabsvv);
+	};
+
+	// Carbonaceous population:
+	addMRNCarOrSil(true);
+
+	// Silicate population:
+	addMRNCarOrSil(false);
+
 	GasModule::GrainInterface grainInterface(move(grainPopv));
 	return grainInterface;
 }
