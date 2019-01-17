@@ -137,9 +137,6 @@ double multimin_f(const gsl_vector* x, void* p)
 	// View the gsl vector as an Eigen vector (without copying)
 	Eigen::Map<EVector> nv(x->data, x->size);
 
-	if (nv.array().isNaN().any())
-		Error::runtime("x is nan");
-
 	// Get the vector of derivatives (pass an emtpy vector because we won't be replacing any
 	// equations here)
 	auto thisp = params->solver_instance;
