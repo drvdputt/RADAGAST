@@ -275,6 +275,7 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	bool stopCriterion = false;
 	EVector previousAbundancev = s.speciesNv;
 	double previousHeating = 0;
+	double previousCooling = 0;
 	while (!stopCriterion)
 	{
 		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
@@ -340,20 +341,26 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
 		                s.speciesNv.array() < 1.e-99 * norm;
 
-		double netHeating = heating(s) - cooling(s);
+		double newHeating = heating(s);
+		double newCooling = cooling(s);
 		bool heatingConverged = TemplatedUtils::equalWithinTolerance(
-		                netHeating, previousHeating, 1e-2);
+		                newHeating, previousHeating, 1e-2);
+		bool coolingConverged = TemplatedUtils::equalWithinTolerance(
+		                newCooling, previousCooling, 1e-2);
 		counter++;
 		DEBUG("Chemistry: " << counter << '\n'
 		                    << s.speciesNv << '\n'
 		                    << "convergence: \n"
 		                    << convergedv << '\n');
-		DEBUG("Net heat: " << netHeating << " previous: " << previousHeating << '\n');
+		DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
+		DEBUG("New cool: " << newCooling << " previous: " << previousCooling << '\n');
 
 		previousAbundancev = s.speciesNv;
-		previousHeating = netHeating;
+		previousHeating = newHeating;
+		previousCooling = newCooling;
 
-		bool allQuantitiesConverged = convergedv.all() && heatingConverged;
+		bool allQuantitiesConverged =
+		                convergedv.all() && heatingConverged && coolingConverged;
 
 		// Currently, the implementation without molecules does not need iteration.
 		stopCriterion = !_molecular || allQuantitiesConverged ||
