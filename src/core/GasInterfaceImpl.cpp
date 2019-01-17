@@ -25,7 +25,7 @@
 
 using namespace std;
 
-constexpr int MAXCHEMISTRYITERATIONS{100};
+constexpr int MAXCHEMISTRYITERATIONS{25};
 constexpr bool GASGRAINCOOL{true};
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
@@ -195,7 +195,8 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	// Decide how to do the initial guess; manual, or using the previous state.
 	bool manualGuess = true;
 
-	// If a previous solution is available (pointer is nonzero), then check if we want to use it
+	// If a previous solution is available (pointer is nonzero), then check if we want to
+	// use it
 	if (previous)
 	{
 		double fT = T / previous->T;
@@ -210,15 +211,15 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	}
 	if (manualGuess)
 	{
-		double molfrac = 0.1;
-		double iniAtomAndIon = nHtotal * (1 - molfrac);
-		double iniNH2 = nHtotal * molfrac / 2;
-		double guessF = Ionization::solveBalance(iniAtomAndIon, T, specificIntensity);
+		double ionFrac = Ionization::solveBalance(nHtotal, T, specificIntensity);
+		double molFrac = 0.1;
+		double nIonized = ionFrac * nHtotal;
+		double nNeutral = (1 - ionFrac) * nHtotal;
 		s.speciesNv = EVector(SpeciesIndex::size());
-		s.speciesNv(_ine) = guessF * iniAtomAndIon;
-		s.speciesNv(_inp) = guessF * iniAtomAndIon;
-		s.speciesNv(_inH) = (1 - guessF) * iniAtomAndIon;
-		s.speciesNv(_inH2) = iniNH2;
+		s.speciesNv(_ine) = nIonized;
+		s.speciesNv(_inp) = nIonized;
+		s.speciesNv(_inH) = (1 - molFrac) * nNeutral;
+		s.speciesNv(_inH2) = molFrac * nNeutral / 2;
 	}
 
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
