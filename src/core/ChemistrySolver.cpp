@@ -208,12 +208,24 @@ ChemistrySolver::~ChemistrySolver() = default;
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
 	EVector nv = n0v;
+
 	// First, use the multiroot method, which intentionally uses a slightly modified kv to
 	// prevent the jacobian from becoming singular (resulting in weird steps)
-	nv = solveMultiroot(rateCoeffv, nv);
+	double smallest = rateCoeffv.maxCoeff();
+	for (int i = 0; i < rateCoeffv.size(); i++)
+		if (rateCoeffv(i) > 0)
+			smallest = std::min(smallest, rateCoeffv(i));
+
+	// Replace the zeros by something very small
+	EVector kv = (rateCoeffv.array() > 0).select(rateCoeffv, smallest * 1e-30);
+	nv = solveMultiroot(kv, nv);
+
 	// Then, use the minimization algorithm which does use the correct coefficients to go to
 	// the real solution
 	nv = solveMultimin(rateCoeffv, nv);
+
+	if (nv.array().isNaN().any())
+		Error::runtime("NaN in chemistry solution");
 
 	// Remove negative densities (and hope everything is still normalized)
 	return (nv.array() < 0).select(0, nv);
@@ -221,14 +233,6 @@ EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& 
 
 EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector& n0v) const
 {
-	// Hack to prevent singular jacobian? Find smallest nonzero element.
-	double smallest = rateCoeffv.maxCoeff();
-	for (int i = 0; i < rateCoeffv.size(); i++)
-		if (rateCoeffv(i) > 0)
-			smallest = std::min(smallest, rateCoeffv(i));
-	// Replace the zeros by something very small
-	EVector kv = (rateCoeffv.array() > 0).select(rateCoeffv, smallest * 1e-30);
-
 	// Fix the conserved quantities using the initial condition
 	EVector conservedQuantityv = _conservEqvv * n0v;
 
@@ -241,7 +245,7 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 
 	// Conserved quantities and rate coefficients are supplied to the functions via this
 	// struct
-	struct multiroot_params params = {&kv, &conservedQuantityv, &iToReplacev, this};
+	struct multiroot_params params = {&rateCoeffv, &conservedQuantityv, &iToReplacev, this};
 
 	const gsl_multiroot_fdfsolver_type* T = gsl_multiroot_fdfsolver_hybridsj;
 	gsl_multiroot_fdfsolver* s = gsl_multiroot_fdfsolver_alloc(T, _numSpecies);
@@ -303,8 +307,6 @@ EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector
 	        << solutionv << "\n");
 
 	gsl_multiroot_fdfsolver_free(s);
-	if (solutionv.array().isNaN().any())
-		Error::runtime("NaN in chemistry solution");
 	return solutionv;
 }
 
