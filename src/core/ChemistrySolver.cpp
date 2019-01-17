@@ -338,7 +338,13 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 	gsl_vector* x = gsl_multimin_fdfminimizer_x(m);
 	double minimum = gsl_multimin_fdfminimizer_minimum(m);
 	gsl_vector* g = gsl_multimin_fdfminimizer_gradient(m);
-	// gsl_vector* dx = gsl_multimin_fdfminimizer_dx(m);
+
+	// Map for easy nan checking
+	Eigen::Map<EVector> solutionv(x->data, x->size);
+
+	// Store a fallback solution that was not NaN, in case we get a NaN.
+	EVector nonNanSolutionv(solutionv);
+
 	int i = 0;
 	for (; i < maxIt; i++)
 	{
@@ -348,6 +354,11 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 		int testGradient = gsl_multimin_test_gradient(g, epsabs_g);
 
 		// DEBUG("Step\n" << Eigen::Map<EVector>(dx->data, dx->size) << '\n');
+
+		if (solutionv.array().isNaN().any())
+			break;
+		else
+			nonNanSolutionv = solutionv;
 		if (iterationStatus == GSL_ENOPROG)
 		{
 			DEBUG("No progress! breaking...\n");
@@ -357,16 +368,15 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 			break;
 	}
 
-	EVector solutionv(Eigen::Map<EVector>(x->data, x->size));
-	EVector Fv = evaluateFv(solutionv, rateCoeffv);
-	EVector Qv = evaluateQv(solutionv, conservedQuantityv);
+	EVector Fv = evaluateFv(nonNanSolutionv, rateCoeffv);
+	EVector Qv = evaluateQv(nonNanSolutionv, conservedQuantityv);
 	DEBUG(i << "multimin iterations for chemistry\nResidual:\n"
 	        << Fv << "\nConservation\n"
 	        << Qv << "\nSolution\n"
-	        << solutionv << "\n");
+	        << nonNanSolutionv << "\n");
 
 	gsl_multimin_fdfminimizer_free(m);
-	return solutionv;
+	return nonNanSolutionv;
 }
 
 std::vector<size_t> ChemistrySolver::chooseEquationsToReplace(const EVector& nv) const
