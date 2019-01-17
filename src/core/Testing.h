@@ -15,16 +15,8 @@ class Spectrum;
 
 namespace Testing
 {
-// ABSORPTION EFFICIENCY FROM FILE //
-/* Some static hacks. The first one reads some data ripped from SKIRT into variables declared in
-   the cpp file. Then, a Qabsv for a single size can be generated using generateQabsv. The third
-   function, qAbsvvForTesting does the read step, and then calls the second function for every
-   size of the list. */
-void readQabs(bool car);
-
-Array generateQabsv(double a, const Array& frequencyv);
-
-std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
+// ABSORPTION EFFICIENCIES FROM FILE //
+std::vector<Array> qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv);
 
 // USEFUL CONSTANTS //
 constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);

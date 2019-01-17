@@ -23,15 +23,23 @@
 
 using namespace std;
 
-/* FIXME: hacks hacks hacks */
 namespace
 {
-vector<double> FILELAMBDAV, FILEAV;
-vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
-} // namespace
-
-void Testing::readQabs(bool car)
+typedef struct QabsDataSet
 {
+	vector<double> FILELAMBDAV;
+	vector<double> FILEAV;
+	vector<vector<double>> QABSVV;
+
+} QabsDataSet;
+
+QabsDataSet readQabs(bool car)
+{
+	QabsDataSet data;
+
+	// We dont need these, but store them anyway for clarity
+	vector<vector<double>> QSCAVV, ASYMMPARVV;
+
 	///////////////////// Begin copy-paste from SKIRT
 	bool reverse = true;
 	bool skip1 = false;
@@ -55,9 +63,9 @@ void Testing::readQabs(bool car)
 	getline(file, line); // ignore anything else on this line
 
 	// resize the vectors
-	FILELAMBDAV.resize(_Nlambda);
-	FILEAV.resize(_Na);
-	QABSVV.resize(_Nlambda, vector<double>(_Na));
+	data.FILELAMBDAV.resize(_Nlambda);
+	data.FILEAV.resize(_Na);
+	data.QABSVV.resize(_Nlambda, vector<double>(_Na));
 	QSCAVV.resize(_Nlambda, vector<double>(_Na));
 	ASYMMPARVV.resize(_Nlambda, vector<double>(_Na));
 
@@ -70,19 +78,19 @@ void Testing::readQabs(bool car)
 	double dummy;
 	for (size_t i = 0; i < _Na; i++)
 	{
-		file >> FILEAV[i];
-		FILEAV[i] *= 1e-6; // convert from micron to m
+		file >> data.FILEAV[i];
+		data.FILEAV[i] *= 1e-6; // convert from micron to m
 		getline(file, line); // ignore anything else on this line
 
 		for (int k = kbeg; k != kend; k += kinc)
 		{
 			if (skip1)
 				file >> dummy;
-			file >> FILELAMBDAV[k];
-			FILELAMBDAV[k] *= 1e-6; // convert from micron to m
+			file >> data.FILELAMBDAV[k];
+			data.FILELAMBDAV[k] *= 1e-6; // convert from micron to m
 			if (skip2)
 				file >> dummy;
-			file >> QABSVV[k][i];
+			file >> data.QABSVV[k][i];
 			file >> QSCAVV[k][i];
 			if (skip3)
 				file >> dummy;
@@ -96,48 +104,39 @@ void Testing::readQabs(bool car)
 	///////////////////// End copy-paste from SKIRT
 
 	// Convert the wavelengths and grain sizes from microns to centimeters
-	for (double& d : FILELAMBDAV)
+	for (double& d : data.FILELAMBDAV)
 		d *= 100.; // m to cm
-	for (double& d : FILEAV)
+	for (double& d : data.FILEAV)
 		d *= 100.; // m to cm
+
+	return data;
 }
 
-Array Testing::generateQabsv(double a, const Array& frequencyv)
+Array generateQabsv(const QabsDataSet& qds, double a, const Array& frequencyv)
 {
+	size_t aIndex = TemplatedUtils::index(a, qds.FILEAV);
+
 	Array wavelengthv = Testing::freqToWavGrid(frequencyv);
 	vector<double> QabsWav(wavelengthv.size());
-	vector<double> QabsWavFromFileForA(FILELAMBDAV.size());
-
-	// very simple model
-	//        for (size_t i = 0; i < wavelength.size(); i++)
-	//        {
-	//            Qabs[i] = .75;
-	//            if (a < 100 * Constant::ANG_CM) Qabs[i] *= a / 100 / Constant::ANG_CM; // this
-	//            works pretty well to simulate the leveling off of the heating efficiency at
-	//            1000 Ang
-	//        }
-
-	if (a <= FILEAV[0]) // extrapolate propto a
+	for (size_t w = 0; w < wavelengthv.size(); w++)
 	{
-		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
-			QabsWavFromFileForA[i] = QABSVV[i][0] * a / FILEAV[0];
+		double wav = wavelengthv[w];
+
+		size_t wIndex = TemplatedUtils::index(wav, qds.FILELAMBDAV);
+		double wLeft = qds.FILELAMBDAV[wIndex - 1];
+		double wRight = qds.FILELAMBDAV[wIndex];
+
+		double aLow = qds.FILEAV[aIndex - 1];
+		double aUp = qds.FILEAV[aIndex];
+
+		const auto& q = qds.QABSVV;
+		QabsWav[w] = TemplatedUtils::interpolateRectangular(
+		                wav, a, wLeft, wRight, aLow, aUp, q[wIndex - 1][aIndex - 1],
+		                q[wIndex][aIndex - 1], q[wIndex - 1][aIndex],
+		                q[wIndex][aIndex]);
 	}
-	else // interpolated from data
-	{
-		size_t a_index = TemplatedUtils::index(a, FILEAV);
-		double normalDistance = (a - FILEAV[a_index - 1]) /
-		                        (FILEAV[a_index] - FILEAV[a_index - 1]);
-		// interpolate the values from the file for a specific grain size
-		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
-			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
-			                         QABSVV[i][a_index] * normalDistance;
-	}
-#ifdef EXACTGRID
-	return QabsWavFromFileForA;
-#endif
-	QabsWav = TemplatedUtils::linearResample<vector<double>>(
-	                QabsWavFromFileForA, FILELAMBDAV, wavelengthv, -1, -1);
-// #define PLOT_QABS
+
+#define PLOT_QABS
 #ifdef PLOT_QABS
 	stringstream filename;
 	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
@@ -152,13 +151,17 @@ Array Testing::generateQabsv(double a, const Array& frequencyv)
 	return Array(QabsWav.data(), QabsWav.size());
 }
 
-vector<Array> Testing::qAbsvvForTesting(const Array& av, const Array& frequencyv)
+} // namespace
+
+vector<Array> Testing::qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv)
 {
 	// Choose carbon
-	readQabs(true);
+	QabsDataSet qds = readQabs(car);
+
 	vector<Array> result;
+	result.reserve(av.size());
 	for (double a : av)
-		result.emplace_back(generateQabsv(a, frequencyv));
+		result.emplace_back(generateQabsv(qds, a, frequencyv));
 	return result;
 }
 
@@ -824,7 +827,8 @@ void Testing::runWithDust(bool write)
 	temperaturev = {15, 10, 5};
 	// And now I need some absorption efficiencies for every wavelength. Let's try to use
 	// the old photoelectric heating test code.
-	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.iFrequencyv())};
+	bool car = true;
+	vector<Array> qAbsvv{qAbsvvForTesting(car, sizev, gasInterface.iFrequencyv())};
 
 	// TODO: check if the qabsvv has loaded correctly
 

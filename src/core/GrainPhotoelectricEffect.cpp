@@ -381,7 +381,8 @@ double GrainPhotoelectricEffect::heatingRate(
 		const Array& Qabsv = grainPop.qAbsv(m);
 		double nd = grainPop.density(m);
 
-		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(), env.specificIntensity.valuev().size());
+		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(),
+		                  env.specificIntensity.valuev().size());
 
 		// Get the charge distribution (is normalized to 1)
 		vector<double> fZ;
@@ -579,8 +580,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	double aMin = 3 * Constant::ANG_CM;
 	double aMax = 10000 * Constant::ANG_CM;
 	const size_t Na = 90;
-	double aStepFactor = pow(aMax / aMin, 1. / Na);
-	double a = aMin;
+	Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
 
 	// Output file will contain one line for every grain size
 	stringstream efficiencyFnSs;
@@ -588,12 +588,14 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	               << ".dat";
 	ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
 
+	bool car = true;
+	const std::vector<Array> qAbsvv = Testing::qAbsvvForTesting(car, sizev, frequencyv);
+
 	// For every grain size
 	for (size_t m = 0; m < Na; m++)
 	{
-		// From the data read in from the SKIRT file, interpolate an absorption
-		// efficiency.
-		const Array& Qabs = Testing::generateQabsv(a, frequencyv);
+		double a = sizev[m];
+		const Array& Qabs = qAbsvv[m];
 
 		// Integrate over the radiation field
 		Array intensityTimesQabs = Qabs * specificIntensityv;
@@ -620,7 +622,6 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		                frequencyv, specificIntensityv);
 		double avgQabs = intensityQabsIntegral / intensityIntegral;
 		avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
-		a *= aStepFactor;
 	}
 	efficiencyOf.close();
 	cout << "Wrote " << efficiencyFnSs.str() << endl;
@@ -651,7 +652,8 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	double a = 200. * Constant::ANG_CM;
 
 	// Qabs for each frequency
-	Array Qabsv = Testing::generateQabsv(a, frequencyv);
+	bool car = true;
+	Array Qabsv = Testing::qAbsvvForTesting(car, {a}, frequencyv)[0];
 
 	// Calculate charge distribution
 	vector<double> fZv;
