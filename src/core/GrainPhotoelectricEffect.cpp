@@ -28,8 +28,8 @@ int GrainPhotoelectricEffect::minimumCharge(double a) const
 }
 
 void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
-                                             const Array& Qabs, int& resultZmax,
-                                             int& resultZmin, vector<double>& resultfZ) const
+                                             const Array& Qabs, int& resultZmin,
+                                             int& resultZmax, vector<double>& resultfZ) const
 {
 	const Array& frequencyv = env.specificIntensity.frequencyv();
 	const Array& specificIntensityv = env.specificIntensity.valuev();
@@ -321,7 +321,7 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 
 double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
                                               const Array& Qabs, const vector<double>& fZ,
-                                              int Zmax, int Zmin) const
+                                              int Zmin, int Zmax) const
 {
 	double totalHeatingForGrainSize = 0;
 
@@ -386,7 +386,7 @@ double GrainPhotoelectricEffect::heatingRate(
 		// Get the charge distribution (is normalized to 1)
 		vector<double> fZ;
 		int Zmin, Zmax;
-		chargeBalance(a, env, Qabsv, Zmax, Zmin, fZ);
+		chargeBalance(a, env, Qabsv, Zmin, Zmax, fZ);
 
 		// Use the charge distribution to calculate the photoelectric heating rate for
 		// this size
