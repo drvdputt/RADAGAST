@@ -18,6 +18,7 @@
 #include "TemplatedUtils.h"
 
 #include <iomanip>
+#include <iterator>
 #include <sstream>
 
 using namespace std;
@@ -503,7 +504,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
                                const Spectrum& specificIntensity, double n)
 {
 	const string tab = "\t";
-	const int samples = 200;
 
 	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
 	output << "# 0temperature 1net 2heat 3cool"
@@ -512,7 +512,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	       << "10e- 11H+ 12H 13H2 \n";
 
 	double T = 10;
-	double factor = pow(1000000. / 10., 1. / samples);
+	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
 	GasModule::GrainInterface gri{};
 	GasInterfaceImpl::Solution s =
 	                gi.calculateDensities(n, T, specificIntensity, gri, nullptr);
@@ -538,10 +538,13 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		output << '\n';
 	};
 
-	for (int N = 1; N < samples; N++, T *= factor)
+	// forward sweep
+	for (double& T : Tv)
 		outputCooling(T);
-	for (int N = samples; N > 1; N--, T /= factor)
-		outputCooling(T);
+	// reverse sweep
+	size_t i = Tv.size();
+	while (i--)
+		outputCooling(Tv[i]);
 
 	output.close();
 
