@@ -537,9 +537,15 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		output << t << tab << netHeating << tab << heat << tab << cool << tab << netLine
 		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
 		       << cCool;
+
+		std::vector<int> h_conservation = {0, 1, 1, 2};
+		double totalH = 0;
 		for (int i = 0; i < s.speciesNv.size(); i++)
+		{
 			output << tab << s.speciesNv(i);
-		output << '\n';
+			totalH += h_conservation[i] * s.speciesNv(i);
+		}
+		output << tab << totalH << '\n';
 	};
 
 	// forward sweep
