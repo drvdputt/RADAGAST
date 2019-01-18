@@ -405,8 +405,8 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
 	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
-	GasModule::GrainInterface grainInfo{};
-	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, grainInfo);
+	GasModule::GrainInterface gri{};
+	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, gri);
 	writeGasState(outputPath, gi, gs);
 }
 
@@ -499,12 +499,14 @@ void Testing::plotHeatingCurve_main()
 	double n = 1000;
 	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
 	GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv, "", "none"};
+	GasModule::GrainInterface gri{};
 	string outputPath = "heatingcurve/";
-	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensity, n);
+	plotHeatingCurve(*gi.pimpl(), outputPath, n, specificIntensity, gri);
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                               const Spectrum& specificIntensity, double n)
+                               double n, const Spectrum& specificIntensity,
+                               const GasModule::GrainInterface& gri)
 {
 	const string tab = "\t";
 
@@ -516,7 +518,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 	double T = 10;
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
-	GasModule::GrainInterface gri{};
 	GasInterfaceImpl::Solution s =
 	                gi.calculateDensities(n, T, specificIntensity, gri, nullptr);
 
@@ -916,7 +917,7 @@ void Testing::runMRNDust(bool write)
 	double Tinit{8000};
 
 	// Dust model
-	auto grainInterface = genMRNDust(nHtotal, gasInterface.iFrequencyv());
+	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
 	double Tc{4e3};
@@ -925,12 +926,12 @@ void Testing::runMRNDust(bool write)
 	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
-	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri);
 
 	if (write)
 	{
 		writeGasState("MRNDust/", gasInterface, gs);
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", I_nu, nHtotal);
+		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
 }

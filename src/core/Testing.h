@@ -59,8 +59,8 @@ void writeGasState(const std::string& outputPath, const GasModule::GasInterface&
                    const GasModule::GasState& gs);
 
 void plotHeatingCurve_main();
-void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                      const Spectrum& specificIntensity, double n);
+void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
+                      const Spectrum& specificIntensity, const GasModule::GrainInterface&);
 
 void plotIonizationStuff();
 
