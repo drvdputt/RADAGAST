@@ -140,6 +140,7 @@ $(INTERFACELINKS): $(PUBLIC_INCLUDEDIR)/%: $(COREDIR)/%
 	ln -sf "$(shell pwd)"/$< $@
 
 # Compiling step + dependency generation
+.SECONDARY: $(COREOBJECT) $(MAINOBJECTS)
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(OBJDIR)/%.d
 	$(CXX) $(CXXFLAGS) -c -o $@ $< 
 	@mv -f $(OBJDIR)/$*.Td $(OBJDIR)/$*.d
