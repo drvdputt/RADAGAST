@@ -567,9 +567,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 void Testing::plotPhotoelectricHeating()
 {
-	bool carbon{true};
-	readQabs(carbon);
-
 	double n = 2.5e1;
 	double f = 3.e-4;
 	double ne = n * f;
