@@ -605,7 +605,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		// Calculate and write out the heating efficiency
 		int Zmin, Zmax;
 		vector<double> fZ;
-		chargeBalance(a, env, Qabs, Zmax, Zmin, fZ);
+		chargeBalance(a, env, Qabs, Zmin, Zmax, fZ);
 		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, fZ, Zmin,
 		                                                        Zmax);
 		double totalAbsorbed =
