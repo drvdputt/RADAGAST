@@ -123,9 +123,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 	// The result of the binary search
 	centerZ = currentZ;
 
-	// Apply detailed balance equation ...
-	bool passedMaximum = false;
-	double maximum = 0;
+	// Apply detailed balance equation: start at one ...
 	resultfZ[centerZ - resultZmin] = 1;
 	// ... for Z > centerZ
 	for (int z = centerZ + 1; z <= resultZmax; z++)
@@ -139,15 +137,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
 
-		// Cut off calculation once the values past the maximum have a relative size of
-		// 1e-6 or less Detects the maximum
-		if (!passedMaximum && resultfZ[index] < resultfZ[index - 1])
-		{
-			passedMaximum = true;
-			maximum = max(maximum, resultfZ[index - 1]);
-		}
-		// Detects the cutoff point once the maximum has been found
-		if (passedMaximum && resultfZ[index] / maximum < cutOffFactor)
+		if (resultfZ[index] < cutOffFactor)
 		{
 			trimHigh = index;
 			break;
@@ -166,13 +156,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
 
-		// Similar detection for cutoff
-		if (!passedMaximum && resultfZ[index] < resultfZ[index + 1])
-		{
-			passedMaximum = true;
-			maximum = max(maximum, resultfZ[index + 1]);
-		}
-		if (passedMaximum && resultfZ[index] / maximum < cutOffFactor)
+		if (resultfZ[index] < cutOffFactor)
 		{
 			trimLow = index;
 			break;
