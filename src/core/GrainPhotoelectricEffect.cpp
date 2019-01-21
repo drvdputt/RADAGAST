@@ -325,7 +325,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 {
 	double totalHeatingForGrainSize = 0;
 
-	DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
+	// DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
 
 	for (int Z = Zmin; Z <= Zmax; Z++)
 	{
