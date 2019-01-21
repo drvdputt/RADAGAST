@@ -213,13 +213,23 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	{
 		double ionFrac = Ionization::solveBalance(nHtotal, T, specificIntensity);
 		double molFrac = 0.1;
-		double nIonized = ionFrac * nHtotal;
-		double nNeutral = (1 - ionFrac) * nHtotal;
 		s.speciesNv = EVector(SpeciesIndex::size());
-		s.speciesNv(_ine) = nIonized;
-		s.speciesNv(_inp) = nIonized;
-		s.speciesNv(_inH) = (1 - molFrac) * nNeutral;
-		s.speciesNv(_inH2) = molFrac * nNeutral / 2;
+		s.speciesNv(_ine) = ionFrac * nHtotal;
+		s.speciesNv(_inp) = s.speciesNv(_ine);
+		s.speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
+		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
+	}
+	else
+	{
+		// make sure that nHtotal and the initial guess are consistent
+		double nNeutralOfSpeciesNv = s.speciesNv(_inH) + 2 * s.speciesNv(_inH2);
+		double nHtotalOfSpeciesNv = s.speciesNv(_inp) + nNeutralOfSpeciesNv;
+		double ionFrac = s.speciesNv(_inp) / nHtotalOfSpeciesNv;
+		double molFrac = 2 * s.speciesNv(_inH2) / nNeutralOfSpeciesNv;
+		s.speciesNv(_ine) = ionFrac * nHtotal;
+		s.speciesNv(_inp) = s.speciesNv(_ine);
+		s.speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
+		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
 	}
 
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
@@ -230,7 +240,8 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	// Initial guess for the H2 solution (if no initial guess is provided, the solver will
 	// make its own)
 	if (_molecular && !manualGuess)
-		gas._h2Levelv = previous->H2Solution.nv;
+		gas._h2Levelv = nHtotal * previous->H2Solution.nv /
+		                previous->H2Solution.nv.sum();
 
 	auto solveLevelBalances = [&]() {
 		double nH = s.speciesNv(_inH);
