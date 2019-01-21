@@ -143,6 +143,12 @@ double multimin_f(const gsl_vector* x, void* p)
 	EVector Fv = thisp->evaluateFv(nv, *params->rateCoeffv);
 	EVector Qv = thisp->evaluateQv(nv, *params->conservedQuantityv);
 	double f = thisp->toMinimizeFunction(Fv, Qv);
+
+	// Add penalty for negative densities
+	size_t iMin = gsl_vector_min_index(x);
+	double min = gsl_vector_get(x, iMin);
+	if (min < 0)
+		f -= min;
 	return f;
 }
 
@@ -157,6 +163,12 @@ void multimin_df(const gsl_vector* x, void* p, gsl_vector* g)
 	EMatrix Jvv = thisp->evaluateJvv(nv, *params->rateCoeffv);
 
 	EVector Gv = thisp->toMinimizeGradientv(Fv, Jvv, Qv);
+
+	// Add slope of penalty for negative densities
+	size_t iMin = gsl_vector_min_index(x);
+	double min = gsl_vector_get(x, iMin);
+	if (min < 0)
+		Gv(iMin) -= 1;
 
 	gsl_vector_view g_view = gsl_vector_view_array(Gv.data(), Gv.size());
 	gsl_vector_memcpy(g, &g_view.vector);
@@ -175,6 +187,16 @@ void multimin_fdf(const gsl_vector* x, void* p, double* f, gsl_vector* g)
 	*f = thisp->toMinimizeFunction(Fv, Qv);
 
 	EVector Gv = thisp->toMinimizeGradientv(Fv, Jvv, Qv);
+
+	// Add (slope of) penalty for negative densities
+	size_t iMin = gsl_vector_min_index(x);
+	double min = gsl_vector_get(x, iMin);
+	if (min < 0)
+	{
+		*f -= min;
+		Gv(iMin) -= 1;
+	}
+
 	gsl_vector_view g_view = gsl_vector_view_array(Gv.data(), Gv.size());
 	gsl_vector_memcpy(g, &g_view.vector);
 }
