@@ -132,7 +132,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		// f(z) =  f(z-1) * up(z-1) / down(z)
 		double up = chargeUpRate(z - 1);
 		double down = chargeDownRate(z);
-		resultfZ[index] = resultfZ[index - 1] * up / down;
+		resultfZ[index] = down > 0 ? resultfZ[index - 1] * up / down : 0;
 
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
@@ -151,7 +151,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		// f(z) = f(z+1) * down(z+1) / up(z)
 		double up = chargeUpRate(z);
 		double down = chargeDownRate(z + 1);
-		resultfZ[index] = resultfZ[index + 1] * down / up;
+		resultfZ[index] = up > 0 ? resultfZ[index + 1] * down / up : 0;
 
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
