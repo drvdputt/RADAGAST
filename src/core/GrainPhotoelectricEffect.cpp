@@ -28,8 +28,8 @@ int GrainPhotoelectricEffect::minimumCharge(double a) const
 }
 
 void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
-                                             const Array& Qabs, int& resultZmax,
-                                             int& resultZmin, vector<double>& resultfZ) const
+                                             const Array& Qabs, int& resultZmin,
+                                             int& resultZmax, vector<double>& resultfZ) const
 {
 	const Array& frequencyv = env.specificIntensity.frequencyv();
 	const Array& specificIntensityv = env.specificIntensity.valuev();
@@ -123,9 +123,7 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 	// The result of the binary search
 	centerZ = currentZ;
 
-	// Apply detailed balance equation ...
-	bool passedMaximum = false;
-	double maximum = 0;
+	// Apply detailed balance equation: start at one ...
 	resultfZ[centerZ - resultZmin] = 1;
 	// ... for Z > centerZ
 	for (int z = centerZ + 1; z <= resultZmax; z++)
@@ -134,20 +132,12 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		// f(z) =  f(z-1) * up(z-1) / down(z)
 		double up = chargeUpRate(z - 1);
 		double down = chargeDownRate(z);
-		resultfZ[index] = resultfZ[index - 1] * up / down;
+		resultfZ[index] = down > 0 ? resultfZ[index - 1] * up / down : 0;
 
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
 
-		// Cut off calculation once the values past the maximum have a relative size of
-		// 1e-6 or less Detects the maximum
-		if (!passedMaximum && resultfZ[index] < resultfZ[index - 1])
-		{
-			passedMaximum = true;
-			maximum = max(maximum, resultfZ[index - 1]);
-		}
-		// Detects the cutoff point once the maximum has been found
-		if (passedMaximum && resultfZ[index] / maximum < cutOffFactor)
+		if (resultfZ[index] < cutOffFactor)
 		{
 			trimHigh = index;
 			break;
@@ -161,18 +151,12 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		// f(z) = f(z+1) * down(z+1) / up(z)
 		double up = chargeUpRate(z);
 		double down = chargeDownRate(z + 1);
-		resultfZ[index] = resultfZ[index + 1] * down / up;
+		resultfZ[index] = up > 0 ? resultfZ[index + 1] * down / up : 0;
 
 		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
 			Error::runtime("invalid value in charge distribution");
 
-		// Similar detection for cutoff
-		if (!passedMaximum && resultfZ[index] < resultfZ[index + 1])
-		{
-			passedMaximum = true;
-			maximum = max(maximum, resultfZ[index + 1]);
-		}
-		if (passedMaximum && resultfZ[index] / maximum < cutOffFactor)
+		if (resultfZ[index] < cutOffFactor)
 		{
 			trimLow = index;
 			break;
@@ -321,11 +305,11 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 
 double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
                                               const Array& Qabs, const vector<double>& fZ,
-                                              int Zmax, int Zmin) const
+                                              int Zmin, int Zmax) const
 {
 	double totalHeatingForGrainSize = 0;
 
-	DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
+	// DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
 
 	for (int Z = Zmin; Z <= Zmax; Z++)
 	{
@@ -381,12 +365,13 @@ double GrainPhotoelectricEffect::heatingRate(
 		const Array& Qabsv = grainPop.qAbsv(m);
 		double nd = grainPop.density(m);
 
-		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(), env.specificIntensity.valuev().size());
+		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(),
+		                  env.specificIntensity.valuev().size());
 
 		// Get the charge distribution (is normalized to 1)
 		vector<double> fZ;
 		int Zmin, Zmax;
-		chargeBalance(a, env, Qabsv, Zmax, Zmin, fZ);
+		chargeBalance(a, env, Qabsv, Zmin, Zmax, fZ);
 
 		// Use the charge distribution to calculate the photoelectric heating rate for
 		// this size
@@ -579,8 +564,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	double aMin = 3 * Constant::ANG_CM;
 	double aMax = 10000 * Constant::ANG_CM;
 	const size_t Na = 90;
-	double aStepFactor = pow(aMax / aMin, 1. / Na);
-	double a = aMin;
+	Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
 
 	// Output file will contain one line for every grain size
 	stringstream efficiencyFnSs;
@@ -588,12 +572,14 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	               << ".dat";
 	ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
 
+	bool car = true;
+	const std::vector<Array> qAbsvv = Testing::qAbsvvForTesting(car, sizev, frequencyv);
+
 	// For every grain size
 	for (size_t m = 0; m < Na; m++)
 	{
-		// From the data read in from the SKIRT file, interpolate an absorption
-		// efficiency.
-		const Array& Qabs = Testing::generateQabsv(a, frequencyv);
+		double a = sizev[m];
+		const Array& Qabs = qAbsvv[m];
 
 		// Integrate over the radiation field
 		Array intensityTimesQabs = Qabs * specificIntensityv;
@@ -603,7 +589,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		// Calculate and write out the heating efficiency
 		int Zmin, Zmax;
 		vector<double> fZ;
-		chargeBalance(a, env, Qabs, Zmax, Zmin, fZ);
+		chargeBalance(a, env, Qabs, Zmin, Zmax, fZ);
 		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, fZ, Zmin,
 		                                                        Zmax);
 		double totalAbsorbed =
@@ -620,7 +606,6 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		                frequencyv, specificIntensityv);
 		double avgQabs = intensityQabsIntegral / intensityIntegral;
 		avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
-		a *= aStepFactor;
 	}
 	efficiencyOf.close();
 	cout << "Wrote " << efficiencyFnSs.str() << endl;
@@ -651,7 +636,8 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	double a = 200. * Constant::ANG_CM;
 
 	// Qabs for each frequency
-	Array Qabsv = Testing::generateQabsv(a, frequencyv);
+	bool car = true;
+	Array Qabsv = Testing::qAbsvvForTesting(car, {a}, frequencyv)[0];
 
 	// Calculate charge distribution
 	vector<double> fZv;

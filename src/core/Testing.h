@@ -15,16 +15,8 @@ class Spectrum;
 
 namespace Testing
 {
-// ABSORPTION EFFICIENCY FROM FILE //
-/* Some static hacks. The first one reads some data ripped from SKIRT into variables declared in
-   the cpp file. Then, a Qabsv for a single size can be generated using generateQabsv. The third
-   function, qAbsvvForTesting does the read step, and then calls the second function for every
-   size of the list. */
-void readQabs(bool car);
-
-Array generateQabsv(double a, const Array& frequencyv);
-
-std::vector<Array> qAbsvvForTesting(const Array& av, const Array& frequencyv);
+// ABSORPTION EFFICIENCIES FROM FILE //
+std::vector<Array> qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv);
 
 // USEFUL CONSTANTS //
 constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);
@@ -67,8 +59,8 @@ void writeGasState(const std::string& outputPath, const GasModule::GasInterface&
                    const GasModule::GasState& gs);
 
 void plotHeatingCurve_main();
-void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                      const Spectrum& specificIntensity, double n);
+void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
+                      const Spectrum& specificIntensity, const GasModule::GrainInterface&);
 
 void plotIonizationStuff();
 
@@ -98,6 +90,8 @@ void runFromFilesvsHardCoded();
 GasModule::GasInterface genFullModel();
 
 GasModule::GasInterface genHonlyModel();
+
+GasModule::GrainInterface genMRNDust(double nHtotal, const Array& frequencyv);
 
 /** Run the model with the maximum number of levels, and iterate until the temperature
     converges. */

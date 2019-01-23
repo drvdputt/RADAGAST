@@ -91,7 +91,7 @@ private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
 	    obtain a charge distribution, and then RateAZ for every charge Z. */
 	double heatingRateA(double a, const Environment& env, const Array& Qabs,
-	                    const std::vector<double>& fZ, int Zmax, int Zmin) const;
+	                    const std::vector<double>& fZ, int Zmin, int Zmax) const;
 
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
 	    immediately autoionize when an electron is captured. */
@@ -100,8 +100,8 @@ private:
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
 	    wavelength. */
-	void chargeBalance(double a, const Environment& env, const Array& Qabs, int& resultZmax,
-	                   int& resultZmin, std::vector<double>& resultfZ) const;
+	void chargeBalance(double a, const Environment& env, const Array& Qabs, int& resultZmin,
+	                   int& resultZmax, std::vector<double>& resultfZ) const;
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */

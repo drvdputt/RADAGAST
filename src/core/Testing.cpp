@@ -18,19 +18,28 @@
 #include "TemplatedUtils.h"
 
 #include <iomanip>
+#include <iterator>
 #include <sstream>
 
 using namespace std;
 
-/* FIXME: hacks hacks hacks */
 namespace
 {
-vector<double> FILELAMBDAV, FILEAV;
-vector<vector<double>> QABSVV, QSCAVV, ASYMMPARVV;
-} // namespace
-
-void Testing::readQabs(bool car)
+typedef struct QabsDataSet
 {
+	vector<double> FILELAMBDAV;
+	vector<double> FILEAV;
+	vector<vector<double>> QABSVV;
+
+} QabsDataSet;
+
+QabsDataSet readQabs(bool car)
+{
+	QabsDataSet data;
+
+	// We dont need these, but store them anyway for clarity
+	vector<vector<double>> QSCAVV, ASYMMPARVV;
+
 	///////////////////// Begin copy-paste from SKIRT
 	bool reverse = true;
 	bool skip1 = false;
@@ -54,9 +63,9 @@ void Testing::readQabs(bool car)
 	getline(file, line); // ignore anything else on this line
 
 	// resize the vectors
-	FILELAMBDAV.resize(_Nlambda);
-	FILEAV.resize(_Na);
-	QABSVV.resize(_Nlambda, vector<double>(_Na));
+	data.FILELAMBDAV.resize(_Nlambda);
+	data.FILEAV.resize(_Na);
+	data.QABSVV.resize(_Nlambda, vector<double>(_Na));
 	QSCAVV.resize(_Nlambda, vector<double>(_Na));
 	ASYMMPARVV.resize(_Nlambda, vector<double>(_Na));
 
@@ -69,19 +78,19 @@ void Testing::readQabs(bool car)
 	double dummy;
 	for (size_t i = 0; i < _Na; i++)
 	{
-		file >> FILEAV[i];
-		FILEAV[i] *= 1e-6; // convert from micron to m
+		file >> data.FILEAV[i];
+		data.FILEAV[i] *= 1e-6; // convert from micron to m
 		getline(file, line); // ignore anything else on this line
 
 		for (int k = kbeg; k != kend; k += kinc)
 		{
 			if (skip1)
 				file >> dummy;
-			file >> FILELAMBDAV[k];
-			FILELAMBDAV[k] *= 1e-6; // convert from micron to m
+			file >> data.FILELAMBDAV[k];
+			data.FILELAMBDAV[k] *= 1e-6; // convert from micron to m
 			if (skip2)
 				file >> dummy;
-			file >> QABSVV[k][i];
+			file >> data.QABSVV[k][i];
 			file >> QSCAVV[k][i];
 			if (skip3)
 				file >> dummy;
@@ -95,48 +104,39 @@ void Testing::readQabs(bool car)
 	///////////////////// End copy-paste from SKIRT
 
 	// Convert the wavelengths and grain sizes from microns to centimeters
-	for (double& d : FILELAMBDAV)
+	for (double& d : data.FILELAMBDAV)
 		d *= 100.; // m to cm
-	for (double& d : FILEAV)
+	for (double& d : data.FILEAV)
 		d *= 100.; // m to cm
+
+	return data;
 }
 
-Array Testing::generateQabsv(double a, const Array& frequencyv)
+Array generateQabsv(const QabsDataSet& qds, double a, const Array& frequencyv)
 {
+	size_t aIndex = TemplatedUtils::index(a, qds.FILEAV);
+
 	Array wavelengthv = Testing::freqToWavGrid(frequencyv);
 	vector<double> QabsWav(wavelengthv.size());
-	vector<double> QabsWavFromFileForA(FILELAMBDAV.size());
-
-	// very simple model
-	//        for (size_t i = 0; i < wavelength.size(); i++)
-	//        {
-	//            Qabs[i] = .75;
-	//            if (a < 100 * Constant::ANG_CM) Qabs[i] *= a / 100 / Constant::ANG_CM; // this
-	//            works pretty well to simulate the leveling off of the heating efficiency at
-	//            1000 Ang
-	//        }
-
-	if (a <= FILEAV[0]) // extrapolate propto a
+	for (size_t w = 0; w < wavelengthv.size(); w++)
 	{
-		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
-			QabsWavFromFileForA[i] = QABSVV[i][0] * a / FILEAV[0];
+		double wav = wavelengthv[w];
+
+		size_t wIndex = TemplatedUtils::index(wav, qds.FILELAMBDAV);
+		double wLeft = qds.FILELAMBDAV[wIndex - 1];
+		double wRight = qds.FILELAMBDAV[wIndex];
+
+		double aLow = qds.FILEAV[aIndex - 1];
+		double aUp = qds.FILEAV[aIndex];
+
+		const auto& q = qds.QABSVV;
+		QabsWav[w] = TemplatedUtils::interpolateRectangular(
+		                wav, a, wLeft, wRight, aLow, aUp, q[wIndex - 1][aIndex - 1],
+		                q[wIndex][aIndex - 1], q[wIndex - 1][aIndex],
+		                q[wIndex][aIndex]);
 	}
-	else // interpolated from data
-	{
-		size_t a_index = TemplatedUtils::index(a, FILEAV);
-		double normalDistance = (a - FILEAV[a_index - 1]) /
-		                        (FILEAV[a_index] - FILEAV[a_index - 1]);
-		// interpolate the values from the file for a specific grain size
-		for (size_t i = 0; i < FILELAMBDAV.size(); i++)
-			QabsWavFromFileForA[i] = QABSVV[i][a_index - 1] * (1 - normalDistance) +
-			                         QABSVV[i][a_index] * normalDistance;
-	}
-#ifdef EXACTGRID
-	return QabsWavFromFileForA;
-#endif
-	QabsWav = TemplatedUtils::linearResample<vector<double>>(
-	                QabsWavFromFileForA, FILELAMBDAV, wavelengthv, -1, -1);
-// #define PLOT_QABS
+
+#define PLOT_QABS
 #ifdef PLOT_QABS
 	stringstream filename;
 	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
@@ -151,13 +151,17 @@ Array Testing::generateQabsv(double a, const Array& frequencyv)
 	return Array(QabsWav.data(), QabsWav.size());
 }
 
-vector<Array> Testing::qAbsvvForTesting(const Array& av, const Array& frequencyv)
+} // namespace
+
+vector<Array> Testing::qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv)
 {
 	// Choose carbon
-	readQabs(true);
+	QabsDataSet qds = readQabs(car);
+
 	vector<Array> result;
+	result.reserve(av.size());
 	for (double a : av)
-		result.emplace_back(generateQabsv(a, frequencyv));
+		result.emplace_back(generateQabsv(qds, a, frequencyv));
 	return result;
 }
 
@@ -401,8 +405,8 @@ void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
 	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
-	GasModule::GrainInterface grainInfo{};
-	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, grainInfo);
+	GasModule::GrainInterface gri{};
+	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, gri);
 	writeGasState(outputPath, gi, gs);
 }
 
@@ -495,32 +499,30 @@ void Testing::plotHeatingCurve_main()
 	double n = 1000;
 	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
 	GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv, "", "none"};
+	GasModule::GrainInterface gri{};
 	string outputPath = "heatingcurve/";
-	plotHeatingCurve(*gi.pimpl(), outputPath, specificIntensity, n);
+	plotHeatingCurve(*gi.pimpl(), outputPath, n, specificIntensity, gri);
 }
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
-                               const Spectrum& specificIntensity, double n)
+                               double n, const Spectrum& specificIntensity,
+                               const GasModule::GrainInterface& gri)
 {
 	const string tab = "\t";
-	const int samples = 200;
 
 	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
 	output << "# 0temperature 1net 2heat 3cool"
 	       << " 4lineNet 5lineHeat 6lineCool"
 	       << " 7continuumNet 8continuumHeat 9continuumCool"
-	       << " 10ionizedFrac" << endl;
+	       << "10e- 11H+ 12H 13H2 \n";
 
 	double T = 10;
-	double factor = pow(1000000. / 10., 1. / samples);
-	GasModule::GrainInterface gri{};
+	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
 	GasInterfaceImpl::Solution s =
 	                gi.calculateDensities(n, T, specificIntensity, gri, nullptr);
 
-	for (int N = 1; N < samples; N++, T *= factor)
-	{
-
-		s = gi.calculateDensities(n, T, specificIntensity, gri, &s);
+	auto outputCooling = [&](double t) {
+		s = gi.calculateDensities(n, t, specificIntensity, gri, &s);
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
@@ -532,10 +534,28 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		double netLine = lHeat - lCool;
 		double netCont = cHeat - cCool;
 
-		output << T << tab << netHeating << tab << heat << tab << cool << tab << netLine
+		output << t << tab << netHeating << tab << heat << tab << cool << tab << netLine
 		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
-		       << cCool << tab << gi.f(s) << endl;
-	}
+		       << cCool;
+
+		std::vector<int> h_conservation = {0, 1, 1, 2};
+		double totalH = 0;
+		for (int i = 0; i < s.speciesNv.size(); i++)
+		{
+			output << tab << s.speciesNv(i);
+			totalH += h_conservation[i] * s.speciesNv(i);
+		}
+		output << tab << totalH << '\n';
+	};
+
+	// forward sweep
+	for (double& T : Tv)
+		outputCooling(T);
+	// reverse sweep
+	size_t i = Tv.size();
+	while (i--)
+		outputCooling(Tv[i]);
+
 	output.close();
 
 	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
@@ -547,9 +567,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 void Testing::plotPhotoelectricHeating()
 {
-	bool carbon{true};
-	readQabs(carbon);
-
 	double n = 2.5e1;
 	double f = 3.e-4;
 	double ne = n * f;
@@ -814,7 +831,8 @@ void Testing::runWithDust(bool write)
 	temperaturev = {15, 10, 5};
 	// And now I need some absorption efficiencies for every wavelength. Let's try to use
 	// the old photoelectric heating test code.
-	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.iFrequencyv())};
+	bool car = true;
+	vector<Array> qAbsvv{qAbsvvForTesting(car, sizev, gasInterface.iFrequencyv())};
 
 	// TODO: check if the qabsvv has loaded correctly
 
@@ -848,12 +866,61 @@ void Testing::runWithDust(bool write)
 //	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
 // }
 
+GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequencyv)
+{
+	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
+
+	double amin = 50 * Constant::ANG_CM;
+	double amax = 0.24 * Constant::UM_CM;
+
+	// Shared properties
+	size_t numSizes = 100;
+	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
+	Array sizev(numSizes);
+	Array temperaturev(numSizes);
+	for (size_t i = 0; i < numSizes; i++)
+	{
+		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
+		temperaturev[i] = 15;
+	}
+
+	// Properties that differ between car and sil
+	auto addMRNCarOrSil = [&](bool car) {
+		double log10norm = car ? -25.13 : -25.11;
+		double C = pow(10., log10norm);
+		Array densityv(numSizes);
+		for (size_t i = 0; i < numSizes; i++)
+		{
+			double bin_width = bin_edges[i + 1] - bin_edges[i];
+			densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+		}
+		auto label = car ? GasModule::GrainTypeLabel::CAR
+		                 : GasModule::GrainTypeLabel::SIL;
+		const auto& qabsvv = qAbsvvForTesting(car, sizev, frequencyv);
+		grainPopv->emplace_back(label, sizev, densityv, temperaturev, qabsvv);
+	};
+
+	// Carbonaceous population:
+	addMRNCarOrSil(true);
+
+	// Silicate population:
+	addMRNCarOrSil(false);
+
+	GasModule::GrainInterface grainInterface(move(grainPopv));
+	return grainInterface;
+}
+
 void Testing::runMRNDust(bool write)
 {
 	cout << "RUN_MRN_DUST\n";
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
+	double nHtotal{1000};
+	double Tinit{8000};
+
+	// Dust model
+	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
 	double Tc{4e3};
@@ -861,45 +928,13 @@ void Testing::runMRNDust(bool write)
 	Array specificIntensityv =
 	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
-	// Gas density
-	double nHtotal{1000};
-	double Tinit{8000};
-
-	double amin = 50 * Constant::ANG_CM;
-	double amax = 0.24 * Constant::UM_CM;
-
-	bool carb = true; // carb or sil
-	double log10norm = carb ? -25.13 : -25.11;
-	double C = pow(10., log10norm);
-	auto mrnDens = [&](double a) { return C * nHtotal * pow(a, -3.5); };
-
-	size_t numSizes = 100;
-	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
-	Array sizev(numSizes);
-	Array densityv(numSizes);
-	Array temperaturev(numSizes);
-	for (size_t i = 0; i < numSizes; i++)
-	{
-		double bin_width = bin_edges[i + 1] - bin_edges[i];
-		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		densityv[i] = mrnDens(sizev[i]) * bin_width;
-		temperaturev[i] = 10;
-	}
-
-	vector<Array> qAbsvv{qAbsvvForTesting(sizev, gasInterface.iFrequencyv())};
-
-	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
-	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
-	                        qAbsvv);
-	GasModule::GrainInterface grainInterface(move(grainPopv));
-
 	GasModule::GasState gs;
-	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri);
 
 	if (write)
 	{
 		writeGasState("MRNDust/", gasInterface, gs);
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", I_nu, nHtotal);
+		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
 }

@@ -25,7 +25,7 @@
 
 using namespace std;
 
-constexpr int MAXCHEMISTRYITERATIONS{100};
+constexpr int MAXCHEMISTRYITERATIONS{25};
 constexpr bool GASGRAINCOOL{true};
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
@@ -195,7 +195,8 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	// Decide how to do the initial guess; manual, or using the previous state.
 	bool manualGuess = true;
 
-	// If a previous solution is available (pointer is nonzero), then check if we want to use it
+	// If a previous solution is available (pointer is nonzero), then check if we want to
+	// use it
 	if (previous)
 	{
 		double fT = T / previous->T;
@@ -210,15 +211,25 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	}
 	if (manualGuess)
 	{
-		double molfrac = 0.1;
-		double iniAtomAndIon = nHtotal * (1 - molfrac);
-		double iniNH2 = nHtotal * molfrac / 2;
-		double guessF = Ionization::solveBalance(iniAtomAndIon, T, specificIntensity);
+		double ionFrac = Ionization::solveBalance(nHtotal, T, specificIntensity);
+		double molFrac = 0.1;
 		s.speciesNv = EVector(SpeciesIndex::size());
-		s.speciesNv(_ine) = guessF * iniAtomAndIon;
-		s.speciesNv(_inp) = guessF * iniAtomAndIon;
-		s.speciesNv(_inH) = (1 - guessF) * iniAtomAndIon;
-		s.speciesNv(_inH2) = iniNH2;
+		s.speciesNv(_ine) = ionFrac * nHtotal;
+		s.speciesNv(_inp) = s.speciesNv(_ine);
+		s.speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
+		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
+	}
+	else
+	{
+		// make sure that nHtotal and the initial guess are consistent
+		double nNeutralOfSpeciesNv = s.speciesNv(_inH) + 2 * s.speciesNv(_inH2);
+		double nHtotalOfSpeciesNv = s.speciesNv(_inp) + nNeutralOfSpeciesNv;
+		double ionFrac = s.speciesNv(_inp) / nHtotalOfSpeciesNv;
+		double molFrac = 2 * s.speciesNv(_inH2) / nNeutralOfSpeciesNv;
+		s.speciesNv(_ine) = ionFrac * nHtotal;
+		s.speciesNv(_inp) = s.speciesNv(_ine);
+		s.speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
+		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
 	}
 
 	/* Lambda function, because it is only needed in this scope. The [&] passes the current
@@ -229,7 +240,8 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 	// Initial guess for the H2 solution (if no initial guess is provided, the solver will
 	// make its own)
 	if (_molecular && !manualGuess)
-		gas._h2Levelv = previous->H2Solution.nv;
+		gas._h2Levelv = nHtotal * previous->H2Solution.nv /
+		                previous->H2Solution.nv.sum();
 
 	auto solveLevelBalances = [&]() {
 		double nH = s.speciesNv(_inH);
@@ -252,9 +264,12 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 		{
 			double nH2 = s.speciesNv(_inH2);
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
+			// gas is passed here to make an initial guess of the levels based on
+			// the gas properties
 			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity);
 
-			// Save this, to be used as an initial condition later
+			// the solution is also saved in the gas struct, so it can be used as an
+			// initial guess instead of just guessing based on the temperature
 			gas._h2Levelv = s.H2Solution.nv;
 		}
 	};
@@ -272,15 +287,13 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 
 	int counter = 0;
 	bool stopCriterion = false;
+	EVector previousAbundancev = s.speciesNv;
+	double previousHeating = 0;
+	double previousCooling = 0;
 	while (!stopCriterion)
 	{
-		/* Use the current guess for the chemical abundances to calculate our first set
-		   of level populations. */
-
 		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
 		solveLevelBalances();
-
-		EVector previousAbundancev = s.speciesNv;
 
 		if (previousAbundancev.array().isNaN().any())
 			Error::runtime("Nan in chemistry solution!");
@@ -296,8 +309,6 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 			double kDissH2Levels = _molecular->dissociationRate(
 			                s.H2Solution, s.specificIntensity);
 
-			DEBUG("Formation rate per H " << kFormH2 << endl);
-			DEBUG("Dissociation rate per H2 " << kDissH2Levels << endl);
 			if (kDissH2Levels < 0)
 				Error::runtime("negative dissociation rate!");
 
@@ -343,14 +354,30 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
 		                s.speciesNv.array() < 1.e-99 * norm;
+
+		double newHeating = heating(s);
+		double newCooling = cooling(s);
+		bool heatingConverged = TemplatedUtils::equalWithinTolerance(
+		                newHeating, previousHeating, 1e-2);
+		bool coolingConverged = TemplatedUtils::equalWithinTolerance(
+		                newCooling, previousCooling, 1e-2);
 		counter++;
-		DEBUG("Chemistry: " << counter << endl
-		                    << s.speciesNv << endl
+		DEBUG("Chemistry: " << counter << '\n'
+		                    << s.speciesNv << '\n'
 		                    << "convergence: \n"
-		                    << convergedv << endl);
+		                    << convergedv << '\n');
+		DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
+		DEBUG("New cool: " << newCooling << " previous: " << previousCooling << '\n');
+
+		previousAbundancev = s.speciesNv;
+		previousHeating = newHeating;
+		previousCooling = newCooling;
+
+		bool allQuantitiesConverged =
+		                convergedv.all() && heatingConverged && coolingConverged;
 
 		// Currently, the implementation without molecules does not need iteration.
-		stopCriterion = !_molecular || convergedv.all() ||
+		stopCriterion = !_molecular || allQuantitiesConverged ||
 		                counter > MAXCHEMISTRYITERATIONS;
 	}
 	return s;

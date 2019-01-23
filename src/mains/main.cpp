@@ -24,19 +24,19 @@ int main()
 	signal(SIGSEGV, handler);
 	try
 	{
-		// These output graphable data which can be used to check correctness.
-		Testing::plotPhotoelectricHeating();
-		Testing::plotIonizationStuff();
-		Testing::plotPS64Collisions();
-		Testing::plotInterpolationTests();
-		Testing::plotHeatingCurve_main();
+		// // These output graphable data which can be used to check correctness.
+		// Testing::plotPhotoelectricHeating();
+		// Testing::plotIonizationStuff();
+		// Testing::plotPS64Collisions();
+		// Testing::plotInterpolationTests();
+		// Testing::plotHeatingCurve_main();
 
 		// These do a run, with writeout, but the results are not directly comparable to
 		// something in the way that the ones above work.
-		Testing::runFromFilesvsHardCoded();
-		Testing::runFullModel();
-		Testing::runWithDust(true);
-		Testing::runH2(true);
+		// Testing::runFromFilesvsHardCoded();
+		// Testing::runFullModel();
+		// Testing::runWithDust(true);
+		// Testing::runH2(true);
 		Testing::runMRNDust(true);
 	}
 	catch (const std::exception& ex)
