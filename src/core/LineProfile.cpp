@@ -106,6 +106,9 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints) const
 void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
                               double factor) const
 {
+	if (frequencyv.size() < 2)
+		Error::runtime("frequencyv should have at least two values");
+
 	double gridMin = *begin(frequencyv);
 	double gridMax = *(end(frequencyv) - 1);
 

@@ -508,13 +508,18 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
                                double n, const Spectrum& specificIntensity,
                                const GasModule::GrainInterface& gri)
 {
-	const string tab = "\t";
+	ColumnFile heatFile(outputPath + "heatcool.dat",
+	                    {"temperature", "net", "heat", "cool", "linenet", "lineheat",
+	                     "linecool", "continuumnet", "continuumheat", "continuumcool",
+	                     "grainheat"});
+	ColumnFile densFile(outputPath + "densities.dat",
+	                    {"temperature", "e-", "H+", "H", "H2", "Htot"});
+	ColumnFile rateFile(outputPath + "chemrates.dat",
+	                    {"temperature", "dissociation", "formation"});
 
-	ofstream output = IOTools::ofstreamFile(outputPath + "heatingcurve.dat");
-	output << "# 0temperature 1net 2heat 3cool"
-	       << " 4lineNet 5lineHeat 6lineCool"
-	       << " 7continuumNet 8continuumHeat 9continuumCool"
-	       << "10e- 11H+ 12H 13H2 \n";
+	std::vector<int> h_conservation = {0, 1, 1, 2};
+	size_t numSpecies = h_conservation.size();
+	vector<double> densFileLine(2 + numSpecies);
 
 	double T = 10;
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
@@ -523,29 +528,32 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 	auto outputCooling = [&](double t) {
 		s = gi.calculateDensities(n, t, specificIntensity, gri, &s);
+
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
 		double lHeat = gi.lineHeating(s);
 		double lCool = gi.lineCooling(s);
 		double cHeat = gi.continuumHeating(s);
 		double cCool = gi.continuumCooling(s);
-
 		double netHeating = heat - cool;
 		double netLine = lHeat - lCool;
 		double netCont = cHeat - cCool;
+		double grainHeat = gi.grainHeating(s, gri);
+		heatFile.writeLine({t, netHeating, heat, cool, netLine, lHeat, lCool, netCont,
+		                    cHeat, cCool, grainHeat});
 
-		output << t << tab << netHeating << tab << heat << tab << cool << tab << netLine
-		       << tab << lHeat << tab << lCool << tab << netCont << tab << cHeat << tab
-		       << cCool;
-
-		std::vector<int> h_conservation = {0, 1, 1, 2};
+		densFileLine[0] = t;
 		double totalH = 0;
-		for (int i = 0; i < s.speciesNv.size(); i++)
+		for (int i = 0; i < numSpecies; i++)
 		{
-			output << tab << s.speciesNv(i);
+			densFileLine[1 + i] = s.speciesNv(i);
 			totalH += h_conservation[i] * s.speciesNv(i);
 		}
-		output << tab << totalH << '\n';
+		densFileLine[1 + numSpecies] = totalH;
+		densFile.writeLine(densFileLine);
+
+		GasModule::GasState gs = gi.makeGasStateFromSolution(s, gri, {}, {});
+		rateFile.writeLine({t, gs.h2form(), gs.h2dissoc()});
 	};
 
 	// forward sweep
@@ -555,8 +563,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	size_t i = Tv.size();
 	while (i--)
 		outputCooling(Tv[i]);
-
-	output.close();
 
 	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
 	                                                specificIntensity.valuev());

@@ -49,6 +49,8 @@ public:
 	double temperature() const { return _temperature; }
 	/** Returns the formation rate of H2, in cm-3 s-1 */
 	double h2form() const { return _h2form; }
+	/** Returns the H2 dissociation rate, in s-1 */
+	double h2dissoc() const { return _h2dissoc; }
 	/** Return the heating rate by the grains in erg cm-3 s-1 */
 	double grainHeat() const { return _grainHeat; }
 
@@ -71,10 +73,12 @@ private:
 	GasState(const std::valarray<double>& emissivityv,
 	         const std::valarray<double>& opacityv,
 	         const std::valarray<double>& scatteringOpacityv, double T,
-	         const std::valarray<double>& densityv, double h2form, double grainHeat)
+	         const std::valarray<double>& densityv, double h2form, double grainHeat,
+	         double h2dissoc)
 	                : _emissivityv(emissivityv), _opacityv(opacityv),
 	                  _scatteringOpacityv(scatteringOpacityv), _temperature(T),
-	                  _densityv(densityv), _h2form(h2form), _grainHeat(grainHeat)
+	                  _densityv(densityv), _h2form(h2form),
+	                  _grainHeat(grainHeat), _h2dissoc{h2dissoc}
 	{
 	}
 
@@ -85,7 +89,7 @@ private:
 	/** Some diagnostics which are publicly available */
 	double _temperature{0};
 	std::valarray<double> _densityv{0};
-	double _h2form{0}, _grainHeat{0};
+	double _h2form{0}, _grainHeat{0}, _h2dissoc{0};
 };
 } /* namespace GasModule */
 

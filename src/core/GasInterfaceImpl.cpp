@@ -93,7 +93,7 @@ double heating_f(double logT, void* params)
 
 void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*unused Tinit*/,
                                     const Spectrum& specificIntensity,
-                                    const GasModule::GrainInterface& gi,
+                                    const GasModule::GrainInterface& gri,
                                     const Array& oFrequencyv, const Array& eFrequencyv) const
 {
 #ifndef SILENT
@@ -106,7 +106,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 	Solution s;
 
 	if (n <= 0)
-		s = calculateDensities(0, 0, specificIntensity, gi);
+		s = calculateDensities(0, 0, specificIntensity, gri);
 
 	else
 	{
@@ -120,7 +120,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
 
 		gsl_function F;
-		struct heating_f_params p = {this, n, &specificIntensity, &gi, &s, false};
+		struct heating_f_params p = {this, n, &specificIntensity, &gri, &s, false};
 		F.function = &heating_f;
 		F.params = &p;
 
@@ -147,10 +147,22 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		// Remember that s gets updated through the pointer given to the function
 		// parameters
 	}
+	gs = makeGasStateFromSolution(s, gri, oFrequencyv, eFrequencyv);
+}
 
-	const Array& emv = emissivityv(s, eFrequencyv);
-	const Array& opv = opacityv(s, oFrequencyv);
-	const Array& scv = scatteringOpacityv(s, oFrequencyv);
+GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
+                const Solution& s, const GasModule::GrainInterface& gri,
+                const Array& oFrequencyv, const Array& eFrequencyv) const
+
+{
+	Array emv, opv, scv;
+	if (eFrequencyv.size() > 2)
+		emv = emissivityv(s, eFrequencyv);
+	if (oFrequencyv.size() > 2)
+	{
+		opv = opacityv(s, oFrequencyv);
+		scv = scatteringOpacityv(s, oFrequencyv);
+	}
 
 #ifdef SANITY
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
@@ -165,9 +177,10 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 	// Put the relevant data into the gas state
 	Array densityv(s.speciesNv.data(), s.speciesNv.size());
 	// Derive this again, just for diagnostics
-	double h2form = GasGrain::surfaceH2FormationRateCoeff(gi, s.T) * s.speciesNv[_inH];
-	double grainHeat = grainHeating(s, gi);
-	gs = GasModule::GasState(emv, opv, scv, s.T, densityv, h2form, grainHeat);
+	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T) * s.speciesNv[_inH];
+	double grainHeat = grainHeating(s, gri);
+	double h2dissoc = _molecular->dissociationRate(s.H2Solution, s.specificIntensity);
+	return {emv, opv, scv, s.T, densityv, h2form, grainHeat, h2dissoc};
 }
 
 GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(

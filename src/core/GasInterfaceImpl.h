@@ -93,6 +93,9 @@ public:
 	                  const Spectrum& specificIntensity, const GasModule::GrainInterface&,
 	                  const Array& oFrequencyv, const Array& eFrequencyv) const;
 
+	GasModule::GasState makeGasStateFromSolution(const Solution&, const GasModule::GrainInterface&, const Array& oFrequencyv,
+	                                             const Array& eFrequencyv) const;
+
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
 	Solution calculateDensities(double n, double T, const Spectrum& specificIntensityv,
