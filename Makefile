@@ -17,9 +17,10 @@ AR=ar
 
 # Options, to be customized by user.
 # Debug build
-OPTFLAGS=-O0 -g -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic #-Wconversion
+WFLAGS = -Wshadow -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic #-Wconversion
+OPTFLAGS=-O0 -g $(WFLAGS)
 # Release build
-release: OPTFLAGS=-O3 -Wall -Wextra -Wno-missing-braces -Werror=return-type -pedantic -DSILENT -Wno-sign-compare
+release: OPTFLAGS=-O3 -DSILENT $(WFLAGS)
 
 # Target directories (this group of directories might be relocatable, but I have never tested
 # this)

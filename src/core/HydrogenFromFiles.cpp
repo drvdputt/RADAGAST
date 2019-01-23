@@ -403,23 +403,25 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 		return max(0., q_nl);
 	};
 
+	double qUp = 0;
 	double qDown = 0;
 	// The value for q(l = n - 1, l = n - 2) is filled in in the last iteration
 	for (int l = 0; l < n - 1; l++)
 	{
 		double qBoth = ps64eq43(l);
-		double qUp = qBoth - qDown;
+		qUp = qBoth - qDown;
 		q_li_lf_goingUp(l, l + 1) = qUp;
 
 		// will also be used in loop for l+1:
 		qDown = qUp * (2. * l + 1.) / (2. * l + 3.);
 		q_li_lf_goingUp(l + 1, l) = qDown;
 	}
-	double qUp = 0;
+	qUp = 0;
+	qDown = 0;
 	for (int l = n - 1; l > 0; l--)
 	{
 		double qBoth = ps64eq43(l);
-		double qDown = qBoth - qUp;
+		qDown = qBoth - qUp;
 		q_li_lf_goingDown(l, l - 1) = qDown;
 
 		// will also be used in loop for l-1:
