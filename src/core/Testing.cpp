@@ -455,9 +455,9 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	wavfile.close();
 
 	out = IOTools::ofstreamFile(outputPath + "raw_opacity.dat");
-	for (size_t i = 0; i < gs._opacityv.size(); i++)
+	for (size_t iFreq = 0; iFreq < gs._opacityv.size(); iFreq++)
 	{
-		out << gi.oFrequencyv()[i] << tab << gs._opacityv[i] << endl;
+		out << gi.oFrequencyv()[iFreq] << tab << gs._opacityv[iFreq] << endl;
 	}
 	out.close();
 
@@ -557,8 +557,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	};
 
 	// forward sweep
-	for (double& T : Tv)
-		outputCooling(T);
+	for (double& d : Tv)
+		outputCooling(d);
 	// reverse sweep
 	size_t i = Tv.size();
 	while (i--)

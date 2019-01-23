@@ -84,7 +84,6 @@ TEST_CASE("H2-specific algorithm")
 	SUBCASE("Blackbody radiation, no collisions, should also go to LTE?")
 	{
 		double n = 1;
-		double T = 250;
 		speciesNv(SpeciesIndex::ine()) = 0;
 		speciesNv(SpeciesIndex::inp()) = 0;
 		speciesNv(SpeciesIndex::inH()) = 0;
