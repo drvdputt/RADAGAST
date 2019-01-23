@@ -29,6 +29,18 @@ std::ofstream ofstreamFile(const std::string& file);
 std::istringstream istringstreamNextLine(std::ifstream& ifs);
 
 std::vector<double> allNumbersFromNextLine(const std::string& line);
-}
+} // namespace IOTools
+
+class ColumnFile
+{
+public:
+	ColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev);
+	~ColumnFile();
+	void writeLine(const std::vector<double>& colValuev);
+
+private:
+	std::ofstream _outFile;
+	size_t _numCols;
+};
 
 #endif /* _IOTOOLS_H_ */

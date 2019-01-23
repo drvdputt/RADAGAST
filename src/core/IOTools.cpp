@@ -52,3 +52,23 @@ vector<double> IOTools::allNumbersFromNextLine(const string& line)
 		nv.emplace_back(i);
 	return nv;
 }
+
+ColumnFile::ColumnFile(const string& filePath, const vector<string>& colNamev)
+                : _outFile{IOTools::ofstreamFile(filePath)}, _numCols{colNamev.size()}
+{
+	for (size_t i = 0; i < _numCols; i++)
+		_outFile << i << ' ' << colNamev[i] << ';';
+	_outFile << '\n';
+}
+
+ColumnFile::~ColumnFile() { _outFile.close(); }
+
+void ColumnFile::writeLine(const vector<double>& colValuev)
+{
+	Error::equalCheck("numCols and num values in line", _numCols, colValuev.size());
+	auto it = cbegin(colValuev);
+	_outFile << *it;
+	while (++it != cend(colValuev))
+		_outFile << ' ' << *it;
+	_outFile << '\n';
+}
