@@ -73,7 +73,7 @@ int main()
 	for (double T = 100000; T > 10; T /= 1.05)
 	{
 		s = pimpl->calculateDensities(n, T, specificIntensity, gri, sp, kGrainH2);
-		sp = &s;
+		// sp = &s;
 		double heat = pimpl->heating(s, gri);
 		double cool = pimpl->cooling(s);
 		outfile << T;
