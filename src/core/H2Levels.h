@@ -18,7 +18,7 @@ public:
 	    direct dissociation cross section. */
 	Array opacityv(const Solution& s, const Array& oFrequencvy) const override;
 
-	/** Ovveride the generic implementation of NLevel with an approach better suited for H2.
+	/** Override the generic implementation of NLevel with an approach better suited for H2.
 	    It scales as a*n^2, where a is the number of iterations, instead of n^3, apparently.
 	    I might be interesting to see this with my own eyes. */
 	NLevel::Solution customSolution(double n, const GasStruct& gas,
