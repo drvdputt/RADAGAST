@@ -36,9 +36,9 @@ TEST_CASE("single species with creation and destruction")
 	{
 		// equilibrium means:
 		// creation - N * destruction = 0 --> N = creation / destruction
-		double c = 10.;
-		double d = 15.;
-		CHECK(solve(c, d) == c / d);
+		double cr = 10.;
+		double ds = 15.;
+		CHECK(solve(cr, ds) == cr / ds);
 	}
 
 	double eps = 1e-15;
