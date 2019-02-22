@@ -929,10 +929,14 @@ void Testing::runMRNDust(bool write)
 	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
-	double Tc{4e3};
-	double G0{1e2};
-	Array specificIntensityv =
-	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
+	double Tc{2950.};
+	// double G0{1e2};
+	Array frequencyv = gasInterface.iFrequencyv();
+	Array specificIntensityv(frequencyv.size());
+	for (int i = 0; i < frequencyv.size(); i++)
+		specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
+
+	// Array specificIntensityv = generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri);

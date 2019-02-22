@@ -13,7 +13,7 @@ int main()
 	int nPhotoBins = 20;
 	double low_eV = 1;
 	double high_eV = 24;
-	double Tc = 4000;
+	double Tc = 2950;
 	// e = h nu ; n = e / h
 	double lowFreq = low_eV / Constant::ERG_EV / Constant::PLANCK;
 	double highFreq = high_eV / Constant::ERG_EV / Constant::PLANCK;
@@ -36,7 +36,7 @@ int main()
 	radf.close();
 
 	// Set a fixed H2 formation rate
-	double kGrainH2 = 1e-12;
+	double kGrainH2 = 2e-15;
 
 	// H nuclei density
 	double n = 1e4;
