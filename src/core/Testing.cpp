@@ -515,7 +515,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	ColumnFile densFile(outputPath + "densities.dat",
 	                    {"temperature", "e-", "H+", "H", "H2", "Htot"});
 	ColumnFile rateFile(outputPath + "chemrates.dat",
-	                    {"temperature", "dissociation", "formation"});
+	                    {"temperature", "formation", "dissociation"});
 
 	std::vector<int> h_conservation = {0, 1, 1, 2};
 	size_t numSpecies = h_conservation.size();
