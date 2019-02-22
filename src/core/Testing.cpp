@@ -521,10 +521,10 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	size_t numSpecies = h_conservation.size();
 	vector<double> densFileLine(2 + numSpecies);
 
-	double T = 10;
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
+	double T0 = 10000;
 	GasInterfaceImpl::Solution s =
-	                gi.calculateDensities(n, T, specificIntensity, gri, nullptr);
+	                gi.calculateDensities(n, T0, specificIntensity, gri, nullptr);
 
 	auto outputCooling = [&](double t) {
 		s = gi.calculateDensities(n, t, specificIntensity, gri, &s);
