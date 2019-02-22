@@ -92,32 +92,29 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	double result{5.8e-11 * Iuv};
 	return result;
 #else
-	// Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which can be
-	// used in chemical network (it will multiply by the density again. TODO: need separate
-	// rates for H2g and H2*
+	EVector directv = directDissociationSinkv(specificIntensity);
+	EVector solomonv = spontaneousDissociationSinkv();
+
 	double nH2 = s.nv.sum();
 
+	EVector popFracv;
 	if (nH2 > 0)
-	{
-		EVector directv = directDissociationSinkv(specificIntensity);
-		EVector solomonv = spontaneousDissociationSinkv();
-		double directFractional = directv.dot(s.nv) / nH2;
-		double solomonFractional = solomonv.dot(s.nv) / nH2;
-		DEBUG("Dissociation: direct rate:" << directFractional << " spontaneous rate: "
-		                                   << solomonFractional << '\n');
-		return directFractional + solomonFractional;
-	}
+		popFracv = s.nv / nH2;
 	else
-	{
 		// We need to return something nonzero here, otherwise the chemistry will have
-		// no dissociation coefficient, maxing out the H2.
+		// no dissociation coefficient, maxing out the H2. Just pick the one for the
+		// ground state? Or maybe LTE? TODO: make the chemistry solver more robust, so
+		// that this fake dissociation rate isn't necessary.
+		popFracv = solveBoltzmanEquations(s.T);
 
-		// Just pick the one for the ground state? Or maybe LTE? TODO: make the
-		// chemistry solver more robust, so that this fake dissociation rate isn't
-		// necessary.
-		EVector ltePopulationFractionv = solveBoltzmanEquations(s.T);
-		return dissociationSinkv(specificIntensity).dot(ltePopulationFractionv);
-	}
+	// Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which
+	// can be used in chemical network (it will multiply by the density again. TODO:
+	// need separate rates for H2g and H2*
+	double directFractional = directv.dot(popFracv);
+	double solomonFractional = solomonv.dot(popFracv);
+	DEBUG("Dissociation: direct rate:" << directFractional << " spontaneous rate: "
+	                                   << solomonFractional << '\n');
+	return directFractional + solomonFractional;
 #endif
 }
 
