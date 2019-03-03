@@ -64,10 +64,10 @@ public:
 		Environment(const Spectrum& specificIntensity, double T, double ne, double np,
 		            const std::vector<int>& chargev, const Array& densityv,
 		            const Array& massv)
-		                : specificIntensity(specificIntensity), _T(T), _ne(ne), _np(np),
+		                : _specificIntensity(specificIntensity), _T(T), _ne(ne), _np(np),
 		                  _chargev(chargev), _densityv(densityv), _massv(massv){};
 		// Radiation field
-		Spectrum specificIntensity;
+		Spectrum _specificIntensity;
 		// The gas temperature, and frequently used densities
 		double _T, _ne, _np;
 		/* Properties of all the charged particles in the environment (also contains ne

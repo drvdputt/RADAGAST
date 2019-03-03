@@ -31,8 +31,8 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
                                              const Array& Qabs, int& resultZmin,
                                              int& resultZmax, vector<double>& resultfZ) const
 {
-	const Array& frequencyv = env.specificIntensity.frequencyv();
-	const Array& specificIntensityv = env.specificIntensity.valuev();
+	const Array& frequencyv = env._specificIntensity.frequencyv();
+	const Array& specificIntensityv = env._specificIntensity.valuev();
 
 	// Express a in angstroms
 	double aA = a / Constant::ANG_CM;
@@ -316,8 +316,8 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 		double fZz = fZ[Z - Zmin];
 		if (isnan(fZz))
 			Error::runtime("nan in fz");
-		double heatAZ = heatingRateAZ(a, Z, env.specificIntensity.frequencyv(), Qabs,
-		                              env.specificIntensity.valuev());
+		double heatAZ = heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabs,
+		                              env._specificIntensity.valuev());
 
 		/* Fraction of grains in this charge state * heating by a single particle of
 		   charge Z. */
@@ -366,7 +366,7 @@ double GrainPhotoelectricEffect::heatingRate(
 		double nd = grainPop.density(m);
 
 		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(),
-		                  env.specificIntensity.valuev().size());
+		                  env._specificIntensity.valuev().size());
 
 		// Get the charge distribution (is normalized to 1)
 		vector<double> fZ;
