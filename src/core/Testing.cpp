@@ -136,7 +136,7 @@ Array generateQabsv(const QabsDataSet& qds, double a, const Array& frequencyv)
 		                q[wIndex][aIndex]);
 	}
 
-#define PLOT_QABS
+// #define PLOT_QABS
 #ifdef PLOT_QABS
 	stringstream filename;
 	filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8)
