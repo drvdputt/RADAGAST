@@ -271,19 +271,21 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 			DEBUG("Solving levels nH = " << nH << endl);
 			s.HSolution.nv = LevelSolver::statisticalEquilibrium(nH, Htransitionvv,
 			                                                     Hsourcev, Hsinkv);
+			// s.HSolution = _atomicLevels->solveLTE(nH, gas);
 		}
 
 		if (_molecular)
 		{
 			double nH2 = s.speciesNv(_inH2);
-			DEBUG("Solving levels nH2 = " << nH2 << endl);
-			// gas is passed here to make an initial guess of the levels based on
-			// the gas properties
-			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity);
+			// DEBUG("Solving levels nH2 = " << nH2 << endl);
+			// // gas is passed here to make an initial guess of the levels based on
+			// // the gas properties
+			// s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity);
 
-			// the solution is also saved in the gas struct, so it can be used as an
-			// initial guess instead of just guessing based on the temperature
-			gas._h2Levelv = s.H2Solution.nv;
+			// // the solution is also saved in the gas struct, so it can be used as an
+			// // initial guess instead of just guessing based on the temperature
+			// gas._h2Levelv = s.H2Solution.nv;
+			s.H2Solution = _molecular->solveLTE(nH2, gas);
 		}
 	};
 

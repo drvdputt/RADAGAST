@@ -527,7 +527,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	                gi.calculateDensities(n, T0, specificIntensity, gri, nullptr);
 
 	auto outputCooling = [&](double t) {
-		s = gi.calculateDensities(n, t, specificIntensity, gri, &s);
+		std::cout << "T = " << t << '\n';
+		s = gi.calculateDensities(n, t, specificIntensity, gri, nullptr);
 
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
