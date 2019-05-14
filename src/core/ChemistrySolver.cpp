@@ -470,7 +470,7 @@ EVector ChemistrySolver::solveTimeDep(const EVector& rateCoeffv, const EVector& 
 		bool relEquil = ((delta / avg).abs() < epsrel).all();
 		if (absEquil && relEquil)
 		{
-			DEBUG("Reached chemical equilibrium after " << i << " iterations");
+			DEBUG("Reached chemical equilibrium after " << i << " iterations\n");
 			break;
 		}
 		if (status != GSL_SUCCESS)
