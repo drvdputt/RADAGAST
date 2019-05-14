@@ -1,10 +1,11 @@
-include_directories(../core ../../include)
+include_directories(../core ../../include ../../eigen3)
 
-set(TARGET main)
-add_executable(${TARGET} main.cpp)
-target_link_libraries(${TARGET} gasmodule)
-include("../../CompilerFlags.cmake")
-# the static or shared library already links to GSL
+foreach(TARGET main krome_compare)
+  add_executable(${TARGET} ${TARGET}.cpp)
+  # this static library already links to GSL
+  target_link_libraries(${TARGET} gasmodule)
+  include("../../CompilerFlags.cmake")
+endforeach()
 
 find_package(GSL REQUIRED) # populates GSL_INCLUDED_DIRS
 set(TARGET run_tests)
