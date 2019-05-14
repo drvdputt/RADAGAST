@@ -1,4 +1,4 @@
-include_directories(../core ../../include ../../eigen3)
+include_directories(../core ../../include ${EIGEN_INCLUDE_DIR})
 
 foreach(TARGET main krome_compare)
   add_executable(${TARGET} ${TARGET}.cpp)

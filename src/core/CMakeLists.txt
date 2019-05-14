@@ -5,7 +5,7 @@ find_package(GSL REQUIRED) # populates GSL_INCLUDED_DIRS
 set(TARGET gasmodule_objects)
 add_library(${TARGET} OBJECT ${SOURCES} ${HEADERS})
 target_include_directories(${TARGET} PRIVATE ../../include)
-target_include_directories(${TARGET} SYSTEM PRIVATE ../../eigen3 ${GSL_INCLUDE_DIRS})
+target_include_directories(${TARGET} SYSTEM PRIVATE ${EIGEN_INCLUDE_DIR} ${GSL_INCLUDE_DIRS})
 include("../../CompilerFlags.cmake")
 # do not forget to link to GSL when making a binary from these objects
 
