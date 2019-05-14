@@ -8,6 +8,7 @@
 
 #include <gsl/gsl_multimin.h>
 #include <gsl/gsl_multiroots.h>
+#include <gsl/gsl_odeiv2.h>
 #include <gsl/gsl_sort.h>
 
 namespace
@@ -201,6 +202,40 @@ void multimin_fdf(const gsl_vector* x, void* p, double* f, gsl_vector* g)
 	gsl_vector_memcpy(g, &g_view.vector);
 }
 
+struct ode_params
+{
+	size_t size;
+	const EVector* rateCoeffv;
+	const ChemistrySolver* solver_instance;
+};
+
+int ode_f(double /* unused t */, const double y[], double dydt[], void* p)
+{
+	auto* params = static_cast<struct ode_params*>(p);
+
+	Eigen::Map<const EVector> nv(y, params->size);
+	Eigen::Map<EVector> Fv(dydt, params->size);
+	Fv = params->solver_instance->evaluateFv(
+	                nv, *params->rateCoeffv); // this should overwrite the contents of dydt
+	return GSL_SUCCESS; // maybe check for nan here
+}
+
+int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], void* p)
+{
+	auto* params = static_cast<struct ode_params*>(p);
+
+	// The jacobian dfdy needs to be stored row-major for GSL. This is also why we needed to
+	// transpose Jvv in the functions for the multiroot-based solution.
+	Eigen::Map<const EVector> nv(y, params->size);
+	Eigen::Map<EMatrixRM> Jvv(dfdy, params->size, params->size);
+	Jvv = params->solver_instance->evaluateJvv(nv, *params->rateCoeffv);
+
+	// no explicit time dependence
+	std::fill(dfdt, dfdt + params->size, 0);
+
+	return GSL_SUCCESS;
+}
+
 } /* namespace */
 
 ChemistrySolver::ChemistrySolver(const EMatrix& reactantStoichvv,
@@ -229,28 +264,30 @@ ChemistrySolver::~ChemistrySolver() = default;
 
 EVector ChemistrySolver::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
-	EVector nv = n0v;
+	// EVector nv = n0v;
 
-	// First, use the multiroot method, which intentionally uses a slightly modified kv to
-	// prevent the jacobian from becoming singular (resulting in weird steps)
-	double smallest = rateCoeffv.maxCoeff();
-	for (int i = 0; i < rateCoeffv.size(); i++)
-		if (rateCoeffv(i) > 0)
-			smallest = std::min(smallest, rateCoeffv(i));
+	// // First, use the multiroot method, which intentionally uses a slightly modified kv to
+	// // prevent the jacobian from becoming singular (resulting in weird steps)
+	// double smallest = rateCoeffv.maxCoeff();
+	// for (int i = 0; i < rateCoeffv.size(); i++)
+	// 	if (rateCoeffv(i) > 0)
+	// 		smallest = std::min(smallest, rateCoeffv(i));
 
-	// Replace the zeros by something very small
-	EVector kv = (rateCoeffv.array() > 0).select(rateCoeffv, smallest * 1e-30);
-	nv = solveMultiroot(kv, nv);
+	// // Replace the zeros by something very small
+	// EVector kv = (rateCoeffv.array() > 0).select(rateCoeffv, smallest);
+	// nv = solveMultiroot(kv, nv);
 
-	// Then, use the minimization algorithm which does use the correct coefficients to go to
-	// the real solution
-	nv = solveMultimin(rateCoeffv, nv);
+	// // Then, use the minimization algorithm which does use the correct coefficients to go to
+	// // the real solution
+	// nv = solveMultimin(rateCoeffv, nv);
 
-	if (nv.array().isNaN().any())
-		Error::runtime("NaN in chemistry solution");
+	// if (nv.array().isNaN().any())
+	// 	Error::runtime("NaN in chemistry solution");
 
-	// Remove negative densities (and hope everything is still normalized)
-	return (nv.array() < 0).select(0, nv);
+	// // Remove negative densities (and hope everything is still normalized)
+	// return (nv.array() < 0).select(0, nv);
+
+	return solveTimeDep(rateCoeffv, n0v);
 }
 
 EVector ChemistrySolver::solveMultiroot(const EVector& rateCoeffv, const EVector& n0v) const
@@ -399,6 +436,50 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 
 	gsl_multimin_fdfminimizer_free(m);
 	return nonNanSolutionv;
+}
+
+EVector ChemistrySolver::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) const
+{
+	EVector conservedQuantityv = _conservEqvv * n0v;
+
+	struct ode_params params = {_numSpecies, &rateCoeffv, this};
+
+	gsl_odeiv2_system s{ode_f, ode_j, _numSpecies, &params};
+
+	// 1 second initial step
+	double ini_step = 1;
+	double epsabs = 1;
+	double epsrel = 1e-15;
+	gsl_odeiv2_driver* d = gsl_odeiv2_driver_alloc_y_new(&s, gsl_odeiv2_step_bsimp,
+	                                                     ini_step, epsabs, epsrel);
+
+	// 2^59 seconds > 13.7 Gyr
+	int max_steps = 59;
+	double t = 0;
+	EVector nv = n0v;
+	for (int i = 1; i <= max_steps; i++)
+	{
+		EVector previousNv = nv;
+
+		double goalTime = std::pow(2, i);
+		int status = gsl_odeiv2_driver_apply(d, &t, goalTime, &nv[0]);
+
+		EArray delta = (nv - previousNv).array().abs();
+		EArray avg = (nv + previousNv) / 2;
+		bool absEquil = (delta < epsabs).all();
+		bool relEquil = ((delta / avg).abs() < epsrel).all();
+		if (absEquil && relEquil)
+		{
+			DEBUG("Reached chemical equilibrium after " << i << " iterations\n");
+			break;
+		}
+		if (status != GSL_SUCCESS)
+		{
+			DEBUG("GSL failure" << '\n');
+			break;
+		}
+	}
+	return nv;
 }
 
 std::vector<size_t> ChemistrySolver::chooseEquationsToReplace(const EVector& nv) const

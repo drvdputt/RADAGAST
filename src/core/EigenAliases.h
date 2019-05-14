@@ -4,6 +4,8 @@
 #include <Eigen/Dense>
 
 using EMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
+// Row major version can be useful for interfacing with e.g. GSL
+using EMatrixRM = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::RowMajor>;
 using EVector = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 using EArray = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>;
 

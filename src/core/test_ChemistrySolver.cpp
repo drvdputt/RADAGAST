@@ -105,7 +105,7 @@ TEST_CASE("Combine and dissociate")
 	n0v << nH0, nH20;
 
 	{ // Both formation and destruction
-		double eps = 1.e-15;
+		double eps = 1.e-13;
 		std::cout << "balance for " << nH0 << " " << nH20 << std::endl;
 		double kform = 1.;
 		double kdiss = 0.2;

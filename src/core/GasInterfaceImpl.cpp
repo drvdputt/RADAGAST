@@ -179,7 +179,7 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
 	// Derive this again, just for diagnostics
 	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
 	double grainHeat = grainHeating(s, gri);
-	double h2dissoc = _molecular->dissociationRate(s.H2Solution, s.specificIntensity);
+	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution, s.specificIntensity) : 0;
 	return {emv, opv, scv, s.T, densityv, h2form, grainHeat, h2dissoc};
 }
 
@@ -271,6 +271,7 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 			DEBUG("Solving levels nH = " << nH << endl);
 			s.HSolution.nv = LevelSolver::statisticalEquilibrium(nH, Htransitionvv,
 			                                                     Hsourcev, Hsinkv);
+			// s.HSolution = _atomicLevels->solveLTE(nH, gas);
 		}
 
 		if (_molecular)
@@ -284,6 +285,7 @@ GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
 			// the solution is also saved in the gas struct, so it can be used as an
 			// initial guess instead of just guessing based on the temperature
 			gas._h2Levelv = s.H2Solution.nv;
+			// s.H2Solution = _molecular->solveLTE(nH2, gas);
 		}
 	};
 

@@ -96,6 +96,9 @@ private:
 	/** Solves the chemistry by minimizing a function. */
 	EVector solveMultimin(const EVector& rateCoeffv, const EVector& n0v) const;
 
+	/** Solver the chemistry by evolving the system until equilibrium. */
+	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) const;
+
 	/** Calculates the density factor for the reaction r. Multiplying the reaction rate
 	    coefficient with this factor gives the total reaction rate. */
 	double densityProduct(const EVector& nv, size_t r) const;
