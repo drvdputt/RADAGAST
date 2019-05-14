@@ -179,7 +179,7 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
 	// Derive this again, just for diagnostics
 	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
 	double grainHeat = grainHeating(s, gri);
-	double h2dissoc = _molecular->dissociationRate(s.H2Solution, s.specificIntensity);
+	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution, s.specificIntensity) : 0;
 	return {emv, opv, scv, s.T, densityv, h2form, grainHeat, h2dissoc};
 }
 
