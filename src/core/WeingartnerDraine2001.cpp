@@ -181,7 +181,7 @@ double WD01::stickingCoefficient(double a, int Z, int z_i, bool carbonaceous)
 
 double WD01::lambdaTilde(double tau, double ksi)
 {
-	/* Found in 1987-Draine-Sutin (writing ksi instead of nu, to avoid confuction with
+	/* Found in 1987-Draine-Sutin (writing ksi instead of nu, to avoid confusion with
 	   frequency). */
 	if (ksi < 0)
 	{
@@ -200,6 +200,6 @@ double WD01::lambdaTilde(double tau, double ksi)
 
 double WD01::thetaKsi(double ksi)
 {
-	// Note that this is an approximation. The exact soluation is actually a root of an equation
 	return ksi > 0. ? ksi / (1. + 1. / sqrt(ksi)) : 0.;
+	// Note that this is an approximation. The exact solution is actually a root of an equation
 }
