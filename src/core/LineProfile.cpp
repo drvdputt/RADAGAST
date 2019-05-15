@@ -276,10 +276,14 @@ void LineProfile::addToSpectrum(const Array& frequencyv, Array& spectrumv, doubl
 double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax,
                                       std::string debug) const
 {
-// #define TRIVIAL
-#ifdef TRIVIAL
-	return spectrum.evaluate(_center);
-#endif
+	// Approximate by value at line center if line is much narrower than the resolution of
+	// the provided SED
+	double spectrumResolutionAtCenter = spectrum.resolution(_center);
+	if (5 * _halfWidth_lorentz < spectrumResolutionAtCenter &&
+	    3 * _sigma_gauss < spectrumResolutionAtCenter)
+		return spectrum.evaluate(_center);
+
+	// Else, do this very complicated integration with automated cutoff
 	const Array& spectrumGrid = spectrum.frequencyv();
 	const Array& lineGrid = recommendedFrequencyGrid(15);
 	Array frequencyv(spectrumGrid.size() + lineGrid.size());

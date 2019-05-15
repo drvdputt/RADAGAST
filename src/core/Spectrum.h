@@ -22,6 +22,12 @@ public:
 	/** Interpolates the data to the given frequency. */
 	double evaluate(double frequency) const;
 
+	/** Distance between data points between which the given frequency falls. If the given
+	    frequency is outside of the frequency grid, then the distance between the first or
+	    last pair of points in the frequency grid is given. Returns 0 if the spectrum is
+	    empty. */
+	double resolution(double frequency) const;
+
 	/** Calculate the average of the spectrum over a given interval. The points used to
 	    perform the integration are the points on which the spectrum is discretized, with
 	    minFreq and maxFreq added extra to fix the range. */

@@ -24,8 +24,21 @@ double Spectrum::evaluate(double frequency) const
 	}
 }
 
+double Spectrum::resolution(double frequency) const
+{
+	if (!_hasData)
+		return 0;
+
+	int index = TemplatedUtils::index(frequency, _frequencyv);
+	if (index == 0)
+		index++;
+	return _frequencyv[index] - _frequencyv[index - 1];
+}
+
 double Spectrum::average(double minFreq, double maxFreq) const
 {
+	if (!_hasData)
+		return 0;
 	// Integrate over [minFreq, all points inbetween, maxFreq]
 
 	// Integration points
