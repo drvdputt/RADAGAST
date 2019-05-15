@@ -114,7 +114,15 @@ QabsDataSet readQabs(bool car)
 
 Array generateQabsv(const QabsDataSet& qds, double a, const Array& frequencyv)
 {
+	// Annoying edge case included
+	if (a <= qds.FILEAV[0])
+		return Array(frequencyv.size());
+
+	if (a > qds.FILEAV[qds.FILEAV.size() - 1])
+		return Array(frequencyv.size());
+
 	size_t aIndex = TemplatedUtils::index(a, qds.FILEAV);
+	assert(aIndex > 0);
 
 	Array wavelengthv = Testing::freqToWavGrid(frequencyv);
 	vector<double> QabsWav(wavelengthv.size());
