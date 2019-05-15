@@ -90,8 +90,18 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	// Compute yield (y2, y1, y0, and finally Y)
 
 	// WD01 text between eq 10 and 11
-	double Elow = Z < 0 ? Emin : -(Z + 1) * Constant::ESQUARE / a;
-	double Ehigh = Z < 0 ? Emax : hnuDiff;
+	double Elow, Ehigh;
+	if (Z < 0)
+	{
+		Elow = Emin;
+		Ehigh = Emax;
+	}
+	else
+	{
+		Elow = -(Z + 1) * Constant::ESQUARE / a;
+		Ehigh = hnuDiff;
+	}
+
 	// Calculate y2 from eq 11
 	double Ediff = Ehigh - Elow;
 	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
@@ -200,6 +210,9 @@ double WD01::lambdaTilde(double tau, double ksi)
 
 double WD01::thetaKsi(double ksi)
 {
-	return ksi > 0. ? ksi / (1. + 1. / sqrt(ksi)) : 0.;
 	// Note that this is an approximation. The exact solution is actually a root of an equation
+	if (ksi > 0.)
+		return ksi / (1. + 1. / sqrt(ksi));
+	else
+		return 0;
 }
