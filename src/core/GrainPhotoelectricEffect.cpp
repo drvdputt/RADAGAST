@@ -90,8 +90,10 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 	};
 
 	/* We will cut off the distribution at some point past the maximum (in either the
-	   positive or the negative direction). */
-	double cutOffFactor = 1.e-6;
+	   positive or the negative direction). For a Gaussian distribution, at half the height
+	   we have already ~80% of the population. So a 10th of the height should definitely be
+	   sufficient.*/
+	double cutOffFactor = 1.e-1;
 	int trimLow = 0;
 	int trimHigh = resultfZ.size() - 1;
 	int centerZ = 0;
