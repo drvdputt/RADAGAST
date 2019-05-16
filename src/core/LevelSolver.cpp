@@ -48,12 +48,17 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 {
 	EVector nv = initialGuessv;
 	int numLv = initialGuessv.size();
-	EMatrix Mvv = totalTransitionRatesvv.transpose();
+	// Tij is the transition rate from i to j. Mij = Tji means the arrival in state i from
+	// j. This form is handy because then you can do a left-multiplication with the nv
+	// column vector to arrive at the total increase rate for each level. Storing Mvv row
+	// major gives some extra speed, because the rows are then contiguous in memory, which
+	// helps when multiplying with nv.
+	EMatrixRM Mvv = totalTransitionRatesvv.transpose();
 
 	// Fractional destruction rate (in s-1) stays constant when populations are adjusted
 	// (sum over the row indices by doing a colwise reduction. Need to transpose because
 	// summing each column gives a row vector, while sinkv is column one.
-	EVector fracDestructionRatev = Mvv.colwise().sum().transpose() + sinkv;
+	EVector fracDestructionRatev = totalTransitionRatesvv.rowwise().sum() + sinkv;
 
 	// The comments here are written in context of H2, since that is the main reason this
 	// algorithm exists
@@ -66,9 +71,6 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 	int startE = stopX;
 	int stopE = numLv;
 	int numE = stopE - startE;
-
-	// The algorithm apparently works better when the iterations happen from high to low
-	// energies, so we go backwards in our loops.
 
 	// Convergence criteria. For the ground state levels, we demand that a certain absolute
 	// precision is reached. For the excited levels, a fractional convergence criterium
@@ -83,23 +85,26 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 	{
 		counter++;
 
-		// The previous nv, for convergence checking
 		EVector previousNv = nv;
 
-		// Sweep over ground state
+		// Sweep over ground state (this can also be done with a block operation, but
+		// this is faster for some reason)
 		for (int i = startX; i < stopX; i++)
 		{
 			// Sum Mij nj, with j running over all other levels.
 			double creationRate = sourcev(i) + Mvv.row(i) * nv;
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
 		}
+
 		/* Renormalize because the algorithm has no sum rule, */
 		nv *= totalDensity / nv.sum();
 
 		// We will cut this iteration short as long as the ground state has not
-		// converged.
-		auto deltaXv = nv.segment(startX, numX) - previousNv.segment(startX, numX);
-		if ((deltaXv.array().abs() > maxDeltaX).any())
+		// converged. Use auto to store an expression instead of an intermediate result.
+		auto deltaXv = (nv.segment(startX, numX) - previousNv.segment(startX, numX))
+		                               .array()
+		                               .abs();
+		if ((deltaXv > maxDeltaX).any())
 		{
 			if (!(counter % 1000))
 			{
@@ -115,17 +120,19 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		// keyword here to work with Eigen expressions, which delays the evaluation
 		// without having to put everything on one line.
 
-		// Creation rates for all E levels, coming only from the ground state populations.
-		auto rateFromXintoEv = Mvv.block(startE, startX, numE, numX) *
-		                       nv.segment(startX, numX);
-		// Total creation rate
-		auto creationRateEv = sourcev.segment(startE, numE) + rateFromXintoEv;
+		// Creation rates for all E levels, coming only from the ground state
+		// populations. Calculate intermediate result here, since we will need to check
+		// all of them for being > 0 anyway.
+		EArray creationRateEv = sourcev.segment(startE, numE) +
+		                        Mvv.block(startE, startX, numE, numX) *
+		                                        nv.segment(startX, numX);
 
-		// Expression for the new populations. Only use this expression if the creation
-		// rate is positive.
-		auto newPopEv = creationRateEv.array() /
+		// Only the elements for which the denumerator is positive should be calculated,
+		// by storing the expression with auto here.
+		auto newPopEv = creationRateEv /
 		                fracDestructionRatev.segment(startE, numE).array();
-		nv.segment(startE, numE) = (creationRateEv.array() > 0).select(newPopEv, 0);
+		nv.segment(startE, numE) = (creationRateEv > 0).select(newPopEv, 0);
+
 		nv *= totalDensity / nv.sum();
 
 		// Overall convergence check (relative change), also check for changes from 0 to
