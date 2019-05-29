@@ -17,6 +17,8 @@
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 
+#include <gsl/gsl_const_cgs.h>
+
 #include <iomanip>
 #include <iterator>
 #include <sstream>
@@ -497,17 +499,31 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
 }
 
-void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr)
+void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr,
+                          bool bulkCar)
 {
+	// Assume a certain bulk density (values taken from SKIRT source code for Draine
+	// Graphite and Draine Silicate)
+	double bulkDen;
+	if (bulkCar)
+		bulkDen = 2.24; // g cm-3
+	else
+		bulkDen = 3.0;
+
 	// write out grain size distribution, preferable in g cm-3
 	for (size_t i = 0; i < gr.numPopulations(); i++)
 	{
 		ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
-		             {"size", "density(cm-3)", "temperature"});
+		             {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
 
 		auto pop = gr.population(i);
 		for (size_t m = 0; m < pop->numSizes(); m++)
-			f.writeLine({pop->size(m), pop->density(m), pop->temperature(m)});
+		{
+			double a = pop->size(m);
+			double numberDen = pop->density(m);
+			double mass = 4. / 3. * Constant::PI * a * a * a * bulkDen;
+			f.writeLine({a, numberDen, numberDen * mass, pop->temperature(m)});
+		}
 	}
 }
 
@@ -899,18 +915,19 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 {
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
 
+	// need grains from .005 to .25 micron
 	double amin = 50 * Constant::ANG_CM;
-	double amax = 0.24 * Constant::UM_CM;
+	double amax = 0.25 * Constant::UM_CM;
 
 	// Shared properties
-	size_t numSizes = 100;
+	size_t numSizes = 10;
 	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
 	Array sizev(numSizes);
 	Array temperaturev(numSizes);
 	for (size_t i = 0; i < numSizes; i++)
 	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 15;
+		temperaturev[i] = 100.;
 	}
 
 	// Properties that differ between car and sil
@@ -920,8 +937,11 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 		Array densityv(numSizes);
 		for (size_t i = 0; i < numSizes; i++)
 		{
-			double bin_width = bin_edges[i + 1] - bin_edges[i];
-			densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+			// analytic integration of dn = C nH a^{-3.5} da
+			// double bin_width = bin_edges[i + 1] - bin_edges[i];
+			// densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+			densityv[i] = C * nHtotal / 2.5 *
+			              (pow(bin_edges[i], -2.5) - pow(bin_edges[i + 1], -2.5));
 		}
 		auto label = car ? GasModule::GrainTypeLabel::CAR
 		                 : GasModule::GrainTypeLabel::SIL;
@@ -933,7 +953,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	addMRNCarOrSil(true);
 
 	// Silicate population:
-	addMRNCarOrSil(false);
+	// addMRNCarOrSil(false);
 
 	GasModule::GrainInterface grainInterface(move(grainPopv));
 	return grainInterface;
@@ -945,19 +965,25 @@ void Testing::runMRNDust(bool write)
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
-	double nHtotal{1000};
+	double nHtotal{25120};
 	double Tinit{8000};
 
 	// Dust model
 	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
-	double Tc{2950.};
+	double Tc{4000.};
+	double bollum = 1.e-6 * Constant::SOL_LUM;
+	double distance = 1.496e12; // 0.1 AU
+
 	// double G0{1e2};
 	Array frequencyv = gasInterface.iFrequencyv();
 	Array specificIntensityv(frequencyv.size());
 	for (int i = 0; i < frequencyv.size(); i++)
 		specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
+
+	specificIntensityv *= bollum / 16 / Constant::PI / distance / distance /
+	                      GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
 	// Array specificIntensityv = generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
 
@@ -966,8 +992,15 @@ void Testing::runMRNDust(bool write)
 
 	if (write)
 	{
-		writeGasState("MRNDust/", gasInterface, gs);
-		writeGrains("MRNDust/", gri);
+		string prefix = "MRNDust/";
+		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
+		for (size_t i = 0; i < frequencyv.size(); i++)
+			radfield.writeLine(
+			                {frequencyv[i], frequencyv[i] * specificIntensityv[i]});
+
+		writeGasState(prefix, gasInterface, gs);
+		writeGrains(prefix, gri);
+
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
 		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
