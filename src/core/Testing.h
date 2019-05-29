@@ -58,6 +58,8 @@ void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& o
 void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi,
                    const GasModule::GasState& gs);
 
+void writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr);
+
 void plotHeatingCurve_main();
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
                       const Spectrum& specificIntensity, const GasModule::GrainInterface&);

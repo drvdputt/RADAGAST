@@ -497,6 +497,20 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
 }
 
+void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr)
+{
+	// write out grain size distribution, preferable in g cm-3
+	for (size_t i = 0; i < gr.numPopulations(); i++)
+	{
+		ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
+		             {"size", "density(cm-3)", "temperature"});
+
+		auto pop = gr.population(i);
+		for (size_t m = 0; m < pop->numSizes(); m++)
+			f.writeLine({pop->size(m), pop->density(m), pop->temperature(m)});
+	}
+}
+
 void Testing::plotHeatingCurve_main()
 {
 	Array frequencyv =
@@ -953,6 +967,7 @@ void Testing::runMRNDust(bool write)
 	if (write)
 	{
 		writeGasState("MRNDust/", gasInterface, gs);
+		writeGrains("MRNDust/", gri);
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
 		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
