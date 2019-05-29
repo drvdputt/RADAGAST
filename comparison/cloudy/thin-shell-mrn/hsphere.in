@@ -1,0 +1,39 @@
+init "honly.ini"
+title hsphere
+# SOURCE
+blackbody 1.0e4
+luminosity total linear solar 1.0e-6
+# GAS
+# 0.1 AU to < .2 AU in cm
+radius 1.496e12 to 2.0e12 linear cm
+hden 25100 linear
+# LEVEL MODEL
+# atom H-like collisions l-mixing off
+# atom H-like collisional ionization off
+atom H-like levels resolved 4
+atom H-like levels collapsed 1
+atom H-like levels print
+#atom H-like topoff off
+database H2 levels 3
+# GRAINS MODEL
+# Standard 3.5 slope MRN distribution (see data/ism.szd)
+grains "graphite_ism_10.opc" no qheat no cooling
+no grain electrons
+no grain gas collisional energy exchange
+no grain molecules
+no grain neutralization
+save grain abundance "grainabundance.g_cm-3.out" last
+save grain H2rate "grainH2rate.out" last
+save grain heating "grainheating.erg_cm-3_s-1.out" last
+save grain temperature "graintemperature.out" last
+save grain charge "graincharge.out" last
+save grain extinction "grainextinction.out" last
+save grain opacity "grainopacity.out" last
+save opacity "opacity.out" total units micron last
+save overview "hsphere.ovr" last
+save continuum "continuum.out" last units micron
+save diffuse continuum "first_4pi_nu_jnu.erg_cm-3_s-1.out" first units micron
+save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
+save chemistry rates destruction "h2destruction.out" "H2"
+save chemistry rates creation "h2creation.out" "H2"
+iterate to convergence
