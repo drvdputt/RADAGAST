@@ -972,7 +972,7 @@ void Testing::runMRNDust(bool write)
 	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
-	double Tc{4000.};
+	double Tc{1.0e4};
 	double bollum = 1.e-6 * Constant::SOL_LUM;
 	double distance = 1.496e12; // 0.1 AU
 
@@ -985,8 +985,6 @@ void Testing::runMRNDust(bool write)
 	specificIntensityv *= bollum / 16 / Constant::PI / distance / distance /
 	                      GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
-	// Array specificIntensityv = generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
-
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri);
 
@@ -995,9 +993,11 @@ void Testing::runMRNDust(bool write)
 		string prefix = "MRNDust/";
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
 		for (size_t i = 0; i < frequencyv.size(); i++)
-			radfield.writeLine(
-			                {frequencyv[i], frequencyv[i] * specificIntensityv[i]});
-
+		{
+			double wav = Constant::LIGHT / frequencyv[i];
+			radfield.writeLine({wav * Constant::CM_UM,
+			                    frequencyv[i] * specificIntensityv[i] * Constant::FPI * Constant::FPI * distance * distance});
+		}
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
 
