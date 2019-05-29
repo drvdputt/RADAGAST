@@ -32,7 +32,7 @@ save grain opacity "grainopacity.out" last
 save opacity "opacity.out" total units micron last
 save overview "hsphere.ovr" last
 save continuum "continuum.out" last units micron
-save diffuse continuum "first_4pi_nu_jnu.erg_cm-3_s-1.out" first units micron
+save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save chemistry rates destruction "h2destruction.out" "H2"
 save chemistry rates creation "h2creation.out" "H2"
