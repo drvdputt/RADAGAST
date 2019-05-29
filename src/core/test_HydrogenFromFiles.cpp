@@ -1,4 +1,4 @@
-#include "doctest.h"
+#include "DoctestUtils.h"
 
 #include "EigenAliases.h"
 #include "GasStruct.h"
@@ -25,7 +25,7 @@ TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")
 	// cout << nistA << endl;
 	// cout << "The element-wise relative difference is " << endl;
 	EMatrix relDiff = (avv - nistA).array() / nistA.array();
-	compareMatrices(avv, nistA, 0.002);
+	DoctestUtils::compareMatrices(avv, nistA, 0.002);
 }
 
 TEST_CASE("Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded "
@@ -47,7 +47,7 @@ TEST_CASE("Perform a direct comparison of the two LevelDataProvider classes Hydr
 	EVector evhc = hhc.ev();
 	EVector evff = hff.ev();
 	// hc_vs_ff(evhc, evff);
-	compareMatrices(evhc, evff, 0.01);
+	DoctestUtils::compareMatrices(evhc, evff, 0.01);
 
 	assert(hhc.gv() == hff.gv());
 
@@ -55,13 +55,13 @@ TEST_CASE("Perform a direct comparison of the two LevelDataProvider classes Hydr
 	EMatrix avvhc = hhc.avv();
 	EMatrix avvff = hff.avv();
 	// hc_vs_ff(avvhc, avvff);
-	compareMatrices(avvhc, avvff, 0.01);
+	DoctestUtils::compareMatrices(avvhc, avvff, 0.01);
 
 	// cout << "Extra A:" << endl;
 	EMatrix eavvhc = hhc.extraAvv();
 	EMatrix eavvff = hff.extraAvv();
 	// hc_vs_ff(eavvhc, eavvff);
-	compareMatrices(eavvhc, eavvff, 0.01);
+	DoctestUtils::compareMatrices(eavvhc, eavvff, 0.01);
 
 	double T = 1e4;
 	double ne = 1e4;

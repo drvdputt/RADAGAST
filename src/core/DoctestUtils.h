@@ -1,8 +1,9 @@
 #ifndef GASMODULE_GIT_SRC_DOCTESTUTILS_H_
 #define GASMODULE_GIT_SRC_DOCTESTUTILS_H_
 
-#include "doctest.h"
+#include "EigenAliases.h"
 #include "TemplatedUtils.h"
+#include "doctest.h"
 
 #include <sstream>
 
@@ -43,6 +44,30 @@ inline void checkTolerance(std::string quantityName, double value, double refere
 			WARN_MESSAGE(withinTolerance, message);
 		else
 			CHECK_MESSAGE(withinTolerance, message);
+	}
+}
+
+template <typename Derived>
+void compareMatrices(const Eigen::MatrixBase<Derived>& a, const Eigen::MatrixBase<Derived>& b,
+                     double tolerance)
+{
+	// Calculate relative difference element-wise
+	EMatrix relDiff = (a - b).array() / b.array();
+	for (int i = 0; i < relDiff.size(); i++)
+	{
+		// Take out the nans (due to divide by zero)
+		auto* pointer = relDiff.data() + i;
+		auto value = *pointer;
+		*pointer = std::isnan(value) ? 0 : value;
+	}
+	bool withinTolerance = (relDiff.cwiseAbs().array() < tolerance).all();
+	if (!withinTolerance)
+	{
+		std::stringstream ss;
+		ss << "matrix " << a << " is not within " << tolerance
+		   << " precision of reference value " << b;
+		std::string message = ss.str();
+		CHECK_MESSAGE(withinTolerance, message);
 	}
 }
 
