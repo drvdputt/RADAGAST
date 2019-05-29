@@ -602,12 +602,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	size_t i = Tv.size();
 	while (i--)
 		outputCooling(Tv[i]);
-
-	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
-	                                                specificIntensity.valuev());
-
-	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
-	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
 }
 
 void Testing::plotPhotoelectricHeating()
@@ -927,7 +921,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	for (size_t i = 0; i < numSizes; i++)
 	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 100.;
+		temperaturev[i] = 115.;
 	}
 
 	// Properties that differ between car and sil
@@ -990,18 +984,31 @@ void Testing::runMRNDust(bool write)
 
 	if (write)
 	{
+		auto gi_pimpl = gasInterface.pimpl();
+		cout << "Te = " << gs.temperature() << '\n';
+		// calculate again to obtain the complete solution object (this data is hidden normally)
+		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
+		GasInterfaceImpl::Solution s = gi_pimpl->calculateDensities(
+		                nHtotal, gs.temperature(), I_nu, gri);
+
+		cout << "Htot = " << gi_pimpl->heating(s, gri) - gi_pimpl->cooling(s) << '\n';
+		cout << "eden = " << s.speciesNv[SpeciesIndex::ine()] << '\n';
+		cout << "H+ " << s.speciesNv[SpeciesIndex::inp()] << '\n';
+		cout << "HI " << s.speciesNv[SpeciesIndex::inH()] << '\n';
+		cout << "H2 " << s.speciesNv[SpeciesIndex::inH2()] << '\n';
+
 		string prefix = "MRNDust/";
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
 		for (size_t i = 0; i < frequencyv.size(); i++)
 		{
 			double wav = Constant::LIGHT / frequencyv[i];
 			radfield.writeLine({wav * Constant::CM_UM,
-			                    frequencyv[i] * specificIntensityv[i] * Constant::FPI * Constant::FPI * distance * distance});
+			                    frequencyv[i] * specificIntensityv[i] *
+			                                    Constant::FPI * Constant::FPI *
+			                                    distance * distance});
 		}
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
-
-		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
 		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
 }
