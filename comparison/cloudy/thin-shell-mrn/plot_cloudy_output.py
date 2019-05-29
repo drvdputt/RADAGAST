@@ -10,8 +10,8 @@ OUTPUT_DIR = Path('plots')
 def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
     # compare_grain_size_distribution()
-    compare_incident_radiation_field()
-
+    # compare_incident_radiation_field()
+    compare_equilibrium()
 
 def compare_grain_size_distribution():
     plt.figure()
@@ -48,6 +48,23 @@ def compare_incident_radiation_field():
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('indicent radiation field $\\nu L_{\\nu}$ (erg / s)')
     plt.show()
+
+
+def compare_equilibrium():
+    cloudy_ovr = pd.read_csv('hsphere.ovr', sep='\t')
+    t = cloudy_ovr['Te'][0]
+    heat = cloudy_ovr['Htot'][0]
+    hden = cloudy_ovr['hden'][0]
+    ne = cloudy_ovr['eden'][0]
+    np = cloudy_ovr['HII'][0] * hden
+    nh = cloudy_ovr['HI'][0] * hden
+    nh2 = cloudy_ovr['2H_2/H'][0] * hden / 2
+    print("Te = ", t)
+    print("Htot = ", heat)
+    print("eden = ", ne)
+    print("H+ = ", np)
+    print("HI = ", nh)
+    print("H2 = ", nh2)
 
 
 if __name__ == "__main__":
