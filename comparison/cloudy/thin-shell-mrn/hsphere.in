@@ -23,9 +23,12 @@ database H2 grain collisions off
 # Standard 3.5 slope MRN distribution (see data/ism.szd)
 grains "graphite_ism_10.opc" no qheat no cooling
 no grain electrons
-no grain gas collisional energy exchange
+# no grain gas collisional energy exchange
 no grain molecules
 no grain neutralization
+# turn off some physics
+no advection
+no charge transfer
 # grain output
 save grain abundance "grainabundance.g_cm-3.out" last
 save grain H2rate "grainH2rate.out" last
@@ -38,6 +41,7 @@ save grain opacity "grainopacity.out" last
 save overview "hsphere.ovr" last
 save opacity "opacity.out" total units micron last
 save heating "heating.out" last
+save cooling "cooling.out" last
 save continuum "continuum.out" last units micron
 save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
@@ -47,4 +51,5 @@ save chemistry rates creation "h2creation.out" "H2" last
 # h output
 save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
 save hydrogen populations "hpopulations.cm-3.out" last
+save recombination coefficients "recombination.out" last
 iterate to convergence
