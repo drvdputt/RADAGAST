@@ -32,7 +32,7 @@ def compare_grain_size_distribution():
     plt.xlabel('grain pop number')
     plt.ylabel('abundance (g_cm-3)')
     plt.title('grain abundance')
-    plt.show()
+    plt.savefig(OUTPUT_DIR / 'grain_size.pdf')
 
 
 def compare_incident_radiation_field():
@@ -47,7 +47,7 @@ def compare_incident_radiation_field():
 
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('indicent radiation field $\\nu L_{\\nu}$ (erg / s)')
-    plt.show()
+    plt.savefig(OUTPUT_DIR / 'radiation_field.pdf')
 
 
 def compare_equilibrium():
