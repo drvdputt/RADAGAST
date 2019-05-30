@@ -1,3 +1,4 @@
+# NOTE: DON'T USE BLANK LINES IN THIS FILE, EXCEPT AT THE END
 init "honly.ini"
 title hsphere
 # SOURCE
@@ -25,6 +26,7 @@ no grain electrons
 no grain gas collisional energy exchange
 no grain molecules
 no grain neutralization
+# grain output
 save grain abundance "grainabundance.g_cm-3.out" last
 save grain H2rate "grainH2rate.out" last
 save grain heating "grainheating.erg_cm-3_s-1.out" last
@@ -32,13 +34,17 @@ save grain temperature "graintemperature.out" last
 save grain charge "graincharge.out" last
 save grain extinction "grainextinction.out" last
 save grain opacity "grainopacity.out" last
-save opacity "opacity.out" total units micron last
+# general output
 save overview "hsphere.ovr" last
+save opacity "opacity.out" total units micron last
+save heating "heating.out" last
 save continuum "continuum.out" last units micron
 save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
+# h2 output
 save chemistry rates destruction "h2destruction.out" "H2" last
 save chemistry rates creation "h2creation.out" "H2" last
-save heating "heating.out" last
-save H2 rates "h2rates.out" last
+# h output
+save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
+save hydrogen populations "hpopulations.cm-3.out" last
 iterate to convergence
