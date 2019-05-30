@@ -798,7 +798,7 @@ GasModule::GasInterface Testing::genFullModel()
 	Array coarsev = defaultCoarseFrequencyv();
 
 	cout << "Construction model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(4));
 	FreeBound fb;
 	H2Levels h2l(make_shared<H2FromFiles>(8, 5));
 
