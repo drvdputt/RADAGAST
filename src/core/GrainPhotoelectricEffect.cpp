@@ -380,8 +380,8 @@ double GrainPhotoelectricEffect::heatingRate(
 		if (a < 2000 * Constant::ANG_CM)
 			total += nd * heatingRateA(a, env, Qabsv, fZ, Zmax, Zmin);
 
-			// and the cooling by gas-grain collisions
-#define INCLUDEGASGRAINCOOL
+		// and the cooling by gas-grain collisions
+// #define INCLUDEGASGRAINCOOL
 #ifdef INCLUDEGASGRAINCOOL
 		double T = grainPop.temperaturev()[m];
 		double sigma = a * a * Constant::PI;
