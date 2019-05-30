@@ -921,7 +921,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	for (size_t i = 0; i < numSizes; i++)
 	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 120.;
+		temperaturev[i] = 118.;
 	}
 
 	// Properties that differ between car and sil
@@ -999,6 +999,7 @@ void Testing::runMRNDust(bool write)
 		cout << "HI " << s.speciesNv[SpeciesIndex::inH()] << '\n';
 		cout << "H2 " << s.speciesNv[SpeciesIndex::inH2()] << '\n';
 		cout << "h2creation " << gs.h2form() << '\n';
+		cout << "h2dissoc " << gs.h2dissoc() << '\n';
 
 		string prefix = "MRNDust/";
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
