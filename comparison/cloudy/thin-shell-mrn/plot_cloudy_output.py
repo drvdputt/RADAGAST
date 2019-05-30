@@ -9,8 +9,8 @@ OUTPUT_DIR = Path('plots')
 
 def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
-    # compare_grain_size_distribution()
-    # compare_incident_radiation_field()
+    compare_grain_size_distribution()
+    compare_incident_radiation_field()
     compare_equilibrium()
 
 def compare_grain_size_distribution():
