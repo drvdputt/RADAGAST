@@ -60,7 +60,8 @@ void writeGasState(const std::string& outputPath, const GasModule::GasInterface&
 
 /** bulkCar is a hack to be able to write out the mass density. The same bulk density is assumed
     for all grain populations. */
-void writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr, bool bulkCar=true);
+void writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr,
+                 bool bulkCar = true);
 
 void plotHeatingCurve_main();
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
