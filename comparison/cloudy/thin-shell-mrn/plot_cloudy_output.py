@@ -11,7 +11,9 @@ def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
     compare_grain_size_distribution()
     compare_incident_radiation_field()
+    compare_emission()
     compare_equilibrium()
+
 
 def compare_grain_size_distribution():
     plt.figure()
@@ -48,6 +50,22 @@ def compare_incident_radiation_field():
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('indicent radiation field $\\nu L_{\\nu}$ (erg / s)')
     plt.savefig(OUTPUT_DIR / 'radiation_field.pdf')
+
+
+def compare_emission():
+    plt.figure()
+    cloudy_cont = pd.read_csv('continuum.out', sep='\t')
+    x = cloudy_cont['#Cont  nu']
+    y = cloudy_cont['DiffOut']
+    plt.loglog(x, y, label='cloudy')
+
+    mrn_opt = np.loadtxt(MRN_DIR / 'opticalProperties.dat')
+    plt.loglog(mrn_opt[:, 1], 1e42 * mrn_opt[:, 2], label='gasmodule')
+    plt.xlabel('$\\lambda$ (micron)')
+    plt.ylabel('outward emission')
+    plt.legend()
+    plt.savefig(OUTPUT_DIR / 'emission.pdf')
+    plt.show()
 
 
 def compare_equilibrium():
