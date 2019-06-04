@@ -795,7 +795,7 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = defaultFrequencyv(100);
+	Array coarsev = defaultFrequencyv(1000);
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(4));
