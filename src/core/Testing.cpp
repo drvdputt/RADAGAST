@@ -888,23 +888,6 @@ void Testing::runWithDust(bool write)
 		writeGasState("withDust/", gasInterface, gs);
 }
 
-// void Testing::plotHlines()
-// {
-//	HydrogenFromFiles hdata{};
-//	HydrogenLevels hlevels{make_shared<HydrogenDataProvider>(hdata)};
-//	double Tc = 30000;
-//	double g0 = 1e0;
-//	double n = 1000;
-//	Array frequencyv = defaultCoarseFrequencyv();
-//	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
-//	NLevel::Solution s;
-//	s.n = n;
-//	s.nv = EVector::Zero(SpeciesIndex::size());
-//	s.nv(SpeciesIndex::inH()) = n;
-//	EMatrix Tvv = hlevels.totalTransitionRatesvv(specificIntensity,const GasStruct& gas,EMatrix* cvv_p[=nullptr])
-//	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
-// }
-
 GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequencyv)
 {
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};

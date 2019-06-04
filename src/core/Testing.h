@@ -109,9 +109,6 @@ void runWithDust(bool write = true);
     ApJ, 548, 296). */
 void runMRNDust(bool write = true);
 
-void plotHlines();
-
-void plotH2lines();
 } // namespace Testing
 
 #endif /* GASMODULE_GIT_SRC_TESTING_H_ */
