@@ -1,4 +1,5 @@
 # NOTE: DON'T USE BLANK LINES IN THIS FILE, EXCEPT AT THE END
+# This test is supposed to be compared with the output of the MRNtest
 init "honly.ini"
 title hsphere
 # SOURCE
