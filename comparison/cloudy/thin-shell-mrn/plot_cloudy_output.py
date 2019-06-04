@@ -59,8 +59,12 @@ def compare_equilibrium():
     np = cloudy_ovr['HII'][0] * hden
     nh = cloudy_ovr['HI'][0] * hden
     nh2 = cloudy_ovr['2H_2/H'][0] * hden / 2
+
+    cloudy_gheat = pd.read_csv('grainheating.erg_cm-3_s-1.out', sep='\t')
+    gheat = sum(cloudy_gheat.to_numpy()[0, 1:])
     print("Te = ", t)
     print("Htot = ", heat)
+    print("grainHeat = ", gheat)
     print("eden = ", ne)
     print("H+ = ", np)
     print("HI = ", nh)
