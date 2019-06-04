@@ -30,7 +30,7 @@ std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 
 Array freqToWavGrid(const Array& frequencyv);
 
-Array defaultCoarseFrequencyv();
+Array defaultFrequencyv(size_t numPoints = 100);
 
 /** Inserts frequency points into a vector of frequencies, given a number of points per line, a
     power for the subgrid per line, and a center and characteristic with per line. */

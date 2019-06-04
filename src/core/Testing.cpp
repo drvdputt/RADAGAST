@@ -233,9 +233,9 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 	return wavelengthv;
 }
 
-Array Testing::defaultCoarseFrequencyv()
+Array Testing::defaultFrequencyv(size_t numPoints)
 {
-	Array coarsev = generateGeometricGridv(100, defaultMinFreq, defaultMaxFreq);
+	Array coarsev = generateGeometricGridv(numPoints, defaultMinFreq, defaultMaxFreq);
 	return coarsev;
 }
 
@@ -795,7 +795,7 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = defaultCoarseFrequencyv();
+	Array coarsev = defaultFrequencyv(100);
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(4));
@@ -812,7 +812,7 @@ GasModule::GasInterface Testing::genFullModel()
 
 GasModule::GasInterface Testing::genHonlyModel()
 {
-	Array coarsev = defaultCoarseFrequencyv();
+	Array coarsev = defaultFrequencyv();
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
