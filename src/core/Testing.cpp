@@ -996,6 +996,6 @@ void Testing::runMRNDust(bool write)
 		}
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
-		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
+		// plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
 }
