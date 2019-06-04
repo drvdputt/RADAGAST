@@ -904,7 +904,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	for (size_t i = 0; i < numSizes; i++)
 	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 118.;
+		temperaturev[i] = 110.;
 	}
 
 	// Properties that differ between car and sil

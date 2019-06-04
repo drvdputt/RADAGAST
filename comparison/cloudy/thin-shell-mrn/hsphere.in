@@ -22,6 +22,7 @@ database H2 grain collisions off
 # GRAINS MODEL
 # Standard 3.5 slope MRN distribution (see data/ism.szd)
 grains "graphite_ism_10.opc" no qheat no cooling
+constant grain temperature 110K linear
 no grain electrons
 # no grain gas collisional energy exchange
 no grain molecules
