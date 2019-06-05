@@ -94,7 +94,6 @@ public:
 	    emissivity. Grids on which the opacity and emissivity will be discretized (before
 	    being stored in the gas state) need to be provided. */
 	GasModule::GasState makeGasStateFromSolution(const Solution&,
-	                                             const GasModule::GrainInterface&,
 	                                             const Array& oFrequencyv,
 	                                             const Array& eFrequencyv) const;
 

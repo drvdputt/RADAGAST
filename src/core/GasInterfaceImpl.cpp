@@ -155,8 +155,7 @@ GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
 }
 
 GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
-                const Solution& s, const GasModule::GrainInterface& gri,
-                const Array& oFrequencyv, const Array& eFrequencyv) const
+                const Solution& s, const Array& oFrequencyv, const Array& eFrequencyv) const
 
 {
 	Array emv, opv, scv;
@@ -167,7 +166,7 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
 		opv = opacityv(s, oFrequencyv);
 		scv = scatteringOpacityv(s, oFrequencyv);
 	}
-
+	Array densityv(s.speciesNv.data(), s.speciesNv.size());
 #ifdef SANITY
 	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
 	{
@@ -178,15 +177,7 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
 		}
 	}
 #endif
-	// Put the relevant data into the gas state
-	Array densityv(s.speciesNv.data(), s.speciesNv.size());
-	// Derive this again, just for diagnostics
-	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
-	double grainHeat = grainHeating(s, gri);
-	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution,
-	                                                            s.specificIntensity)
-	                             : 0;
-	return {emv, opv, scv, s.T, densityv, h2form, grainHeat, h2dissoc};
+	return {emv, opv, scv, s.T, densityv};
 }
 
 void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
@@ -195,7 +186,20 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 {
 	if (!gd)
 		Error::runtime("GasDiagnostics is nullptr!");
+
 	gd->setPhotoelectricHeating(Array({grainHeating(s, gri)}));
+
+	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
+	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution,
+	                                                            s.specificIntensity)
+	                             : 0;
+
+	double hphotoion = Ionization::photoRateCoeff(s.specificIntensity);
+	double hcolion = Ionization::collisionalRateCoeff(s.T);
+	double hrec = Ionization::recombinationRateCoeff(s.T);
+
+	gd->setReactionNames({"h2form", "h2dissoc", "hphotoion", "hcolion", "hrec"});
+	gd->setReactionRates({h2form, h2dissoc, hphotoion, hcolion, hrec});
 }
 
 GasInterfaceImpl::Solution

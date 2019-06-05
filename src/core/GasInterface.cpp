@@ -81,7 +81,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 	if (n > 0)
 	{
 		GasInterfaceImpl::Solution s = _pimpl->solveTemperature(n, Tinit, specificIntensity, grainInfo);
-		gasState = _pimpl->makeGasStateFromSolution(s, grainInfo, _oFrequencyv, _eFrequencyv);
+		gasState = _pimpl->makeGasStateFromSolution(s, _oFrequencyv, _eFrequencyv);
 		if (gd)
 			_pimpl->fillGasDiagnosticsFromSolution(s, grainInfo, gd);
 	}
@@ -95,7 +95,7 @@ void GasInterface::initializeGasState(GasState& gasState, double n, double T,
 	if (n > 0)
 	{
 		GasInterfaceImpl::Solution s = _pimpl->solveInitialGuess(n, T, grainInfo);
-		gasState = _pimpl->makeGasStateFromSolution(s, grainInfo, _oFrequencyv, _eFrequencyv);
+		gasState = _pimpl->makeGasStateFromSolution(s, _oFrequencyv, _eFrequencyv);
 		if (gd)
 			_pimpl->fillGasDiagnosticsFromSolution(s, grainInfo, gd);
 	}

@@ -2,6 +2,7 @@
 #include "ChemicalNetwork.h"
 #include "ChemistrySolver.h"
 #include "FreeBound.h"
+#include "GasDiagnostics.h"
 #include "GasInterface.h"
 #include "GasInterfaceImpl.h"
 #include "GasStruct.h"
@@ -424,7 +425,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
                             const GasModule::GasState& gs)
 {
 	cout << "Equilibrium temperature: " << gs.temperature() << endl;
-	cout << "Ionized fraction: " << gs.ionizedFraction() << endl;
 
 	const Array& eFrequencyv = gi.eFrequencyv();
 	const Array& emv = gs._emissivityv;
@@ -546,27 +546,34 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
                                double n, const Spectrum& specificIntensity,
                                const GasModule::GrainInterface& gri)
 {
+	// Initial
+	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
+	double T0 = 10000;
+	GasInterfaceImpl::Solution s =
+		gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
+	GasDiagnostics gd;
+	gi.fillGasDiagnosticsFromSolution(s, gri, &gd);
+
 	ColumnFile heatFile(outputPath + "heatcool.dat",
 	                    {"temperature", "net", "heat", "cool", "linenet", "lineheat",
 	                     "linecool", "continuumnet", "continuumheat", "continuumcool",
 	                     "grainheat"});
 	ColumnFile densFile(outputPath + "densities.dat",
 	                    {"temperature", "e-", "H+", "H", "H2", "Htot"});
-	ColumnFile rateFile(outputPath + "chemrates.dat",
-	                    {"temperature", "formation", "dissociation"});
+
+	vector<string> rateFileColNames = {"temperature"};
+	for (auto name : gd.reactionNames())
+		rateFileColNames.emplace_back(name);
+	ColumnFile rateFile(outputPath + "chemrates.dat", rateFileColNames);
 
 	std::vector<int> h_conservation = {0, 1, 1, 2};
 	size_t numSpecies = h_conservation.size();
 	vector<double> densFileLine(2 + numSpecies);
 
-	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
-	double T0 = 10000;
-	GasInterfaceImpl::Solution s =
-		gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
-
 	auto outputCooling = [&](double t) {
 		std::cout << "T = " << t << '\n';
 		s = gi.solveDensities(n, t, specificIntensity, gri, nullptr);
+		gi.fillGasDiagnosticsFromSolution(s, gri, &gd);
 
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
@@ -577,7 +584,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		double netHeating = heat - cool;
 		double netLine = lHeat - lCool;
 		double netCont = cHeat - cCool;
-		double grainHeat = gi.grainHeating(s, gri);
+		double grainHeat = gd.photoelectricHeating().sum();
 		heatFile.writeLine({t, netHeating, heat, cool, netLine, lHeat, lCool, netCont,
 		                    cHeat, cCool, grainHeat});
 
@@ -591,8 +598,14 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		densFileLine[1 + numSpecies] = totalH;
 		densFile.writeLine(densFileLine);
 
-		GasModule::GasState gs = gi.makeGasStateFromSolution(s, gri, {}, {});
-		rateFile.writeLine({t, gs.h2form(), gs.h2dissoc()});
+
+
+		vector<double> lineValues;
+		lineValues.reserve(rateFileColNames.size());
+		lineValues.emplace_back(t);
+		for (double rate : gd.reactionRates())
+			lineValues.emplace_back(rate);
+		rateFile.writeLine(lineValues);
 	};
 
 	// forward sweep
@@ -963,7 +976,8 @@ void Testing::runMRNDust(bool write)
 	                      GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
 	GasModule::GasState gs;
-	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri);
+	GasDiagnostics gd;
+	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri, &gd);
 
 	if (write)
 	{
@@ -975,14 +989,14 @@ void Testing::runMRNDust(bool write)
 		                nHtotal, gs.temperature(), I_nu, gri);
 
 		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';
-		cout << "grainHeat = " << gi_pimpl->grainHeating(s, gri) << '\n';
+		cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
 		cout << "Ctot = " << gi_pimpl->cooling(s) << '\n';
 		cout << "eden = " << s.speciesNv[SpeciesIndex::ine()] << '\n';
 		cout << "H+ " << s.speciesNv[SpeciesIndex::inp()] << '\n';
 		cout << "HI " << s.speciesNv[SpeciesIndex::inH()] << '\n';
 		cout << "H2 " << s.speciesNv[SpeciesIndex::inH2()] << '\n';
-		cout << "h2creation " << gs.h2form() << '\n';
-		cout << "h2dissoc " << gs.h2dissoc() << '\n';
+		for (size_t i = 0; i < gd.reactionNames().size(); i++)
+			cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
 
 		string prefix = "MRNDust/";
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
