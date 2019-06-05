@@ -11,6 +11,7 @@
 class ChemistrySolver;
 class FreeBound;
 class FreeFree;
+class GasDiagnostics;
 class HydrogenLevels;
 class H2Levels;
 
@@ -91,9 +92,12 @@ public:
 	    discretized (before being stored in the gas state) also needs to be provided. */
 	void solveBalance(GasModule::GasState&, double n, double Tinit,
 	                  const Spectrum& specificIntensity, const GasModule::GrainInterface&,
-	                  const Array& oFrequencyv, const Array& eFrequencyv) const;
+	                  const Array& oFrequencyv, const Array& eFrequencyv,
+	                  GasDiagnostics& gd) const;
 
-	GasModule::GasState makeGasStateFromSolution(const Solution&, const GasModule::GrainInterface&, const Array& oFrequencyv,
+	GasModule::GasState makeGasStateFromSolution(const Solution&,
+	                                             const GasModule::GrainInterface&,
+	                                             const Array& oFrequencyv,
 	                                             const Array& eFrequencyv) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this

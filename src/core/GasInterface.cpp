@@ -71,7 +71,7 @@ GasInterface::~GasInterface() = default;
 
 void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
                                   const valarray<double>& specificIntensityv,
-                                  const GrainInterface& grainInfo) const
+                                  const GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
 	Timer t("Update gas state");
 	// Create a spectrum object which makes it easier to pass around the frequencies and the
@@ -80,7 +80,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
 		_pimpl->solveBalance(gasState, n, Tinit, specificIntensity, grainInfo,
-		                     _oFrequencyv, _eFrequencyv);
+		                     _oFrequencyv, _eFrequencyv, gd);
 	else
 		zeroOpticalProperties(gasState);
 }

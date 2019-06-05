@@ -13,6 +13,10 @@
     classes and functions in the aforementioned files), falls under the namepace GasModule. */
 class GasInterfaceImpl;
 
+/** More details about the gas can be retrieved by passing an object of this class. Include its
+    header to construct one, and then pass a pointer to the update function */
+class GasDiagnostics;
+
 namespace GasModule
 {
 /** The interface class that other codes should use. This class and GasState should be the only
@@ -82,7 +86,7 @@ public:
 	    its constructor need to be the same as those given for the radiation field here. */
 	void updateGasState(GasState&, double n, double Tinit,
 	                    const std::valarray<double>& specificIntensityv,
-	                    const GrainInterface&) const;
+	                    const GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
 	/** Does the same as the above, but without an input radiation field. Instead, a
 	    blackbody of the given temperature is used to calculate GasState. It is recommended
