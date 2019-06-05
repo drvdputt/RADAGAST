@@ -26,7 +26,7 @@
 using namespace std;
 
 constexpr int MAXCHEMISTRYITERATIONS{25};
-constexpr bool GASGRAINCOOL{true};
+constexpr bool GASGRAINCOOL{false};
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
                                    unique_ptr<H2Levels> molecularModel)
@@ -527,40 +527,37 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 		}
 	}
 
+	double gasGrainCooling = 0;
 	// For gas-grain collisional cooling, calculate the average dust temperature, weighted
 	// by cross section. This will be the expected value of the temperatures a particle
 	// 'experiences' when colliding with a grain.
-	double Tsum = 0;
-	double weight = 0;
-	for (size_t i = 0; i < numPop; i++)
+	if (GASGRAINCOOL && numPop > 0)
 	{
-		const GasModule::GrainInterface::Population* pop = g.population(i);
-		for (size_t m = 0; m < pop->numSizes(); m++)
+		double Tsum = 0;
+		double weight = 0;
+		for (size_t i = 0; i < numPop; i++)
 		{
-			double a = pop->size(m);
-			double nd = pop->density(m);
-			double w = Constant::PI * a * a * nd;
-			Tsum += w * pop->temperature(m);
-			weight += w;
+			const GasModule::GrainInterface::Population* pop = g.population(i);
+			for (size_t m = 0; m < pop->numSizes(); m++)
+			{
+				double a = pop->size(m);
+				double nd = pop->density(m);
+				double w = Constant::PI * a * a * nd;
+				Tsum += w * pop->temperature(m);
+				weight += w;
+			}
 		}
-	}
-
-	// Cooling of the gas by collisions with the dust particles. This is a recipe that does
-	// not depend on the grain present, except for the average temperature (it probably
-	// assumes some average population, see coefficient in Krumholz et al. (2011)). Only do
-	// this if there is dust, cause otherwise we dont have a dust temperature of course.
-	double gasGrainCooling = 0;
-	if (numPop > 0)
-	{
+		// Cooling of the gas by collisions with the dust particles. This is a recipe
+		// that does not depend on the grain present, except for the average temperature
+		// (it probably assumes some average population, see coefficient in Krumholz et
+		// al. (2011)). Only do this if there is dust, cause otherwise we dont have a
+		// dust temperature of course.
 		double Tdust = Tsum / weight;
 		double Tgas = s.T;
 		double nH = s.speciesNv[_inH];
 		double nH2 = s.speciesNv[_inH2];
-		gasGrainCooling = GASGRAINCOOL ? GasGrain::simpleGasGrainCool(Tdust, Tgas, nH,
-		                                                              nH2)
-		                               : 0;
+		gasGrainCooling = GasGrain::simpleGasGrainCool(Tdust, Tgas, nH, nH2);
 	}
-
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
 

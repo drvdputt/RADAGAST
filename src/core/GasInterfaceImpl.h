@@ -98,7 +98,7 @@ public:
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
-	Solution calculateDensities(double n, double T, const Spectrum& specificIntensityv,
+	Solution calculateDensities(double n, double T, const Spectrum& specificIntensity,
 	                            const GasModule::GrainInterface&,
 	                            const GasInterfaceImpl::Solution* previous = nullptr,
 	                            double h2FormationOverride = -1) const;

@@ -30,7 +30,7 @@ std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 
 Array freqToWavGrid(const Array& frequencyv);
 
-Array defaultCoarseFrequencyv();
+Array defaultFrequencyv(size_t numPoints = 100);
 
 /** Inserts frequency points into a vector of frequencies, given a number of points per line, a
     power for the subgrid per line, and a center and characteristic with per line. */
@@ -57,6 +57,11 @@ void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& o
 
 void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi,
                    const GasModule::GasState& gs);
+
+/** bulkCar is a hack to be able to write out the mass density. The same bulk density is assumed
+    for all grain populations. */
+void writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr,
+                 bool bulkCar = true);
 
 void plotHeatingCurve_main();
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
@@ -104,9 +109,6 @@ void runWithDust(bool write = true);
     ApJ, 548, 296). */
 void runMRNDust(bool write = true);
 
-void plotHlines();
-
-void plotH2lines();
 } // namespace Testing
 
 #endif /* GASMODULE_GIT_SRC_TESTING_H_ */

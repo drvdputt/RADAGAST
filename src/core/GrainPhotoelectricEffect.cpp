@@ -378,10 +378,10 @@ double GrainPhotoelectricEffect::heatingRate(
 		// Use the charge distribution to calculate the photoelectric heating rate for
 		// this size
 		if (a < 2000 * Constant::ANG_CM)
-			total += nd * heatingRateA(a, env, Qabsv, fZ, Zmax, Zmin);
+			total += nd * heatingRateA(a, env, Qabsv, fZ, Zmin, Zmax);
 
-			// and the cooling by gas-grain collisions
-#define INCLUDEGASGRAINCOOL
+		// and the cooling by gas-grain collisions
+// #define INCLUDEGASGRAINCOOL
 #ifdef INCLUDEGASGRAINCOOL
 		double T = grainPop.temperaturev()[m];
 		double sigma = a * a * Constant::PI;
@@ -643,8 +643,8 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 
 	// Calculate charge distribution
 	vector<double> fZv;
-	int Zmax, Zmin;
-	chargeBalance(a, env, Qabsv, Zmax, Zmin, fZv);
+	int Zmin, Zmax;
+	chargeBalance(a, env, Qabsv, Zmin, Zmax, fZv);
 
 	cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << endl;
 

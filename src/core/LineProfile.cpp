@@ -109,13 +109,18 @@ void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
 	if (frequencyv.size() < 2)
 		Error::runtime("frequencyv should have at least two values");
 
-	double gridMin = *begin(frequencyv);
-	double gridMax = *(end(frequencyv) - 1);
+	double gridMin = frequencyv[0];
+	double gridMax = frequencyv[frequencyv.size() - 1];
 
-	// Skip points of the line that fall outside of the grid
 	const Array& lineGrid = recommendedFrequencyGrid();
 	auto lineBegin = begin(lineGrid);
 	auto lineEnd = end(lineGrid);
+
+	// If line is completely outside grid, do nothing
+	if (*lineBegin > gridMax || *(lineEnd - 1) < gridMin)
+		return;
+
+	// If some points for the line are outside the grid, ignore them
 	while (*lineBegin < gridMin)
 		lineBegin++;
 	while (*(lineEnd - 1) > gridMax)
@@ -124,7 +129,7 @@ void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv,
 	double lineMax = *(lineEnd - 1);
 	size_t numLinePoints = distance(lineBegin, lineEnd);
 
-	// We will only do the calculation for frequency bins the line overlaps with
+	// We will only do the calculation for frequency bins the line overlaps with.
 
 	// Find the left side of the bin for the first line point
 	auto gridStart = upper_bound(begin(frequencyv), end(frequencyv), lineMin) - 1;

@@ -17,6 +17,8 @@
 #include "SpeciesIndex.h"
 #include "TemplatedUtils.h"
 
+#include <gsl/gsl_const_cgs.h>
+
 #include <iomanip>
 #include <iterator>
 #include <sstream>
@@ -231,9 +233,9 @@ vector<double> Testing::freqToWavGrid(const vector<double>& frequencyv)
 	return wavelengthv;
 }
 
-Array Testing::defaultCoarseFrequencyv()
+Array Testing::defaultFrequencyv(size_t numPoints)
 {
-	Array coarsev = generateGeometricGridv(100, defaultMinFreq, defaultMaxFreq);
+	Array coarsev = generateGeometricGridv(numPoints, defaultMinFreq, defaultMaxFreq);
 	return coarsev;
 }
 
@@ -497,6 +499,34 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
 }
 
+void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr,
+                          bool bulkCar)
+{
+	// Assume a certain bulk density (values taken from SKIRT source code for Draine
+	// Graphite and Draine Silicate)
+	double bulkDen;
+	if (bulkCar)
+		bulkDen = 2.24; // g cm-3
+	else
+		bulkDen = 3.0;
+
+	// write out grain size distribution, preferable in g cm-3
+	for (size_t i = 0; i < gr.numPopulations(); i++)
+	{
+		ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
+		             {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
+
+		auto pop = gr.population(i);
+		for (size_t m = 0; m < pop->numSizes(); m++)
+		{
+			double a = pop->size(m);
+			double numberDen = pop->density(m);
+			double mass = 4. / 3. * Constant::PI * a * a * a * bulkDen;
+			f.writeLine({a, numberDen, numberDen * mass, pop->temperature(m)});
+		}
+	}
+}
+
 void Testing::plotHeatingCurve_main()
 {
 	Array frequencyv =
@@ -572,12 +602,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	size_t i = Tv.size();
 	while (i--)
 		outputCooling(Tv[i]);
-
-	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
-	                                                specificIntensity.valuev());
-
-	cout << "Calculated heating curve under isrf of " << isrf << " erg / s / cm2 / sr = "
-	     << isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl;
 }
 
 void Testing::plotPhotoelectricHeating()
@@ -771,10 +795,10 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = defaultCoarseFrequencyv();
+	Array coarsev = defaultFrequencyv(1000);
 
 	cout << "Construction model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
+	HydrogenLevels hl(make_shared<HydrogenFromFiles>(4));
 	FreeBound fb;
 	H2Levels h2l(make_shared<H2FromFiles>(8, 5));
 
@@ -788,7 +812,7 @@ GasModule::GasInterface Testing::genFullModel()
 
 GasModule::GasInterface Testing::genHonlyModel()
 {
-	Array coarsev = defaultCoarseFrequencyv();
+	Array coarsev = defaultFrequencyv();
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
@@ -864,39 +888,23 @@ void Testing::runWithDust(bool write)
 		writeGasState("withDust/", gasInterface, gs);
 }
 
-// void Testing::plotHlines()
-// {
-//	HydrogenFromFiles hdata{};
-//	HydrogenLevels hlevels{make_shared<HydrogenDataProvider>(hdata)};
-//	double Tc = 30000;
-//	double g0 = 1e0;
-//	double n = 1000;
-//	Array frequencyv = defaultCoarseFrequencyv();
-//	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
-//	NLevel::Solution s;
-//	s.n = n;
-//	s.nv = EVector::Zero(SpeciesIndex::size());
-//	s.nv(SpeciesIndex::inH()) = n;
-//	EMatrix Tvv = hlevels.totalTransitionRatesvv(specificIntensity,const GasStruct& gas,EMatrix* cvv_p[=nullptr])
-//	Array lineSpectrum = hlevels.lineEmissivityv(s, frequencyv);
-// }
-
 GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequencyv)
 {
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
 
+	// need grains from .005 to .25 micron
 	double amin = 50 * Constant::ANG_CM;
-	double amax = 0.24 * Constant::UM_CM;
+	double amax = 0.25 * Constant::UM_CM;
 
 	// Shared properties
-	size_t numSizes = 100;
+	size_t numSizes = 10;
 	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
 	Array sizev(numSizes);
 	Array temperaturev(numSizes);
 	for (size_t i = 0; i < numSizes; i++)
 	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 15;
+		temperaturev[i] = 110.;
 	}
 
 	// Properties that differ between car and sil
@@ -906,8 +914,11 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 		Array densityv(numSizes);
 		for (size_t i = 0; i < numSizes; i++)
 		{
-			double bin_width = bin_edges[i + 1] - bin_edges[i];
-			densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+			// analytic integration of dn = C nH a^{-3.5} da
+			// double bin_width = bin_edges[i + 1] - bin_edges[i];
+			// densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+			densityv[i] = C * nHtotal / 2.5 *
+			              (pow(bin_edges[i], -2.5) - pow(bin_edges[i + 1], -2.5));
 		}
 		auto label = car ? GasModule::GrainTypeLabel::CAR
 		                 : GasModule::GrainTypeLabel::SIL;
@@ -919,7 +930,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	addMRNCarOrSil(true);
 
 	// Silicate population:
-	addMRNCarOrSil(false);
+	// addMRNCarOrSil(false);
 
 	GasModule::GrainInterface grainInterface(move(grainPopv));
 	return grainInterface;
@@ -931,29 +942,60 @@ void Testing::runMRNDust(bool write)
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
-	double nHtotal{1000};
+	double nHtotal{25120};
 	double Tinit{8000};
 
 	// Dust model
 	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
-	double Tc{2950.};
+	double Tc{1.0e4};
+	double bollum = 1.e-6 * Constant::SOL_LUM;
+	double distance = 1.496e12; // 0.1 AU
+
 	// double G0{1e2};
 	Array frequencyv = gasInterface.iFrequencyv();
 	Array specificIntensityv(frequencyv.size());
 	for (int i = 0; i < frequencyv.size(); i++)
 		specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
 
-	// Array specificIntensityv = generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
+	specificIntensityv *= bollum / 16 / Constant::PI / distance / distance /
+	                      GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
 	GasModule::GasState gs;
 	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri);
 
 	if (write)
 	{
-		writeGasState("MRNDust/", gasInterface, gs);
+		auto gi_pimpl = gasInterface.pimpl();
+		cout << "Te = " << gs.temperature() << '\n';
+		// calculate again to obtain the complete solution object (this data is hidden normally)
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
+		GasInterfaceImpl::Solution s = gi_pimpl->calculateDensities(
+		                nHtotal, gs.temperature(), I_nu, gri);
+
+		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';
+		cout << "grainHeat = " << gi_pimpl->grainHeating(s, gri) << '\n';
+		cout << "Ctot = " << gi_pimpl->cooling(s) << '\n';
+		cout << "eden = " << s.speciesNv[SpeciesIndex::ine()] << '\n';
+		cout << "H+ " << s.speciesNv[SpeciesIndex::inp()] << '\n';
+		cout << "HI " << s.speciesNv[SpeciesIndex::inH()] << '\n';
+		cout << "H2 " << s.speciesNv[SpeciesIndex::inH2()] << '\n';
+		cout << "h2creation " << gs.h2form() << '\n';
+		cout << "h2dissoc " << gs.h2dissoc() << '\n';
+
+		string prefix = "MRNDust/";
+		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
+		for (size_t i = 0; i < frequencyv.size(); i++)
+		{
+			double wav = Constant::LIGHT / frequencyv[i];
+			radfield.writeLine({wav * Constant::CM_UM,
+			                    frequencyv[i] * specificIntensityv[i] *
+			                                    Constant::FPI * Constant::FPI *
+			                                    distance * distance});
+		}
+		writeGasState(prefix, gasInterface, gs);
+		writeGrains(prefix, gri);
+		// plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 	}
 }
