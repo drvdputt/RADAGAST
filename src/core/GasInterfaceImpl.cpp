@@ -112,7 +112,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 	{
 		const double Tmax = 1000000.;
 		const double Tmin = 10;
-		const double logTmax = log10(Tmax);
+		double logTmax = log10(Tmax);
 		const double logTmin = log10(Tmin);
 		const double logTtolerance = 1.e-3;
 
@@ -123,6 +123,18 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		struct heating_f_params p = {this, n, &specificIntensity, &gri, &s, false};
 		F.function = &heating_f;
 		F.params = &p;
+
+		// For very high temperatures, the heating becomes positive again, and the GSL
+		// function will error out. It needs to to have different signs for the points
+		// bracketing the root.
+		double reduceMax = 1.;
+		while (heating_f(logTmax, &p) > 0)
+		{
+			while (logTmax - reduceMax < logTmin)
+				reduceMax /= 2;
+
+			logTmax -= reduceMax;
+		}
 
 		// Iterate once to initialize the solution
 		gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
