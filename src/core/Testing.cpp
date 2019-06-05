@@ -562,11 +562,11 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
 	double T0 = 10000;
 	GasInterfaceImpl::Solution s =
-	                gi.calculateDensities(n, T0, specificIntensity, gri, nullptr);
+		gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
 
 	auto outputCooling = [&](double t) {
 		std::cout << "T = " << t << '\n';
-		s = gi.calculateDensities(n, t, specificIntensity, gri, nullptr);
+		s = gi.solveDensities(n, t, specificIntensity, gri, nullptr);
 
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
@@ -971,7 +971,7 @@ void Testing::runMRNDust(bool write)
 		cout << "Te = " << gs.temperature() << '\n';
 		// calculate again to obtain the complete solution object (this data is hidden normally)
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		GasInterfaceImpl::Solution s = gi_pimpl->calculateDensities(
+		GasInterfaceImpl::Solution s = gi_pimpl->solveDensities(
 		                nHtotal, gs.temperature(), I_nu, gri);
 
 		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';

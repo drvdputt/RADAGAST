@@ -91,7 +91,8 @@ public:
 	/** Does the same as the above, but without an input radiation field. Instead, a
 	    blackbody of the given temperature is used to calculate GasState. It is recommended
 	    to apply this function to all gas states before starting a simulation. */
-	void initializeGasState(GasState&, double n, double T, const GrainInterface&) const;
+	void initializeGasState(GasState&, double n, double T, const GrainInterface&,
+	                        GasDiagnostics* gd = nullptr) const;
 
 	// USAGE 2: Translate GasState into optical properties //
 

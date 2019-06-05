@@ -4,6 +4,7 @@
 #include "DebugMacros.h"
 #include "FreeBound.h"
 #include "FreeFree.h"
+#include "GasDiagnostics.h"
 #include "GasGrainInteraction.h"
 #include "GasStruct.h"
 #include "GrainType.h"
@@ -45,18 +46,17 @@ GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
-void GasInterfaceImpl::solveInitialGuess(GasModule::GasState& gs, double n, double T,
-                                         const GasModule::GrainInterface& gi,
-                                         const Array& oFrequencyv,
-                                         const Array& eFrequencyv) const
+GasInterfaceImpl::Solution
+GasInterfaceImpl::solveInitialGuess(double n, double T,
+                                    const GasModule::GrainInterface& gi) const
 {
-	Array isrfGuess(oFrequencyv.size());
-	for (size_t iFreq = 0; iFreq < oFrequencyv.size(); iFreq++)
-	{
-		double freq = oFrequencyv[iFreq];
-		isrfGuess[iFreq] = SpecialFunctions::planck(freq, T);
-	}
-	solveBalance(gs, n, T, Spectrum(oFrequencyv, isrfGuess), gi, oFrequencyv, eFrequencyv);
+	Array iFrequencyv = Testing::defaultFrequencyv(1000);
+	Array blackbodyv(iFrequencyv.size());
+	for (size_t i = 0; i < iFrequencyv.size(); i++)
+		blackbodyv[i] = SpecialFunctions::planck(iFrequencyv[i], T);
+
+	Solution s = solveTemperature(n, T, Spectrum(iFrequencyv, blackbodyv), gi);
+	return s;
 }
 
 struct heating_f_params
@@ -82,24 +82,23 @@ double heating_f(double logT, void* params)
 	const GasInterfaceImpl::Solution* previous =
 	                p->use_previous_solution ? p->solution_storage : nullptr;
 
-	s = p->gasInterfacePimpl->calculateDensities(p->n, pow(10., logT),
-	                                             *p->specificIntensity, *p->grainInterface,
-	                                             previous);
+	s = p->gasInterfacePimpl->solveDensities(p->n, pow(10., logT), *p->specificIntensity,
+	                                         *p->grainInterface, previous);
 
 	double heat = p->gasInterfacePimpl->heating(s, *p->grainInterface);
 	double cool = p->gasInterfacePimpl->cooling(s);
 	return heat - cool;
 }
 
-void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*unused Tinit*/,
-                                    const Spectrum& specificIntensity,
-                                    const GasModule::GrainInterface& gri,
-                                    const Array& oFrequencyv, const Array& eFrequencyv) const
+GasInterfaceImpl::Solution
+GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
+                                   const Spectrum& specificIntensity,
+                                   const GasModule::GrainInterface& gri) const
 {
 	Solution s;
 
 	if (n <= 0)
-		s = calculateDensities(0, 0, specificIntensity, gri);
+		s = solveDensities(0, 0, specificIntensity, gri);
 
 	else
 	{
@@ -152,7 +151,7 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
 		// Remember that s gets updated through the pointer given to the function
 		// parameters
 	}
-	gs = makeGasStateFromSolution(s, gri, oFrequencyv, eFrequencyv);
+	return s;
 }
 
 GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
@@ -184,14 +183,26 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
 	// Derive this again, just for diagnostics
 	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
 	double grainHeat = grainHeating(s, gri);
-	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution, s.specificIntensity) : 0;
+	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution,
+	                                                            s.specificIntensity)
+	                             : 0;
 	return {emv, opv, scv, s.T, densityv, h2form, grainHeat, h2dissoc};
 }
 
-GasInterfaceImpl::Solution GasInterfaceImpl::calculateDensities(
-                double nHtotal, double T, const Spectrum& specificIntensity,
-                const GasModule::GrainInterface& gi, const GasInterfaceImpl::Solution* previous,
-                double h2FormationOverride) const
+void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
+                                                      const GasModule::GrainInterface& gri,
+                                                      GasDiagnostics* gd) const
+{
+	if (!gd)
+		Error::runtime("GasDiagnostics is nullptr!");
+	gd->setPhotoelectricHeating(Array({grainHeating(s, gri)}));
+}
+
+GasInterfaceImpl::Solution
+GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& specificIntensity,
+                                 const GasModule::GrainInterface& gi,
+                                 const GasInterfaceImpl::Solution* previous,
+                                 double h2FormationOverride) const
 {
 	Solution s;
 

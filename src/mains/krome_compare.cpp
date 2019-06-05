@@ -55,7 +55,7 @@ int main()
 	GasInterfaceImpl::Solution* sp = nullptr;
 	for (double T = 1000; T < 100000; T *= 1.05)
 	{
-		s = pimpl->calculateDensities(n, T, specificIntensity, gri, sp, kGrainH2);
+		s = pimpl->solveDensities(n, T, specificIntensity, gri, sp, kGrainH2);
 		// Uncomment this to re-use the previous solution as an initial guess
 		// sp = &s;
 		double heat = pimpl->heating(s, gri);
@@ -72,7 +72,7 @@ int main()
 	}
 	for (double T = 100000; T > 10; T /= 1.05)
 	{
-		s = pimpl->calculateDensities(n, T, specificIntensity, gri, sp, kGrainH2);
+		s = pimpl->solveDensities(n, T, specificIntensity, gri, sp, kGrainH2);
 		// sp = &s;
 		double heat = pimpl->heating(s, gri);
 		double cool = pimpl->cooling(s);

@@ -79,18 +79,26 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 	// specific intensity for a certain frequency.
 	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
-		_pimpl->solveBalance(gasState, n, Tinit, specificIntensity, grainInfo,
-		                     _oFrequencyv, _eFrequencyv, gd);
+	{
+		GasInterfaceImpl::Solution s = _pimpl->solveTemperature(n, Tinit, specificIntensity, grainInfo);
+		gasState = _pimpl->makeGasStateFromSolution(s, grainInfo, _oFrequencyv, _eFrequencyv);
+		if (gd)
+			_pimpl->fillGasDiagnosticsFromSolution(s, grainInfo, gd);
+	}
 	else
 		zeroOpticalProperties(gasState);
 }
 
 void GasInterface::initializeGasState(GasState& gasState, double n, double T,
-                                      const GrainInterface& grainInfo) const
+                                      const GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
 	if (n > 0)
-		_pimpl->solveInitialGuess(gasState, n, T, grainInfo, _oFrequencyv,
-		                          _eFrequencyv);
+	{
+		GasInterfaceImpl::Solution s = _pimpl->solveInitialGuess(n, T, grainInfo);
+		gasState = _pimpl->makeGasStateFromSolution(s, grainInfo, _oFrequencyv, _eFrequencyv);
+		if (gd)
+			_pimpl->fillGasDiagnosticsFromSolution(s, grainInfo, gd);
+	}
 	else
 		zeroOpticalProperties(gasState);
 }

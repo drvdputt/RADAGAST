@@ -82,30 +82,33 @@ public:
 	    populations for a certain electron temperature, under influence of a blackbody isrf
 	    of that same temperature. Can be used by the client to manually set the temperature
 	    and calculate some properties which can be used as an initial guess. */
-	void solveInitialGuess(GasModule::GasState&, double n, double T,
-	                       const GasModule::GrainInterface&, const Array& oFrequencyv,
-	                       const Array& eFrequencyv) const;
+	Solution solveInitialGuess(double n, double T, const GasModule::GrainInterface&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
 	    temperature guess, and a Spectrum object containing the radiation field in specific
-	    intensity per frequency units. A grid on which the opacity (and emissivity?) will be
-	    discretized (before being stored in the gas state) also needs to be provided. */
-	void solveBalance(GasModule::GasState&, double n, double Tinit,
-	                  const Spectrum& specificIntensity, const GasModule::GrainInterface&,
-	                  const Array& oFrequencyv, const Array& eFrequencyv,
-	                  GasDiagnostics& gd) const;
+	    intensity per frequency units. */
+	Solution solveTemperature(double n, double Tinit, const Spectrum& specificIntensity,
+	                          const GasModule::GrainInterface&) const;
 
+	/** Distills the solution object into the necessary information to retrieve opacity and
+	    emissivity. Grids on which the opacity and emissivity will be discretized (before
+	    being stored in the gas state) need to be provided. */
 	GasModule::GasState makeGasStateFromSolution(const Solution&,
 	                                             const GasModule::GrainInterface&,
 	                                             const Array& oFrequencyv,
 	                                             const Array& eFrequencyv) const;
 
+	/** Copies some values from the Solution, or recalculates them, and puts these in the
+	    GasDiagnostics object */
+	void fillGasDiagnosticsFromSolution(const Solution&, const GasModule::GrainInterface&,
+	                                    GasDiagnostics*) const;
+
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
-	Solution calculateDensities(double n, double T, const Spectrum& specificIntensity,
-	                            const GasModule::GrainInterface&,
-	                            const GasInterfaceImpl::Solution* previous = nullptr,
-	                            double h2FormationOverride = -1) const;
+	Solution solveDensities(double n, double T, const Spectrum& specificIntensity,
+	                        const GasModule::GrainInterface&,
+	                        const GasInterfaceImpl::Solution* previous = nullptr,
+	                        double h2FormationOverride = -1) const;
 
 	/** @name Properties of final state
 
