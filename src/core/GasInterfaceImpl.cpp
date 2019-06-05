@@ -96,13 +96,6 @@ void GasInterfaceImpl::solveBalance(GasModule::GasState& gs, double n, double /*
                                     const GasModule::GrainInterface& gri,
                                     const Array& oFrequencyv, const Array& eFrequencyv) const
 {
-#ifndef SILENT
-	double isrf = TemplatedUtils::integrate<double>(specificIntensity.frequencyv(),
-	                                                specificIntensity.valuev());
-
-	DEBUG("Solving balance under isrf of " << isrf << " erg / s / cm2 / sr = ");
-	DEBUG(isrf / Constant::LIGHT * Constant::FPI / Constant::HABING << " Habing" << endl);
-#endif
 	Solution s;
 
 	if (n <= 0)
