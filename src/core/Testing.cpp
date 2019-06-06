@@ -547,7 +547,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
 	double T0 = 10000;
 	GasInterfaceImpl::Solution s =
-		gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
+	                gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
 	GasDiagnostics gd;
 	gi.fillGasDiagnosticsFromSolution(s, gri, &gd);
 
@@ -914,7 +914,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	for (size_t i = 0; i < numSizes; i++)
 	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 110.;
+		temperaturev[i] = 10.;
 	}
 
 	// Properties that differ between car and sil
@@ -960,8 +960,8 @@ void Testing::runMRNDust(bool write)
 
 	// Radiation field
 	double Tc{1.0e4};
-	double bollum = 1.e-6 * Constant::SOL_LUM;
-	double distance = 1.496e12; // 0.1 AU
+	double bollum = 2.e0 * Constant::SOL_LUM;
+	double distance = 1. * Constant::PC_CM; // 1.0 AU
 
 	// double G0{1e2};
 	Array frequencyv = gasInterface.iFrequencyv();
