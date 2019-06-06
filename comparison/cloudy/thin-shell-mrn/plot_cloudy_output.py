@@ -19,7 +19,7 @@ def compare_grain_size_distribution():
     plt.figure()
 
     # cloudy
-    cloudy_abun = np.loadtxt('grainabundance.g_cm-3.out')
+    cloudy_abun = np.loadtxt('grainabundance.g_cm-3.out', ndmin=2)
     # first column = depth, last column = total
     x = range(cloudy_abun.shape[1])[1:-1]
     y = cloudy_abun[0, 1:-1]
@@ -60,7 +60,7 @@ def compare_emission():
     plt.loglog(x, y, label='cloudy')
 
     mrn_opt = np.loadtxt(MRN_DIR / 'opticalProperties.dat')
-    plt.loglog(mrn_opt[:, 1], 1e42 * mrn_opt[:, 2], label='gasmodule')
+    plt.loglog(mrn_opt[:, 1], mrn_opt[:, 2], label='gasmodule')
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('outward emission')
     plt.legend()
