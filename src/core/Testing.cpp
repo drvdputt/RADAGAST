@@ -595,8 +595,6 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		densFileLine[1 + numSpecies] = totalH;
 		densFile.writeLine(densFileLine);
 
-
-
 		vector<double> lineValues;
 		lineValues.reserve(rateFileColNames.size());
 		lineValues.emplace_back(t);
@@ -979,11 +977,10 @@ void Testing::runMRNDust(bool write)
 	if (write)
 	{
 		auto gi_pimpl = gasInterface.pimpl();
-		cout << "Te = " << gs.temperature() << '\n';
 		// calculate again to obtain the complete solution object (this data is hidden normally)
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		GasInterfaceImpl::Solution s = gi_pimpl->solveDensities(
-		                nHtotal, gs.temperature(), I_nu, gri);
+		GasInterfaceImpl::Solution s =
+		                gi_pimpl->solveDensities(nHtotal, gs.temperature(), I_nu, gri);
 
 		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';
 		cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
@@ -1001,9 +998,8 @@ void Testing::runMRNDust(bool write)
 		{
 			double wav = Constant::LIGHT / frequencyv[i];
 			radfield.writeLine({wav * Constant::CM_UM,
-			                    frequencyv[i] * specificIntensityv[i] *
-			                                    Constant::FPI * Constant::FPI *
-			                                    distance * distance});
+			                    Constant::FPI * frequencyv[i] *
+			                                    specificIntensityv[i]});
 		}
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
