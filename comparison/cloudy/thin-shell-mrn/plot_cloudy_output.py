@@ -65,7 +65,7 @@ def compare_emission():
     plt.ylabel('outward emission')
     plt.legend()
     plt.savefig(OUTPUT_DIR / 'emission.pdf')
-    plt.show()
+    # plt.show()
 
 
 def compare_equilibrium():
@@ -80,13 +80,33 @@ def compare_equilibrium():
 
     cloudy_gheat = pd.read_csv('grainheating.erg_cm-3_s-1.out', sep='\t')
     gheat = sum(cloudy_gheat.to_numpy()[0, 1:])
-    print("Te = ", t)
+
+    cloudy_h2creation = pd.read_csv('h2creation.out', sep='\t')
+    h2form = cloudy_h2creation['grn,H,H=>grn,H2'][0] / nh
+
+    cloudy_h2destruction = pd.read_csv('h2destruction.out', sep='\t')
+    h2dissoc = cloudy_h2destruction['PHOTON,H2=>H,H'][0]
+
+    cloudy_hionization = pd.read_csv(
+        'hionization.s-1.cm-3_s-1.out', sep='\t', nrows=1)
+    hphotoion = cloudy_hionization['gam1'][0]
+    hcolion = cloudy_hionization['coll ion1'][0]
+    hrec = cloudy_hionization['RecTot'][0]
+
     print("Htot = ", heat)
     print("grainHeat = ", gheat)
     print("eden = ", ne)
     print("H+ = ", np)
     print("HI = ", nh)
     print("H2 = ", nh2)
+
+    print("h2form = ", h2form)
+    print("h2dissoc = ", h2dissoc)
+    print("hphotoion = ", hphotoion)
+    print("hcolion = ", hcolion)
+    print("hrec = ", hrec)
+
+    print("Te = ", t)
 
 
 if __name__ == "__main__":
