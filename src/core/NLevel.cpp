@@ -201,7 +201,7 @@ EVector NLevel::solveBoltzmanEquations(double T) const
 	for (int i = 0; i < _ev.size(); i++)
 	{
 		// Exponential factor
-		pv(i) *= exp(eMin - _ev(i) / kT);
+		pv(i) *= exp((eMin - _ev(i)) / kT);
 		// Normalization
 		pSum += pv(i);
 	}

@@ -54,6 +54,10 @@ EVector statisticalEquilibrium_iterative(double totalDensity,
                                          const EVector& initialGuessv,
                                          int fullyConnectedCutoff = -1);
 
+/** Calculate the LTE statistical equilibrium by simply applying the boltzman equations. The
+    only thing needed is the energies and the degeneracies of the levels, and a temperature. */
+EVector statisticalEquilibrium_boltzman(double totalDensity, double T, const EVector& ev, const EVector& gv);
+
 } /* namespace LevelSolver */
 
 #endif /* GASMODULE_GIT_SRC_LEVELSOLVER_H_ */

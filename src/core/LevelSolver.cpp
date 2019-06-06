@@ -1,4 +1,5 @@
 #include "LevelSolver.h"
+#include "Constants.h"
 #include "DebugMacros.h"
 #include "Error.h"
 
@@ -171,4 +172,18 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 		DEBUG(" (not converged)\n");
 	// DEBUG("h2Levelv = \n" << nv << std::endl);
 	return nv;
+}
+
+EVector LevelSolver::statisticalEquilibrium_boltzman(double totalDensity, double T,
+                                                     const EVector& ev, const EVector& gv)
+{
+	// It would be better if we could assume that the lowest level is index 0, but I'm not
+	// sure anymore if I made this guaranteed throughout the code.
+	double eMin = ev.minCoeff();
+	double kT = Constant::BOLTZMAN * T;
+
+	                // g * exp((eMin - e) / kT)
+	                EVector pv = gv.array() * ((eMin - ev.array()) / kT).exp();
+
+	return pv / pv.sum() * totalDensity;
 }

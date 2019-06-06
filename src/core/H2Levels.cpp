@@ -50,6 +50,13 @@ NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
 	EVector initialGuessv;
 	if (gas._h2Levelv.size() == 0)
 	{
+		initialGuessv = EVector::Zero(numLv());
+
+		// Use LTE for the X levels, and 0 for the rest
+		int endX = _hff->startOfExcitedIndices();
+		initialGuessv.head(endX) = LevelSolver::statisticalEquilibrium_boltzman(
+		                n, gas._T, ev().head(endX), gv().head(endX));
+
 		DEBUG("Using LTE as initial guess for H2" << endl);
 		initialGuessv = n * solveBoltzmanEquations(gas._T);
 		// TODO: experiment with this instead of LTE as initial condition
