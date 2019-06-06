@@ -4,18 +4,18 @@ init "honly.ini"
 title hsphere
 # SOURCE
 blackbody 1.0e4
-luminosity total linear solar 1.0e-6
+luminosity total linear solar 2.0
 # GAS
-# 0.1 AU to < .2 AU in cm
-radius 1.496e12 to 1.500e12 linear cm
+# 10 AU in cm
+radius 1.0 to 1.01 linear parsecs
 hden 25100 linear
 # LEVEL MODEL
 # database H-like collisions l-mixing off
 # database H-like collisional ionization off
 database H-like levels resolved 4
 database H-like levels collapsed 1
-database H-like levels print
-#database H-like topoff off
+# database H-like levels print
+# database H-like topoff off
 database H2 levels 3
 database H2 collisional dissociation off
 database H2 grain collisions off
@@ -24,7 +24,7 @@ set H2 Jura CT02
 # GRAINS MODEL
 # Standard 3.5 slope MRN distribution (see data/ism.szd)
 grains "graphite_ism_10.opc" no qheat no cooling
-constant grain temperature 110K linear
+# constant grain temperature 110K linear
 no grain electrons
 # no grain gas collisional energy exchange
 no grain molecules
@@ -46,6 +46,8 @@ save opacity "opacity.out" total units micron last
 save heating "heating.out" last
 save cooling "cooling.out" last
 save continuum "continuum.out" last units micron
+# radiation
+set save luminosity old
 save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 # h2 output
