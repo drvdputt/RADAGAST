@@ -453,8 +453,8 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 		double freq = eFrequencyv[iFreq];
 		double wav = Constant::LIGHT / freq * Constant::CM_UM;
 		out.precision(9);
-		out << scientific << freq << tab << wav << tab << emv[iFreq] << tab
-		    << opv.evaluate(freq) << endl;
+		out << scientific << freq << tab << wav << tab
+		    << Constant::FPI * freq * emv[iFreq] << tab << opv.evaluate(freq) << endl;
 		wavfile.precision(9);
 		wavfile << wav << tab << freq << endl;
 	}
