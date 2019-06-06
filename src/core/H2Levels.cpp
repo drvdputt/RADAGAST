@@ -131,6 +131,8 @@ double H2Levels::dissociationHeating(const Solution& s) const
 	// level population = heating power density
 	EArray p = _hff->dissociationProbabilityv().array();
 	EArray k = _hff->dissociationKineticEnergyv().array();
+
+	// TODO: heating by direct dissociation
 	return s.nv.dot(EVector{p * k});
 }
 
