@@ -430,9 +430,6 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 	const Array& emv = gs._emissivityv;
 	Spectrum opv(gi.oFrequencyv(), gs._opacityv);
 
-	cout << "Integrated emissivity " << TemplatedUtils::integrate<double>(eFrequencyv, emv)
-	     << endl;
-
 	char tab = '\t';
 	ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
 	vector<std::string> colnames = {
