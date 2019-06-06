@@ -382,10 +382,7 @@ EMatrix H2FromFiles::cvv(const GasStruct& gas) const
 
 	// TODO: (optional?) g-bar approximation for missing coefficients
 
-	// H2-H2 collisions. TODO: I actually need the ortho-para ratio here, which
-	// unfortunately depends on the levels themselves... Maybe I need a wrapper around
-	// speciesNv, which also contains a bunch of other parameters, such as the ortho and
-	// para contributions. I just pick a ratio of 3 here, hardcoded.
+	// H2-H2 collisions.
 	double nH2 = gas._speciesNv(_inH2);
 	addToCvv(the_cvv, _qH2ortho, T, gas._orthoH2 * nH2);
 	addToCvv(the_cvv, _qH2para, T, (1. - gas._orthoH2) * nH2);
