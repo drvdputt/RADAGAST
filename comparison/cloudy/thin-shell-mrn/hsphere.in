@@ -20,7 +20,7 @@ database H2 levels 3
 database H2 collisional dissociation off
 database H2 grain collisions off
 # database H2 chemistry simple
-set H2 Jura CT02
+set H2 Jura ELRD
 # GRAINS MODEL
 # Standard 3.5 slope MRN distribution (see data/ism.szd)
 grains "graphite_ism_10.opc" no qheat no cooling
@@ -40,6 +40,8 @@ save grain temperature "graintemperature.out" last
 save grain charge "graincharge.out" last
 save grain extinction "grainextinction.out" last
 save grain opacity "grainopacity.out" last
+save grain numb "grainnumberdensity.out" last
+save grain sizes "grainsize.out" last
 # general output
 save overview "hsphere.ovr" last
 save opacity "opacity.out" total units micron last

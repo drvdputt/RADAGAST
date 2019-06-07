@@ -20,20 +20,24 @@ def compare_grain_size_distribution():
 
     # cloudy
     cloudy_abun = np.loadtxt('grainabundance.g_cm-3.out', ndmin=2)
+    cloudy_size = np.loadtxt('grainsize.out', ndmin=2)
+    cloudy_num = np.loadtxt('grainnumberdensity.out', ndmin=2)
     # first column = depth, last column = total
-    x = range(cloudy_abun.shape[1])[1:-1]
-    y = cloudy_abun[0, 1:-1]
-    plt.semilogy(x, y, marker='+')
+    x = cloudy_size[0, 1:]
+    # y = cloudy_abun[0, 1:-1]
+    y = cloudy_num[0, 1:]
+    plt.loglog(x, y, marker='+', label='cloudy')
 
     # mrn test
     mrn_abun = np.loadtxt(MRN_DIR / 'grainpop_0.dat')
-    x = range(1, mrn_abun.shape[0] + 1)
-    y = mrn_abun[:, 2]
-    plt.semilogy(x, y, marker='x')
+    x = mrn_abun[:, 0]
+    y = mrn_abun[:, 1]
+    plt.loglog(x, y, marker='x', label='MRNtest')
 
-    plt.xlabel('grain pop number')
-    plt.ylabel('abundance (g_cm-3)')
+    plt.xlabel('average radius')
+    plt.ylabel('number density')
     plt.title('grain abundance')
+    plt.legend()
     plt.savefig(OUTPUT_DIR / 'grain_size.pdf')
 
 
@@ -68,6 +72,21 @@ def compare_emission():
     # plt.show()
 
 
+def compare_opacity():
+    plt.figure()
+    cloudy_op = pd.read_csv('opacity.out', sep='\t')
+    x = cloudy_op['#nu/um']
+    y = cloudy_op['Tot opac']
+    plt.loglog(x, y, label='cloudy')
+
+    mrn_opt = np.loadtxt(MRN_DIR / 'opticalProperties.dat')
+    plt.loglog(mrn_opt[:, 1], mrn_opt[:, 3], label='gasmodule')
+    plt.xlabel('$\\lambda$ (micron)')
+    plt.ylabel('opacity')
+    plt.legend()
+    plt.savefig(OUTPUT_DIR / 'emission.pdf')
+
+
 def compare_equilibrium():
     cloudy_ovr = pd.read_csv('hsphere.ovr', sep='\t')
     t = cloudy_ovr['Te'][0]
@@ -83,9 +102,17 @@ def compare_equilibrium():
 
     cloudy_h2creation = pd.read_csv('h2creation.out', sep='\t')
     h2form = cloudy_h2creation['grn,H,H=>grn,H2'][0] / nh
+
+    cloudy_grainh2rate = pd.read_csv('grainH2rate.out', sep='\t')
+    h2form_g = sum(cloudy_grainh2rate.to_numpy()[0, 1:])
     # I want to the total formation per H atom. Therefore, we do not use
     # the 'coef' options here. Using give rather large numbers (order of
     # 1). Probably has to do with grain number density.
+
+    # Alternatively, I could sum the formation rates from the grain
+    # H2rate file. They are in units s-1 and the source code states that
+    # multiplying them with hden will yield the total formation rate
+    # cm-3 s-1.
 
     cloudy_h2destruction = pd.read_csv('h2destruction.out', sep='\t')
     h2dissoc = cloudy_h2destruction['PHOTON,H2=>H,H'][0]
@@ -110,7 +137,7 @@ def compare_equilibrium():
     print("HI = ", nh)
     print("H2 = ", nh2)
 
-    print("h2form = ", h2form)
+    print("h2form = ", h2form_g)
     print("h2dissoc = ", h2dissoc)
     print("hphotoion = ", hphotoion)
     print("hcolion = ", hcolion)
