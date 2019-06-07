@@ -454,16 +454,23 @@ EVector ChemistrySolver::solveTimeDep(const EVector& rateCoeffv, const EVector& 
 	                                                     ini_step, epsabs, epsrel);
 
 	// 2^59 seconds > 13.7 Gyr
-	int max_steps = 59;
+	int max_steps = 60;
 	double t = 0;
 	EVector nv = n0v;
 	for (int i = 1; i <= max_steps; i++)
 	{
 		EVector previousNv = nv;
 
-		double goalTime = std::pow(2, i);
+		double goalTime = std::pow(2., i);
 		int status = gsl_odeiv2_driver_apply(d, &t, goalTime, &nv[0]);
-
+		if (status != GSL_SUCCESS)
+		{
+			DEBUG("GSL failure" << '\n');
+			// If there was a problem, then nv might have become NaN. Use the last
+			// good value.
+			nv = previousNv;
+			break;
+		}
 		EArray delta = (nv - previousNv).array().abs();
 		EArray avg = (nv + previousNv) / 2;
 		bool absEquil = (delta < epsabs).all();
@@ -473,12 +480,8 @@ EVector ChemistrySolver::solveTimeDep(const EVector& rateCoeffv, const EVector& 
 			DEBUG("Reached chemical equilibrium after " << i << " iterations\n");
 			break;
 		}
-		if (status != GSL_SUCCESS)
-		{
-			DEBUG("GSL failure" << '\n');
-			break;
-		}
 	}
+	gsl_odeiv2_driver_free(d);
 	return nv;
 }
 
