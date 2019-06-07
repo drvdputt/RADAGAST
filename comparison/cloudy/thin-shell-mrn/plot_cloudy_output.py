@@ -83,9 +83,19 @@ def compare_equilibrium():
 
     cloudy_h2creation = pd.read_csv('h2creation.out', sep='\t')
     h2form = cloudy_h2creation['grn,H,H=>grn,H2'][0] / nh
+    # I want to the total formation per H atom. Therefore, we do not use
+    # the 'coef' options here. Using give rather large numbers (order of
+    # 1). Probably has to do with grain number density.
 
     cloudy_h2destruction = pd.read_csv('h2destruction.out', sep='\t')
     h2dissoc = cloudy_h2destruction['PHOTON,H2=>H,H'][0]
+    # h2destruction was saved with the 'coef' option. According to hazy
+    # 1, a 2-body reaction would have a coefficient of unit cm3 s-1 when
+    # this option is used. Multiplying with the densities of the 2
+    # bodies yields cm-3 s-1. The destruction by photons is a 1-body
+    # reaction, so this gives us something in s-1 for this specific
+    # reaction. So using 'coef' for the destruction gives us the same
+    # coefficient as my gas code
 
     cloudy_hionization = pd.read_csv(
         'hionization.s-1.cm-3_s-1.out', sep='\t', nrows=1)
