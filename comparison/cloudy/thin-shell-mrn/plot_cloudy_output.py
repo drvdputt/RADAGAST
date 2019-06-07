@@ -9,10 +9,11 @@ OUTPUT_DIR = Path('plots')
 
 def main():
     OUTPUT_DIR.mkdir(exist_ok=True)
+    compare_equilibrium()
     compare_grain_size_distribution()
     compare_incident_radiation_field()
     compare_emission()
-    compare_equilibrium()
+    compare_opacity()
 
 
 def compare_grain_size_distribution():
@@ -84,7 +85,7 @@ def compare_opacity():
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('opacity')
     plt.legend()
-    plt.savefig(OUTPUT_DIR / 'emission.pdf')
+    plt.savefig(OUTPUT_DIR / 'opacity.pdf')
 
 
 def compare_equilibrium():
