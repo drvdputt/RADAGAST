@@ -55,7 +55,8 @@ save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 # h2 output
 save chemistry rates destruction "h2destruction.out" "H2" coef last
 save chemistry rates creation "h2creation.out" "H2" last
-save h2 rates "h2rates" last
+save h2 rates "h2rates.out" last
+save h2 populations "h2populations.frac.out"
 # h output
 save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
 save hydrogen populations "hpopulations.cm-3.out" last

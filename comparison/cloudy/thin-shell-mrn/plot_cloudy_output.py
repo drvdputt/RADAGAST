@@ -14,6 +14,7 @@ def main():
     compare_incident_radiation_field()
     compare_emission()
     compare_opacity()
+    compare_populations()
 
 
 def compare_grain_size_distribution():
@@ -87,6 +88,20 @@ def compare_opacity():
     plt.legend()
     plt.savefig(OUTPUT_DIR / 'opacity.pdf')
 
+
+def compare_populations():
+    plt.figure()
+    cloudy_pops = np.loadtxt('hpopulations.cm-3.out', ndmin=2)
+    y = cloudy_pops[0, 3:]
+    x = range(len(y))
+    plt.semilogy(x, y, label='cloudy')
+
+    hpop = np.loadtxt(MRN_DIR / 'hpopulations.dat')
+    plt.semilogy(range(hpop.shape[0]), hpop[:, 2], label='gasmodule')
+    plt.xlabel('index')
+    plt.ylabel('population density (cm-3)')
+    plt.legend()
+    plt.savefig(OUTPUT_DIR / 'hpopulations.pdf')
 
 def compare_equilibrium():
     cloudy_ovr = pd.read_csv('hsphere.ovr', sep='\t')

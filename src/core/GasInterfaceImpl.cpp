@@ -200,6 +200,12 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 
 	gd->setReactionNames({"h2form", "h2dissoc", "hphotoion", "hcolion", "hrec"});
 	gd->setReactionRates({h2form, h2dissoc, hphotoion, hcolion, hrec});
+
+	if (gd->saveLevelPopulations())
+	{
+		gd->setHPopulations(Array(s.HSolution.nv.data(), s.HSolution.nv.size()));
+		gd->setH2Populations(Array(s.H2Solution.nv.data(), s.H2Solution.nv.size()));
+	}
 }
 
 GasInterfaceImpl::Solution

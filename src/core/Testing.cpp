@@ -1004,5 +1004,13 @@ void Testing::runMRNDust(bool write)
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
 		// plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
+
+		vector<string> populationColumns = {"label", "energy", "density"};
+		ColumnFile hpop(prefix + "hpopulations.dat", populationColumns);
+		for (double n : gd.hPopulations())
+			hpop.writeLine({0., 0., n});
+		ColumnFile h2pop(prefix + "h2populations.dat", populationColumns);
+		for (double n : gd.h2Populations())
+			h2pop.writeLine({0., 0., n});
 	}
 }
