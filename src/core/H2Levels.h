@@ -20,7 +20,7 @@ public:
 
 	/** Override the generic implementation of NLevel with an approach better suited for H2.
 	    It scales as a*n^2, where a is the number of iterations, instead of n^3, apparently.
-	    I might be interesting to see this with my own eyes. */
+	    It might be interesting to see this with my own eyes. */
 	NLevel::Solution customSolution(double n, const GasStruct& gas,
 	                                const Spectrum& specificIntensity) const;
 
