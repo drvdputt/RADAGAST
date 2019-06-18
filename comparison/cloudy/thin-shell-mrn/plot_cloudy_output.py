@@ -41,6 +41,7 @@ def compare_grain_size_distribution():
     plt.title('grain abundance')
     plt.legend()
     plt.savefig(OUTPUT_DIR / 'grain_size.pdf')
+    plt.close()
 
 
 def compare_incident_radiation_field():
@@ -56,6 +57,7 @@ def compare_incident_radiation_field():
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('indicent radiation field $\\nu L_{\\nu}$ (erg / s)')
     plt.savefig(OUTPUT_DIR / 'radiation_field.pdf')
+    plt.close()
 
 
 def compare_emission():
@@ -71,7 +73,7 @@ def compare_emission():
     plt.ylabel('outward emission')
     plt.legend()
     plt.savefig(OUTPUT_DIR / 'emission.pdf')
-    # plt.show()
+    plt.close()
 
 
 def compare_opacity():
@@ -87,21 +89,45 @@ def compare_opacity():
     plt.ylabel('opacity')
     plt.legend()
     plt.savefig(OUTPUT_DIR / 'opacity.pdf')
+    plt.close()
 
 
 def compare_populations():
-    plt.figure()
+    fig, axs = plt.subplots(1, 2)
+
     cloudy_pops = np.loadtxt('hpopulations.cm-3.out', ndmin=2)
     y = cloudy_pops[0, 3:]
     x = range(len(y))
-    plt.semilogy(x, y, label='cloudy')
+    axs[0].semilogy(x, y, label='cloudy')
 
     hpop = np.loadtxt(MRN_DIR / 'hpopulations.dat')
-    plt.semilogy(range(hpop.shape[0]), hpop[:, 2], label='gasmodule')
-    plt.xlabel('index')
-    plt.ylabel('population density (cm-3)')
-    plt.legend()
-    plt.savefig(OUTPUT_DIR / 'hpopulations.pdf')
+    axs[0].semilogy(range(hpop.shape[0]), hpop[:, 2], label='gasmodule')
+
+    axs[0].set_xlabel('index')
+    axs[0].set_ylabel('population density (cm-3)')
+    axs[0].set_title('H')
+
+    cloudy_h2pops = pd.read_csv('h2populations.frac.out', sep='\t')
+    pops_h2 = cloudy_h2pops['pops/H2'].to_numpy()[3:]
+    energy = cloudy_h2pops['energy(wn)'].to_numpy()[3:]
+    y = pops_h2
+    x = range(len(y))
+    axs[1].semilogy(x, y, label='cloudy')
+
+    h2pop = np.loadtxt(MRN_DIR / 'h2populations.dat')
+    y = h2pop[:, 2]
+    y /= sum(y)
+    x = range(len(y))
+
+    axs[1].semilogy(x, y, label='gasmodule')
+
+    axs[1].set_xlabel('index')
+    axs[1].set_title('H2')
+
+    axs[0].legend()
+    fig.savefig(OUTPUT_DIR / 'hpopulations.pdf')
+    plt.show()
+
 
 def compare_equilibrium():
     cloudy_ovr = pd.read_csv('hsphere.ovr', sep='\t')

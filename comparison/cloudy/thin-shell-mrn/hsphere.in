@@ -19,6 +19,8 @@ database H-like levels collapsed 1
 database H2 levels 3
 database H2 collisional dissociation off
 database H2 grain collisions off
+database H2 H collisions 2015
+database H2 gbar off
 # database H2 chemistry simple
 set H2 Jura ELRD
 # GRAINS MODEL
@@ -56,7 +58,7 @@ save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save chemistry rates destruction "h2destruction.out" "H2" coef last
 save chemistry rates creation "h2creation.out" "H2" last
 save h2 rates "h2rates.out" last
-save h2 populations "h2populations.frac.out"
+save h2 populations "h2populations.frac.out" last
 # h output
 save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
 save hydrogen populations "hpopulations.cm-3.out" last
