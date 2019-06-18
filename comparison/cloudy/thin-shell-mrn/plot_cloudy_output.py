@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.rc('lines', linewidth=1)
 import numpy as np
 from pathlib import Path
 from matplotlib import pyplot as plt
@@ -62,18 +64,27 @@ def compare_incident_radiation_field():
 
 def compare_emission():
     plt.figure()
-    cloudy_cont = pd.read_csv('continuum.out', sep='\t')
-    x = cloudy_cont['#Cont  nu']
-    y = cloudy_cont['DiffOut']
+
+    # cloudy_cont = pd.read_csv('continuum.out', sep='\t')
+    # x = cloudy_cont['#Cont  nu']
+    # y = cloudy_cont['DiffOut']
+
+    cloudy_diffuse = pd.read_csv('4pi_nu_jnu.erg_cm-3_s-1.out', sep='\t')
+    x = cloudy_diffuse['#energy/um']
+    y = cloudy_diffuse['Total']
+    max_y = max(y)
+    lower_limit = 1e-20 * max_y
     plt.loglog(x, y, label='cloudy')
 
     mrn_opt = np.loadtxt(MRN_DIR / 'opticalProperties.dat')
-    plt.loglog(mrn_opt[:, 1], mrn_opt[:, 2], label='gasmodule')
+    plt.loglog(mrn_opt[:, 1], mrn_opt[:, 2], label='gasmodule', ls='dashed')
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('outward emission')
     plt.legend()
+    plt.ylim([lower_limit, max_y])
+    plt.xlim([5.e-2, 1.e6])
     plt.savefig(OUTPUT_DIR / 'emission.pdf')
-    plt.close()
+    # plt.close()
 
 
 def compare_opacity():
