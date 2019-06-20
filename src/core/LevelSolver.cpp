@@ -90,9 +90,14 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 
 		// Sweep over ground state (this can also be done with a block operation, but
 		// this is faster for some reason)
-		for (int i = startX; i < stopX; i++)
+		// for (int i = startX; i < stopX; i++)
+		for (int i = stopX - 1; i >= startX; i--)
 		{
-			// Sum Mij nj, with j running over all other levels.
+			if (fracDestructionRatev(i) <= 0)
+			{
+				nv(i) = 0;
+				continue;
+			}
 			double creationRate = sourcev(i) + Mvv.row(i) * nv;
 			nv(i) = creationRate <= 0 ? 0 : creationRate / fracDestructionRatev(i);
 		}
