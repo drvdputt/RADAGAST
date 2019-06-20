@@ -49,6 +49,15 @@ size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
 	return _ejvToIndexm.at({static_cast<int>(eState), j, v});
 }
 
+int H2FromFiles::indexFind(ElectronicState eState, int j, int v) const
+{
+	auto iter = _ejvToIndexm.find({static_cast<int>(eState), j, v});
+	if (iter == _ejvToIndexm.end())
+		return -1;
+	else
+		return (*iter).second;
+}
+
 void H2FromFiles::readLevels()
 {
 	// Expand levelv with the levels listed in these files
@@ -167,10 +176,12 @@ void H2FromFiles::readDirectDissociation()
 			// block, or at the end of the file.
 
 			// Add the new cross section at the correct level index.
-			size_t levelIndex = indexOutput(ElectronicState::X, ji, vi);
-			_dissociationCrossSectionv[levelIndex].emplace_back(
-			                Array(frequencyv.data(), frequencyv.size()),
-			                Array(crossSectionv.data(), crossSectionv.size()));
+			int index = indexFind(ElectronicState::X, ji, vi);
+			if (index > -1)
+				_dissociationCrossSectionv[index].emplace_back(
+				                Array(frequencyv.data(), frequencyv.size()),
+				                Array(crossSectionv.data(),
+				                      crossSectionv.size()));
 		}
 	}
 }
@@ -198,10 +209,11 @@ void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
 		{
 			string word1, word2;
 			iss >> word1 >> word2;
+			continue; // Do not read the 'extra' levels to better match with cloudy
 			// If the comment is anything else than "#extra data", we will skip this
 			// line
-			if (word1 != "#extra" || word2 != "data")
-				continue;
+			// if (word1 != "#extra" || word2 != "data")
+				// continue;
 		}
 		int v, j;
 		iss >> v >> j;
@@ -250,11 +262,13 @@ void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState uppe
 		// If within the J,v limits, fill in the coefficient.
 		if (validJV(JU, VU) && validJV(JL, VL))
 		{
-			// An error will be thrown if the level is still not in the list.
-			size_t upperIndex = indexOutput(upperE, JU, VU);
-			size_t lowerIndex = indexOutput(lowerE, JL, VL);
-			_avv(upperIndex, lowerIndex) = A;
-			counter++;
+			int upperIndex = indexFind(upperE, JU, VU);
+			int lowerIndex = indexFind(lowerE, JL, VL);
+			if (upperIndex > -1 && lowerIndex > -1)
+			{
+				_avv(upperIndex, lowerIndex) = A;
+				counter++;
+			}
 		}
 	}
 	DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
@@ -284,10 +298,13 @@ void H2FromFiles::readDissProbFile(const string& repoFile, ElectronicState eStat
 		if (!validJV(j, v))
 			continue;
 
-		int index = indexOutput(eState, j, v);
-		_dissProbv[index] = diss;
-		_dissKinEv[index] = kin / Constant::ERG_EV;
-		counter++;
+		int index = indexFind(eState, j, v);
+		if (index > -1)
+		{
+			_dissProbv[index] = diss;
+			_dissKinEv[index] = kin / Constant::ERG_EV;
+			counter++;
+		}
 	}
 	DEBUG("Read in " << counter << " dissociation rates from " << repoFile << endl);
 }
@@ -331,13 +348,18 @@ CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
 		if (!validJV(JU, VU) || !validJV(JL, VL))
 			continue;
 
-		// Else, add the level indices and data.
-		iv.emplace_back(indexOutput(ElectronicState::X, JU, VU));
-		fv.emplace_back(indexOutput(ElectronicState::X, JL, VL));
-		Array qForEachTv(numTemperatures);
-		for (size_t i = 0; i < numTemperatures; i++)
-			issCollRates >> qForEachTv[i];
-		qvv.emplace_back(qForEachTv);
+		int upperIndex = indexFind(ElectronicState::X, JU, VU);
+		int lowerIndex = indexFind(ElectronicState::X, JL, VL);
+		if (upperIndex > -1 && lowerIndex > -1)
+		{
+			iv.emplace_back(upperIndex);
+			fv.emplace_back(lowerIndex);
+			Array qForEachTv(numTemperatures);
+			for (size_t i = 0; i < numTemperatures; i++)
+				issCollRates >> qForEachTv[i];
+			qvv.emplace_back(qForEachTv);
+		}
+		// else the data is unused, and we go to the next line
 	}
 
 	size_t numTransitions = qvv.size();

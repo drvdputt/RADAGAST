@@ -128,8 +128,12 @@ public:
 	/** @name Functionality specific for H2. */
 	/**@{*/
 
-	/** Retrieve the index of a level with these quantum numbers. */
+	/** Retrieve the index of a level with these quantum numbers. Will throw an out of range
+	    error when no level was read in for these quantum numbers */
 	size_t indexOutput(ElectronicState eState, int j, int v) const;
+
+	/** Same as the above, but returns -1 if level is not found. */
+	int indexFind(ElectronicState eState, int j, int v) const;
 
 	/** Get the index pointing to the first (index-wise, not energy-wise) electronically
 	excited level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels
