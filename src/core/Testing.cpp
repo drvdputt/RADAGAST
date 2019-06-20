@@ -803,19 +803,20 @@ void Testing::runFromFilesvsHardCoded()
 
 GasModule::GasInterface Testing::genFullModel()
 {
-	Array coarsev = defaultFrequencyv(1000);
+	Array coarsev = defaultFrequencyv(3000);
 
 	cout << "Construction model to help with refining frequency grid" << endl;
 	HydrogenLevels hl(make_shared<HydrogenFromFiles>(4));
 	FreeBound fb;
-	H2Levels h2l(make_shared<H2FromFiles>(8, 5));
+	H2Levels h2l(make_shared<H2FromFiles>(99, 99));
 
-	Array frequencyv = improveFrequencyGrid(hl, coarsev);
-	frequencyv = improveFrequencyGrid(fb, frequencyv);
-	frequencyv = improveFrequencyGrid(h2l, frequencyv);
+	Array frequencyv = coarsev;
+	// Array frequencyv = improveFrequencyGrid(hl, coarsev);
+	// frequencyv = improveFrequencyGrid(fb, frequencyv);
+	// frequencyv = improveFrequencyGrid(h2l, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {coarsev, coarsev, frequencyv, "", "8 5"};
+	return {coarsev, coarsev, frequencyv, "", "99 99"};
 }
 
 GasModule::GasInterface Testing::genHonlyModel()
