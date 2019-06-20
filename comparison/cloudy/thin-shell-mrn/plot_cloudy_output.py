@@ -1,9 +1,9 @@
+import pandas as pd
+from matplotlib import pyplot as plt
+from pathlib import Path
+import numpy as np
 import matplotlib
 matplotlib.rc('lines', linewidth=1)
-import numpy as np
-from pathlib import Path
-from matplotlib import pyplot as plt
-import pandas as pd
 
 MRN_DIR = Path('../../../../run/MRNDust')
 OUTPUT_DIR = Path('plots')
@@ -69,9 +69,14 @@ def compare_emission():
     # x = cloudy_cont['#Cont  nu']
     # y = cloudy_cont['DiffOut']
 
-    cloudy_diffuse = pd.read_csv('4pi_nu_jnu.erg_cm-3_s-1.out', sep='\t')
-    x = cloudy_diffuse['#energy/um']
-    y = cloudy_diffuse['Total']
+    # cloudy_diffuse = pd.read_csv('4pi_nu_jnu.erg_cm-3_s-1.out', sep='\t')
+    # x = cloudy_diffuse['#energy/um']
+    # y = cloudy_diffuse['Total']
+
+    cloudy_diffuse = np.loadtxt('all_4pi_nu_jnu.erg_cm-3_s-1.out', max_rows=2)
+    x = cloudy_diffuse[0]
+    y = cloudy_diffuse[1]
+
     max_y = max(y)
     lower_limit = 1e-20 * max_y
     plt.loglog(x, y, label='cloudy')
