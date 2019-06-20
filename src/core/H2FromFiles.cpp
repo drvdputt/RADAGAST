@@ -14,7 +14,8 @@ using namespace std;
 namespace
 {
 constexpr bool BLEVELS{true};
-constexpr bool CLEVELS{true};
+constexpr bool CplusLEVELS{true};
+constexpr bool CminusLEVELS{false};
 } // namespace
 
 H2FromFiles::H2FromFiles(int maxJ, int maxV)
@@ -63,13 +64,12 @@ void H2FromFiles::readLevels()
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
 	_startOfExcitedIndices = _levelv.size();
-	if (BLEVELS)
+	if (BLEVELS) // Lyman
 		readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
-	if (CLEVELS)
-	{
+	if (CplusLEVELS) // Werner
 		readLevelFile("dat/h2/energy_C_plus.dat", ElectronicState::Cplus);
+	if (CminusLEVELS)
 		readLevelFile("dat/h2/energy_C_minus.dat", ElectronicState::Cminus);
-	}
 	_numL = _levelv.size();
 }
 
@@ -83,13 +83,12 @@ void H2FromFiles::readTransProbs()
 	if (BLEVELS)
 		readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B,
 		                  ElectronicState::X);
-	if (CLEVELS)
-	{
+	if (CplusLEVELS)
 		readTransProbFile("dat/h2/transprob_C_plus.dat", ElectronicState::Cplus,
 		                  ElectronicState::X);
+	if (CminusLEVELS)
 		readTransProbFile("dat/h2/transprob_C_minus.dat", ElectronicState::Cminus,
 		                  ElectronicState::X);
-	}
 }
 
 void H2FromFiles::readDissProbs()
@@ -99,11 +98,10 @@ void H2FromFiles::readDissProbs()
 
 	if (BLEVELS)
 		readDissProbFile("dat/h2/dissprob_B.dat", ElectronicState::B);
-	if (CLEVELS)
-	{
+	if (CplusLEVELS)
 		readDissProbFile("dat/h2/dissprob_C_plus.dat", ElectronicState::Cplus);
+	if (CminusLEVELS)
 		readDissProbFile("dat/h2/dissprob_C_minus.dat", ElectronicState::Cminus);
-	}
 }
 
 void H2FromFiles::readCollisions()
