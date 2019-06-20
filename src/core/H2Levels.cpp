@@ -34,17 +34,18 @@ Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 }
 
 NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
-                                          const Spectrum& specificIntensity) const
+                                          const Spectrum& specificIntensity, double h2form) const
 {
 	NLevel::Solution s;
 	s.n = n;
 	s.T = gas._T;
 	EMatrix Tvv = totalTransitionRatesvv(specificIntensity, gas, &s.cvv);
-	// TODO: the source term should contain the 'formation pumping' contributions. When H2
-	// is formed on grain surfaces, it can be released from the grain in an excited state.
-	// The simplest way is assuming a fixed distribution. In that case, the source vector is
-	// this distribution scaled with the total grain H2 formation rate.
+
+	// TODO: Use better formation pumping recipe
 	EVector sourcev = EVector::Zero(numLv());
+	sourcev.head(_hff->startOfExcitedIndices()) = _hff->formationDistribution();
+	sourcev *= h2form / sourcev.sum();
+
 	EVector sinkv = dissociationSinkv(specificIntensity);
 
 	EVector initialGuessv;
@@ -58,11 +59,6 @@ NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
 		                n, gas._T, ev().head(endX), gv().head(endX));
 
 		DEBUG("Using LTE as initial guess for H2" << endl);
-		initialGuessv = n * solveBoltzmanEquations(gas._T);
-		// TODO: experiment with this instead of LTE as initial condition
-		// DEBUG("Using ground state as initial guess for H2" << endl);
-		// initialGuessv = EVector::Zero(numLv());
-		// initialGuessv.head(4) = EVector::Constant(4, n / 4);
 	}
 	else if (gas._h2Levelv.size() == numLv())
 		initialGuessv = gas._h2Levelv;

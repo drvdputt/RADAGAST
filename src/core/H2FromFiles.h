@@ -154,6 +154,12 @@ public:
 	    want to integrate over these cross sections efficiently, since the Spectrum object
 	    contains the minimum and maximum frequency. */
 	std::vector<Spectrum> directDissociationCrossSections(size_t index) const;
+
+	/** Return the distribution of newly formed hydrogen over the electronic ground state.
+	    For now, we use equation 19 from Draine and Bertoldi (1996), which does not depend
+	    on grain properties. */
+	EVector formationDistribution() const;
+
 	/**@}*/
 private:
 	/** Returns true if the given J and V are within the boundaries specified by the

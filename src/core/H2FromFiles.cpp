@@ -455,3 +455,16 @@ void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double 
 		the_cvv(f, i) += Cfi;
 	}
 }
+
+EVector H2FromFiles::formationDistribution() const
+{
+	double kTf = Constant::BOLTZMAN * 5.e4;
+
+	EVector fv = EVector(_startOfExcitedIndices);
+	for (int i = 0; i < _startOfExcitedIndices; i++)
+	{
+		int gj = (_levelv[i].j() % 2) ? 3 : 1;
+		fv[i] = gj * (1 + _levelv[i].v()) * exp(-_levelv[i].e() / kTf);
+	}
+	return fv / fv.sum();
+}

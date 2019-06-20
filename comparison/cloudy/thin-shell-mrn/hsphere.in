@@ -23,6 +23,7 @@ database H2 H collisions 2015
 database H2 gbar off
 # database H2 chemistry simple
 set H2 Jura ELRD
+set H2 grain formation pumping DB96
 # GRAINS MODEL
 # Standard 3.5 slope MRN distribution (see data/ism.szd)
 grains "graphite_ism_10.opc" no qheat no cooling

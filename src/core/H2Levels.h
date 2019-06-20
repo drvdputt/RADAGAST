@@ -19,10 +19,12 @@ public:
 	Array opacityv(const Solution& s, const Array& oFrequencvy) const override;
 
 	/** Override the generic implementation of NLevel with an approach better suited for H2.
-	    It scales as a*n^2, where a is the number of iterations, instead of n^3, apparently.
-	    It might be interesting to see this with my own eyes. */
+	    It uses the iterative solver from LevelSolver, and calculated the correct source and
+	    sink terms by using information about the H2 levels. The H2 formation tempo [cm-3
+	    s-1] (from grain surfaces only) is need to normalize the source term, which
+	    describes the formation pumping. */
 	NLevel::Solution customSolution(double n, const GasStruct& gas,
-	                                const Spectrum& specificIntensity) const;
+	                                const Spectrum& specificIntensity, double h2form=0) const;
 
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon
 	    process derived from the level population solution. This rate can be used to
@@ -57,6 +59,8 @@ private:
 
 	/** Sink term due to the spontaneous dissociation rate. [s-1] */
 	EVector spontaneousDissociationSinkv() const;
+
+	EVector formationDistribution() const;
 
 private:
 	std::shared_ptr<const H2FromFiles> _hff;

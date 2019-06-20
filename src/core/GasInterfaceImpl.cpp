@@ -271,10 +271,12 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
 	}
 
-	/* Lambda function, because it is only needed in this scope. The [&] passes the current
-	   scope by reference, so the lambda function can modify s. */
 	// Package some gas parameters
 	GasStruct gas(T, s.speciesNv);
+
+	// Formation rate on grain surfaces. We declare it here so that it can be passed to the
+	// level population calculation too (needed for H2 formation pumping).
+	double kFormH2 = 0;
 
 	// Initial guess for the H2 solution (if no initial guess is provided, the solver will
 	// make its own)
@@ -306,7 +308,7 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
 			// gas is passed here to make an initial guess of the levels based on
 			// the gas properties
-			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity);
+			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity, nH * kFormH2);
 
 			// the solution is also saved in the gas struct, so it can be used as an
 			// initial guess instead of just guessing based on the temperature
@@ -343,7 +345,7 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		if (_molecular)
 		{
 			// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
-			double kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
+			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
 			if (h2FormationOverride >= 0)
 				kFormH2 = h2FormationOverride;
 
