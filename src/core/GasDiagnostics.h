@@ -19,6 +19,9 @@ public:
 	/** The photoelectric heating contribution by each grain population */
 	Array photoelectricHeating() const { return _photoelectricHeating; }
 
+	/** Other heating rates, stored as a map with keys */
+	const std::map<std::string, double> otherHeating() const { return _heatingm; }
+
 	/** Names of the reactions in the chemical network used */
 	std::vector<std::string> reactionNames() const { return _reactionNamev; }
 	/** Rates of the reactions in the chemical network used */
@@ -37,12 +40,15 @@ public:
 	void setReactionRates(const Array& rr) { _reactionRatev = rr; }
 	void setHPopulations(const Array& hp) { _hPopulationv = hp; }
 	void setH2Populations(const Array& h2p) { _h2Populationv = h2p; }
+	void setHeating(const std::string& key, double value);
 	void setUserValue(const std::string& key, double value);
 
 private:
 	bool _saveLevelPopulations{true};
 
 	Array _photoelectricHeating;
+
+	std::map<std::string, double> _heatingm;
 
 	std::vector<std::string> _reactionNamev;
 	Array _reactionRatev;

@@ -154,8 +154,9 @@ GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
 	return s;
 }
 
-GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(
-                const Solution& s, const Array& oFrequencyv, const Array& eFrequencyv) const
+GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s,
+                                                               const Array& oFrequencyv,
+                                                               const Array& eFrequencyv) const
 
 {
 	Array emv, opv, scv;
@@ -206,6 +207,13 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 		gd->setHPopulations(Array(s.HSolution.nv.data(), s.HSolution.nv.size()));
 		gd->setH2Populations(Array(s.H2Solution.nv.data(), s.H2Solution.nv.size()));
 	}
+
+	gd->setHeating("H ion", Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
+	                                            s.specificIntensity));
+	gd->setHeating("H deexc", _atomicLevels->heating(s.HSolution));
+	gd->setHeating("H2 deexc", _molecular->heating(s.H2Solution));
+	gd->setHeating("H2 dissoc",
+	               _molecular->dissociationHeating(s.H2Solution, s.specificIntensity));
 }
 
 GasInterfaceImpl::Solution
@@ -308,7 +316,8 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 			DEBUG("Solving levels nH2 = " << nH2 << endl);
 			// gas is passed here to make an initial guess of the levels based on
 			// the gas properties
-			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity, nH * kFormH2);
+			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity,
+			                                          nH * kFormH2);
 
 			// the solution is also saved in the gas struct, so it can be used as an
 			// initial guess instead of just guessing based on the temperature
@@ -622,7 +631,8 @@ double GasInterfaceImpl::continuumHeating(const Solution& s) const
 	                              s.specificIntensity);
 	if (_molecular)
 	{
-		double dissheat = _molecular->dissociationHeating(s.H2Solution, s.specificIntensity);
+		double dissheat = _molecular->dissociationHeating(s.H2Solution,
+		                                                  s.specificIntensity);
 		result += dissheat;
 	}
 	return result;

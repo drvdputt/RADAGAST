@@ -3,6 +3,11 @@
 
 #include <iostream>
 
+void GasDiagnostics::setHeating(const std::string& key, double value)
+{
+	_heatingm[key] = value;
+}
+
 void GasDiagnostics::setUserValue(const std::string& key, double value)
 {
 	auto valueIt = _userValuem.find(key);

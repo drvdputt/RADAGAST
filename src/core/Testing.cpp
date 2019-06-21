@@ -993,6 +993,9 @@ void Testing::runMRNDust(bool write)
 		for (size_t i = 0; i < gd.reactionNames().size(); i++)
 			cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
 
+		for (const auto& entry : gd.otherHeating())
+			cout << entry.first << " heat = " << entry.second << '\n';
+
 		string prefix = "MRNDust/";
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
 		for (size_t i = 0; i < frequencyv.size(); i++)
