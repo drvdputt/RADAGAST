@@ -622,7 +622,7 @@ double GasInterfaceImpl::continuumHeating(const Solution& s) const
 	                              s.specificIntensity);
 	if (_molecular)
 	{
-		double dissheat = _molecular->dissociationHeating(s.H2Solution);
+		double dissheat = _molecular->dissociationHeating(s.H2Solution, s.specificIntensity);
 		result += dissheat;
 	}
 	return result;

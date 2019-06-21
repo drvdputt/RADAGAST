@@ -34,7 +34,8 @@ Array H2Levels::opacityv(const Solution& s, const Array& oFrequencyv) const
 }
 
 NLevel::Solution H2Levels::customSolution(double n, const GasStruct& gas,
-                                          const Spectrum& specificIntensity, double h2form) const
+                                          const Spectrum& specificIntensity,
+                                          double h2form) const
 {
 	NLevel::Solution s;
 	s.n = n;
@@ -95,7 +96,7 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	double result{5.8e-11 * Iuv};
 	return result;
 #else
-	EVector directv = directDissociationSinkv(specificIntensity);
+	EVector directv = directDissociationIntegralv(specificIntensity);
 	EVector solomonv = spontaneousDissociationSinkv();
 
 	double nH2 = s.nv.sum();
@@ -105,9 +106,7 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 		popFracv = s.nv / nH2;
 	else
 		// We need to return something nonzero here, otherwise the chemistry will have
-		// no dissociation coefficient, maxing out the H2. Just pick the one for the
-		// ground state? Or maybe LTE? TODO: make the chemistry solver more robust, so
-		// that this fake dissociation rate isn't necessary.
+		// no dissociation coefficient, which can be troublesomec.
 		popFracv = solveBoltzmanEquations(s.T);
 
 	// Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which
@@ -115,33 +114,39 @@ double H2Levels::dissociationRate(const NLevel::Solution& s,
 	// need separate rates for H2g and H2*
 	double directFractional = directv.dot(popFracv);
 	double solomonFractional = solomonv.dot(popFracv);
-	DEBUG("Dissociation: direct rate:" << directFractional << " spontaneous rate: "
-	                                   << solomonFractional << '\n');
+	DEBUG("Dissociation: direct rate:" << directFractional
+	                                   << " solomon rate: " << solomonFractional << '\n');
 	return directFractional + solomonFractional;
 #endif
 }
 
-double H2Levels::dissociationHeating(const Solution& s) const
+double H2Levels::dissociationHeating(const Solution& s, const Spectrum& specificIntensity) const
 {
 	// Fraction that dissociates per second * kinetic energy per dissociation * density of
 	// level population = heating power density
 	EArray p = _hff->dissociationProbabilityv().array();
 	EArray k = _hff->dissociationKineticEnergyv().array();
+	double solomonHeat = s.nv.dot(EVector{p * k});
 
-	// TODO: heating by direct dissociation
-	return s.nv.dot(EVector{p * k});
+	EVector directHeatv = directDissociationIntegralv(specificIntensity, true);
+	double directHeat = s.nv.dot(directHeatv);
+
+	DEBUG("Dissociation heat: direct heat: " << directHeat
+	                                         << " solomon heat:" << solomonHeat << '\n');
+	return solomonHeat + directHeat;
 }
 
 double H2Levels::dissociationCooling(const Solution&) const { return 0.0; }
 
 EVector H2Levels::dissociationSinkv(const Spectrum& specificIntensity) const
 {
-	EVector directv = directDissociationSinkv(specificIntensity);
+	EVector directv = directDissociationIntegralv(specificIntensity);
 	EVector solomonv = spontaneousDissociationSinkv();
 	return directv + solomonv;
 }
 
-EVector H2Levels::directDissociationSinkv(const Spectrum& specificIntensity) const
+EVector H2Levels::directDissociationIntegralv(const Spectrum& specificIntensity,
+                                              bool heatRate) const
 {
 	size_t numLv{_hff->numLv()};
 	EVector result{EVector::Zero(numLv)};
@@ -179,7 +184,15 @@ EVector H2Levels::directDissociationSinkv(const Spectrum& specificIntensity) con
 				// integrating.)
 				double nu = cs_nuv[iNu];
 				sigmaFv[iNu] *= specificIntensity.evaluate(nu) / nu;
+
+				// If we are calculating the heating rate (erg s-1) instead of
+				// the number rate (s-1), multiply with the energy minus the
+				// threshold (i.e. the lowest frequency of the grid for that
+				// specific cross section)
+				if (heatRate)
+					sigmaFv[iNu] *= Constant::PLANCK * (nu - cs_nuv[0]);
 			}
+
 			// Integrate to total number of dissociations (s-1)
 			result(iLv) += Constant::FPI / Constant::PLANCK *
 			               TemplatedUtils::integrate<double>(cs_nuv, sigmaFv,

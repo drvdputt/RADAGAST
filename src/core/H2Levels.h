@@ -38,7 +38,7 @@ public:
 	    ionization). I think it should be possible to calculate this from the radiation
 	    field, the level populations, and the threshold energy for each level: (photon
 	    energy - threshold energy) times the rate. */
-	double dissociationHeating(const Solution& s) const;
+	double dissociationHeating(const Solution& s, const Spectrum& specificIntensity) const;
 
 	/** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this
 	    depends on the velocity distribution of the colliding particles, and the energy
@@ -52,8 +52,11 @@ public:
 	EVector dissociationSinkv(const Spectrum& specificIntensity) const;
 
 private:
-	/** Sink term due to direct radiative dissociation. Needs radiation field. [s-1] */
-	EVector directDissociationSinkv(const Spectrum& specificIntensity) const;
+	/** For each level of X, calculate the direct radiative dissociation rate [s-1] by
+	    integrating the cross section over the appropriate frequency range. If heatRate is
+	    true, the integrand is multiplied by (hnu - threshold), so that the heating rate
+	    [erg s-1] due to this process is given instead. */
+	EVector directDissociationIntegralv(const Spectrum& specificIntensityv, bool heatRate=false) const;
 
 	/** TODO: need collisional dissociation contribution. */
 
