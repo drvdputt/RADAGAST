@@ -5,5 +5,5 @@ mkdir $BUILD_DIR
 cd $BUILD_DIR
 
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=YES $SRC_DIR
-ln -s compile_commands.json $SRC_DIR
+ln -sf $BUILD_DIR/compile_commands.json $SRC_DIR
 make -j$NJOB
