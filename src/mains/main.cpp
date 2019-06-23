@@ -3,6 +3,7 @@
 #include <csignal>
 #include <execinfo.h>
 #include <iostream>
+#include <string>
 #include <unistd.h>
 
 void handler(int sig)
@@ -19,8 +20,15 @@ void handler(int sig)
 	exit(1);
 }
 
-int main()
+int main(int argc, char** argv)
 {
+	if (!(argc == 1 || argc == 4))
+	{
+		std::cerr << "wrong number of command line arguments\nEither use no arguments "
+		             "or specify nH, Tc and lumSol\n ";
+		exit(1);
+	}
+
 	signal(SIGSEGV, handler);
 	try
 	{
@@ -37,7 +45,15 @@ int main()
 		// Testing::runFullModel();
 		// Testing::runWithDust(true);
 		// Testing::runH2(true);
-		Testing::runMRNDust(true);
+		if (argc == 1)
+			Testing::runMRNDust(true);
+		else if (argc == 4)
+		{
+			double nH = std::stod(argv[1]);
+			double Tc = std::stod(argv[2]);
+			double lumSol = std::stod(argv[3]);
+			Testing::runMRNDust(true, nH, Tc, lumSol, true);
+		}
 	}
 	catch (const std::exception& ex)
 	{

@@ -107,7 +107,7 @@ void runWithDust(bool write = true);
 
 /** A test with many dust grain sizes, following the MRN distribution (see Weingartner 2001,
     ApJ, 548, 296). */
-void runMRNDust(bool write = true, double nH=2.51e4, double Tc=9.e3, double lumSol=2.e3);
+void runMRNDust(bool write = true, double nH=2.51e4, double Tc=9.e3, double lumSol=2.e3, bool own_dir=false);
 } // namespace Testing
 
 #endif /* GASMODULE_GIT_SRC_TESTING_H_ */

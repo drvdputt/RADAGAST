@@ -24,6 +24,8 @@
 #include <iterator>
 #include <sstream>
 
+#include <sys/stat.h>
+
 using namespace std;
 
 namespace
@@ -945,7 +947,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	return grainInterface;
 }
 
-void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol)
+void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool own_dir)
 {
 	cout << "RUN_MRN_DUST\n";
 
@@ -997,6 +999,14 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol)
 			cout << entry.first << " heat = " << entry.second << '\n';
 
 		string prefix = "MRNDust/";
+		if (own_dir)
+		{
+			stringstream ss;
+			ss << "nH" << nHtotal << "_Tc" << Tc << "_lum" << lumSol << '_' << prefix;
+			prefix = ss.str();
+			if (prefix[prefix.size() - 1] == '/')
+				mkdir(prefix.c_str(), 0755);
+		}
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
 		for (size_t i = 0; i < frequencyv.size(); i++)
 		{
