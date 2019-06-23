@@ -945,21 +945,21 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	return grainInterface;
 }
 
-void Testing::runMRNDust(bool write)
+void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol)
 {
 	cout << "RUN_MRN_DUST\n";
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
-	double nHtotal{25120};
+	double nHtotal = nH;
 	double Tinit{8000};
 
 	// Dust model
 	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
 
 	// Radiation field
-	double Tc{1.0e4};
-	double bollum = 2.e0 * Constant::SOL_LUM;
+	// Tc argument is color temperature
+	double bollum = lumSol * Constant::SOL_LUM;
 	double distance = 1. * Constant::PC_CM; // 1.0 AU
 
 	// double G0{1e2};
