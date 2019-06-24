@@ -10,14 +10,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_definitions(-DSILENT)
 endif()
 
-SET(EIGEN_POSSIBLE_LOCATIONS /usr/local/include/eigen3 /usr/include/eigen3)
+SET(EIGEN_POSSIBLE_LOCATIONS /usr/local/include/eigen3 /usr/include/eigen3 $ENV{HOME}/.local/eigen3)
+message(STATUS "Looking for Eigen in the list ${EIGEN_POSSIBLE_LOCATIONS}")
 foreach(EIGEN_DIR IN LISTS EIGEN_POSSIBLE_LOCATIONS)
   if (EXISTS ${EIGEN_DIR})
     SET(EIGEN_INCLUDE_DIR ${EIGEN_DIR} CACHE PATH "Eigen include directory")
     break()
   endif()
 endforeach()
-
+message(STATUS "Using eigen headers from ${EIGEN_DIR}")
 
 add_subdirectory(src/core)
 add_subdirectory(src/mains)
