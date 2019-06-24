@@ -1,6 +1,8 @@
 from pathlib import Path
 import itertools
 
+c17_dir = Path('/Users/drvdputt/Software/c17.01/')
+
 output_dir = Path('../benchmark')
 output_dir.mkdir(exist_ok=True)
 
@@ -23,4 +25,8 @@ with open(joblist_file, 'w') as jobf:
         with open(single_point_output_dir / 'hsphere.in', 'w') as f:
             f.write(cloudy_input)
 
-        jobf.write('cd {} && cloudy.exe -r hsphere\n'.format(single_point_output_dir))
+        jobf.write('cd {} && {cloudy} -r hsphere\n'.format(single_point_output_dir, cloudy=c17_dir / 'source/cloudy.exe'))
+
+run_jobs_command = 'CLOUDY_DATA={}/data parallel < {}'.format(c17_dir, joblist_file)
+print('To run the benchmarks, use the following command')
+print(run_jobs_command)
