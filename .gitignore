@@ -2,3 +2,19 @@
 doc/html
 doc/latex
 .*
+*~
+# for cquery / ccls
+compile_commands.json
+# qt creator
+gasmodule.config
+gasmodule.creator
+gasmodule.creator.user
+gasmodule.files
+gasmodule.includes
+# output in compare/
+*.out
+plots/
+# cmake
+cmake_install.cmake
+CMakeFiles/
+Makefile
