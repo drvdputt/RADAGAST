@@ -45,8 +45,8 @@ save grain temperature "graintemperature.out" last
 save grain charge "graincharge.out" last
 save grain extinction "grainextinction.out" last
 save grain opacity "grainopacity.out" last
-save grain numb "grainnumberdensity.out" last
-save grain sizes "grainsize.out" last
+# save grain numb "grainnumberdensity.out" last
+# save grain sizes "grainsize.out" last
 # general output
 save overview "hsphere.ovr" last
 save opacity "opacity.out" total units micron last
