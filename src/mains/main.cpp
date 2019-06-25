@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 			double nH = std::stod(argv[1]);
 			double Tc = std::stod(argv[2]);
 			double lumSol = std::stod(argv[3]);
-			Testing::runMRNDust(true, nH, Tc, lumSol, true);
+			Testing::runMRNDust(true, nH, Tc, lumSol, false);
 		}
 	}
 	catch (const std::exception& ex)

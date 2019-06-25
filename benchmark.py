@@ -3,6 +3,8 @@ import itertools
 
 c17_dir = Path('/Users/drvdputt/Software/c17.01/')
 
+gasmodule_main = Path('../cmake_release/src/mains/main').resolve()
+
 output_dir = Path('../benchmark')
 output_dir.mkdir(exist_ok=True)
 
@@ -25,7 +27,11 @@ with open(joblist_file, 'w') as jobf:
         with open(single_point_output_dir / 'hsphere.in', 'w') as f:
             f.write(cloudy_input)
 
-        jobf.write('cd {} && {cloudy} -r hsphere\n'.format(single_point_output_dir, cloudy=c17_dir / 'source/cloudy.exe'))
+        # job that runs cloudy
+        jobf.write('cd {} && {cloudy} -r hsphere\n'.format(single_point_output_dir.resolve(), cloudy=c17_dir / 'source/cloudy.exe'))
+
+        # job that runs gasmodule
+        jobf.write('cd {} && mkdir -p MRNDust && {gasmodule} {nh} {tc} {lum}\n'.format(single_point_output_dir.resolve(), gasmodule=gasmodule_main, nh=nh, tc=tc, lum=lum))
 
 run_jobs_command = 'CLOUDY_DATA={}/data parallel < {}'.format(c17_dir, joblist_file)
 print('To run the benchmarks, use the following command')
