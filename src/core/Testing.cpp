@@ -979,30 +979,39 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 
 	if (write)
 	{
+		string prefix = "MRNDust/";
+
 		auto gi_pimpl = gasInterface.pimpl();
 		// calculate again to obtain the complete solution object (this data is hidden normally)
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
 		GasInterfaceImpl::Solution s =
 		                gi_pimpl->solveDensities(nHtotal, gs.temperature(), I_nu, gri);
 
+		double ne = s.speciesNv[SpeciesIndex::ine()];
+		double np = s.speciesNv[SpeciesIndex::inp()];
+		double nHI = s.speciesNv[SpeciesIndex::inH()];
+		double nH2 = s.speciesNv[SpeciesIndex::inH2()];
+
+		ColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
+		overview.writeLine({gs.temperature(), ne, np, nHI, nH2});
 		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';
 		cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
 		cout << "Ctot = " << gi_pimpl->cooling(s) << '\n';
-		cout << "eden = " << s.speciesNv[SpeciesIndex::ine()] << '\n';
-		cout << "H+ " << s.speciesNv[SpeciesIndex::inp()] << '\n';
-		cout << "HI " << s.speciesNv[SpeciesIndex::inH()] << '\n';
-		cout << "H2 " << s.speciesNv[SpeciesIndex::inH2()] << '\n';
+		cout << "eden = " << ne << '\n';
+		cout << "H+ " << np << '\n';
+		cout << "HI " << nHI << '\n';
+		cout << "H2 " << nH2 << '\n';
 		for (size_t i = 0; i < gd.reactionNames().size(); i++)
 			cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
 
 		for (const auto& entry : gd.otherHeating())
 			cout << entry.first << " heat = " << entry.second << '\n';
 
-		string prefix = "MRNDust/";
 		if (own_dir)
 		{
 			stringstream ss;
-			ss << "nH" << nHtotal << "_Tc" << Tc << "_lum" << lumSol << '_' << prefix;
+			ss << "nH" << nHtotal << "_Tc" << Tc << "_lum" << lumSol << '_'
+			   << prefix;
 			prefix = ss.str();
 			if (prefix[prefix.size() - 1] == '/')
 				mkdir(prefix.c_str(), 0755);
