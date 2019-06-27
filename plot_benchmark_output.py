@@ -8,7 +8,20 @@ import pandas as pd
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('dirs', nargs='+')
+    ap.add_argument('-x', default='nh')
     args = ap.parse_args()
+
+    if args.x == 'nh':
+        par_index = 0
+        par_xlabel = 'nh (cm-3)'
+    elif args.x == 'tc':
+        par_index = 1
+        par_xlabel = 'Tc (K)'
+    elif args.x == 'lum':
+        par_index = 2
+        par_xlabel = 'lum (solar)'
+    else:
+        raise 'invalid -x option'
 
     dirs = [Path(d) for d in args.dirs]
     x = np.zeros(len(dirs))
@@ -20,7 +33,7 @@ def main():
     # one point per dir
     for i, d in enumerate(dirs):
         par = np.loadtxt(d / 'parameters.dat')
-        nh = par[0]
+        nh = par[par_index]
         x[i] = nh
 
         cloudy_ovr = pd.read_csv(d / 'hsphere.ovr', sep='\t')
@@ -46,6 +59,7 @@ def main():
 
     plt.gca().set_xscale('log')
     plt.gca().set_yscale('log')
+    plt.xlabel(par_xlabel)
     plt.legend()
 
     # one curve per dir
@@ -60,7 +74,7 @@ def main():
         y = cloudy_diffuse[1]
 
         par = np.loadtxt(d / 'parameters.dat')
-        nh = par[0]
+        nh = par[par_index]
         x[i] = nh
         lc = plt.loglog(x, y, label='cloudy {}'.format(nh))
 
@@ -79,7 +93,7 @@ def main():
         MRN_DIR = d / 'MRNdust'
 
         par = np.loadtxt(d / 'parameters.dat')
-        nh = par[0]
+        nh = par[par_index]
 
         cloudy_pops = np.loadtxt(d / 'hpopulations.cm-3.out', ndmin=2)
         y = cloudy_pops[0, 3:]
