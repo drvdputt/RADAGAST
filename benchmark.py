@@ -8,7 +8,7 @@ gasmodule_main = Path('../cmake_release/src/mains/main').resolve()
 output_dir = Path('../benchmark')
 output_dir.mkdir(exist_ok=True)
 
-densities = [1.e0, 1.e1, 1.e2, 1.e4, 1.e5, 1.e6]
+densities = [1.e0, 1.e1, 1.e2, 1.e3, 1.e4, 1.e5, 1.e6]
 color_temperatures = [1.e4]
 luminosities = [10.]
 

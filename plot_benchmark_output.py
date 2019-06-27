@@ -12,8 +12,8 @@ def main():
 
     dirs = [Path(d) for d in args.dirs]
     x = np.zeros(len(dirs))
-    num_curves = 4
-    lab_curves = ['e', 'p', 'H', 'H2']
+    lab_curves = ['Te', 'e', 'p', 'H', 'H2']
+    num_curves = len(lab_curves)
     y_cloudy = np.zeros((num_curves, len(dirs)))
     y_gasmod = np.zeros((num_curves, len(dirs)))
 
@@ -32,10 +32,10 @@ def main():
         nh = cloudy_ovr['HI'][0] * hden
         nh2 = cloudy_ovr['2H_2/H'][0] * hden / 2
 
-        y_cloudy[:, i] = (ne, nhp, nh, nh2)
+        y_cloudy[:, i] = (t, ne, nhp, nh, nh2)
 
         gasmod_ovr = np.loadtxt(d / 'MRNdust/overview.dat')
-        y_gasmod[:, i] = gasmod_ovr[1:]
+        y_gasmod[:, i] = gasmod_ovr[:]
 
     plt.figure()
     for i in range(num_curves):
