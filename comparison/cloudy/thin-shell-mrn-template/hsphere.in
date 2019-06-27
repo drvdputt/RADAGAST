@@ -23,6 +23,7 @@ database H2 collisional dissociation off
 database H2 grain collisions off
 database H2 H collisions 2015
 database H2 gbar off
+database H2 limit off
 # database H2 chemistry simple
 set H2 Jura ELRD
 set H2 grain formation pumping DB96
