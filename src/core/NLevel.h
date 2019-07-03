@@ -118,6 +118,10 @@ public:
 	/** Cooling rate due to collisional excitation. */
 	double cooling(const Solution& s) const;
 
+	/** Heating minus cooling, in a way that seems more efficient (maybe precise too?) to
+	    me */
+	double netheating(const Solution& s) const;
+
 	/** Return the number of levels in the solution */
 	size_t numLv() const { return _numLv; }
 

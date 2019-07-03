@@ -151,6 +151,22 @@ double NLevel::cooling(const Solution& s) const
 	return total;
 }
 
+double NLevel::netheating(const Solution& s) const
+{
+	double total = 0;
+	for (size_t up = 0; up <_numLv; up++)
+	{
+		for (size_t lo = 0; lo < up; lo++)
+		{
+			double cul = s.cvv(up, lo);
+			double clu = s.cvv(lo, up);
+			if (cul > 0)
+				total += (_ev(up) - _ev(lo)) * (cul * s.nv(up) - clu * s.nv(lo));
+		}
+	}
+	return total;
+}
+
 EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
                                         const EMatrix& Cvv) const
 {

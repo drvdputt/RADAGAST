@@ -600,17 +600,18 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
-	double result = _atomicLevels->cooling(s.HSolution);
-	if (_molecular)
-		result += _molecular->cooling(s.H2Solution);
-	return result;
+	// double result = _atomicLevels->cooling(s.HSolution);
+	// if (_molecular)
+	// 	result += _molecular->cooling(s.H2Solution);
+	// return result;
+	return 0.;
 }
 
 double GasInterfaceImpl::lineHeating(const Solution& s) const
 {
-	double result = _atomicLevels->heating(s.HSolution);
+	double result = _atomicLevels->netheating(s.HSolution);
 	if (_molecular)
-		result += _molecular->heating(s.H2Solution);
+		result += _molecular->netheating(s.H2Solution);
 	return result;
 }
 
