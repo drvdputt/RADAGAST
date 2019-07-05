@@ -11,7 +11,7 @@ class BenchmarkResult:
         self.d = Path(bench_directory)
         self.parameters = np.loadtxt(self.d / 'parameters.dat')
         self.cloudy = CloudyResult(self.d)
-        self.gasmodule = GasModuleResult(self.d / 'MRNdust')
+        self.gasmodule = GasModuleResult(self.d / 'MRNDust')
 
     def get_nh_tc_lum(self):
         """get the parameters for which the benchmark was run: nH, Tc and luminosity"""
