@@ -35,7 +35,7 @@ libgasmodule.a will be put) and the linker flag @c -lgasmodule.
 
 @subsection cmake_build_subsec Include in a CMake project
 
-It is possible to add instructions to the CMakelists that create the gadmodule library as part of
+It is possible to add instructions to the CMakelists that create the gasmodule library as part of
 the build process for the whole project. We use CMake to build SKIRT, so these instructions will be
 based on the structure of SKIRT in terms of a CMake project.
 

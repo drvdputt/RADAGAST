@@ -1,20 +1,23 @@
 from pathlib import Path
 import itertools
 
-c17_dir = Path('/Users/drvdputt/Software/c17.01/')
+c17_dir = Path.home() / 'Software/c17.01/'
 
-gasmodule_main = Path('../cmake_release/src/mains/main').resolve()
+gasmodule_git = (Path(__file__).parent / '../..').resolve()
 
-output_dir = Path('../benchmark')
+gasmodule_main = (gasmodule_git / '../cmake_release/src/mains/main').resolve()
+
+output_dir = (gasmodule_git / '../benchmark_output').resolve()
 output_dir.mkdir(exist_ok=True)
 
-densities = [1.e0, 1.e1, 1.e2, 1.e3, 1.e4, 1.e5, 1.e6]
+# densities = [1.e0, 1.e1, 1.e2, 1.e3, 1.e4, 1.e5, 1.e6]
+densities = [1.e3]
 color_temperatures = [1.e4]
-luminosities = [10.]
+luminosities = [10., 100., 1000., 10000., 100000.]
 
 # load cloudy input file template as one big string, and fill in the
 # values in curly brackest by treating it as a format string
-cloudy_template_file = 'comparison/cloudy/thin-shell-mrn-template/hsphere.in'
+cloudy_template_file = gasmodule_git / 'benchmark/cloudy/thin-shell-mrn-template/hsphere.in'
 with open(cloudy_template_file) as f:
     cloudy_template = f.read();
 

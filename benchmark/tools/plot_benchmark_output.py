@@ -4,6 +4,7 @@ from matplotlib import pyplot as plt
 from pathlib import Path
 import pandas as pd
 
+from read_benchmark_output import BenchmarkResult
 
 def main():
     ap = argparse.ArgumentParser()
@@ -25,42 +26,30 @@ def main():
 
     dirs = [Path(d) for d in args.dirs]
     x = np.zeros(len(dirs))
-    lab_curves = ['Te', 'e', 'p', 'H', 'H2']
+    lab_curves = ['e', 'H+', 'H', 'H2']
     num_curves = len(lab_curves)
     y_cloudy = np.zeros((num_curves, len(dirs)))
     y_gasmod = np.zeros((num_curves, len(dirs)))
 
     # one point per dir
     for i, d in enumerate(dirs):
-        par = np.loadtxt(d / 'parameters.dat')
-        nh = par[par_index]
-        x[i] = nh
-
-        cloudy_ovr = pd.read_csv(d / 'hsphere.ovr', sep='\t')
-        t = cloudy_ovr['Te'][0]
-        heat = cloudy_ovr['Htot'][0]
-        hden = cloudy_ovr['hden'][0]
-        ne = cloudy_ovr['eden'][0]
-        nhp = cloudy_ovr['HII'][0] * hden
-        nh = cloudy_ovr['HI'][0] * hden
-        nh2 = cloudy_ovr['2H_2/H'][0] * hden / 2
-
-        y_cloudy[:, i] = (t, ne, nhp, nh, nh2)
-
-        gasmod_ovr = np.loadtxt(d / 'MRNdust/overview.dat')
-        y_gasmod[:, i] = gasmod_ovr[:]
+        br = BenchmarkResult(d)
+        x[i] = br.get_nh_tc_lum()[par_index]
+        y_cloudy[:, i] = br.cloudy.get_densities(numpy=True)
+        y_gasmod[:, i] = br.gasmodule.get_densities(numpy=True)
 
     plt.figure()
     for i in range(num_curves):
         lc = plt.plot(x, y_cloudy[i], label='cloudy ' +
                       lab_curves[i], marker='x')
         plt.plot(x, y_gasmod[i], label='gasmod ' +
-                 lab_curves[i], marker='+', color=lc[0].get_color())
+                 lab_curves[i], marker='+', color=lc[0].get_color(), ls='dashed')
 
     plt.gca().set_xscale('log')
     plt.gca().set_yscale('log')
     plt.xlabel(par_xlabel)
     plt.legend()
+    plt.savefig('curves.pdf')
 
     # one curve per dir
     # _________________
@@ -85,6 +74,8 @@ def main():
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('outward emission')
     plt.gcf().legend()
+    plt.savefig('emission.pdf')
+    
 
     # populations
 #    plt.figure()
@@ -134,7 +125,7 @@ def main():
     axs[1].set_xlabel('index')
     axs[1].set_title('H2')
 
-    plt.show()
+    plt.savefig('populations.pdf')
 
 
 if __name__ == '__main__':
