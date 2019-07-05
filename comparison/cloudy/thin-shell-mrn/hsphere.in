@@ -3,17 +3,16 @@
 init "honly.ini"
 title hsphere
 # SOURCE
-blackbody 1.0e4
-luminosity total linear solar 2.0
+blackbody 1.e4
+luminosity total linear solar 100.0
 # GAS
-# 10 AU in cm
 radius 1.0 to 1.01 linear parsecs
-hden 25100 linear
+hden 1.e4 linear
 # LEVEL MODEL
 # database H-like collisions l-mixing off
 # database H-like collisional ionization off
 database H-like levels resolved 4
-database H-like levels collapsed 1
+database H-like levels collapsed 20
 # database H-like levels print
 # database H-like topoff off
 database H2 levels 3
