@@ -2,7 +2,6 @@ import argparse
 import numpy as np
 from matplotlib import pyplot as plt
 from pathlib import Path
-import pandas as pd
 
 from read_benchmark_output import BenchmarkResult
 
@@ -77,57 +76,44 @@ def main():
 
     plt.xlabel('$\\lambda$ (micron)')
     plt.ylabel('outward emission')
+    plt.ylim(bottom=1e-30, top=max(y) * 1.1)
+    plt.xlim(left=1e-2, right=3e5)
     plt.gcf().legend()
     plt.savefig('emission.pdf')
     
 
     # populations
 #    plt.figure()
-    fig, axs = plt.subplots(1, 2)
+    fig, axs = plt.subplots(2, 2, sharex='col')
     for i, d in enumerate(dirs):
-        MRN_DIR = d / 'MRNdust'
+        br = BenchmarkResult(d)
+        par = br.get_nh_tc_lum()[par_index]
 
-        par = np.loadtxt(d / 'parameters.dat')
-        nh = par[par_index]
-
-        cloudy_pops = np.loadtxt(d / 'hpopulations.cm-3.out', ndmin=2)
-        y = cloudy_pops[0, 3:]
-        x = range(len(y))
-        # lc = axs[0].semilogy(x, y, label='cloudy {}'.format(nh), marker='x')
-
+        yc = br.cloudy.get_h_populations()
+        lc = axs[0][0].semilogy(range(len(yc)), yc, label='cloudy {}'.format(par), marker='x')
         color = lc[0].get_color()
 
-        hpop = np.loadtxt(MRN_DIR / 'hpopulations.dat')
-        # axs[0].semilogy(range(hpop.shape[0]), hpop[:, 2], label='gasmodule', marker='+', color=color)
+        yg = br.gasmodule.get_h_populations()
+        axs[0][0].semilogy(range(len(yg)), yg, label='gasmodule', marker='+', color=color, ls='dashed')
 
-        maxindex = min(len(y), len(hpop[:, 2]))
-        axs[0].semilogy(range(maxindex), hpop[:maxindex, 2] /
-                        y[:maxindex], label='ratio at {}'.format(nh), marker='+')
+        max_h_level = min(len(yc), len(yg))
+        axs[1][0].semilogy(range(max_h_level), yg[:max_h_level] / yc[:max_h_level], color=color)
 
-        cloudy_h2pops = pd.read_csv(d / 'h2populations.frac.out', sep='\t')
-        pops_h2 = cloudy_h2pops['pops/H2'].to_numpy()[3:]
-        energy = cloudy_h2pops['energy(wn)'].to_numpy()[3:]
-        yc = pops_h2
-        x = range(len(yc))
-        # axs[1].semilogy(x, y, label='cloudy', marker='x', color=color)
+        y2c = br.cloudy.get_h2_populations()
+        lc = axs[0][1].semilogy(range(len(y2c)), y2c, color=color)
 
-        h2pop = np.loadtxt(MRN_DIR / 'h2populations.dat')
-        yg = h2pop[:, 2]
-        yg /= sum(yg)
-        x = range(len(yg))
-        # axs[1].semilogy(x, y, label='gasmodule', marker='+', color=color)
+        y2g = br.gasmodule.get_h2_populations()
+        axs[0][1].semilogy(range(len(y2g)), y2g, color=color, ls='dashed')
 
-        maxindex = min(len(yg), len(yc))
-        axs[1].semilogy(x[:maxindex], yg[:maxindex] /
-                        yc[:maxindex], label='gasmodule', marker='+')
+        max_h2_level = min(len(y2c), len(y2g))
+        axs[1][1].semilogy(range(max_h2_level), y2g[:max_h2_level] / y2c[:max_h2_level], color=color)
 
-    axs[0].legend()
-    axs[0].set_xlabel('index')
-    axs[0].set_ylabel('population density (cm-3)')
-    axs[0].set_title('H')
-
-    axs[1].set_xlabel('index')
-    axs[1].set_title('H2')
+    fig.legend(*axs[0][0].get_legend_handles_labels())
+    axs[1][0].set_xlabel('h level index')
+    axs[1][1].set_xlabel('h2 level index')
+    axs[0][0].set_ylabel('population fraction')
+    axs[0][0].set_title('H')
+    axs[0][1].set_title('H2')
 
     plt.savefig('populations.pdf')
 

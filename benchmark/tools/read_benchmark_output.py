@@ -41,6 +41,18 @@ class CloudyResult:
             self.d / 'all_4pi_nu_jnu.erg_cm-3_s-1.out', max_rows=2)
         return cloudy_diffuse[0], cloudy_diffuse[depth_index + 1]
 
+    def get_h_populations(self):
+        """indexed arbitrarily, but should be the same for cloudy and gas module"""
+        cloudy_pops = np.loadtxt(self.d / 'hpopulations.cm-3.out', ndmin=2)
+        y = cloudy_pops[0]
+        return y / sum(y)
+
+    def get_h2_populations(self):
+        """indexed arbitrarily, but should be the same for cloudy and gas module"""
+        cloudy_h2pops = pd.read_csv(self.d / 'h2populations.frac.out', sep='\t')
+        pops_h2 = cloudy_h2pops['pops/H2'].to_numpy()[3:]
+        return pops_h2 # these should already be population fractions
+
 
 class GasModuleResult:
     def __init__(self, directory):
@@ -60,3 +72,13 @@ class GasModuleResult:
         """returns wavelength and 4pi nu j_nu"""
         optical = np.loadtxt(self.d / 'opticalProperties.dat')
         return optical[:, 1], optical[:, 2]
+
+    def get_h_populations(self):
+        hpop = np.loadtxt(self.d / 'hpopulations.dat')
+        y = hpop[:, 2]
+        return y / sum(y)
+
+    def get_h2_populations(self):
+        h2pop = np.loadtxt(self.d / 'h2populations.dat')
+        y = h2pop[:, 2]
+        return y / sum(y)
