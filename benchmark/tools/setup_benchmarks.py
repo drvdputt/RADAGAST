@@ -25,7 +25,7 @@ joblist_file = output_dir / 'joblist.txt'
 
 with open(joblist_file, 'w') as jobf:
     for nh, tc, lum in itertools.product(densities, color_temperatures, luminosities):
-        single_point_output_dir = output_dir / '{}_{}_{}'.format(nh, tc, lum)
+        single_point_output_dir = output_dir / '{:.1e}_{:.1e}_{:.1e}'.format(nh, tc, lum)
         single_point_output_dir.mkdir(exist_ok=True)
         cloudy_input = cloudy_template.format(nh=nh, tc=tc, lum=lum)
 
