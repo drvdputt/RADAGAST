@@ -39,18 +39,25 @@ def main():
         y_cloudy[:, i] = br.cloudy.get_densities(numpy=True)
         y_gasmod[:, i] = br.gasmodule.get_densities(numpy=True)
 
-    plt.figure()
+    fig, axs = plt.subplots(2, 1, sharex=True)
     for i in range(num_curves):
-        lc = plt.plot(x, y_cloudy[i], label='cloudy ' +
+        lc = axs[0].plot(x, y_cloudy[i], label='cloudy ' +
                       lab_curves[i], marker='x')
-        plt.plot(x, y_gasmod[i], label='gasmod ' +
+        axs[0].plot(x, y_gasmod[i], label='gasmod ' +
                  lab_curves[i], marker='+', color=lc[0].get_color(), ls='dashed')
 
-    plt.gca().set_xscale('log')
-    plt.gca().set_yscale('log')
-    plt.xlabel(par_xlabel)
-    plt.legend()
-    plt.savefig('curves.pdf')
+        axs[1].plot(x, y_gasmod[i] / y_cloudy[i], color=lc[0].get_color())
+
+    for ax in axs:
+        ax.set_xscale('log')
+        ax.set_yscale('log')
+
+    axs[1].set_xlabel(par_xlabel)
+    axs[0].set_ylabel('density (cm-3)')
+    axs[1].set_ylabel('ratio (gasmodule / cloudy)')
+    fig.legend(*axs[0].get_legend_handles_labels())
+    fig.subplots_adjust(hspace=0.03)
+    fig.savefig('curves.pdf', bbox_inches='tight')
 
     # one curve per dir
     # _________________
