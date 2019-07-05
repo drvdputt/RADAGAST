@@ -32,6 +32,7 @@ def main():
     y_gasmod = np.zeros((num_curves, len(dirs)))
 
     # one point per dir
+    # -----------------
     for i, d in enumerate(dirs):
         br = BenchmarkResult(d)
         x[i] = br.get_nh_tc_lum()[par_index]
@@ -57,18 +58,14 @@ def main():
     # spectrum
     plt.figure()
     for d in dirs:
-        cloudy_diffuse = np.loadtxt(
-            d / 'all_4pi_nu_jnu.erg_cm-3_s-1.out', max_rows=2)
-        x = cloudy_diffuse[0]
-        y = cloudy_diffuse[1]
+        br = BenchmarkResult(d)
+        par = br.get_nh_tc_lum()[par_index]
 
-        par = np.loadtxt(d / 'parameters.dat')
-        nh = par[par_index]
-        x[i] = nh
-        lc = plt.loglog(x, y, label='cloudy {}'.format(nh))
+        x, y = br.cloudy.get_emissivity()
+        lc = plt.loglog(x, y, label='cloudy {}'.format(par))
 
-        mrn_opt = np.loadtxt(d / 'MRNdust' / 'opticalProperties.dat')
-        plt.loglog(mrn_opt[:, 1], mrn_opt[:, 2], label='gasmodule',
+        x, y = br.gasmodule.get_emissivity()
+        plt.loglog(x, y, label='gasmodule',
                    ls='dashed', color=lc[0].get_color())
 
     plt.xlabel('$\\lambda$ (micron)')
