@@ -22,6 +22,9 @@ class CloudyResult:
     def __init__(self, directory):
         self.d = Path(directory)
         self.ovr = pd.read_csv(self.d / 'hsphere.ovr', sep='\t')
+        self.ok = len(self.ovr) >= 1
+        if not self.ok:
+            print('Warning: problem with cloudy for {}'.format(directory))
 
     def get_densities(self, depth_index=0, numpy=False):
         hden = self.ovr['hden'][depth_index]
