@@ -178,6 +178,39 @@ vector<Array> Testing::qAbsvvForTesting(bool car, const Array& av, const Array& 
 	return result;
 }
 
+double Testing::equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv,
+                                       const Array& crossSectionv)
+{
+	// Assumes that both arguments on the same frequency grid
+
+	// There's probably quite some mistakes in this (instead of finding the right way to
+	// integrate / averaging, I just winged it). But hopefully it's close enough to make the
+	// cloudy comparison easier.
+
+	double absorption = TemplatedUtils::integrate<double, Array, Array>(
+	                frequencyv, crossSectionv * specificIntensityv);
+
+	auto heating = [&](double T) -> int {
+		Array blackbodyIntegrandv(frequencyv.size());
+		for (size_t i = 0; i < frequencyv.size(); i++)
+			blackbodyIntegrandv[i] = SpecialFunctions::planck(frequencyv[i], T) *
+			                         crossSectionv[i];
+
+		double bbEmission = 0;
+		if (T > 0.)
+			bbEmission = TemplatedUtils::integrate<double, Array, Array>(frequencyv, blackbodyIntegrandv);
+		if (bbEmission < absorption)
+			return 1;
+		if (bbEmission > absorption)
+			return -1;
+		else
+			return 0;
+	};
+
+	double result = TemplatedUtils::binaryIntervalSearch<double>(heating, 30., 1.e-3, 300., 1.);
+	return result;
+}
+
 Array Testing::improveFrequencyGrid(const NLevel& boundBound, const Array& oldPoints)
 {
 	// Add extra points for the lines
@@ -899,7 +932,7 @@ void Testing::runWithDust(bool write)
 		writeGasState("withDust/", gasInterface, gs);
 }
 
-GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequencyv)
+GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& specificIntensity)
 {
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
 
@@ -911,12 +944,9 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 	size_t numSizes = 10;
 	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
 	Array sizev(numSizes);
-	Array temperaturev(numSizes);
+
 	for (size_t i = 0; i < numSizes; i++)
-	{
 		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
-		temperaturev[i] = 11.;
-	}
 
 	// Properties that differ between car and sil
 	auto addMRNCarOrSil = [&](bool car) {
@@ -933,7 +963,19 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Array& frequ
 		}
 		auto label = car ? GasModule::GrainTypeLabel::CAR
 		                 : GasModule::GrainTypeLabel::SIL;
-		const auto& qabsvv = qAbsvvForTesting(car, sizev, frequencyv);
+		const auto& qabsvv =
+		                qAbsvvForTesting(car, sizev, specificIntensity.frequencyv());
+
+		Array temperaturev(numSizes);
+		for (size_t i = 0; i < numSizes; i++)
+		{
+			Array crossSectionv = qabsvv[i] * Constant::PI * sizev[i] * sizev[i];
+			temperaturev[i] = equilibriumTemperature(specificIntensity.frequencyv(),
+			                                         specificIntensity.valuev(),
+			                                         crossSectionv);
+			cout << "grain " << i << ": " << temperaturev[i] << " K\n";
+		}
+
 		grainPopv->emplace_back(label, sizev, densityv, temperaturev, qabsvv);
 	};
 
@@ -956,9 +998,6 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 	double nHtotal = nH;
 	double Tinit{8000};
 
-	// Dust model
-	auto gri = genMRNDust(nHtotal, gasInterface.iFrequencyv());
-
 	// Radiation field
 	// Tc argument is color temperature
 	double bollum = lumSol * Constant::SOL_LUM;
@@ -972,6 +1011,9 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 
 	specificIntensityv *= bollum / 16 / Constant::PI / distance / distance /
 	                      GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
+
+	// Dust model
+	auto gri = genMRNDust(nHtotal, Spectrum{frequencyv, specificIntensityv});
 
 	GasModule::GasState gs;
 	GasDiagnostics gd;

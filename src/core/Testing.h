@@ -18,6 +18,10 @@ namespace Testing
 // ABSORPTION EFFICIENCIES FROM FILE //
 std::vector<Array> qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv);
 
+// Makeshift dust equilibrium calculation
+double equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv,
+                              const Array& crossSectionv);
+
 // USEFUL CONSTANTS //
 constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);
 constexpr double defaultMaxFreq = Constant::LIGHT / (0.005 * Constant::UM_CM);
@@ -96,7 +100,7 @@ GasModule::GasInterface genFullModel();
 
 GasModule::GasInterface genHonlyModel();
 
-GasModule::GrainInterface genMRNDust(double nHtotal, const Array& frequencyv);
+GasModule::GrainInterface genMRNDust(double nHtotal, const Spectrum& specificIntensityv);
 
 /** Run the model with the maximum number of levels, and iterate until the temperature
     converges. */
@@ -107,7 +111,8 @@ void runWithDust(bool write = true);
 
 /** A test with many dust grain sizes, following the MRN distribution (see Weingartner 2001,
     ApJ, 548, 296). */
-void runMRNDust(bool write = true, double nH=1.e4, double Tc=1.e4, double lumSol=1.e2, bool own_dir=false);
+void runMRNDust(bool write = true, double nH = 1.e4, double Tc = 1.e4, double lumSol = 1.e2,
+                bool own_dir = false);
 } // namespace Testing
 
 #endif /* GASMODULE_GIT_SRC_TESTING_H_ */
