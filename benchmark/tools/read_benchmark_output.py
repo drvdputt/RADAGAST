@@ -49,9 +49,21 @@ class CloudyResult:
 
     def get_h2_populations(self):
         """indexed arbitrarily, but should be the same for cloudy and gas module"""
-        cloudy_h2pops = pd.read_csv(self.d / 'h2populations.frac.out', sep='\t')
+        cloudy_h2pops = pd.read_csv(
+            self.d / 'h2populations.frac.out', sep='\t')
         pops_h2 = cloudy_h2pops['pops/H2'].to_numpy()[3:]
-        return pops_h2 # these should already be population fractions
+        return pops_h2  # these should already be population fractions
+
+    def get_h2_rates(self):
+        """get formation, dissocation rates"""
+        cloudy_grainh2rate = pd.read_csv(self.d / 'grainH2rate.out', sep='\t')
+        h2form_g = sum(cloudy_grainh2rate.to_numpy()[0, 1:])
+
+        cloudy_h2destruction = pd.read_csv(
+            self.d / 'h2destruction.out', sep='\t')
+        h2dissoc = cloudy_h2destruction['PHOTON,H2=>H,H'][0]
+
+        return h2form_g, h2dissoc
 
 
 class GasModuleResult:
@@ -82,3 +94,7 @@ class GasModuleResult:
         h2pop = np.loadtxt(self.d / 'h2populations.dat')
         y = h2pop[:, 2]
         return y / sum(y)
+
+    def get_h2_rates(self):
+        rates = np.loadtxt(self.d / 'rates.dat')
+        return rates[:2]
