@@ -1,6 +1,5 @@
 #include "IOTools.h"
 #include "DebugMacros.h"
-#include "Error.h"
 
 #ifndef REPOROOT
 #error "Please specify the main GasModule git directory on the compiler command line using -D\"/full/path/to/GasModule/git\""
@@ -63,13 +62,3 @@ ColumnFile::ColumnFile(const string& filePath, const vector<string>& colNamev)
 }
 
 ColumnFile::~ColumnFile() { _outFile.close(); }
-
-void ColumnFile::writeLine(const vector<double>& colValuev)
-{
-	Error::equalCheck("numCols and num values in line", _numCols, colValuev.size());
-	auto it = cbegin(colValuev);
-	_outFile << *it;
-	while (++it != cend(colValuev))
-		_outFile << ' ' << *it;
-	_outFile << '\n';
-}

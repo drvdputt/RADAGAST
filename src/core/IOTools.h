@@ -1,6 +1,8 @@
 #ifndef _IOTOOLS_H_
 #define _IOTOOLS_H_
 
+#include "Error.h"
+
 #include <fstream>
 #include <sstream>
 #include <vector>
@@ -36,11 +38,25 @@ class ColumnFile
 public:
 	ColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev);
 	~ColumnFile();
-	void writeLine(const std::vector<double>& colValuev);
+
+	/** Writes one line to the file, separated by spaces. The argument should be of a
+	    typical container type, preferably of doubles (supporting iterators and size). */
+	template <typename T> void writeLine(const T& colValuev);
 
 private:
 	std::ofstream _outFile;
 	size_t _numCols;
 };
+
+template<typename T>
+void ColumnFile::writeLine(const T& colValuev)
+{
+	Error::equalCheck("numCols and num values in line", _numCols, colValuev.size());
+	auto it = begin(colValuev);
+	_outFile << *it;
+	while (++it != end(colValuev))
+		_outFile << ' ' << *it;
+	_outFile << '\n';
+}
 
 #endif /* _IOTOOLS_H_ */

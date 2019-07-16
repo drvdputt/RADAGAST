@@ -198,7 +198,8 @@ double Testing::equilibriumTemperature(const Array& frequencyv, const Array& spe
 
 		double bbEmission = 0;
 		if (T > 0.)
-			bbEmission = TemplatedUtils::integrate<double, Array, Array>(frequencyv, blackbodyIntegrandv);
+			bbEmission = TemplatedUtils::integrate<double, Array, Array>(
+			                frequencyv, blackbodyIntegrandv);
 		if (bbEmission < absorption)
 			return 1;
 		if (bbEmission > absorption)
@@ -207,7 +208,8 @@ double Testing::equilibriumTemperature(const Array& frequencyv, const Array& spe
 			return 0;
 	};
 
-	double result = TemplatedUtils::binaryIntervalSearch<double>(heating, 30., 1.e-3, 300., 1.);
+	double result = TemplatedUtils::binaryIntervalSearch<double>(heating, 30., 1.e-3, 300.,
+	                                                             1.);
 	return result;
 }
 
@@ -554,7 +556,8 @@ void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainI
 			double a = pop->size(m);
 			double numberDen = pop->density(m);
 			double mass = 4. / 3. * Constant::PI * a * a * a * bulkDen;
-			f.writeLine({a, numberDen, numberDen * mass, pop->temperature(m)});
+			f.writeLine<Array>(
+			                {a, numberDen, numberDen * mass, pop->temperature(m)});
 		}
 	}
 }
@@ -617,8 +620,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		double netLine = lHeat - lCool;
 		double netCont = cHeat - cCool;
 		double grainHeat = gd.photoelectricHeating().sum();
-		heatFile.writeLine({t, netHeating, heat, cool, netLine, lHeat, lCool, netCont,
-		                    cHeat, cCool, grainHeat});
+		heatFile.writeLine<Array>({t, netHeating, heat, cool, netLine, lHeat, lCool,
+		                           netCont, cHeat, cCool, grainHeat});
 
 		densFileLine[0] = t;
 		double totalH = 0;
@@ -1035,7 +1038,7 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		double nH2 = s.speciesNv[SpeciesIndex::inH2()];
 
 		ColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
-		overview.writeLine({gs.temperature(), ne, np, nHI, nH2});
+		overview.writeLine<Array>({gs.temperature(), ne, np, nHI, nH2});
 		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';
 		cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
 		cout << "Ctot = " << gi_pimpl->cooling(s) << '\n';
@@ -1045,6 +1048,9 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		cout << "H2 " << nH2 << '\n';
 		for (size_t i = 0; i < gd.reactionNames().size(); i++)
 			cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
+
+		ColumnFile rates(prefix + "rates.dat", gd.reactionNames());
+		rates.writeLine(gd.reactionRates());
 
 		for (const auto& entry : gd.otherHeating())
 			cout << entry.first << " heat = " << entry.second << '\n';
@@ -1062,9 +1068,9 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		for (size_t i = 0; i < frequencyv.size(); i++)
 		{
 			double wav = Constant::LIGHT / frequencyv[i];
-			radfield.writeLine({wav * Constant::CM_UM,
-			                    Constant::FPI * frequencyv[i] *
-			                                    specificIntensityv[i]});
+			radfield.writeLine<Array>({wav * Constant::CM_UM,
+			                           Constant::FPI * frequencyv[i] *
+			                                           specificIntensityv[i]});
 		}
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
@@ -1073,9 +1079,9 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		vector<string> populationColumns = {"label", "energy", "density"};
 		ColumnFile hpop(prefix + "hpopulations.dat", populationColumns);
 		for (double n : gd.hPopulations())
-			hpop.writeLine({0., 0., n});
+			hpop.writeLine<Array>({0., 0., n});
 		ColumnFile h2pop(prefix + "h2populations.dat", populationColumns);
 		for (double n : gd.h2Populations())
-			h2pop.writeLine({0., 0., n});
+			h2pop.writeLine<Array>({0., 0., n});
 	}
 }
