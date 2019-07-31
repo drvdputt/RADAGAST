@@ -17,15 +17,19 @@ luminosities = [10., 100., 1000., 10000., 100000.]
 
 # load cloudy input file template as one big string, and fill in the
 # values in curly brackest by treating it as a format string
-cloudy_template_file = gasmodule_git / 'benchmark/cloudy/thin-shell-mrn-template/hsphere.in'
+cloudy_template_file = gasmodule_git / \
+    'benchmark/cloudy/thin-shell-mrn-template/hsphere.in'
 with open(cloudy_template_file) as f:
-    cloudy_template = f.read();
+    cloudy_template = f.read()
 
 joblist_file = output_dir / 'joblist.txt'
+gasmod_jobs_file = output_dir / 'only_gasmod.txt'
+cloudy_jobs_file = output_dir / 'only_cloudy.txt'
 
-with open(joblist_file, 'w') as jobf:
+with open(joblist_file, 'w') as jobf, open(gasmod_jobs_file, 'w') as gasmodf, open(cloudy_jobs_file, 'w') as cloudyf:
     for nh, tc, lum in itertools.product(densities, color_temperatures, luminosities):
-        single_point_output_dir = output_dir / '{:.1e}_{:.1e}_{:.1e}'.format(nh, tc, lum)
+        single_point_output_dir = output_dir / \
+            '{:.1e}_{:.1e}_{:.1e}'.format(nh, tc, lum)
         single_point_output_dir.mkdir(exist_ok=True)
         cloudy_input = cloudy_template.format(nh=nh, tc=tc, lum=lum)
 
@@ -36,11 +40,16 @@ with open(joblist_file, 'w') as jobf:
             f.writelines((str(d) + '\n' for d in (nh, tc, lum)))
 
         # job that runs cloudy
-        jobf.write('cd {} && {cloudy} -r hsphere\n'.format(single_point_output_dir.resolve(), cloudy=c17_dir / 'source/cloudy.exe'))
+        for f in (jobf, cloudyf):
+            f.write('cd {} && {cloudy} -r hsphere\n'.format(
+                single_point_output_dir.resolve(), cloudy=c17_dir / 'source/cloudy.exe'))
 
         # job that runs gasmodule
-        jobf.write('cd {} && mkdir -p MRNDust && {gasmodule} {nh} {tc} {lum}\n'.format(single_point_output_dir.resolve(), gasmodule=gasmodule_main, nh=nh, tc=tc, lum=lum))
+        for f in (jobf, gasmodf):
+            f.write('cd {} && mkdir -p MRNDust && {gasmodule} {nh} {tc} {lum}\n'.format(
+                single_point_output_dir.resolve(), gasmodule=gasmodule_main, nh=nh, tc=tc, lum=lum))
 
-run_jobs_command = 'CLOUDY_DATA={}/data parallel < {}'.format(c17_dir, joblist_file)
+run_jobs_command = 'CLOUDY_DATA={}/data parallel < {}'.format(
+    c17_dir, joblist_file)
 print('To run the benchmarks, use the following command')
 print(run_jobs_command)
