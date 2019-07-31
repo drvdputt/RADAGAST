@@ -35,9 +35,9 @@ def main():
         fig, axs = plt.subplots(2, 1, sharex=True)
         for i in range(len(labels)):
             lc = axs[0].plot(x, data_cloudy[i],
-                             label='cloudy ' + labels[i], marker='x')
-            axs[0].plot(x, data_gasmod[i], label='gasmod ' + labels[i],
-                        marker='+', color=lc[0].get_color(), ls='dashed')
+                             label='cloudy ' + labels[i], marker='d', ls='none')
+            axs[0].plot(x, data_gasmod[i], label='gasmod ' +
+                        labels[i], color=lc[0].get_color())
             axs[1].plot(x, data_gasmod[i] / data_cloudy[i],
                         color=lc[0].get_color())
 
@@ -107,12 +107,12 @@ def main():
 
         yc = br.cloudy.get_h_populations()
         lc = axs[0][0].semilogy(
-            range(len(yc)), yc, label='cloudy {}'.format(par), marker='x')
+            range(len(yc)), yc, label='cloudy {}'.format(par), ls='none', marker='d')
         color = lc[0].get_color()
 
         yg = br.gasmodule.get_h_populations()
         axs[0][0].semilogy(range(len(yg)), yg, label='gasmodule',
-                           marker='+', color=color, ls='dashed')
+                           color=color)
 
         max_h_level = min(len(yc), len(yg))
         axs[1][0].semilogy(range(max_h_level),
