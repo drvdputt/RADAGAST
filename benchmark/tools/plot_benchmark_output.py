@@ -52,6 +52,9 @@ def main():
         fig.subplots_adjust(hspace=0.03)
         fig.savefig(fn, bbox_inches='tight')
 
+    temp_curve = ['T']
+    temp_cloudy, temp_gasmod = prepare_curve_arrays(len(temp_curve))
+
     dens_curves = ['e', 'H+', 'H', 'H2']
     dens_cloudy, dens_gasmod = prepare_curve_arrays(len(dens_curves))
 
@@ -65,11 +68,15 @@ def main():
     for i, d in enumerate(dirs):
         br = BenchmarkResult(d)
         x[i] = br.get_nh_tc_lum()[par_index]
+        temp_cloudy[0, i] = br.cloudy.get_temp()
+        temp_gasmod[0, i] = br.gasmodule.get_temp()
         dens_cloudy[:, i] = br.cloudy.get_densities(numpy=True)
         dens_gasmod[:, i] = br.gasmodule.get_densities(numpy=True)
         rate_cloudy[:, i] = br.cloudy.get_h2_rates()
         rate_gasmod[:, i] = br.gasmodule.get_h2_rates()
 
+    plot_curves(temp_curve, temp_cloudy, temp_gasmod,
+                'temperature (K)', 'temperature.pdf')
     plot_curves(dens_curves, dens_cloudy, dens_gasmod,
                 'density (cm-3)', 'density.pdf')
     plot_curves(rate_curves, rate_cloudy,

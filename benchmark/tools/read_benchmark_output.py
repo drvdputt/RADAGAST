@@ -27,6 +27,13 @@ class CloudyResult:
         if not self.ok:
             print('Warning: problem with cloudy for {}'.format(directory))
 
+    def get_temp(self, depth_index=0):
+        if self.ok:
+            t = self.ovr['Te'][depth_index]
+        else:
+            t = 0
+        return t
+
     def get_densities(self, depth_index=0, numpy=False):
         if self.ok:
             hden = self.ovr['hden'][depth_index]
@@ -89,6 +96,9 @@ class GasModuleResult:
     def __init__(self, directory):
         self.d = Path(directory)
         self.ovr = np.loadtxt(self.d / 'overview.dat')
+
+    def get_temp(self):
+        return self.ovr[0]
 
     def get_densities(self, numpy=False):
         if numpy:
