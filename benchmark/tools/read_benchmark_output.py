@@ -63,7 +63,7 @@ class CloudyResult:
         """indexed arbitrarily, but should be the same for cloudy and gas module"""
         if self.ok:
             cloudy_pops = np.loadtxt(self.d / 'hpopulations.cm-3.out', ndmin=2)
-            y = cloudy_pops[0]
+            y = cloudy_pops[0][3:]
             return y / sum(y)
         else:
             return np.zeros(1)
