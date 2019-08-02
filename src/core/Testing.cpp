@@ -946,16 +946,14 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 	// Shared properties
 	size_t numSizes = 10;
 	Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
-	Array sizev(numSizes);
-
-	for (size_t i = 0; i < numSizes; i++)
-		sizev[i] = (bin_edges[i + 1] + bin_edges[i]) / 2;
 
 	// Properties that differ between car and sil
 	auto addMRNCarOrSil = [&](bool car) {
 		double log10norm = car ? -25.13 : -25.11;
 		double C = pow(10., log10norm);
 		Array densityv(numSizes);
+		Array sizev(numSizes);
+		Array areav(numSizes);
 		for (size_t i = 0; i < numSizes; i++)
 		{
 			// analytic integration of dn = C nH a^{-3.5} da
@@ -963,6 +961,16 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 			// densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
 			densityv[i] = C * nHtotal / 2.5 *
 			              (pow(bin_edges[i], -2.5) - pow(bin_edges[i + 1], -2.5));
+
+			auto average_power_of_size = [&](double power) {
+				double exponent = 2.5 - power;
+				return C * nHtotal / exponent *
+				       (pow(bin_edges[i], -exponent) -
+				        pow(bin_edges[i + 1], -exponent)) /
+				       densityv[i];
+			};
+			sizev[i] = average_power_of_size(1.);
+			areav[i] = average_power_of_size(2.);
 		}
 		auto label = car ? GasModule::GrainTypeLabel::CAR
 		                 : GasModule::GrainTypeLabel::SIL;
@@ -972,7 +980,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 		Array temperaturev(numSizes);
 		for (size_t i = 0; i < numSizes; i++)
 		{
-			Array crossSectionv = qabsvv[i] * Constant::PI * sizev[i] * sizev[i];
+			Array crossSectionv = qabsvv[i] * Constant::PI * areav[i];
 			temperaturev[i] = equilibriumTemperature(specificIntensity.frequencyv(),
 			                                         specificIntensity.valuev(),
 			                                         crossSectionv);
