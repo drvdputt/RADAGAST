@@ -1,6 +1,7 @@
 #ifndef GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
 #define GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
 
+#include "ChargeDistribution.h"
 #include "Constants.h"
 #include "GrainInterface.h"
 #include "Spectrum.h"
@@ -64,8 +65,9 @@ public:
 		Environment(const Spectrum& specificIntensity, double T, double ne, double np,
 		            const std::vector<int>& chargev, const Array& densityv,
 		            const Array& massv)
-		                : _specificIntensity(specificIntensity), _T(T), _ne(ne), _np(np),
-		                  _chargev(chargev), _densityv(densityv), _massv(massv){};
+		                : _specificIntensity(specificIntensity), _T(T), _ne(ne),
+		                  _np(np), _chargev(chargev), _densityv(densityv),
+		                  _massv(massv){};
 		// Radiation field
 		Spectrum _specificIntensity;
 		// The gas temperature, and frequently used densities
@@ -91,7 +93,7 @@ private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
 	    obtain a charge distribution, and then RateAZ for every charge Z. */
 	double heatingRateA(double a, const Environment& env, const Array& Qabs,
-	                    const std::vector<double>& fZ, int Zmin, int Zmax) const;
+	                    const ChargeDistribution& cd) const;
 
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
 	    immediately autoionize when an electron is captured. */
@@ -100,8 +102,8 @@ private:
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
 	    wavelength. */
-	void chargeBalance(double a, const Environment& env, const Array& Qabs, int& resultZmin,
-	                   int& resultZmax, std::vector<double>& resultfZ) const;
+	ChargeDistribution calculateChargeDistribution(double a, const Environment& env,
+	                                               const Array& Qabs) const;
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */
@@ -122,14 +124,13 @@ private:
 	    TODO: figure out how this fits in with the gas-grain collisional energy exchange.
 	    I've disabled this for now, using the INCLUDERECCOOL macro. */
 	double recombinationCoolingRate(double a, const Environment& env,
-	                                const std::vector<double>& fZ, int Zmin) const;
+	                                const ChargeDistribution& cd) const;
 
 	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
 	    area [erg s-1 cm-2], so we need to multipy with the surface area per volume unit
 	    (n_grain * sigma_grain). */
 	double gasGrainCollisionCooling(double a, const Environment& env,
-	                                const std::vector<double>& fZ, int Zmin,
-	                                double Tgrain) const;
+	                                const ChargeDistribution& cd, double Tgrain) const;
 
 	/* Graintype-specific properties are provided by this object. */
 	const GrainType& _grainType;

@@ -27,9 +27,9 @@ int GrainPhotoelectricEffect::minimumCharge(double a) const
 	return WD01::minimumCharge(a, Uait);
 }
 
-void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
-                                             const Array& Qabs, int& resultZmin,
-                                             int& resultZmax, vector<double>& resultfZ) const
+ChargeDistribution
+GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environment& env,
+                                                      const Array& Qabs) const
 {
 	const Array& frequencyv = env._specificIntensity.frequencyv();
 	const Array& specificIntensityv = env._specificIntensity.valuev();
@@ -42,23 +42,21 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 
 	/* The maximum charge is one more than the highest charge which still allows ionization
 	   by photons of hnumax. */
-	resultZmax = floor(
+	int resultZmax = floor(
 	                ((hnumax - _grainType.workFunction()) * Constant::ERG_EV / 14.4 * aA +
 	                 .5 - .3 / aA) /
 	                (1 + .3 / aA));
 
 	// The minimum charge is the most negative charge for which autoionization does not
 	// occur
-	resultZmin = minimumCharge(a);
+	int resultZmin = minimumCharge(a);
 
 	if (resultZmax < resultZmin)
 		Error::runtime("Zmax is smaller than Zmin. This can happen when the grains are "
 		               "too"
 		               "small for the recipe used.");
-	resultfZ.resize(resultZmax - resultZmin + 1, -1);
 
-	// These two functions determine the up and down rates for the detailed balance The
-	// equation which must be satisfied is f(Z) * upRate(Z) = f(Z+1) * downRate(Z+1)
+	// These two functions determine the up and down rates for the detailed balance 
 
 	// The rate at which the grain moves out of charge Z, in the positive direction.
 	auto chargeUpRate = [&](int Z) -> double {
@@ -89,118 +87,11 @@ void GrainPhotoelectricEffect::chargeBalance(double a, const Environment& env,
 		return Jtotal;
 	};
 
-	/* We will cut off the distribution at some point past the maximum (in either the
-	   positive or the negative direction). For a Gaussian distribution, at half the height
-	   we have already ~80% of the population. So a 10th of the height should definitely be
-	   sufficient.*/
-	double cutOffFactor = 1.e-1;
-	int trimLow = 0;
-	int trimHigh = resultfZ.size() - 1;
-	int centerZ = 0;
+	ChargeDistribution chargeDistribution;
+	chargeDistribution.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin,
+	                                            resultZmax);
 
-	// Find the central peak using a binary search
-	int upperbound = resultZmax;
-	int lowerbound = resultZmin;
-	int currentZ = floor((resultZmax + resultZmin) / 2.);
-	while (currentZ != lowerbound)
-	{
-		// Compare the up and down rates for Z and Z+1 respectively
-		// goal: up * f(z) == down * f(z+1)
-		// factor up/down == f(z+1)/f(z)
-		// --> factor > 1 means upward slope and vice versa
-		double factor = chargeUpRate(currentZ) / chargeDownRate(currentZ + 1);
-		if (factor > 1)
-		{
-			// Upward slope --> the maximum is more to the right
-			lowerbound = currentZ;
-		}
-		else
-		{
-			// Downward slope --> the maximum is more to the left
-			upperbound = currentZ;
-		}
-		// Move the cursor to the center of the new bounds
-		currentZ = floor((lowerbound + upperbound) / 2.);
-	}
-	// The result of the binary search
-	centerZ = currentZ;
-
-	// Apply detailed balance equation: start at one ...
-	resultfZ[centerZ - resultZmin] = 1;
-	// ... for Z > centerZ
-	for (int z = centerZ + 1; z <= resultZmax; z++)
-	{
-		int index = z - resultZmin;
-		// f(z) =  f(z-1) * up(z-1) / down(z)
-		double up = chargeUpRate(z - 1);
-		double down = chargeDownRate(z);
-		resultfZ[index] = down > 0 ? resultfZ[index - 1] * up / down : 0;
-
-		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
-			Error::runtime("invalid value in charge distribution");
-
-		if (resultfZ[index] < cutOffFactor)
-		{
-			trimHigh = index;
-			break;
-		}
-	}
-
-	// ... for Z < centerZ
-	for (int z = centerZ - 1; z >= resultZmin; z--)
-	{
-		int index = z - resultZmin;
-		// f(z) = f(z+1) * down(z+1) / up(z)
-		double up = chargeUpRate(z);
-		double down = chargeDownRate(z + 1);
-		resultfZ[index] = up > 0 ? resultfZ[index + 1] * down / up : 0;
-
-		if (isnan(resultfZ[index]) || isinf(resultfZ[index]))
-			Error::runtime("invalid value in charge distribution");
-
-		if (resultfZ[index] < cutOffFactor)
-		{
-			trimLow = index;
-			break;
-		}
-	}
-
-	/* Apply the cutoffs (this might be done more elegantly, i.e. while avoiding the
-	   allocation of all the memory for the initial fZ buffer). */
-
-	// Trim the top first! Makes things (i.e. dealing with the indices) much easier.
-
-	resultfZ.erase(resultfZ.begin() + trimHigh + 1, resultfZ.end());
-	resultZmax = resultZmin + trimHigh;
-
-	resultfZ.erase(resultfZ.begin(), resultfZ.begin() + trimLow);
-	resultZmin += trimLow;
-
-	// Normalize
-	double sum = 0.;
-	for (double d : resultfZ)
-		sum += d;
-	for (double& d : resultfZ)
-		d /= sum;
-
-	// Test the result
-	//    for (int z = resultZmin + 1; z <= resultZmax - 1; z++){
-	//        double Jpe = emissionRate(a, z, wavelength, Qabs, isrf);
-	//        double Jion = collisionalChargingRate(a, z, 1, Constant::HMASS_CGS);
-	//        double Je = collisionalChargingRate(a, z, -1, Constant::ELECTRONMASS);
-	//        int index = z - resultZmin;
-	//        double departure = resultfZ[index] * (Jpe + Jion + Je);
-
-	//        Jpe = emissionRate(a, z-1, wavelength, Qabs, isrf);
-	//        Jion = collisionalChargingRate(a, z-1, 1, Constant::HMASS_CGS);
-	//        double arrival = resultfZ[index-1] * (Jpe + Jion);
-
-	//        Je = collisionalChargingRate(a, z+1, -1, Constant::ELECTRONMASS);
-	//        arrival += resultfZ[index+1] * Je;
-
-	//        cout << "Total change rate in population z = "<<z<<" : "<<arrival -
-	//        departure<<endl;
-	//    }
+	return chargeDistribution;
 }
 
 double GrainPhotoelectricEffect::rateIntegral(
@@ -306,18 +197,16 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 }
 
 double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
-                                              const Array& Qabs, const vector<double>& fZ,
-                                              int Zmin, int Zmax) const
+                                              const Array& Qabs,
+                                              const ChargeDistribution& cd) const
 {
 	double totalHeatingForGrainSize = 0;
 
-	// DEBUG("Z in (" << Zmin << ", " << Zmax << ") for size " << a << "\n");
-
-	for (int Z = Zmin; Z <= Zmax; Z++)
+	for (int Z = cd.zmin(); Z <= cd.zmax(); Z++)
 	{
-		double fZz = fZ[Z - Zmin];
+		double fZz = cd.value(Z);
 		if (isnan(fZz))
-			Error::runtime("nan in fz");
+			Error::runtime("nan in charge distribution");
 		double heatAZ = heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabs,
 		                              env._specificIntensity.valuev());
 
@@ -370,17 +259,13 @@ double GrainPhotoelectricEffect::heatingRate(
 		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(),
 		                  env._specificIntensity.valuev().size());
 
-		// Get the charge distribution (is normalized to 1)
-		vector<double> fZ;
-		int Zmin, Zmax;
-		chargeBalance(a, env, Qabsv, Zmin, Zmax, fZ);
+		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
 
 		// Use the charge distribution to calculate the photoelectric heating rate for
 		// this size
 		if (a < 2000 * Constant::ANG_CM)
-			total += nd * heatingRateA(a, env, Qabsv, fZ, Zmin, Zmax);
+			total += nd * heatingRateA(a, env, Qabsv, cd);
 
-		// and the cooling by gas-grain collisions
 // #define INCLUDEGASGRAINCOOL
 #ifdef INCLUDEGASGRAINCOOL
 		double T = grainPop.temperaturev()[m];
@@ -395,9 +280,10 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& freq
                                               const Array& Qabs,
                                               const Array& specificIntensityv) const
 {
-	return rateIntegral(a, Z, WD01::eMin(a, Z), frequencyv, Qabs, specificIntensityv,
-	                    [](double, double) -> double { return 1.; },
-	                    [](double) -> double { return 1; });
+	return rateIntegral(
+	                a, Z, WD01::eMin(a, Z), frequencyv, Qabs, specificIntensityv,
+	                [](double, double) -> double { return 1.; },
+	                [](double) -> double { return 1; });
 }
 
 double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
@@ -431,14 +317,11 @@ double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, 
 }
 
 double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
-                                                          const vector<double>& fZ,
-                                                          int Zmin) const
+                                                          const ChargeDistribution& cd) const
 {
 	// Calculates WD01 equation 42
 	double kT = Constant::BOLTZMAN * env._T;
 	double eightkT3DivPi = 8 * kT * kT * kT / Constant::PI;
-
-	int Zmax = Zmin + fZ.size() - 1;
 
 	// For every collision partner, add the contibutions for each possible grain charge.
 	double particleSum = 0;
@@ -448,14 +331,12 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 		int z_i = env._chargev[i];
 		double tau = a * kT / z_i / z_i / Constant::ESQUARE;
 
-		double Zsum = 0;
-		for (int Z = Zmin; Z <= Zmax; Z++)
-		{
-			// ksi = Ze / q_i = Z / z_i
-			double ksi = Z / static_cast<double>(z_i);
-			Zsum += _grainType.stickingCoefficient(a, Z, z_i) * fZ[Z - Zmin] *
-			        WD01::lambdaTilde(tau, ksi);
-		}
+		double Zsum = cd.sumOverCharge([&](int zGrain) {
+			double ksi = zGrain / static_cast<double>(z_i);
+			return _grainType.stickingCoefficient(a, zGrain, z_i) *
+			       WD01::lambdaTilde(tau, ksi);
+		});
+
 		particleSum += env._densityv[i] * sqrt(eightkT3DivPi / env._massv[i]) * Zsum;
 	}
 
@@ -466,25 +347,25 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	/* This term is only included when the population of the maximally negative grain charge
 	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
 	   minimumCharge, (and Zmin > minimumCharge). */
-	if (Zmin == minimumCharge(a))
-		secondTerm = fZ[0] *
-		             collisionalChargingRate(a, env._T, Zmin, -1,
+	int zmin = cd.zmin();
+	if (zmin == minimumCharge(a))
+		secondTerm = cd.value(zmin) *
+		             collisionalChargingRate(a, env._T, zmin, -1,
 		                                     Constant::ELECTRONMASS, env._ne) *
-		             _grainType.ionizationPotential(a, Zmin - 1);
+		             _grainType.ionizationPotential(a, zmin - 1);
 
 	return Constant::PI * a * a * particleSum + secondTerm;
 }
 
 double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Environment& env,
-                                                          const std::vector<double>& fZ,
-                                                          int Zmin, double Tgrain) const
+                                                          const ChargeDistribution& cd,
+                                                          double Tgrain) const
 {
-	double lambdaG = 0;
 	double kT = env._T * Constant::BOLTZMAN;
 	double kTgrain = Tgrain * Constant::BOLTZMAN;
-	for (int Z = Zmin; Z < Zmin + fZ.size(); Z++)
-	{
-		double Ug = _grainType.ionizationPotential(a, Z);
+	double lambdaG = cd.sumOverCharge([&](int zGrain) {
+		double lambdaG_for_this_z = 0;
+		double Ug = _grainType.ionizationPotential(a, zGrain);
 		double Vg = sqrt(Constant::ESQUARE) * Ug;
 		for (size_t i = 0; i < env._massv.size(); i++)
 		{
@@ -492,14 +373,15 @@ double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Enviro
 			double psi = env._chargev[i] * Vg / kT;
 			double eta = psi <= 0 ? 1 - psi : exp(-psi);
 			double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
-			double S = _grainType.stickingCoefficient(a, Z, env._chargev[i]);
+			double S = _grainType.stickingCoefficient(a, zGrain, env._chargev[i]);
 			// cm s-1
 			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
 			// cm-3 * cm s-1 * erg = cm-2 s-1 erg
-			lambdaG += env._densityv[i] * vbar * S *
-			           (2 * kT * ksi - 2 * kTgrain * eta);
+			lambdaG_for_this_z += env._densityv[i] * vbar * S *
+			                      (2 * kT * ksi - 2 * kTgrain * eta);
 		}
-	}
+		return lambdaG_for_this_z;
+	});
 	return lambdaG;
 }
 
@@ -589,11 +471,8 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		                frequencyv, intensityTimesQabs);
 
 		// Calculate and write out the heating efficiency
-		int Zmin, Zmax;
-		vector<double> fZ;
-		chargeBalance(a, env, Qabs, Zmin, Zmax, fZ);
-		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, fZ, Zmin,
-		                                                        Zmax);
+		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabs);
+		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, cd);
 		double totalAbsorbed =
 		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
 		double efficiency = heating / totalAbsorbed;
@@ -641,12 +520,9 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	bool car = true;
 	Array Qabsv = Testing::qAbsvvForTesting(car, {a}, frequencyv)[0];
 
-	// Calculate charge distribution
-	vector<double> fZv;
-	int Zmin, Zmax;
-	chargeBalance(a, env, Qabsv, Zmin, Zmax, fZv);
+	ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
 
-	cout << "Zmax = " << Zmax << " Zmin = " << Zmin << " len fZ = " << fZv.size() << endl;
+	cout << "Zmax = " << cd.zmax() << " Zmin = " << cd.zmin() << '\n';
 
 	ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
 	out << "# a = " << a << endl;
@@ -655,8 +531,8 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 	out << "# ne = " << ne << endl;
 	out << "# Tgas = " << gasT << endl;
 
-	for (int z = Zmin; z <= Zmax; z++)
-		out << z << '\t' << fZv[z - Zmin] << '\n';
+	for (int z = cd.zmin(); z <= cd.zmax(); z++)
+		out << z << '\t' << cd.value(z) << '\n';
 	out.close();
 
 	return 0.;
