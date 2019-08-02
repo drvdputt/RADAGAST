@@ -89,6 +89,18 @@ public:
 	double heatingRate(const Environment&,
 	                   const GasModule::GrainInterface::Population& grainPop) const;
 
+	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
+	    environment env, given the absorption efficiency of that grain in function of the
+	    wavelength. */
+	ChargeDistribution calculateChargeDistribution(double a, const Environment& env,
+	                                               const Array& Qabs) const;
+
+	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
+	    area [erg s-1 cm-2], so we need to multipy with the surface area per volume unit
+	    (n_grain * sigma_grain). */
+	double gasGrainCollisionCooling(double a, const Environment& env,
+	                                const ChargeDistribution& cd, double Tgrain) const;
+
 private:
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
 	    obtain a charge distribution, and then RateAZ for every charge Z. */
@@ -98,12 +110,6 @@ private:
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
 	    immediately autoionize when an electron is captured. */
 	int minimumCharge(double a) const;
-
-	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
-	    environment env, given the absorption efficiency of that grain in function of the
-	    wavelength. */
-	ChargeDistribution calculateChargeDistribution(double a, const Environment& env,
-	                                               const Array& Qabs) const;
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */
@@ -126,12 +132,7 @@ private:
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const ChargeDistribution& cd) const;
 
-	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
-	    area [erg s-1 cm-2], so we need to multipy with the surface area per volume unit
-	    (n_grain * sigma_grain). */
-	double gasGrainCollisionCooling(double a, const Environment& env,
-	                                const ChargeDistribution& cd, double Tgrain) const;
-
+private:
 	/* Graintype-specific properties are provided by this object. */
 	const GrainType& _grainType;
 

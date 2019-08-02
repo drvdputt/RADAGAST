@@ -106,12 +106,21 @@ public:
 
 		size_t numSizes() const { return _sizev.size(); }
 
-		std::valarray<double> qAbsv(int m) const {return _qAbsvv[m];}
-		double temperature(int m) const {return _temperaturev[m];}
-		double density(int m) const {return _densityv[m];}
-		double size(int m) const {return _sizev[m];}
+		std::valarray<double> qAbsv(int m) const { return _qAbsvv[m]; }
+		double temperature(int m) const { return _temperaturev[m]; }
+		double density(int m) const { return _densityv[m]; }
+		double size(int m) const { return _sizev[m]; }
 
 		void test() const;
+
+		/** Recalculate the temperature for each size, by finding the temperature for
+		    which < blackbody * kappa > = < radiation field * kappa > + extra heat (such
+		    as collisional, needs to be given for each size). Some things can probably
+		    be cached should this be slow. No idea how something like this could be
+		    achieved in SKIRT, if stochastic heating still needs to work. */
+		void calculateTemperature(std::valarray<double> frequencyv,
+		                          std::valarray<double> specificIntensityv,
+		                          std::valarray<double> otherGrainHeat);
 
 	private:
 		std::valarray<double> _sizev;
@@ -149,7 +158,7 @@ public:
 	const Population* population(size_t i) const;
 
 	/** Get a pointer to the whole population vector. */
-	const std::vector<Population>* populationv() const;
+	std::vector<Population>* populationv() const;
 
 	/** A quick test to see if all population objects in the vector have reasonable
 	    contents. */

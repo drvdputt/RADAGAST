@@ -1,7 +1,9 @@
 #include "GrainInterface.h"
 #include "Array.h"
+#include "Constants.h"
 #include "Error.h"
 #include "GrainType.h"
+#include "SpecialFunctions.h"
 
 #include <cassert>
 
@@ -63,6 +65,39 @@ void GrainInterface::Population::test() const
 		Error::runtime("Grain of size 0 not allowed!");
 }
 
+void GrainInterface::Population::calculateTemperature(std::valarray<double> frequencyv,
+                                                      std::valarray<double> specificIntensityv,
+                                                      std::valarray<double> otherGrainHeat)
+{
+	for (size_t i = 0; i < _sizev.size(); i++)
+	{
+		double absorption = TemplatedUtils::integrate<double, Array, Array>(
+		                frequencyv, _qAbsvv[i] * specificIntensityv);
+
+		auto heating = [&](double T) -> int {
+			Array blackbodyIntegrandv(frequencyv.size());
+			for (size_t j = 0; j < frequencyv.size(); j++)
+				blackbodyIntegrandv[j] =
+				                _qAbsvv[i][j] *
+				                SpecialFunctions::planck(frequencyv[j], T);
+
+			double bbEmission = 0;
+			if (T > 0.)
+				bbEmission = TemplatedUtils::integrate<double, Array, Array>(
+				                frequencyv, blackbodyIntegrandv);
+			if (bbEmission < absorption + otherGrainHeat[i])
+				return 1;
+			if (bbEmission > absorption + otherGrainHeat[i])
+				return -1;
+			else
+				return 0;
+		};
+		_temperaturev[i] = TemplatedUtils::binaryIntervalSearch<double>(heating, 30.,
+		                                                                1.e-3, 300, 1.);
+		std::cout << "New temp for grain " << i << " " << _temperaturev[i] << " K\n";
+	}
+}
+
 GrainInterface::GrainInterface() = default;
 
 GrainInterface::~GrainInterface() = default;
@@ -89,7 +124,7 @@ const GrainInterface::Population* GrainInterface::population(size_t i) const
 	return _populationv->data() + i;
 }
 
-const std::vector<GrainInterface::Population>* GrainInterface::populationv() const
+std::vector<GrainInterface::Population>* GrainInterface::populationv() const
 {
 	return _populationv.get();
 }

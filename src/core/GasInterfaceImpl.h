@@ -90,6 +90,9 @@ public:
 	Solution solveTemperature(double n, double Tinit, const Spectrum& specificIntensity,
 	                          const GasModule::GrainInterface&) const;
 
+	/** Temporary way to take into account collisional heating of the grains */
+	void updateGrainTemps(const Solution& s, const GasModule::GrainInterface&) const;
+
 	/** Distills the solution object into the necessary information to retrieve opacity and
 	    emissivity. Grids on which the opacity and emissivity will be discretized (before
 	    being stored in the gas state) need to be provided. */

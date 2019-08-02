@@ -87,6 +87,7 @@ double heating_f(double logT, void* params)
 
 	double heat = p->gasInterfacePimpl->heating(s, *p->grainInterface);
 	double cool = p->gasInterfacePimpl->cooling(s);
+	p->gasInterfacePimpl->updateGrainTemps(s, *p->grainInterface);
 	return heat - cool;
 }
 
@@ -154,6 +155,39 @@ GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
 	return s;
 }
 
+void GasInterfaceImpl::updateGrainTemps(const Solution& s,
+                                        const GasModule::GrainInterface& g) const
+{
+	// Specify the environment parameters
+	double ne = s.speciesNv[_ine];
+	double np = s.speciesNv[_inp];
+	GrainPhotoelectricEffect::Environment env(
+	                s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS});
+
+	for (auto& pop : *g.populationv())
+	{
+		const GrainType* type = pop.type();
+		if (type->heatingAvailable())
+		{
+			/* Choose the correct parameters for the photoelectric effect based on
+			   the type (a.k.a. composition) of the Population. */
+			GrainPhotoelectricEffect gpe(*type);
+
+			size_t numSizes = pop.numSizes();
+			Array grainHeatPerSizev(numSizes);
+			for (int m = 0; m < numSizes; m++)
+			{
+				auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
+				                                          pop.qAbsv(m));
+				grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
+				                pop.size(m), env, cd, pop.temperature(m));
+			}
+			pop.calculateTemperature(s.specificIntensity.frequencyv(), s.specificIntensity.valuev(), grainHeatPerSizev);
+		}
+	}
+}
+
 GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s,
                                                                const Array& oFrequencyv,
                                                                const Array& eFrequencyv) const
@@ -173,7 +207,8 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s
 	{
 		if (emv[iFreq] < 0 || opv[iFreq] < 0 || scv[iFreq] < 0)
 		{
-			Error::runtime("GasModule: negative value in one of the optical "
+			Error::runtime("GasModule: negative value in one of the "
+			               "optical "
 			               "properties");
 		}
 	}
