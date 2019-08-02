@@ -194,7 +194,6 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution,
 	                                                            s.specificIntensity)
 	                             : 0;
-
 	double hphotoion = Ionization::photoRateCoeff(s.specificIntensity);
 	double hcolion = Ionization::collisionalRateCoeff(s.T);
 	double hrec = Ionization::recombinationRateCoeff(s.T);
@@ -211,9 +210,11 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 	gd->setHeating("H ion", Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
 	                                            s.specificIntensity));
 	gd->setHeating("H deexc", _atomicLevels->heating(s.HSolution));
-	gd->setHeating("H2 deexc", _molecular->heating(s.H2Solution));
+	gd->setHeating("H2 deexc", _molecular ? _molecular->heating(s.H2Solution) : 0);
 	gd->setHeating("H2 dissoc",
-	               _molecular->dissociationHeating(s.H2Solution, s.specificIntensity));
+	               _molecular ? _molecular->dissociationHeating(s.H2Solution,
+	                                                            s.specificIntensity)
+	                          : 0);
 }
 
 GasInterfaceImpl::Solution
