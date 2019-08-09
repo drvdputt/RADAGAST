@@ -205,7 +205,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	for (int Z = cd.zmin(); Z <= cd.zmax(); Z++)
 	{
 		double fZz = cd.value(Z);
-		if (isnan(fZz))
+		if (!isfinite(fZz))
 			Error::runtime("nan in charge distribution");
 		double heatAZ = heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabs,
 		                              env._specificIntensity.valuev());
@@ -469,7 +469,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		double totalAbsorbed =
 		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
 		double efficiency = heating / totalAbsorbed;
-		if (isnan(efficiency))
+		if (!isfinite(efficiency))
 			cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed
 			     << endl;
 

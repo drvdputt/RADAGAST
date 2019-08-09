@@ -58,7 +58,7 @@ void compareMatrices(const Eigen::MatrixBase<Derived>& a, const Eigen::MatrixBas
 		// Take out the nans (due to divide by zero)
 		auto* pointer = relDiff.data() + i;
 		auto value = *pointer;
-		*pointer = std::isnan(value) ? 0 : value;
+		*pointer = std::isfinite(value) ? value : 0;
 	}
 	bool withinTolerance = (relDiff.cwiseAbs().array() < tolerance).all();
 	if (!withinTolerance)

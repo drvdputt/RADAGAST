@@ -14,7 +14,7 @@ double ChargeDistribution::sumOverCharge(std::function<double(int z)> functionOf
 	double sum = 0;
 	for (int i = 0; i < _fz.size(); i++)
 	{
-		if (isnan(_fz[i]))
+		if (!std::isfinite(_fz[i]))
 			Error::runtime("nan in charge distribution");
 		sum += functionOfZ(_zmin + i);
 	}
@@ -76,7 +76,7 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
 		double down = chargeDownRatef(z);
 		_fz[index] = down > 0 ? _fz[index - 1] * up / down : 0;
 
-		if (isnan(_fz[index]) || isinf(_fz[index]))
+		if (!std::isfinite(_fz[index]))
 			Error::runtime("invalid value in charge distribution");
 
 		if (_fz[index] < cutOffFactor)
@@ -95,7 +95,7 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
 		double down = chargeDownRatef(z + 1);
 		_fz[index] = up > 0 ? _fz[index + 1] * down / up : 0;
 
-		if (isnan(_fz[index]) || isinf(_fz[index]))
+		if (!std::isfinite(_fz[index]))
 			Error::runtime("invalid value in charge distribution");
 
 		if (_fz[index] < cutOffFactor)

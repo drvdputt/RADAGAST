@@ -71,7 +71,7 @@ double GasGrain::surfaceH2FormationRateCoeff(const GasModule::GrainInterface& gI
 
 			// factor n_d * sigma_d * epsilon_H2 * S_h
 			double contribution = nd * sigmad * epsilon * S;
-			if (!std::isnan(contribution))
+			if (std::isfinite(contribution))
 				total += contribution;
 		}
 	}
