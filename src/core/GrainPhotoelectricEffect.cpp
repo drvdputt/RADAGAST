@@ -319,7 +319,7 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 		                                     Constant::ELECTRONMASS, env._ne) *
 		             _grainType.ionizationPotential(a, zmin - 1);
 
-	return Constant::PI * a * a * particleSum + secondTerm;
+	return Constant::PI * a * a * particleSum * kT + secondTerm;
 }
 
 double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Environment& env,
