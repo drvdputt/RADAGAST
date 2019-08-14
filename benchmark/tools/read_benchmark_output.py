@@ -91,6 +91,10 @@ class CloudyResult:
 
         return h2form_g, h2dissoc
 
+    def get_grain_temps(self):
+        """get list of grain temperatures"""
+        cloudy_graintemps = pd.read_csv(self.d / 'graintemperature.out', sep='\t')
+        return cloudy_graintemps.to_numpy()[0, 1:]
 
 class GasModuleResult:
     def __init__(self, directory):
@@ -127,3 +131,8 @@ class GasModuleResult:
     def get_h2_rates(self):
         rates = np.loadtxt(self.d / 'rates.dat')
         return rates[:2]
+
+    def get_grain_temps(self):
+        """get list of grain temperatures"""
+        grainprops = np.loadtxt(self.d / 'grainpop_0.dat')
+        return grainprops[:, 3]
