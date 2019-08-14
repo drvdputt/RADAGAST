@@ -448,6 +448,11 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
 		                s.speciesNv.array() < 1.e-99 * norm;
 
+		// Changing the grain temperature influences the following:
+		// h2 formation rate
+		// gas-dust energy exchange (gas cooling)
+		updateGrainTemps(s, gi);
+
 		double newHeating = heating(s);
 		double newCooling = cooling(s);
 		bool heatingConverged = TemplatedUtils::equalWithinTolerance(
