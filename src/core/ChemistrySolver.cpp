@@ -440,8 +440,6 @@ EVector ChemistrySolver::solveMultimin(const EVector& rateCoeffv, const EVector&
 
 EVector ChemistrySolver::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) const
 {
-	EVector conservedQuantityv = _conservEqvv * n0v;
-
 	struct ode_params params = {_numSpecies, &rateCoeffv, this};
 
 	gsl_odeiv2_system s{ode_f, ode_j, _numSpecies, &params};
