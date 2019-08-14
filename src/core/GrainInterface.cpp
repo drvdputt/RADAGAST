@@ -71,7 +71,8 @@ void GrainInterface::Population::calculateTemperature(std::valarray<double> freq
 {
 	for (size_t i = 0; i < _sizev.size(); i++)
 	{
-		double absorption = TemplatedUtils::integrate<double, Array, Array>(
+		double cross = Constant::PI * _sizev[i] * _sizev[i];
+		double absorption = cross * TemplatedUtils::integrate<double, Array, Array>(
 		                frequencyv, _qAbsvv[i] * specificIntensityv);
 
 		auto heating = [&](double T) -> int {
@@ -83,7 +84,7 @@ void GrainInterface::Population::calculateTemperature(std::valarray<double> freq
 
 			double bbEmission = 0;
 			if (T > 0.)
-				bbEmission = TemplatedUtils::integrate<double, Array, Array>(
+				bbEmission = cross * TemplatedUtils::integrate<double, Array, Array>(
 				                frequencyv, blackbodyIntegrandv);
 			if (bbEmission < absorption + otherGrainHeat[i])
 				return 1;

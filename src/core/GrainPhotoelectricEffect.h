@@ -78,16 +78,10 @@ public:
 		Array _densityv, _massv;
 	} Environment;
 
-	/** Calculate the total heating rate by the grains, given a certain environment. Then,
-	    the grain properties need to be specified. First, a list of grain sizes, grainSizev,
-	    and a list of number densities for each size, grainDensityv. Then, an absorption
-	    efficiency for each grain size and each wavelength should be given. In absQvv, every
-	    row represents the wavelength-dependent absorption efficiency for a certain grain
-	    size. Therefore, the rows should be indexed in the same way as grainSizev, while the
-	    columns should be indexed like env.wavelengthv. Calls heatinRateA for every grain
-	    size. */
-	double heatingRate(const Environment&,
-	                   const GasModule::GrainInterface::Population& grainPop) const;
+	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
+	    obtain a charge distribution, and then RateAZ for every charge Z. */
+	double heatingRateA(double a, const Environment& env, const Array& Qabs,
+	                    const ChargeDistribution& cd) const;
 
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
@@ -97,16 +91,13 @@ public:
 
 	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
 	    area [erg s-1 cm-2], so we need to multipy with the surface area per volume unit
-	    (n_grain * sigma_grain). */
+	    (n_grain * sigma_grain). The last argument (bool) indicates whether we want to know
+	    the cooling of the gas (false), or the heating of the grain (true). In the latter
+	    case, it adds a term that takes into account the potential of the grain. */
 	double gasGrainCollisionCooling(double a, const Environment& env,
-	                                const ChargeDistribution& cd, double Tgrain) const;
+	                                const ChargeDistribution& cd, double Tgrain, bool addGrainPotential) const;
 
 private:
-	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
-	    obtain a charge distribution, and then RateAZ for every charge Z. */
-	double heatingRateA(double a, const Environment& env, const Array& Qabs,
-	                    const ChargeDistribution& cd) const;
-
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
 	    immediately autoionize when an electron is captured. */
 	int minimumCharge(double a) const;

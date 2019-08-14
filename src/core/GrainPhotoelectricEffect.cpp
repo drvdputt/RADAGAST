@@ -241,34 +241,6 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	return netHeatingForGrainSize;
 }
 
-double GrainPhotoelectricEffect::heatingRate(
-                const Environment& env,
-                const GasModule::GrainInterface::Population& grainPop) const
-{
-	double total{0.};
-	for (size_t m = 0; m < grainPop.numSizes(); m++)
-	{
-		/* TODO: The contribution of the large grains is ignored here to speed up the
-		   calculation. Need to double check this limit, or implement a faster charge
-		   algorithm, such as the one proposed in van Hoof (2004) that is used in
-		   Cloudy. */
-		double a = grainPop.size(m);
-		const Array& Qabsv = grainPop.qAbsv(m);
-		double nd = grainPop.density(m);
-
-		Error::equalCheck("Sizes of Qabsv, and specificIntensity", Qabsv.size(),
-		                  env._specificIntensity.valuev().size());
-
-		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
-
-		// Use the charge distribution to calculate the photoelectric heating rate for
-		// this size
-		if (a < 2000 * Constant::ANG_CM)
-			total += nd * heatingRateA(a, env, Qabsv, cd);
-	}
-	return total;
-}
-
 double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& frequencyv,
                                               const Array& Qabs,
                                               const Array& specificIntensityv) const
@@ -352,7 +324,7 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 
 double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Environment& env,
                                                           const ChargeDistribution& cd,
-                                                          double Tgrain) const
+                                                          double Tgrain, bool addGrainPotential) const
 {
 	double kT = env._T * Constant::BOLTZMAN;
 	double kTgrain = Tgrain * Constant::BOLTZMAN;
@@ -363,19 +335,28 @@ double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Enviro
 		for (size_t i = 0; i < env._massv.size(); i++)
 		{
 			// Dimensionless
-			double psi = env._chargev[i] * Vg / kT;
+			double ZVg = env._chargev[i] * Vg;
+			double psi = ZVg / kT;
 			double eta = psi <= 0 ? 1 - psi : exp(-psi);
 			double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
 			double S = _grainType.stickingCoefficient(a, zGrain, env._chargev[i]);
 			// cm s-1
 			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
 			// cm-3 * cm s-1 * erg = cm-2 s-1 erg
-			lambdaG_for_this_z += env._densityv[i] * vbar * S *
-			                      (2 * kT * ksi - 2 * kTgrain * eta);
+			double collisionEnergy = 2 * kT * ksi - 2 * kTgrain * eta;
+			if (addGrainPotential)
+			{
+				// A positively charged particle will slow down before it hits a
+				// positively charged grain, and accelerate again when it leaves
+				// the grain
+				collisionEnergy -= ZVg * eta;
+			}
+			lambdaG_for_this_z += env._densityv[i] * vbar * S * collisionEnergy;
 		}
 		return lambdaG_for_this_z;
 	});
-	return lambdaG;
+	// Remember that 1991-Baldwin gives the rate 'per unit projected area'
+	return Constant::PI * a * a * lambdaG;
 }
 
 double GrainPhotoelectricEffect::yieldFunctionTest() const

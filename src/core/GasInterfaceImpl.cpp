@@ -87,7 +87,6 @@ double heating_f(double logT, void* params)
 
 	double heat = p->gasInterfacePimpl->heating(s, *p->grainInterface);
 	double cool = p->gasInterfacePimpl->cooling(s);
-	p->gasInterfacePimpl->updateGrainTemps(s, *p->grainInterface);
 	return heat - cool;
 }
 
@@ -176,14 +175,21 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 
 			size_t numSizes = pop.numSizes();
 			Array grainHeatPerSizev(numSizes);
+			Array grainPhotoPerSizev(numSizes);
 			for (int m = 0; m < numSizes; m++)
 			{
 				auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
 				                                          pop.qAbsv(m));
 				grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
-				                pop.size(m), env, cd, pop.temperature(m));
+					pop.size(m), env, cd, pop.temperature(m), true);
+				cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
+
+				grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
+				cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
 			}
-			pop.calculateTemperature(s.specificIntensity.frequencyv(), s.specificIntensity.valuev(), grainHeatPerSizev);
+			pop.calculateTemperature(s.specificIntensity.frequencyv(),
+						 s.specificIntensity.valuev(),
+						 grainHeatPerSizev - grainPhotoPerSizev);
 		}
 	}
 }
@@ -191,7 +197,6 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s,
                                                                const Array& oFrequencyv,
                                                                const Array& eFrequencyv) const
-
 {
 	Array emv, opv, scv;
 	if (eFrequencyv.size() > 2)
@@ -467,6 +472,8 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		// Currently, the implementation without molecules does not need iteration.
 		stopCriterion = !_molecular || allQuantitiesConverged ||
 		                counter > MAXCHEMISTRYITERATIONS;
+
+		updateGrainTemps(s, gi);
 	}
 	return s;
 }
@@ -578,13 +585,17 @@ double GasInterfaceImpl::heating(const Solution& s) const
 double GasInterfaceImpl::grainHeating(const Solution& s,
                                       const GasModule::GrainInterface& g) const
 {
-	double grainPhotoelectricHeating{0};
+	double grainPhotoelectricHeating = 0;
+	double gasGrainCooling = 0;
+
 	// Specify the environment parameters
 	double ne = s.speciesNv[_ine];
 	double np = s.speciesNv[_inp];
+	double nH = s.speciesNv[_inH];
+	double nH2 = s.speciesNv[_inH2];
 	GrainPhotoelectricEffect::Environment env(
-	                s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np},
-	                {Constant::ELECTRONMASS, Constant::PROTONMASS});
+		s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np, nH, nH2},
+		{Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
 	size_t numPop = g.numPopulations();
 	for (size_t i = 0; i < numPop; i++)
 	{
@@ -592,47 +603,25 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 		const GrainType* type = pop->type();
 		if (type->heatingAvailable())
 		{
-			/* Choose the correct parameters for the photoelectric heating
-			   calculation based on the type (a.k.a. composition) of the
-			   Population. */
+			/* Choose the correct parameters for the photoelectric effect based on
+			   the type (a.k.a. composition) of the Population. */
 			GrainPhotoelectricEffect gpe(*type);
-			grainPhotoelectricHeating += gpe.heatingRate(env, *pop);
-		}
-	}
 
-	double gasGrainCooling = 0;
-	// For gas-grain collisional cooling, calculate the average dust temperature, weighted
-	// by cross section. This will be the expected value of the temperatures a particle
-	// 'experiences' when colliding with a grain.
-	if (GASGRAINCOOL && numPop > 0)
-	{
-		double Tsum = 0;
-		double weight = 0;
-		for (size_t i = 0; i < numPop; i++)
-		{
-			const GasModule::GrainInterface::Population* pop = g.population(i);
-			for (size_t m = 0; m < pop->numSizes(); m++)
+			size_t numSizes = pop->numSizes();
+			for (int m = 0; m < numSizes; m++)
 			{
 				double a = pop->size(m);
+				const Array& qAbsv = pop->qAbsv(m);
 				double nd = pop->density(m);
-				double w = Constant::PI * a * a * nd;
-				Tsum += w * pop->temperature(m);
-				weight += w;
+				auto cd = gpe.calculateChargeDistribution(a, env, qAbsv);
+				grainPhotoelectricHeating += nd * gpe.heatingRateA(a, env, qAbsv, cd);
+				gasGrainCooling += nd * gpe.gasGrainCollisionCooling(a, env, cd, pop->temperature(m), false);
 			}
 		}
-		// Cooling of the gas by collisions with the dust particles. This is a recipe
-		// that does not depend on the grain present, except for the average temperature
-		// (it probably assumes some average population, see coefficient in Krumholz et
-		// al. (2011)). Only do this if there is dust, cause otherwise we dont have a
-		// dust temperature of course.
-		double Tdust = Tsum / weight;
-		double Tgas = s.T;
-		double nH = s.speciesNv[_inH];
-		double nH2 = s.speciesNv[_inH2];
-		gasGrainCooling = GasGrain::simpleGasGrainCool(Tdust, Tgas, nH, nH2);
 	}
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
+
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {
