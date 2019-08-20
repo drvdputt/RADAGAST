@@ -171,25 +171,31 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 		{
 			/* Choose the correct parameters for the photoelectric effect based on
 			   the type (a.k.a. composition) of the Population. */
-			GrainPhotoelectricEffect gpe(*type);
+			// GrainPhotoelectricEffect gpe(*type);
 
-			size_t numSizes = pop.numSizes();
-			Array grainHeatPerSizev(numSizes);
-			Array grainPhotoPerSizev(numSizes);
-			for (int m = 0; m < numSizes; m++)
-			{
-				auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
-				                                          pop.qAbsv(m));
-				grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
-					pop.size(m), env, cd, pop.temperature(m), true);
-				cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
+			// size_t numSizes = pop.numSizes();
+			// Array grainHeatPerSizev(numSizes);
+			// Array grainPhotoPerSizev(numSizes);
+			// for (int m = 0; m < numSizes; m++)
+			// {
+			// 	auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
+			// 	                                          pop.qAbsv(m));
+			// 	grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
+			// 		pop.size(m), env, cd, pop.temperature(m), true);
+			// 	cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
 
-				grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
-				cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
-			}
+			// 	grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
+			// 	cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
+			// }
+			// pop.calculateTemperature(s.specificIntensity.frequencyv(),
+			// 			 s.specificIntensity.valuev(),
+			// 			 grainHeatPerSizev - grainPhotoPerSizev);
+
+			const Array& h2FormationHeatv = GasGrain::surfaceH2FormationHeatPerSize(
+			                pop, s.T, s.speciesNv[_inH]);
 			pop.calculateTemperature(s.specificIntensity.frequencyv(),
-						 s.specificIntensity.valuev(),
-						 grainHeatPerSizev - grainPhotoPerSizev);
+			                         s.specificIntensity.valuev(),
+			                         h2FormationHeatv);
 		}
 	}
 }
@@ -477,8 +483,6 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		// Currently, the implementation without molecules does not need iteration.
 		stopCriterion = !_molecular || allQuantitiesConverged ||
 		                counter > MAXCHEMISTRYITERATIONS;
-
-		updateGrainTemps(s, gi);
 	}
 	return s;
 }
@@ -599,8 +603,9 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 	double nH = s.speciesNv[_inH];
 	double nH2 = s.speciesNv[_inH2];
 	GrainPhotoelectricEffect::Environment env(
-		s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np, nH, nH2},
-		{Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
+	                s.specificIntensity, s.T, ne, np, {-1, 1}, {ne, np, nH, nH2},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
+	                 2 * Constant::HMASS_CGS});
 	size_t numPop = g.numPopulations();
 	for (size_t i = 0; i < numPop; i++)
 	{
@@ -619,14 +624,17 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 				const Array& qAbsv = pop->qAbsv(m);
 				double nd = pop->density(m);
 				auto cd = gpe.calculateChargeDistribution(a, env, qAbsv);
-				grainPhotoelectricHeating += nd * gpe.heatingRateA(a, env, qAbsv, cd);
-				gasGrainCooling += nd * gpe.gasGrainCollisionCooling(a, env, cd, pop->temperature(m), false);
+				grainPhotoelectricHeating +=
+				                nd * gpe.heatingRateA(a, env, qAbsv, cd);
+				gasGrainCooling += nd * gpe.gasGrainCollisionCooling(
+				                                        a, env, cd,
+				                                        pop->temperature(m),
+				                                        false);
 			}
 		}
 	}
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
-
 
 double GasInterfaceImpl::lineCooling(const Solution& s) const
 {

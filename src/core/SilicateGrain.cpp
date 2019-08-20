@@ -1,10 +1,12 @@
 #include "SilicateGrain.h"
 #include "Constants.h"
+#include "GasGrainInteraction.h"
 #include "WeingartnerDraine2001.h"
 
 SilicateGrain::SilicateGrain()
-                : GrainType({320, 110, 450, 30000, 14.4, 3e12, 1.3e13, 1e-10}, true,
-                            8 / Constant::ERG_EV)
+                : GrainType(GasModule::GrainTypeLabel::SIL, GasGrain::silSurface,
+                            GasGrain::grainHeatingPerH2Formed_sil, true,
+                            WD01::workFunction(false))
 {
 }
 

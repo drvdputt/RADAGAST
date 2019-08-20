@@ -90,7 +90,11 @@ public:
 	Solution solveTemperature(double n, double Tinit, const Spectrum& specificIntensity,
 	                          const GasModule::GrainInterface&) const;
 
-	/** Temporary way to take into account collisional heating of the grains */
+	/** Calculate several extra contributions to the heating of the grains (collisions
+	    (Draine and Bertoldi 1996), H2 formation on the surface (Takahashi 2001). Passing
+	    some intermediary results of either the H2 level calculation or the grain
+	    photoelectric effect calculation might help in speeding up this computation, as well
+	    as using caching for the radiation emitted by the grains. */
 	void updateGrainTemps(const Solution& s, const GasModule::GrainInterface&) const;
 
 	/** Distills the solution object into the necessary information to retrieve opacity and

@@ -4,10 +4,11 @@
 #include "Error.h"
 #include "SilicateGrain.h"
 
-GrainType::GrainType(const GasModule::SfcInteractionPar& sfcInteractionPar,
+GrainType::GrainType(GasModule::GrainTypeLabel l,
+                     const GasModule::SfcInteractionPar& sfcInteractionPar, double heatPerH2,
                      bool heatingAvailable, double workFunction)
-                : _sfcInteractionPar(sfcInteractionPar), _heatingAvailable(heatingAvailable),
-                  _workFunction(workFunction)
+                : _label(l), _sfcInteractionPar(sfcInteractionPar), _heatPerH2(heatPerH2),
+                  _heatingAvailable(heatingAvailable), _workFunction(workFunction)
 {
 }
 

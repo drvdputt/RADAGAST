@@ -104,8 +104,8 @@ public:
 		/** Recalculate the temperature for each size, by finding the temperature for
 		    which < blackbody * kappa > = < radiation field * kappa > + extra heat (such
 		    as collisional, needs to be given for each size). Some things can probably
-		    be cached should this be slow. No idea how something like this could be
-		    achieved in SKIRT, if stochastic heating still needs to work. */
+		    be cached should this be slow. No idea how to handle this if stochastic
+		    heating still needs to work. */
 		void calculateTemperature(std::valarray<double> frequencyv,
 		                          std::valarray<double> specificIntensityv,
 		                          std::valarray<double> otherGrainHeat);

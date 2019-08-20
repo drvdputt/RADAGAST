@@ -9,13 +9,18 @@ class GrainType
 {
 protected:
 	/** Member values to be provided by the subclass constructor. */
-	GrainType(const GasModule::SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
-	          double workFunction);
+	GrainType(GasModule::GrainTypeLabel l,
+	          const GasModule::SfcInteractionPar& sfcInteractionPar, double heatPerH2,
+	          bool heatingAvailable, double workFunction);
 
 public:
 	virtual ~GrainType();
 
+	GasModule::GrainTypeLabel label() const { return _label; }
+
 	GasModule::SfcInteractionPar sfcInteractionPar() const { return _sfcInteractionPar; }
+
+	double heatPerH2() const { return _heatPerH2; };
 
 	bool heatingAvailable() const { return _heatingAvailable; }
 

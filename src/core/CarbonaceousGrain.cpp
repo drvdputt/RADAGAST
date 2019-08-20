@@ -1,10 +1,12 @@
 #include "CarbonaceousGrain.h"
 #include "Constants.h"
+#include "GasGrainInteraction.h"
 #include "WeingartnerDraine2001.h"
 
 CarbonaceousGrain::CarbonaceousGrain()
-                : GrainType({520, 260, 800, 30000, 14, 3e12, 1.3e13, 1e-10}, true,
-                            4.4 / Constant::ERG_EV)
+                : GrainType(GasModule::GrainTypeLabel::CAR, GasGrain::carSurface,
+                            GasGrain::grainHeatingPerH2Formed_car, true,
+                            WD01::workFunction(true))
 {
 }
 
