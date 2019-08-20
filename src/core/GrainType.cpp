@@ -1,7 +1,6 @@
 #include "GrainType.h"
 #include "CarbonaceousGrain.h"
 #include "Constants.h"
-#include "CustomGrain.h"
 #include "Error.h"
 #include "SilicateGrain.h"
 
@@ -25,17 +24,4 @@ std::unique_ptr<GrainType> GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLab
 		Error::runtime("Only CAR and SIL have built-in grain properties.");
 		return nullptr;
 	}
-}
-
-std::unique_ptr<GrainType>
-GrainTypeFactory::makeCustom(const GasModule::SfcInteractionPar& sfcInteractionPar,
-                             bool heatingAvailable, double workFunction,
-                             GasModule::IonizationPotentialf ionizationPotentialf,
-                             GasModule::PhotoelectricYieldf photoelectricYieldf,
-                             GasModule::AutoIonizationThresholdf autoIonizationThresholdf,
-                             GasModule::StickingCoefficientf stickingCoefficientf)
-{
-	return std::make_unique<CustomGrain>(sfcInteractionPar, heatingAvailable, workFunction,
-	                                     ionizationPotentialf, photoelectricYieldf,
-	                                     autoIonizationThresholdf, stickingCoefficientf);
 }

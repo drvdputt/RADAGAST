@@ -30,25 +30,23 @@ public:
 	virtual double stickingCoefficient(double a, int z, int z_i) const = 0;
 
 private:
+	GasModule::GrainTypeLabel _label;
 	GasModule::SfcInteractionPar _sfcInteractionPar;
+	double _heatPerH2;
 	bool _heatingAvailable;
 	double _workFunction;
 };
 
-/** Factory which can create either a custom grain type, or on of the builtins, given a valid value
-    for the enum (this is enforced at compile-time though, thanks to the use of enum class. */
+/** Factory which can create one of the builtins, given a valid value for the enum. I used to
+    have a method for custom grain types too, but have removed this code because it was getting
+    too complicated to be used by anyone. The machinery to do something similar will stay in
+    place, but I recommend writing more ad-hoc code like the CarbonaceousGrain subclass instead
+    of trying anything fully general. */
 class GrainTypeFactory
 {
 public:
 	/** Factory method for subclasses. */
 	static std::unique_ptr<GrainType> makeBuiltin(GasModule::GrainTypeLabel t);
-
-	static std::unique_ptr<GrainType>
-	makeCustom(const GasModule::SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
-	           double workFunction, GasModule::IonizationPotentialf ionizationPotentialf,
-	           GasModule::PhotoelectricYieldf photoelectricYieldf,
-	           GasModule::AutoIonizationThresholdf autoIonizationThresholdf,
-	           GasModule::StickingCoefficientf stickingCoefficientf);
 };
 
 #endif /* GASMODULE_GIT_SRC_BUILTINGRAINTYPE_H_ */

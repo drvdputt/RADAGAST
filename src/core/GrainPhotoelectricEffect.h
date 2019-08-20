@@ -21,8 +21,7 @@ public:
 	GrainType subclasses. The \c SilicateGrain and \c CarbonaceousGrain types are 'native'
 	to this recipe, i.e. their implementations are also based on formulae from WD01. With
 	some optimism, it should be possible to use this recipe for other types of grains, if
-	the right functions and properties (yield, ionization potentials, etc.) are provided.
-	For this purpose, the \c GrainType subclass \c CustomGrain can be used. */
+	the right functions and properties (yield, ionization potentials, etc.) are provided. */
 	GrainPhotoelectricEffect(const GrainType& grainType);
 
 public:

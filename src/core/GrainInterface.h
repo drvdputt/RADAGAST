@@ -40,11 +40,12 @@ typedef std::function<double(double a)> AutoIonizationThresholdf;
 /** Function signature for custom sticking coefficient. */
 typedef std::function<double(double a, int Z, double z_i)> StickingCoefficientf;
 
-/** List of grain types which have built-in values for these properties. */
+/** List of grain types which have built-in values for these properties. For anything else, a
+    separate graintype subclass will have to be written */
 enum class GrainTypeLabel
 {
 	CAR,
-	SIL
+	SIL,
 };
 
 /** Class that a client code should use to pass the grain properties in a cell. This class
@@ -71,24 +72,11 @@ public:
 	public:
 		/** For CAR or SIL grain type. The built-in values for some of the quantities
 		    for h2 formation and the photoelectric effect will be used. Remember to use
-		    move construction, because of the unique_ptr member. TODO: make this more
-		    elegant or something. Not using a move constructor will not compile. This is
-		    something I should ask peter about. */
+		    move construction, because of the unique_ptr member. */
 		Population(GrainTypeLabel type, const std::valarray<double>& sizev,
 		           const std::valarray<double>& densityv,
 		           const std::valarray<double>& temperaturev,
 		           const std::vector<std::valarray<double>>& qAbsvv);
-
-		/** For custom grain types. Some lambda functions need to be provided. */
-		Population(const std::valarray<double>& sizev,
-		           const std::valarray<double>& densityv,
-		           const std::valarray<double>& temperaturev,
-		           const std::vector<std::valarray<double>>& qAbsvv,
-		           const SfcInteractionPar& sfcInteractionPar, bool heatingAvailable,
-		           double workFunction, IonizationPotentialf ionizationPotentialf,
-		           PhotoelectricYieldf photoElectricYieldf,
-		           AutoIonizationThresholdf autoIonizationThresholdf,
-		           StickingCoefficientf stickingCoefficientf);
 
 		/** Undelete the move constructor (needed to be able to put these objects into a
 		    vector std::vector) */
