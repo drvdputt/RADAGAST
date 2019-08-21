@@ -1,6 +1,7 @@
 #include "GrainInterface.h"
 #include "Array.h"
 #include "Constants.h"
+#include "DebugMacros.h"
 #include "Error.h"
 #include "GrainType.h"
 #include "SpecialFunctions.h"
@@ -73,7 +74,7 @@ void GrainInterface::Population::calculateTemperature(std::valarray<double> freq
 		};
 		_temperaturev[i] = TemplatedUtils::binaryIntervalSearch<double>(heating, 30.,
 		                                                                1.e-3, 300, 1.);
-		std::cout << "New temp for grain " << i << " " << _temperaturev[i] << " K\n";
+		DEBUG("New temp for grain " << i << " " << _temperaturev[i] << " K\n");
 	}
 }
 
