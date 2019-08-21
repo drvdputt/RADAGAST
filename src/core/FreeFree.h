@@ -52,7 +52,7 @@ public:
 
 	/** Calculate the heating due to direct absorption of photons the free electrons moving
 	    in the field of the free protons. */
-	double heating(double np_ne, double T, const Spectrum& specificIntensityv) const;
+	double heating(double np_ne, double T, const Spectrum& specificIntensity) const;
 
 	/** Calculate the cooling due to Bremsstrahlung, given the product of the electron and
 	    proton densities, and their kinetic temperature. */

@@ -233,7 +233,9 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 	if (!gd)
 		Error::runtime("GasDiagnostics is nullptr!");
 
-	gd->setPhotoelectricHeating(Array({grainHeating(s, gri)}));
+	// I need this per grain size. Doing this thing for now.
+	double totalGrainHeat = grainHeating(s, gri);
+	gd->setPhotoelectricHeating(Array({totalGrainHeat}));
 
 	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
 	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution,
@@ -252,14 +254,25 @@ void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
 		gd->setH2Populations(Array(s.H2Solution.nv.data(), s.H2Solution.nv.size()));
 	}
 
+	double netHline = _atomicLevels->netheating(s.HSolution);
+	double netH2line = _molecular ? _molecular->netheating(s.H2Solution) : 0;
+
 	gd->setHeating("H ion", Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
 	                                            s.specificIntensity));
-	gd->setHeating("H deexc", _atomicLevels->heating(s.HSolution));
-	gd->setHeating("H2 deexc", _molecular ? _molecular->heating(s.H2Solution) : 0);
+	gd->setCooling("Hrec", Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp),
+	                                           s.speciesNv(_ine), s.T));
+	gd->setHeating("H deexc", netHline);
+	gd->setCooling("H exc", -netHline);
+
+	gd->setHeating("H2 deexc", netH2line);
+	gd->setCooling("H2 exc", -netH2line);
 	gd->setHeating("H2 dissoc",
 	               _molecular ? _molecular->dissociationHeating(s.H2Solution,
 	                                                            s.specificIntensity)
 	                          : 0);
+	gd->setHeating("total grainphoto", totalGrainHeat);
+	gd->setHeating("freefree", _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity));
+	gd->setCooling("freefree", _freeFree->cooling(np(s) * ne(s), s.T));
 }
 
 GasInterfaceImpl::Solution

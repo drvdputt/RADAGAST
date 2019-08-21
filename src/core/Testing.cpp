@@ -991,6 +991,24 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 	return grainInterface;
 }
 
+namespace {
+	/** writes out a map as a single line column file, where the keys are the column names */
+	void writeMapAsColumnFile(string filename, const map<string, double>& map)
+	{
+		vector<string> namev;
+		vector<double> valuev;
+		namev.reserve(map.size());
+		valuev.reserve(map.size());
+		for (auto const& item : map)
+		{
+			namev.emplace_back(item.first);
+			valuev.emplace_back(item.second);
+		}
+		ColumnFile f(filename, namev);
+		f.writeLine(valuev);
+	}
+}
+
 void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool own_dir)
 {
 	cout << "RUN_MRN_DUST\n";
@@ -1051,8 +1069,8 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		ColumnFile rates(prefix + "rates.dat", gd.reactionNames());
 		rates.writeLine(gd.reactionRates());
 
-		for (const auto& entry : gd.otherHeating())
-			cout << entry.first << " heat = " << entry.second << '\n';
+		writeMapAsColumnFile(prefix + "heat.dat", gd.otherHeating());
+		writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
 
 		if (own_dir)
 		{
