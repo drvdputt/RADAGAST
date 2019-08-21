@@ -1012,6 +1012,7 @@ namespace {
 void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool own_dir)
 {
 	cout << "RUN_MRN_DUST\n";
+	cout << "Parameters: nH " << nH << " Tc " << Tc << " lum " << lumSol << '\n';
 
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
