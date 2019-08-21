@@ -100,8 +100,7 @@ public:
 	/** Distills the solution object into the necessary information to retrieve opacity and
 	    emissivity. Grids on which the opacity and emissivity will be discretized (before
 	    being stored in the gas state) need to be provided. */
-	GasModule::GasState makeGasStateFromSolution(const Solution&,
-	                                             const Array& oFrequencyv,
+	GasModule::GasState makeGasStateFromSolution(const Solution&, const Array& oFrequencyv,
 	                                             const Array& eFrequencyv) const;
 
 	/** Copies some values from the Solution, or recalculates them, and puts these in the
@@ -164,7 +163,6 @@ public:
 	{
 		return s.speciesNv(_inp) / (s.speciesNv(_inH) + 2 * s.speciesNv(_inH2));
 	}
-	
 
 private:
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]

@@ -573,7 +573,7 @@ double GasInterfaceImpl::cooling(const Solution& s) const
 	double freefreeCool = _freeFree->cooling(np(s) * ne(s), s.T);
 
 	double hRecCool = Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp),
-	                                    s.speciesNv(_ine), s.T);
+	                                      s.speciesNv(_ine), s.T);
 
 	double h2dissCool = 0.;
 	if (_molecular)
@@ -598,16 +598,14 @@ double GasInterfaceImpl::heating(const Solution& s) const
 	double freefreeHeat = _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity);
 
 	double hPhotoIonHeat = Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
-	                              s.specificIntensity);
+	                                           s.specificIntensity);
 
 	double dissHeat = 0.;
 	if (_molecular)
-		dissHeat = _molecular->dissociationHeating(s.H2Solution,
-		                                                  s.specificIntensity);
+		dissHeat = _molecular->dissociationHeating(s.H2Solution, s.specificIntensity);
 
 	return lineHeat + freefreeHeat + hPhotoIonHeat + dissHeat;
 }
-
 
 double GasInterfaceImpl::grainHeating(const Solution& s,
                                       const GasModule::GrainInterface& g) const
@@ -653,4 +651,3 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 	}
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
-
