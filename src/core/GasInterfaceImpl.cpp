@@ -655,10 +655,10 @@ double GasInterfaceImpl::grainHeating(const Solution& s,
 				auto cd = gpe.calculateChargeDistribution(a, env, qAbsv);
 				grainPhotoelectricHeating +=
 				                nd * gpe.heatingRateA(a, env, qAbsv, cd);
-				gasGrainCooling += nd * gpe.gasGrainCollisionCooling(
-				                                        a, env, cd,
-				                                        pop->temperature(m),
-				                                        false);
+				// gasGrainCooling += nd * gpe.gasGrainCollisionCooling(
+				//                                         a, env, cd,
+				//                                         pop->temperature(m),
+				//                                         false);
 			}
 		}
 	}
