@@ -590,9 +590,7 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	gi.fillGasDiagnosticsFromSolution(s, gri, &gd);
 
 	ColumnFile heatFile(outputPath + "heatcool.dat",
-	                    {"temperature", "net", "heat", "cool", "linenet", "lineheat",
-	                     "linecool", "continuumnet", "continuumheat", "continuumcool",
-	                     "grainheat"});
+	                    {"temperature", "net", "heat", "cool", "grainheat"});
 	ColumnFile densFile(outputPath + "densities.dat",
 	                    {"temperature", "e-", "H+", "H", "H2", "Htot"});
 
@@ -612,16 +610,9 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 		double heat = gi.heating(s);
 		double cool = gi.cooling(s);
-		double lHeat = gi.lineHeating(s);
-		double lCool = gi.lineCooling(s);
-		double cHeat = gi.continuumHeating(s);
-		double cCool = gi.continuumCooling(s);
-		double netHeating = heat - cool;
-		double netLine = lHeat - lCool;
-		double netCont = cHeat - cCool;
 		double grainHeat = gd.photoelectricHeating().sum();
-		heatFile.writeLine<Array>({t, netHeating, heat, cool, netLine, lHeat, lCool,
-		                           netCont, cHeat, cCool, grainHeat});
+		double netHeating = heat - cool + grainHeat;
+		heatFile.writeLine<Array>({t, netHeating, heat, cool, grainHeat});
 
 		densFileLine[0] = t;
 		double totalH = 0;

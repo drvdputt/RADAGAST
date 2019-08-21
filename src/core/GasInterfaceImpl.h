@@ -140,51 +140,32 @@ public:
 
 	Array ionizationOpacityv(const Solution&, const Array& eFrequencyv) const;
 
-	///////////////////////////////////////
-	// HEATING AND COOLING CONTRIBUTIONS //
-	///////////////////////////////////////
-
-	/** The total bolometric emission, in erg / s / cm^3, obtained by integrating the
-	    emissivity. */
+	/** Total cooling */
 	double cooling(const Solution&) const;
 
 	/** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
 	double heating(const Solution&, const GasModule::GrainInterface&) const;
 
-	/** Total heating sans grains. */
+	/** The heating by everything but the grains (relatively cheap) */
 	double heating(const Solution&) const;
 
-	/** The heating by the grains only. */
+	/** The heating by the grains only (expensive to calculate) */
 	double grainHeating(const Solution&, const GasModule::GrainInterface&) const;
+	/**@}*/
 
-	/** The cooling by the lines only. */
-	double lineCooling(const Solution&) const;
-
-	/** The heating by the lines only. */
-	double lineHeating(const Solution&) const;
-
-	/** The cooling by recombination + free-free continuum */
-	double continuumCooling(const Solution&) const;
-
-	/** The heating by processes involving the continuum [erg / s / cm3]. */
-	double continuumHeating(const Solution&) const;
-
-	/** The product of the proton and electron density. By putting this in a function,
-	    refactoring the way the densities are stored will be easier, should it happen in the
-	    future. */
-	inline double np_ne(const Solution& s) const
-	{
-		return s.speciesNv(_ine) * s.speciesNv(_inp);
-	}
+	/** Easy access for some frequently used quantities */
+	inline double nH(const Solution& s) const { return s.speciesNv[_inH]; }
+	inline double nH2(const Solution& s) const { return s.speciesNv[_inH2]; }
+	inline double np(const Solution& s) const { return s.speciesNv[_inp]; }
+	inline double ne(const Solution& s) const { return s.speciesNv[_ine]; }
 
 	/** Expression for the ionized fraction. */
 	inline double f(const Solution& s) const
 	{
 		return s.speciesNv(_inp) / (s.speciesNv(_inH) + 2 * s.speciesNv(_inH2));
 	}
+	
 
-	inline double nAtomic(const Solution& s) const { return s.speciesNv[_inH]; }
-	/**@}*/
 private:
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]
 	int _ine, _inp, _inH, _inH2;
