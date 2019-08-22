@@ -85,11 +85,11 @@ def main():
         rate_gasmod[:, i] = br.gasmodule.get_h2_rates()
 
     plot_curves(temp_curve, temp_cloudy, temp_gasmod,
-                'temperature (K)', 'temperature.pdf')
+                'temperature (K)', args.prefix + 'temperature.pdf')
     plot_curves(dens_curves, dens_cloudy, dens_gasmod,
-                'density (cm-3)', 'density.pdf')
+                'density (cm-3)', args.prefix + 'density.pdf')
     plot_curves(rate_curves, rate_cloudy,
-                rate_gasmod, 'rate (s-1)', 'rate.pdf')
+                rate_gasmod, 'rate (s-1)', args.prefix + 'rate.pdf')
 
     # one curve per dir
     # _________________
