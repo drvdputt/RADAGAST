@@ -10,6 +10,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('dirs', nargs='+')
     ap.add_argument('-x', default='nh')
+    ap.add_argument('-prefix', default='')
     args = ap.parse_args()
 
     if args.x == 'nh':
@@ -31,7 +32,7 @@ def main():
         curves_array = np.zeros((num_curves, len(dirs)))
         return curves_array, curves_array.copy()
 
-    def plot_curves(labels, data_cloudy, data_gasmod, ylabel='value', fn='curves.pdf'):
+    def plot_curves(labels, data_cloudy, data_gasmod, ylabel='value', fn=args.prefix + 'curves.pdf'):
         fig, axs = plt.subplots(2, 1, sharex=True)
         for i in range(len(labels)):
             lc = axs[0].plot(x, data_cloudy[i],
@@ -111,7 +112,7 @@ def main():
     plt.ylim(bottom=1e-30, top=max(y) * 1.1)
     plt.xlim(left=1e-2, right=3e5)
     plt.gcf().legend()
-    plt.savefig('emission.pdf')
+    plt.savefig(args.prefix + 'emission.pdf')
 
     # populations
 #    plt.figure()
@@ -150,7 +151,7 @@ def main():
     axs[0][0].set_title('H')
     axs[0][1].set_title('H2')
 
-    plt.savefig('populations.pdf')
+    plt.savefig(args.prefix + 'populations.pdf')
 
 
 if __name__ == '__main__':
