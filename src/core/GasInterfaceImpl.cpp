@@ -194,7 +194,7 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 
 		pop.calculateTemperature(
 		                s.specificIntensity.frequencyv(), s.specificIntensity.valuev(),
-		                grainHeatPerSizev - grainPhotoPerSizev + h2FormationHeatv);
+		                grainHeatPerSizev + h2FormationHeatv);
 	}
 }
 
