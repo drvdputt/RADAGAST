@@ -16,7 +16,7 @@ double ChargeDistribution::sumOverCharge(std::function<double(int z)> functionOf
 	{
 		if (!std::isfinite(_fz[i]))
 			Error::runtime("nan in charge distribution");
-		sum += functionOfZ(_zmin + i);
+		sum += _fz[i] * functionOfZ(_zmin + i);
 	}
 	return sum;
 }
