@@ -152,7 +152,7 @@ public:
 	    collisions with the grains. Calculated together for efficiency. Optionally returns
 	    the individual constributions through the pointer arguments. */
 	double grainHeating(const Solution&, const GasModule::GrainInterface&,
-			    double* photoHeat = nullptr, double* collCool = nullptr) const;
+	                    double* photoHeat = nullptr, double* collCool = nullptr) const;
 	/**@}*/
 
 	/** Easy access for some frequently used quantities */
