@@ -64,8 +64,13 @@ save chemistry rates creation "h2creation.out" "H2" last
 save h2 rates "h2rates.out" last
 save h2 populations "h2populations.frac.out" last
 # h output
+save chemistry rates destruction "hdestruction.out" "H" coef last
+save chemistry rates creation "hcreation.out" "H" last
 save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
 save hydrogen populations "hpopulations.cm-3.out" last
 save recombination coefficients "recombination.out" last
+# h+ output
+save chemistry rates destruction "pdestruction.out" "H+" coef last
+save chemistry rates creation "pcreation.out" "H+" last
 # case A no photoionization
 iterate to convergence
