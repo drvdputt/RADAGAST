@@ -103,8 +103,8 @@ GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
 
 	else
 	{
-		const double Tmax = 1000000.;
-		const double Tmin = 10;
+		const double Tmax = 100000.;
+		const double Tmin = 1.;
 		double logTmax = log10(Tmax);
 		const double logTmin = log10(Tmin);
 		const double logTtolerance = 1.e-3;
