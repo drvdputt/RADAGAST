@@ -12,7 +12,7 @@ output_dir.mkdir(exist_ok=True)
 
 densities = [1.e2, 1.e3, 1.e4, 1.e5]
 color_temperatures = [7.5e3, 1.5e4, 3.0e4]
-luminosities = [10., 100., 1.e3, 1.e4]
+luminosities = [1., 10., 100., 1.e3, 1.e4]
 
 # load cloudy input file template as one big string, and fill in the
 # values in curly brackest by treating it as a format string
