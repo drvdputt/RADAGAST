@@ -8,7 +8,7 @@
 
 TEST_CASE("H2-specific algorithm")
 {
-	H2FromFiles hff(15, 3);
+	H2FromFiles hff(99, 99);
 	EVector ev = hff.ev();
 	H2Levels h2l(std::make_shared<const H2FromFiles>(hff));
 
@@ -36,7 +36,7 @@ TEST_CASE("H2-specific algorithm")
 		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
 
 		// This test seems to work reasonably for the first three levels
-		for (size_t i = 0; i < std::min<int>(3, s0.nv.size()); i++)
+		for (size_t i = 0; i < std::min<int>(16, s0.nv.size()); i++)
 			DoctestUtils::checkTolerance("level " + std::to_string(i) +
 			                                             " from solver vs LTE",
 			                             s0.nv(i), sLTE.nv(i), epsFrac);
@@ -49,8 +49,8 @@ TEST_CASE("H2-specific algorithm")
 
 	SUBCASE("no radiation, low density, should go to ground state")
 	{
-		double n = 1e-12;
-		double eps = 1e-12;
+		double n = 1e-15;
+		double eps = 1e-2;
 
 		speciesNv(SpeciesIndex::ine()) = 0;
 		speciesNv(SpeciesIndex::inp()) = 0;
@@ -63,7 +63,7 @@ TEST_CASE("H2-specific algorithm")
 		EVector nv = s0.nv;
 
 		// Check if some individual levels are indeed close to 0
-		for (size_t i = 2; i < std::min<int>(5, nv.size()); i++)
+		for (size_t i = 2; i < std::min<int>(16, nv.size()); i++)
 			DoctestUtils::checkRange("level " + std::to_string(i), nv(i), 0,
 			                         n * eps);
 
@@ -96,7 +96,7 @@ TEST_CASE("H2-specific algorithm")
 
 		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
 		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
-		for (size_t i = 0; i < std::min<int>(4, s0.nv.size()); i++)
+		for (size_t i = 0; i < std::min<int>(16, s0.nv.size()); i++)
 			DoctestUtils::checkTolerance("level pop vs LTE", s0.nv(i), sLTE.nv(i),
 			                             epsFrac, true);
 
