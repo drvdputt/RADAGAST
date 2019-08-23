@@ -63,8 +63,6 @@ private:
 	/** Sink term due to the spontaneous dissociation rate. [s-1] */
 	EVector spontaneousDissociationSinkv() const;
 
-	EVector formationDistribution() const;
-
 private:
 	std::shared_ptr<const H2FromFiles> _hff;
 
