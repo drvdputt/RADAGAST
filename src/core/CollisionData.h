@@ -43,9 +43,8 @@ public:
 	    error if something's off with the map or the transition list. */
 	void check() const;
 
-	/* GETTERS. Pick whichever you find most useful. Seems like a have a little
-	   bi-directional map thing going on. Having this generalized might be handy in the
-	   future. */
+	/* GETTERS. Pick whichever you find most useful. Seems like I a have a bi-directional
+	   map thing going on. Having this generalized might be handy in the future. */
 
 	/** Get the temperature vector */
 	Array temperaturev() const { return _temperaturev; }

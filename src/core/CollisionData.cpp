@@ -8,6 +8,11 @@ void CollisionData::prepare(const Array& temperaturev, size_t numTransitions)
 {
 	_temperaturev = temperaturev;
 	_qvv = EMatrix::Zero(temperaturev.size(), numTransitions);
+
+	// This is usually not necessary, since in recommended use, prepare is only called on a
+	// freshly constructed instance. But just in case.
+	_transitionToColm.clear();
+	_transitionv.clear();
 }
 
 void CollisionData::insertDataForTransition(const Array& qForEachTv, int i, int f)
