@@ -138,7 +138,7 @@ def main():
         lc = axs[0][1].semilogy(range(len(y2c)), y2c, color=color)
 
         y2g = br.gasmodule.get_h2_populations()
-        axs[0][1].semilogy(range(len(y2g)), y2g, color=color, ls='dashed')
+        axs[0][1].semilogy(range(len(y2c)), y2g[:len(y2c)], color=color, ls='dashed')
 
         max_h2_level = min(len(y2c), len(y2g))
         axs[1][1].semilogy(range(max_h2_level),
