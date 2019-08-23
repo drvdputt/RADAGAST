@@ -106,15 +106,18 @@ void H2FromFiles::readDissProbs()
 
 void H2FromFiles::readCollisions()
 {
+	_qdataPerPartner.resize(_numPartners);
+	_hasQdata.resize(_numPartners, EMatrix_bool::Zero(_numL, _numL));
+
 	// Collisions with H, from Lique 2015
-	_qH = readCollisionFile("dat/h2/coll_rates_H_15.dat");
+	readCollisionFile("dat/h2/coll_rates_H_15.dat", H0);
 
 	// Collision rates with H2, from Lee 2008
-	_qH2ortho = readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat");
-	_qH2para = readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat");
+	readCollisionFile("dat/h2/coll_rates_H2ortho_ORNL.dat", H2ORTHO);
+	readCollisionFile("dat/h2/coll_rates_H2para_ORNL.dat", H2PARA);
 
 	// Collision rates with H+, from Gerlich 1990
-	_qp = readCollisionFile("dat/h2/coll_rates_Hp.dat");
+	readCollisionFile("dat/h2/coll_rates_Hp.dat", HPLUS);
 }
 
 void H2FromFiles::readDirectDissociation()
@@ -208,10 +211,6 @@ void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
 			string word1, word2;
 			iss >> word1 >> word2;
 			continue; // Do not read the 'extra' levels to better match with cloudy
-			// If the comment is anything else than "#extra data", we will skip this
-			// line
-			// if (word1 != "#extra" || word2 != "data")
-				// continue;
 		}
 		int v, j;
 		iss >> v >> j;
