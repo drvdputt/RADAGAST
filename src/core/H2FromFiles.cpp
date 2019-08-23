@@ -306,7 +306,7 @@ void H2FromFiles::readDissProbFile(const string& repoFile, ElectronicState eStat
 	DEBUG("Read in " << counter << " dissociation rates from " << repoFile << endl);
 }
 
-CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
+void H2FromFiles::readCollisionFile(const string& repoFile, CollisionPartner iPartner)
 {
 	ifstream coll_rates = IOTools::ifstreamRepoFile(repoFile);
 
@@ -360,14 +360,15 @@ CollisionData H2FromFiles::readCollisionFile(const string& repoFile) const
 	}
 
 	size_t numTransitions = qvv.size();
-	CollisionData qData;
-	qData.prepare(temperaturev, numTransitions);
+	_qdataPerPartner[iPartner].prepare(temperaturev, numTransitions);
 	for (size_t t = 0; t < numTransitions; t++)
-		qData.insertDataForTransition(qvv[t], iv[t], fv[t]);
-	qData.check();
-	DEBUG("Read in " << qData.transitionv().size() << " collision coefficients from "
-	                 << repoFile << endl);
-	return qData;
+	{
+		_qdataPerPartner[iPartner].insertDataForTransition(qvv[t], iv[t], fv[t]);
+		_hasQdata[iPartner](iv[t], fv[t]) = true;
+	}
+	_qdataPerPartner[iPartner].check();
+	DEBUG("Read in " << _qdataPerPartner[iPartner].transitionv().size()
+	                 << " collision coefficients from " << repoFile << endl);
 }
 
 EVector H2FromFiles::ev() const
@@ -397,20 +398,20 @@ EMatrix H2FromFiles::cvv(const GasStruct& gas) const
 
 	// H-H2 collisions
 	double nH = gas._speciesNv(_inH);
-	addToCvv(the_cvv, _qH, T, nH);
+	addToCvv(the_cvv, T, H0, nH);
 
 	// TODO: (optional?) g-bar approximation for missing coefficients
 
 	// H2-H2 collisions.
 	double nH2 = gas._speciesNv(_inH2);
-	addToCvv(the_cvv, _qH2ortho, T, gas._orthoH2 * nH2);
-	addToCvv(the_cvv, _qH2para, T, (1. - gas._orthoH2) * nH2);
+	addToCvv(the_cvv, T, H2ORTHO, gas._orthoH2 * nH2);
+	addToCvv(the_cvv, T, H2PARA, (1. - gas._orthoH2) * nH2);
 
 	// TODO: test if these are loaded correctly (compare with graph in Lee paper)
 
 	// H+-H2 collisions
 	double np = gas._speciesNv(SpeciesIndex::inp());
-	addToCvv(the_cvv, _qp, T, np);
+	addToCvv(the_cvv, T, HPLUS, np);
 	return the_cvv;
 }
 
@@ -435,11 +436,13 @@ vector<Spectrum> H2FromFiles::directDissociationCrossSections(size_t index) cons
 
 bool H2FromFiles::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }
 
-void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,
+void H2FromFiles::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner,
                            double nPartner) const
 {
 	if (nPartner <= 0)
 		return;
+
+	const CollisionData& qdata = _qdataPerPartner[iPartner];
 
 	/* Find the grid point to the right of (>=) the requested log-temperature. (Returns last
 	   point if T > Tmax). We will naively extrapolate for points outside the range, and cut
@@ -466,13 +469,58 @@ void H2FromFiles::addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double 
 		// The levels involved in this transition
 		int i = transitionv[transitionIndex][0];
 		int f = transitionv[transitionIndex][1];
-		const H2Level& ini = _levelv[i];
-		const H2Level& fin = _levelv[f];
 		double Cif = q * nPartner;
-		double Cfi = Cif * ini.g() / fin.g() * exp((fin.e() - ini.e()) / kT);
 		the_cvv(i, f) += Cif;
-		the_cvv(f, i) += Cfi;
+		the_cvv(f, i) += otherDirectionC(Cif, i, f, kT);
 	}
+	addGBarCvv(the_cvv, kT, iPartner, nPartner);
+}
+
+void H2FromFiles::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
+                             double nPartner) const
+{
+	// We only do this for the electronic ground state, and only if the current collision
+	// coefficient is still zero at this point.
+	for (int i = 0; i < _startOfExcitedIndices; i++)
+	{
+		for (int j = i + 1; j < _startOfExcitedIndices; j++)
+		{
+			// If we already have data for this collision partner, skip
+			if (_hasQdata[iPartner](i, j))
+				continue;
+
+			// Determine which is upper and which is lower
+			int u, l;
+			if (_levelv[i].e() > _levelv[j].e())
+			{
+				u = i;
+				l = j;
+			}
+			else
+			{
+				u = j;
+				l = i;
+			}
+			// apply eq 1 from Shaw et al. 2005. sigma is transition energy in cm-1
+			double sigma = (_levelv[u].e() - _levelv[l].e()) /
+			               Constant::PLANCKLIGHT;
+			double y0 = _gbarcoll[iPartner][0];
+			double a = _gbarcoll[iPartner][1];
+			double b = _gbarcoll[iPartner][2];
+			double logk = y0 + a * pow(max(sigma, 100.), b);
+
+			double Cul = nPartner * pow(10., exp(logk));
+			the_cvv(u, l) += Cul;
+			the_cvv(l, u) += otherDirectionC(Cul, u, l, kT);
+		}
+	}
+}
+
+double H2FromFiles::otherDirectionC(double Cif, int i, int f, double kT) const
+{
+	double Cfi = Cif * _levelv[i].g() / static_cast<double>(_levelv[f].g()) *
+	             exp((_levelv[f].e() - _levelv[i].e()) / kT);
+	return Cfi;
 }
 
 EVector H2FromFiles::formationDistribution() const

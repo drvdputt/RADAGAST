@@ -62,14 +62,33 @@ private:
 	/** Load dissociation cross sections from Gay et al. (2012). */
 	void readDirectDissociation();
 
+	/** Read energy levels and quantum numbers from the given file, registers them in the
+	    index map. */
 	void readLevelFile(const std::string& repoFile, ElectronicState eState);
 
+	/** Load the radiative transition rates between the levels from the given file. To be
+	    used after al levels have been read in. */
 	void readTransProbFile(const std::string& repoFile, ElectronicState upperE,
 	                       ElectronicState lowerE);
 
+	/** Load the dissociation probabilities and kinetic energies from the given file. To be
+	    used after al levels have been read in. */
 	void readDissProbFile(const std::string& repoFile, ElectronicState eState);
 
-	CollisionData readCollisionFile(const std::string& repoFile) const;
+	// We don't have helium at this point, so leave it out. Don't forget to set numPartners
+	// if you change this enum.
+	enum CollisionPartner
+	{
+		H0 = 0,
+		/*He,*/ H2ORTHO,
+		H2PARA,
+		HPLUS
+	};
+	static const int _numPartners{4};
+
+	/** Load collision data and store it in the given CollisionData object. To be used after
+	    al levels have been read in. */
+	void readCollisionFile(const std::string& repoFile, CollisionPartner iPartner);
 
 private:
 	class H2Level
@@ -170,13 +189,44 @@ private:
 	    user. */
 	bool validJV(int J, int v) const;
 
+	/** Collisions between H and H2. Collisions between H2 (separate for ortho and para) and
+	    H2. Collisions between H+ and H2. Indexed according to the CollisionPartner enum. */
+	std::vector<CollisionData> _qdataPerPartner;
+
+	/** Keeps track for which transition we have collisional data, for each collision
+	    partner. */
+	std::vector<EMatrix_bool> _hasQdata;
+
+	/** Coefficients (y0, a, b) to be used on the formula log(k) = y0 + a * max(sigma,
+	    100)^b, for each of the 5 possible collision partners defined in the enum above. */
+	const double _gbarcoll[_numPartners][3] = {{-9.9265, -0.1048, 0.456},
+	                                           // {-8.281  , -0.1303 , 0.4931 },
+	                                           {-10.0357, -0.0243, 0.67},
+	                                           {-8.6213, -0.1004, 0.5291},
+	                                           {-9.2719, -0.0001, 1.0391}};
+
 	/** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i,
 	    f) and the_cvv(f, i) respectively. For each transition in the CollisionData object,
 	    q_if [cm3 s-1] is interpolated for the given temperature, and multiplied by the
 	    given partner density to obtain the Cif [s-1]. Cfi is calculated using @f$ C_{fi} =
-	    C_{if}\frac{g_i}{g_f}\exp(-h \nu_{if} / kT) @f$. */
-	void addToCvv(EMatrix& the_cvv, const CollisionData& qdata, double T,
+	    C_{if}\frac{g_i}{g_f}\exp(-h \nu_{if} / kT) @f$. Any missing collisional data are
+	    approximated with the g-bar coefficients (which do not depend on temperature by the
+	    way). */
+	void addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner,
 	              double nPartner) const;
+
+	/** Uses the g-bar approximation (same as Cloudy, see Shaw et al. 2005, eq. 1 and Table
+	    2) for the collision coefficients within X. This is a very rough approximation, but
+	    much better than just using 0 (personal communication with Peter van Hoof). The
+	    iPartner argument indicates which set of coefficients from Table 2 needs to be used,
+	    as a separate fit was made for each collision partner. See enum defined above.
+	    nPartner should be the density of this species. */
+	void addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
+	                double nPartner) const;
+
+	/** Returns the low-to-high collision coefficient Cfi, given the high to low coefficient
+	    Cif and the temperature kT. */
+	double otherDirectionC(double Cif, int i, int f, double kT) const;
 
 	int _maxJ, _maxV;
 
@@ -201,15 +251,6 @@ private:
 	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our
 	    map approach. */
 	EMatrix _avv;
-
-	/** Collisions between H and H2. */
-	CollisionData _qH;
-
-	/** Collisions between H2 and H2. */
-	CollisionData _qH2ortho, _qH2para;
-
-	/** Collision between H+ and H2. */
-	CollisionData _qp;
 
 	/** Dissociation probability for each level. [s-1] */
 	EVector _dissProbv;
