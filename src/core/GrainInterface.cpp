@@ -80,7 +80,7 @@ void GrainInterface::Population::calculateTemperature(std::valarray<double> freq
 	}
 }
 
-GrainInterface::GrainInterface() = default;
+GrainInterface::GrainInterface() : _populationv(std::make_unique<std::vector<Population>>()) {}
 
 GrainInterface::~GrainInterface() = default;
 
