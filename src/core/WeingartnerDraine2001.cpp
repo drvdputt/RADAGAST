@@ -48,12 +48,13 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
 	// For negatively charged grains, different expressions are used for car and sil
 	else if (carbonaceous)
 	{
-		ip_v += workFunction(carbonaceous) -
-		        e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
+		// WD01 eq 4 (using IP(Z < 0) = EA(Z + 1))
+		ip_v += workFunction(carbonaceous) - e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM);
 	}
 	else // if silicate
 	{
-		ip_v += 3 / Constant::ERG_EV; // WD01 eq 5
+		// WD01 eq 5 (using IP(Z < 0) = EA(Z + 1))
+		ip_v += 3 / Constant::ERG_EV;
 	}
 	return ip_v;
 }
