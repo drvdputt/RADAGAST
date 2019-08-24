@@ -94,7 +94,8 @@ public:
 	    the cooling of the gas (false), or the heating of the grain (true). In the latter
 	    case, it adds a term that takes into account the potential of the grain. */
 	double gasGrainCollisionCooling(double a, const Environment& env,
-	                                const ChargeDistribution& cd, double Tgrain, bool addGrainPotential) const;
+	                                const ChargeDistribution& cd, double Tgrain,
+	                                bool addGrainPotential) const;
 
 private:
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to

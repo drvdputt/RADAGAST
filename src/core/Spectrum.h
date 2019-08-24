@@ -34,11 +34,12 @@ public:
 	double average(double minFreq, double maxFreq) const;
 
 	/** Bin this spectrum onto another frequency grid. The argument given is a list of
-	frequencies, on which this spectrum should be discretized. Every value of the resulting
-	Array, is this spectrum averaged over a bin surrounding each frequency point given in
-	frequencyv. The bin edges are put halfway between the frequency points. The first and
-	last bin are special cases: they go from frequencyv[0] to the first intermediate point,
-	and from the last intermediate point to frequencyv[n-1]. */
+	    frequencies, on which this spectrum should be discretized. Every value of the
+	    resulting Array, is this spectrum averaged over a bin surrounding each frequency
+	    point given in frequencyv. The bin edges are put halfway between the frequency
+	    points. The first and last bin are special cases: they go from frequencyv[0] to the
+	    first intermediate point, and from the last intermediate point to
+	    frequencyv[n-1]. */
 	Array binned(Array frequencyv) const;
 
 	double freqMax() const { return _freqMax; }
