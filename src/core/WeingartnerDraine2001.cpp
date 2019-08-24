@@ -128,6 +128,10 @@ double WD01::yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceo
 	double beta2 = beta * beta;
 	double alpha2 = alpha * alpha;
 
+	/* TODO: expm1 is has a heavy weight in the yield calculation performance. I should
+	   cache these per grain size. However, As stated above, la might depend on the
+	   frequency in the future, so this might become harder than it seems. Of course,
+	   caching for each frequency and size should also be possible. */
 	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
 	            (beta2 - 2. * beta - 2. * expm1(-beta));
 
