@@ -14,7 +14,7 @@ double WD01::workFunction(bool carbonaceous)
 double WD01::eMin(double a, int Z)
 {
 // TODO: use this as a default instead. Before I can do that, the charge calculation algorithm
-// needs to be made more robust.
+// needs to be made more robust. Update: i forgot the factor ESQUARE. Maybe it will work now.
 // #define VANHOOF_EMIN
 #ifdef VANHOOF_EMIN
 	// replace by van Hoof (2004) eq 1
@@ -23,7 +23,7 @@ double WD01::eMin(double a, int Z)
 	else
 	{
 		double ksi{-static_cast<double>(Z) - 1};
-		return thetaKsi(ksi) *
+		return thetaKsi(ksi) * Constant::ESQUARE
 		       (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(ksi, -0.26));
 	}
 #else
