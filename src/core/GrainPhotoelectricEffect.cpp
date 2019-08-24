@@ -56,7 +56,7 @@ GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environmen
 		               "too"
 		               "small for the recipe used.");
 
-	// These two functions determine the up and down rates for the detailed balance 
+	// These two functions determine the up and down rates for the detailed balance
 
 	// The rate at which the grain moves out of charge Z, in the positive direction.
 	auto chargeUpRate = [&](int Z) -> double {
@@ -120,8 +120,11 @@ double GrainPhotoelectricEffect::rateIntegral(
 		pdIntegrandv.resize(numFreq);
 
 	Array hnuv = Constant::PLANCK * frequencyv;
-	for (size_t iFreq = 0; iFreq < numFreq; iFreq++)
+	for (size_t iFreq = numFreq; iFreq-- > 0;)
 	{
+		if (hnuv[iFreq] < hnu_pet && hnuv[iFreq] < hnu_pdt)
+			break;
+
 		// No contribution below the photoelectric threshold
 		double hnu = hnuv[iFreq];
 		if (hnu > hnu_pet)
@@ -324,7 +327,8 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 
 double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Environment& env,
                                                           const ChargeDistribution& cd,
-                                                          double Tgrain, bool addGrainPotential) const
+                                                          double Tgrain,
+                                                          bool addGrainPotential) const
 {
 	double kT = env._T * Constant::BOLTZMAN;
 	double kTgrain = Tgrain * Constant::BOLTZMAN;
