@@ -45,7 +45,7 @@ private:
 	    cross section. The given functions should take the parameters hnuDiff, Emin and Elow
 	    as defined in the body of rateIntegral. */
 	double rateIntegral(double a, int Z, double Emin, const Array& frequencyv,
-	                    const Array& Qabs, const Array& specificIntensityv,
+	                    const Array& Qabsv, const Array& specificIntensityv,
 	                    std::function<double(double hnuDiffpet, double Elow)> peFunction,
 	                    std::function<double(double hnuDiffpdt)> pdFunction) const;
 
@@ -79,14 +79,14 @@ public:
 
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
 	    obtain a charge distribution, and then RateAZ for every charge Z. */
-	double heatingRateA(double a, const Environment& env, const Array& Qabs,
+	double heatingRateA(double a, const Environment& env, const Array& Qabsv,
 	                    const ChargeDistribution& cd) const;
 
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
 	    wavelength. */
 	ChargeDistribution calculateChargeDistribution(double a, const Environment& env,
-	                                               const Array& Qabs) const;
+	                                               const Array& Qabsv) const;
 
 	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
 	    area [erg s-1 cm-2], so we need to multipy with the surface area per volume unit
@@ -94,7 +94,8 @@ public:
 	    the cooling of the gas (false), or the heating of the grain (true). In the latter
 	    case, it adds a term that takes into account the potential of the grain. */
 	double gasGrainCollisionCooling(double a, const Environment& env,
-	                                const ChargeDistribution& cd, double Tgrain, bool addGrainPotential) const;
+	                                const ChargeDistribution& cd, double Tgrain,
+	                                bool addGrainPotential) const;
 
 private:
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
@@ -103,12 +104,12 @@ private:
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */
-	double heatingRateAZ(double a, int Z, const Array& frequencyv, const Array& Qabs,
+	double heatingRateAZ(double a, int Z, const Array& frequencyv, const Array& Qabsv,
 	                     const Array& specificIntensityv) const;
 
 	/** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
 	    according to equation 25 of WD01. */
-	double emissionRate(double a, int Z, const Array& frequencyv, const Array& Qabs,
+	double emissionRate(double a, int Z, const Array& frequencyv, const Array& Qabsv,
 	                    const Array& specificIntensityv) const;
 
 	/** The rate [s-1] at which a grain is charged by colliding with other particles. Taken
@@ -121,6 +122,27 @@ private:
 	    I've disabled this for now, using the INCLUDERECCOOL macro. */
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const ChargeDistribution& cd) const;
+
+	/** Get the photoelectric and photodetachment thresholds. (Used by both the heating rate
+	    integral and number rate integral). */
+	void getPET_PDT_Emin(double a, double Z, double& pet, double& pdt, double& Emin) const;
+
+	/** Integrates over the radiation field, counting the number of absorptions per second,
+	    per projected grain area. f_hnuDiff can be any function of hnuDiff = (hnu - pet).
+	    Multiplying with yield will give the total photoelectric emission rate in electrons
+	    s-1 cm-2, while multiplying with the average energy and the yield will give the
+	    heating rate in erg s-1 cm-2. */
+	double photoelectricIntegrationLoop(
+	                const Array& frequencyv, const Array& Qabsv,
+	                const Array& specificIntensityv, double pet,
+	                const std::function<double(double hnuDiff)>* f_hnuDiff = nullptr) const;
+
+	/** Integration loop which applies equation 20 for the photodetachment cross section. Do
+	    not forget to multiply the result with abs(Z)! */
+	double
+	photodetachmentIntegrationLoop(int Z, const Array& frequencyv,
+	                               const Array& specificIntensityv, double pdt,
+	                               const double* calcEnergyWithThisEmin = nullptr) const;
 
 private:
 	/* Graintype-specific properties are provided by this object. */

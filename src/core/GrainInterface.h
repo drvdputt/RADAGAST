@@ -31,8 +31,12 @@ typedef struct SfcInteractionPar
 /** Function signature for custom ionization potential. */
 typedef std::function<double(double a, int Z)> IonizationPotentialf;
 
-/** Function signature for custom photoelectric yield. */
-typedef std::function<double(double a, int Z, double hnu)> PhotoelectricYieldf;
+/** Function signature for custom photoelectric yield. hnuDiff is the energy of the photon minus
+    the potoelectric threshold. Emin is the minimum energy that electron will have, given that
+    was able to escape (intuitively, if it needs to go uphill to escape, the electron escaping
+    to infinity will end up with an energy equal to the potential difference from the top of the
+    hill to infinity. See also figure with potential sketches in WD01. */
+typedef std::function<double(double a, int Z, double hnuDiff, double Emin)> PhotoelectricYieldf;
 
 /** Function signature for custom autionization threshold. */
 typedef std::function<double(double a)> AutoIonizationThresholdf;

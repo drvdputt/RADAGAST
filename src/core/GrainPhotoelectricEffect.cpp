@@ -29,7 +29,7 @@ int GrainPhotoelectricEffect::minimumCharge(double a) const
 
 ChargeDistribution
 GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environment& env,
-                                                      const Array& Qabs) const
+                                                      const Array& Qabsv) const
 {
 	const Array& frequencyv = env._specificIntensity.frequencyv();
 	const Array& specificIntensityv = env._specificIntensity.valuev();
@@ -62,7 +62,7 @@ GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environmen
 	auto chargeUpRate = [&](int Z) -> double {
 		double Jtotal{0};
 		// Photoelectric effect rate
-		Jtotal += emissionRate(a, Z, frequencyv, Qabs, specificIntensityv);
+		Jtotal += emissionRate(a, Z, frequencyv, Qabsv, specificIntensityv);
 		/* Collisions with positive particles. Collisions with multiply charged
 		   particles are treated as if they can only change the charge by 1. This is
 		   technically incorrect, but the charging rate due to positive ions is very
@@ -94,113 +94,105 @@ GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environmen
 	return chargeDistribution;
 }
 
-double GrainPhotoelectricEffect::rateIntegral(
-                double a, int Z, double Emin, const Array& frequencyv, const Array& Qabs,
-                const Array& specificIntensityv,
-                function<double(double hnuDiffpet, double Elow)> peFunction,
-                function<double(double hnuDiffpdt)> pdFunction) const
+void GrainPhotoelectricEffect::getPET_PDT_Emin(double a, double Z, double& pet, double& pdt,
+                                               double& Emin) const
+{
+	Emin = WD01::eMin(a, Z);
+	double ip_v = _grainType.ionizationPotential(a, Z);
+	// WD01 eq 6
+	pet = Z >= -1 ? ip_v : ip_v + Emin;
+	// Photodetachment, WD01 eq 18 (using EA(Z + 1, a) = IP(Z, a) if Z < 0)
+	pdt = ip_v + Emin;
+}
+
+double GrainPhotoelectricEffect::photoelectricIntegrationLoop(
+                const Array& frequencyv, const Array& Qabsv, const Array& specificIntensityv,
+                double pet, const function<double(double hnuDiff)>* f_hnuDiff) const
+{
+	Array integrandv(frequencyv.size());
+	double nu_pet = pet / Constant::PLANCK;
+
+	// yield is zero by definition below photoelectric threshold
+	int i = frequencyv.size() - 1;
+	while (frequencyv[i] > nu_pet && i > 0)
+	{
+		double hnu = Constant::PLANCK * frequencyv[i];
+		integrandv[i] = Qabsv[i] * specificIntensityv[i] / hnu;
+		if (f_hnuDiff)
+			integrandv[i] *= (*f_hnuDiff)(hnu - pet);
+		i--;
+	}
+	// <function unit> sr-1 cm-2 s-1
+	double integral = TemplatedUtils::integrate<double>(frequencyv, integrandv, max(0, i),
+	                                                    frequencyv.size() - 1);
+	// <function unit> cm-2 s-1
+	return Constant::FPI * integral;
+}
+
+double GrainPhotoelectricEffect::photodetachmentIntegrationLoop(
+                int Z, const Array& frequencyv, const Array& specificIntensityv, double pdt,
+                const double* calcEnergyWithThisEmin) const
+{
+	Array integrandv(frequencyv.size());
+	double nu_pdt = pdt / Constant::PLANCK;
+
+	// no effect below photodetachment threshold
+	int i = frequencyv.size() - 1;
+	while (frequencyv[i] > nu_pdt && i > 0)
+	{
+		double hnu = Constant::PLANCK * frequencyv[i];
+		double hnuDiff = hnu - pdt;
+		// <function unit> / time / angle
+		integrandv[i] = WD01::sigmaPDT(Z, hnuDiff) * specificIntensityv[i] / hnu;
+		if (calcEnergyWithThisEmin)
+			integrandv[i] *= hnuDiff + *calcEnergyWithThisEmin;
+		i--;
+	}
+	// <erg optional> s-1 sr-1
+	double integral = TemplatedUtils::integrate<double>(frequencyv, integrandv, max(0, i),
+	                                                    frequencyv.size() - 1);
+	// <erg optional> s-1
+	return Constant::FPI * integral;
+}
+
+double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& frequencyv,
+                                               const Array& Qabsv,
+                                               const Array& specificIntensityv) const
 {
 	const double e2_a = Constant::ESQUARE / a;
+
+	// It's cheaper to calculate these together (and safer, less code duplication), so I
+	// made this funtion, and pass these values as arguments when needed.
+	double pet, pdt, Emin;
+	getPET_PDT_Emin(a, Z, pet, pdt, Emin);
 
 	// WD01 text between eq 10 and 11
 	double Elow = Z < 0 ? Emin : -(Z + 1) * e2_a;
 
-	// Quantities independent of nu
-	double ip_v = _grainType.ionizationPotential(a, Z);
-	// WD01 eq 6
-	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
-	// Photodetachment, WD01 eq 18
-	double hnu_pdt = ip_v + Emin;
+	std::function<double(double)> yieldTimesAverageEnergy = [&](double hnuDiff) -> double {
+		double Y = _grainType.photoelectricYield(a, Z, hnuDiff, Emin);
 
-	// Two separate integrands for photoelectric effect and photodetachment
-	size_t numFreq = frequencyv.size();
-	Array peIntegrandv(numFreq);
-	Array pdIntegrandv;
-	if (Z < 0)
-		pdIntegrandv.resize(numFreq);
-
-	Array hnuv = Constant::PLANCK * frequencyv;
-	for (size_t iFreq = numFreq; iFreq-- > 0;)
-	{
-		if (hnuv[iFreq] < hnu_pet && hnuv[iFreq] < hnu_pdt)
-			break;
-
-		// No contribution below the photoelectric threshold
-		double hnu = hnuv[iFreq];
-		if (hnu > hnu_pet)
-		{
-			// Quantities dependent on nu
-			double hnuDiff = hnu - hnu_pet;
-
-			// The integral over the electron energy distribution
-			double Y = _grainType.photoElectricYield(a, Z, hnu);
-
-			// dimensionless * dimensionless * (energy / time / freq / area / angle)
-			// / energy * <function unit> * dFreq = <function unit> / time / area /
-			// angle
-			peIntegrandv[iFreq] = Y * Qabs[iFreq] * specificIntensityv[iFreq] /
-			                      hnu * peFunction(hnuDiff, Elow);
-		}
-
-		// If applicable, also calculate integrand for photodetachment
-		if (Z < 0 && hnu > hnu_pdt)
-		{
-			double DeltaE = 3 / Constant::ERG_EV;
-			double x = (hnu - hnu_pdt) / DeltaE;
-			double denom = 1 + x * x / 3;
-			// WD01 eq 20, with constant factor moved in front of integral (see ***)
-			double sigma_pdt = x / denom / denom;
-
-			// <function unit> / time / angle
-			pdIntegrandv[iFreq] = sigma_pdt * specificIntensityv[iFreq] / hnu *
-			                      pdFunction(hnu - hnu_pdt);
-		}
-	}
-
-	// angle (4pi) * area (pi a^2) * <function unit> / time / area / angle = <function unit>
-	// / time => we end up with a rate if we multiply by 4pi and the area (cross section) of
-	// the grain
-	double peIntegral = Constant::FPI * Constant::PI * a * a *
-	                    TemplatedUtils::integrate<double>(frequencyv, peIntegrandv);
-
-	// *** Constant factor from sigma_pdt moved in front of integral.
-	// Multiply with angle (4pi) to arrive at <function unit> / time
-	double pdIntegral{0.};
-	if (Z < 0)
-		pdIntegral = 1.2e-17 * (-Z) * Constant::FPI *
-		             TemplatedUtils::integrate<double>(frequencyv, pdIntegrandv);
-
-	return peIntegral + pdIntegral;
-}
-
-double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& frequencyvv,
-                                               const Array& Qabs,
-                                               const Array& specificIntensityv) const
-{
-	double Emin = WD01::eMin(a, Z);
-
-	// WD01 eq 39 (energy integral term of the integrand)
-	auto averageEnergyPE = [&](double hnuDiffpet, double Elow) {
-		double Emax = hnuDiffpet + Emin;
-		double Ehigh = Z < 0 ? Emax : hnuDiffpet;
-
-		// Calculate y2 from eq 11
-		double Ediff = Ehigh - Elow;
-		double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3 * Elow) / Ediff / Ediff / Ediff
-		                   : 1;
-
-		// The integral over the electron energy distribution (integral E f(E) dE)
+		double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
+		// The integral over the electron energy distribution (integral E f(E) dE), over the relevant range
 		double IntE = WD01::energyIntegral(Elow, Ehigh, Emin);
-		return IntE / y2;
+		double y2 = WD01::escapingFraction(Z, Elow, Ehigh);
+
+		return Y * IntE / y2;
 	};
-	// WD01 eq 40 (term in parentheses of the integrand)
-	auto averageEnergyPD = [&](double hnuDiffpdt) { return hnuDiffpdt + Emin; };
-	return rateIntegral(a, Z, Emin, frequencyvv, Qabs, specificIntensityv, averageEnergyPE,
-	                    averageEnergyPD);
+	double heatingRatePE =
+	                Constant::PI * a * a *
+	                photoelectricIntegrationLoop(frequencyv, Qabsv, specificIntensityv, pet,
+	                                             &yieldTimesAverageEnergy);
+
+	double heatingRatePD = 0;
+	if (Z < 0)
+		heatingRatePD = photodetachmentIntegrationLoop(Z, frequencyv,
+		                                               specificIntensityv, pdt, &Emin);
+	return heatingRatePE + heatingRatePD;
 }
 
 double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
-                                              const Array& Qabs,
+                                              const Array& Qabsv,
                                               const ChargeDistribution& cd) const
 {
 	double totalHeatingForGrainSize = 0;
@@ -210,7 +202,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 		double fZz = cd.value(Z);
 		if (!isfinite(fZz))
 			Error::runtime("nan in charge distribution");
-		double heatAZ = heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabs,
+		double heatAZ = heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabsv,
 		                              env._specificIntensity.valuev());
 
 		/* Fraction of grains in this charge state * heating by a single particle of
@@ -245,13 +237,26 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 }
 
 double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& frequencyv,
-                                              const Array& Qabs,
+                                              const Array& Qabsv,
                                               const Array& specificIntensityv) const
 {
-	return rateIntegral(
-	                a, Z, WD01::eMin(a, Z), frequencyv, Qabs, specificIntensityv,
-	                [](double, double) -> double { return 1.; },
-	                [](double) -> double { return 1; });
+	// Notice that there is quite some duplication compared to heatingRateAZ, but i didn't
+	// find it worth the effort to make more abstractions.
+	double pet, pdt, Emin;
+	getPET_PDT_Emin(a, Z, pet, pdt, Emin);
+
+	function<double(double)> yieldf = [&](double hnuDiff) {
+		return _grainType.photoelectricYield(a, Z, hnuDiff, Emin);
+	};
+	double emissionRatePE = Constant::PI * a * a *
+	                        photoelectricIntegrationLoop(frequencyv, Qabsv,
+	                                                     specificIntensityv, pet, &yieldf);
+	double emissionRatePD = 0;
+	if (Z < 0)
+		emissionRatePD = photodetachmentIntegrationLoop(Z, frequencyv,
+		                                                specificIntensityv, pdt);
+
+	return emissionRatePE + emissionRatePD;
 }
 
 double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
@@ -394,7 +399,8 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 			double hnuDiff = hnu - hnu_pet;
 			if (hnuDiff > 0)
 				out << hnu * Constant::ERG_EV << '\t'
-				    << _grainType.photoElectricYield(a, Z, hnu) << '\n';
+				    << _grainType.photoelectricYield(a, Z, hnuDiff, Emin)
+				    << '\n';
 			hnu += step;
 		}
 		out << '\n';
@@ -441,16 +447,16 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	for (size_t m = 0; m < Na; m++)
 	{
 		double a = sizev[m];
-		const Array& Qabs = qAbsvv[m];
+		const Array& Qabsv = qAbsvv[m];
 
 		// Integrate over the radiation field
-		Array intensityTimesQabs = Qabs * specificIntensityv;
+		Array intensityTimesQabsv = Qabsv * specificIntensityv;
 		double intensityQabsIntegral = TemplatedUtils::integrate<double>(
-		                frequencyv, intensityTimesQabs);
+		                frequencyv, intensityTimesQabsv);
 
 		// Calculate and write out the heating efficiency
-		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabs);
-		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, cd);
+		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
+		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabsv, cd);
 		double totalAbsorbed =
 		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
 		double efficiency = heating / totalAbsorbed;

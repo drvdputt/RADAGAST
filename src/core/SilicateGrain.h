@@ -16,7 +16,7 @@ public:
 	    \c WeingartnerDraine2001.h, calling the 'silicate' versions of the latter by using \c
 	    false for their \c carbonaceous argument. */
 	/**@{*/
-	double photoElectricYield(double a, int z, double hnu) const override;
+	double photoelectricYield(double a, int z, double hnuDiff, double Emin) const override;
 
 	double ionizationPotential(double a, int z) const override;
 

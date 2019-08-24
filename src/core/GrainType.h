@@ -28,7 +28,8 @@ public:
 
 	virtual double ionizationPotential(double a, int Z) const = 0;
 
-	virtual double photoElectricYield(double a, int z, double hnu) const = 0;
+	virtual double photoelectricYield(double a, int z, double hnuDiff,
+	                                  double Emin) const = 0;
 
 	virtual double autoIonizationThreshold(double a) const = 0;
 

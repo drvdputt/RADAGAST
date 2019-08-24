@@ -10,9 +10,9 @@ SilicateGrain::SilicateGrain()
 {
 }
 
-double SilicateGrain::photoElectricYield(double a, int z, double hnu) const
+double SilicateGrain::photoelectricYield(double a, int z, double hnuDiff, double Emin) const
 {
-	return WD01::yield(a, z, hnu, false);
+	return WD01::yield(a, z, hnuDiff, Emin, false);
 }
 
 double SilicateGrain::ionizationPotential(double a, int z) const

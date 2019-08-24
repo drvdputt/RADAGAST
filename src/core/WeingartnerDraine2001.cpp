@@ -41,9 +41,9 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
 	double ip_v = (Z + .5) * e2_a;
 	if (Z >= 0)
 	{
-		// use the same expression for carbonaceous and silicate
+		// use the same expression for carbonaceous and silicate (WD01 eq 2)
 		ip_v += workFunction(carbonaceous) +
-		        (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
+		        (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a;
 	}
 	// For negatively charged grains, different expressions are used for car and sil
 	else if (carbonaceous)
@@ -82,13 +82,16 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin)
 	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
-double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
+double WD01::escapingFraction(int Z, double Elow, double Ehigh)
 {
-	double ip_v = ionizationPotential(a, Z, carbonaceous);
-	double Emin = eMin(a, Z);
-	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
-	double hnuDiff = hnu - hnu_pet;
+	// Calculate y2 from eq 11
+	double Ediff = Ehigh - Elow;
+	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
+	return y2;
+}
 
+double WD01::yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceous)
+{
 	// Below photoelectric threshold
 	if (hnuDiff < 0)
 		return 0;
@@ -109,9 +112,7 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 		Ehigh = hnuDiff;
 	}
 
-	// Calculate y2 from eq 11
-	double Ediff = Ehigh - Elow;
-	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
+	double y2 = escapingFraction(Z, Elow, Ehigh);
 
 	// Calculate y1 from grain properties and eq 13, 14
 	// double imaginaryRefIndex = 1; // should be wavelength-dependent
@@ -224,4 +225,14 @@ double WD01::thetaKsi(double ksi)
 		return ksi / (1. + 1. / sqrt(ksi));
 	else
 		return 0;
+}
+
+double WD01::sigmaPDT(int Z, double hnuDiff)
+{
+	constexpr double DeltaE = 3 / Constant::ERG_EV;
+	double x = hnuDiff / DeltaE;
+	double denom = 1 + x * x / 3;
+	// WD01 eq 20, with constant factor moved in front of integral
+	double sigma_pdt = 1.2e-17 * abs(Z) * x / denom / denom;
+	return sigma_pdt;
 }
