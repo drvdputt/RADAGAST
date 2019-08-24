@@ -190,7 +190,7 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 		                   : 1;
 
 		// The integral over the electron energy distribution (integral E f(E) dE)
-		double IntE = WD01::energyIntegral(Elow, Ehigh, Emin, Emax);
+		double IntE = WD01::energyIntegral(Elow, Ehigh, Emin);
 		return IntE / y2;
 	};
 	// WD01 eq 40 (term in parentheses of the integrand)

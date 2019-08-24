@@ -16,7 +16,7 @@ double eMin(double a, int Z);
 double ionizationPotential(double a, int Z, bool carbonaceous);
 
 /** Calculates the integral over the energy in WD01 equation 39. */
-double energyIntegral(double Elow, double Ehigh, double Emin, double Emax);
+double energyIntegral(double Elow, double Ehigh, double Emin);
 
 /** Calculates the photoelectric yield according to WD01 equation 12. */
 double yield(double a, int Z, double hnu, bool carbonaceous);

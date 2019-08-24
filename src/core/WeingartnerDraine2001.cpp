@@ -58,8 +58,14 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
 	return ip_v;
 }
 
-double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
+double WD01::energyIntegral(double Elow, double Ehigh, double Emin)
 {
+	// This integrates over a parabolic distribution, with zeros at Elow and Ehigh. The
+	// integration range is [Emin, Emax = Ehigh]. Emin has to be given, because we do not
+	// want to integrate over electrons that do not escape.
+
+	// I do this to make the code more readable. It looks more like my notes this way.
+	double Emax = Ehigh;
 	double Ediff = Ehigh - Elow;
 	double Ediff3 = Ediff * Ediff * Ediff;
 
@@ -81,11 +87,10 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	double Emin = eMin(a, Z);
 	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
 	double hnuDiff = hnu - hnu_pet;
+
 	// Below photoelectric threshold
 	if (hnuDiff < 0)
 		return 0;
-
-	double Emax = hnuDiff + Emin;
 
 	// Compute yield (y2, y1, y0, and finally Y)
 
@@ -95,7 +100,7 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	if (Z < 0)
 	{
 		Elow = Emin;
-		Ehigh = Emax;
+		Ehigh = hnuDiff + Emin;
 	}
 	else
 	{
