@@ -23,14 +23,14 @@ double WD01::eMin(double a, int Z)
 	else
 	{
 		double ksi{-static_cast<double>(Z) - 1};
-		return thetaKsi(ksi) * Constant::ESQUARE
+		return thetaKsi(ksi) * Constant::ESQUARE *
 		       (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(ksi, -0.26));
 	}
 #else
 	// WD01 eq 7
 	double e2_a{Constant::ESQUARE / a};
 	double Emin = Z >= 0 ? 0
-			     : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
+	                     : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
 	return Emin;
 #endif
 }
@@ -43,13 +43,13 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
 	{
 		// use the same expression for carbonaceous and silicate
 		ip_v += workFunction(carbonaceous) +
-			(Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
+		        (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
 	}
 	// For negatively charged grains, different expressions are used for car and sil
 	else if (carbonaceous)
 	{
 		ip_v += workFunction(carbonaceous) -
-			e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
+		        e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
 	}
 	else // if silicate
 	{
@@ -71,8 +71,8 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
 	double Emin2 = Emin * Emin;
 	return 6 / Ediff3 *
 	       (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. +
-		(Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
-		Elow * Ehigh * (Emax2 - Emin2) / 2.);
+	        (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3. -
+	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
@@ -89,7 +89,8 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 
 	// Compute yield (y2, y1, y0, and finally Y)
 
-	// WD01 text between eq 10 and 11
+	// Energy distribution parameters (parabola that becomes zero at Elow and Ehigh. See
+	// WD01 text between eq 10 and 11).
 	double Elow, Ehigh;
 	if (Z < 0)
 	{
@@ -109,8 +110,10 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	// Calculate y1 from grain properties and eq 13, 14
 	// double imaginaryRefIndex = 1; // should be wavelength-dependent
 	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
-	constexpr double la = 100 *
-			  Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
+
+	// value from 1994-Bakes. WD01 uses the one in the comment above, which is more annoying
+	// to calculate.
+	constexpr double la = 100 * Constant::ANG_CM;
 	constexpr double le = 10 * Constant::ANG_CM;
 
 	double beta = a / la;
@@ -119,7 +122,7 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	double alpha2 = alpha * alpha;
 
 	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
-		    (beta2 - 2. * beta - 2. * expm1(-beta));
+	            (beta2 - 2. * beta - 2. * expm1(-beta));
 
 	// Calculate y0 from eq 9, 16, 17
 	double thetaOverW = hnuDiff;
