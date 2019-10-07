@@ -1,10 +1,10 @@
-#include "HydrogenLevels.h"
-#include "Constants.h"
-#include "GasStruct.h"
-#include "HydrogenDataProvider.h"
-#include "IonizationBalance.h"
-#include "SpeciesIndex.h"
-#include "TemplatedUtils.h"
+#include "HydrogenLevels.hpp"
+#include "Constants.hpp"
+#include "GasStruct.hpp"
+#include "HydrogenDataProvider.hpp"
+#include "IonizationBalance.hpp"
+#include "SpeciesIndex.hpp"
+#include "TemplatedUtils.hpp"
 
 #include <vector>
 

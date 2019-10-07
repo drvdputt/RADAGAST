@@ -1,5 +1,5 @@
-#include "ChargeDistribution.h"
-#include "Error.h"
+#include "ChargeDistribution.hpp"
+#include "Error.hpp"
 
 double ChargeDistribution::value(int z) const
 {

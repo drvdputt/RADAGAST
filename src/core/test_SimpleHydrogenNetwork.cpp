@@ -1,11 +1,11 @@
 #include "doctest.h"
 
-#include "SimpleHydrogenNetwork.h"
+#include "SimpleHydrogenNetwork.hpp"
 
-#include "ChemistrySolver.h"
-#include "IonizationBalance.h"
-#include "SpeciesIndex.h"
-#include "Testing.h"
+#include "ChemistrySolver.hpp"
+#include "IonizationBalance.hpp"
+#include "SpeciesIndex.hpp"
+#include "Testing.hpp"
 
 TEST_CASE("testing chemistry solver by comparing with exact solution of ionization")
 {

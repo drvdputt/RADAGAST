@@ -1,7 +1,7 @@
-#include "CarbonaceousGrain.h"
-#include "Constants.h"
-#include "GasGrainInteraction.h"
-#include "WeingartnerDraine2001.h"
+#include "CarbonaceousGrain.hpp"
+#include "Constants.hpp"
+#include "GasGrainInteraction.hpp"
+#include "WeingartnerDraine2001.hpp"
 
 CarbonaceousGrain::CarbonaceousGrain()
                 : GrainType(GasModule::GrainTypeLabel::CAR, GasGrain::carSurface,

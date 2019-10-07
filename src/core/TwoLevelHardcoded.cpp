@@ -1,6 +1,6 @@
-#include "TwoLevelHardcoded.h"
-#include "Constants.h"
-#include "GasStruct.h"
+#include "TwoLevelHardcoded.hpp"
+#include "Constants.hpp"
+#include "GasStruct.hpp"
 
 TwoLevelHardcoded::TwoLevelHardcoded()
 {

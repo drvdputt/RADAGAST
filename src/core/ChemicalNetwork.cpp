@@ -1,5 +1,5 @@
-#include "ChemicalNetwork.h"
-#include "SpeciesIndex.h"
+#include "ChemicalNetwork.hpp"
+#include "SpeciesIndex.hpp"
 
 #include <iostream>
 

@@ -1,9 +1,9 @@
-#include "GasInterface.h"
-#include "GasInterfaceImpl.h"
-#include "SpecialFunctions.h"
-#include "SpeciesIndex.h"
-#include "Spectrum.h"
-#include "Testing.h"
+#include "GasInterface.hpp"
+#include "GasInterfaceImpl.hpp"
+#include "SpecialFunctions.hpp"
+#include "SpeciesIndex.hpp"
+#include "Spectrum.hpp"
+#include "Testing.hpp"
 
 #include <fstream>
 

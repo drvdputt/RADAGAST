@@ -1,9 +1,9 @@
-#include "LineProfile.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "IOTools.h"
-#include "SpecialFunctions.h"
-#include "TemplatedUtils.h"
+#include "LineProfile.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "IOTools.hpp"
+#include "SpecialFunctions.hpp"
+#include "TemplatedUtils.hpp"
 
 #include <cmath>
 #include <iomanip>

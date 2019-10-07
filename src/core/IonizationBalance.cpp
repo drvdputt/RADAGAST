@@ -1,7 +1,7 @@
-#include "IonizationBalance.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "TemplatedUtils.h"
+#include "IonizationBalance.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "TemplatedUtils.hpp"
 
 #include <algorithm>
 #include <iostream>

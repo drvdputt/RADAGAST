@@ -1,12 +1,12 @@
-#include "HydrogenFromFiles.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "Error.h"
-#include "GasStruct.h"
-#include "IOTools.h"
-#include "IonizationBalance.h"
-#include "SpeciesIndex.h"
-#include "TemplatedUtils.h"
+#include "HydrogenFromFiles.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
+#include "GasStruct.hpp"
+#include "IOTools.hpp"
+#include "IonizationBalance.hpp"
+#include "SpeciesIndex.hpp"
+#include "TemplatedUtils.hpp"
 
 using namespace std;
 

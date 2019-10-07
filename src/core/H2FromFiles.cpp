@@ -1,11 +1,11 @@
-#include "H2FromFiles.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "Error.h"
-#include "GasStruct.h"
-#include "IOTools.h"
-#include "SpeciesIndex.h"
-#include "TemplatedUtils.h"
+#include "H2FromFiles.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
+#include "GasStruct.hpp"
+#include "IOTools.hpp"
+#include "SpeciesIndex.hpp"
+#include "TemplatedUtils.hpp"
 
 #include <regex>
 

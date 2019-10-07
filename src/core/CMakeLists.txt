@@ -1,5 +1,5 @@
 file(GLOB SOURCES "*.cpp")
-file(GLOB HEADERS "*.h")
+file(GLOB HEADERS "*.hpp")
 find_package(GSL REQUIRED) # populates GSL_INCLUDED_DIRS
 
 set(TARGET gasmodule_objects)

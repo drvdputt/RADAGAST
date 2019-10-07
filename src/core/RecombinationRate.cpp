@@ -1,6 +1,6 @@
-#include "RecombinationRate.h"
-#include "IOTools.h"
-#include "TemplatedUtils.h"
+#include "RecombinationRate.hpp"
+#include "IOTools.hpp"
+#include "TemplatedUtils.hpp"
 
 using namespace std;
 

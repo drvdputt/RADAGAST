@@ -1,10 +1,10 @@
-#include "DoctestUtils.h"
+#include "DoctestUtils.hpp"
 
-#include "EigenAliases.h"
-#include "GasStruct.h"
-#include "HydrogenFromFiles.h"
-#include "HydrogenHardcoded.h"
-#include "SpeciesIndex.h"
+#include "EigenAliases.hpp"
+#include "GasStruct.hpp"
+#include "HydrogenFromFiles.hpp"
+#include "HydrogenHardcoded.hpp"
+#include "SpeciesIndex.hpp"
 
 TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")
 {

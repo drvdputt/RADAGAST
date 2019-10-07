@@ -1,5 +1,5 @@
-#include "GasDiagnostics.h"
-#include "TemplatedUtils.h"
+#include "GasDiagnostics.hpp"
+#include "TemplatedUtils.hpp"
 
 #include <iostream>
 

@@ -1,7 +1,7 @@
-#include "SilicateGrain.h"
-#include "Constants.h"
-#include "GasGrainInteraction.h"
-#include "WeingartnerDraine2001.h"
+#include "SilicateGrain.hpp"
+#include "Constants.hpp"
+#include "GasGrainInteraction.hpp"
+#include "WeingartnerDraine2001.hpp"
 
 SilicateGrain::SilicateGrain()
                 : GrainType(GasModule::GrainTypeLabel::SIL, GasGrain::silSurface,

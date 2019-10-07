@@ -1,7 +1,7 @@
-#include "LevelSolver.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "Error.h"
+#include "LevelSolver.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
 
 EVector LevelSolver::statisticalEquilibrium(double totalDensity,
                                             const EMatrix& totalTransitionRatesvv,

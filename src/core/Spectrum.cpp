@@ -1,4 +1,4 @@
-#include "Spectrum.h"
+#include "Spectrum.hpp"
 
 using namespace std;
 

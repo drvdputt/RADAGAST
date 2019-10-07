@@ -1,13 +1,13 @@
 #include "doctest.h"
 
-#include "Constants.h"
-#include "DoctestUtils.h"
-#include "GasStruct.h"
-#include "NLevel.h"
-#include "SpeciesIndex.h"
-#include "Spectrum.h"
-#include "Testing.h"
-#include "TwoLevelHardcoded.h"
+#include "Constants.hpp"
+#include "DoctestUtils.hpp"
+#include "GasStruct.hpp"
+#include "NLevel.hpp"
+#include "SpeciesIndex.hpp"
+#include "Spectrum.hpp"
+#include "Testing.hpp"
+#include "TwoLevelHardcoded.hpp"
 
 TEST_CASE("Test NLevel implementation using two level system")
 {

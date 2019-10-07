@@ -1,7 +1,7 @@
-#include "SpecialFunctions.h"
-#include "Constants.h"
-#include "Error.h"
-#include "TemplatedUtils.h"
+#include "SpecialFunctions.hpp"
+#include "Constants.hpp"
+#include "Error.hpp"
+#include "TemplatedUtils.hpp"
 
 #include <cmath>
 #include <exception>

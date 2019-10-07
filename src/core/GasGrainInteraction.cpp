@@ -1,7 +1,7 @@
-#include "GasGrainInteraction.h"
-#include "Constants.h"
-#include "Error.h"
-#include "GrainType.h"
+#include "GasGrainInteraction.hpp"
+#include "Constants.hpp"
+#include "Error.hpp"
+#include "GrainType.hpp"
 
 Array GasGrain::surfaceH2FormationRateCoeffPerSize(
                 const GasModule::GrainInterface::Population& pop, double Tgas)

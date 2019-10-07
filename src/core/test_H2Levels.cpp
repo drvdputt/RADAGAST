@@ -1,10 +1,10 @@
-#include "DoctestUtils.h"
-#include "GasStruct.h"
-#include "H2FromFiles.h"
-#include "H2Levels.h"
-#include "LevelSolver.h"
-#include "SpeciesIndex.h"
-#include "Testing.h"
+#include "DoctestUtils.hpp"
+#include "GasStruct.hpp"
+#include "H2FromFiles.hpp"
+#include "H2Levels.hpp"
+#include "LevelSolver.hpp"
+#include "SpeciesIndex.hpp"
+#include "Testing.hpp"
 
 TEST_CASE("H2-specific algorithm")
 {

@@ -1,11 +1,11 @@
-#include "GrainPhotoelectricEffect.h"
-#include "DebugMacros.h"
-#include "Error.h"
-#include "GrainType.h"
-#include "IOTools.h"
-#include "TemplatedUtils.h"
-#include "Testing.h"
-#include "WeingartnerDraine2001.h"
+#include "GrainPhotoelectricEffect.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
+#include "GrainType.hpp"
+#include "IOTools.hpp"
+#include "TemplatedUtils.hpp"
+#include "Testing.hpp"
+#include "WeingartnerDraine2001.hpp"
 
 #include <cmath>
 #include <iomanip>

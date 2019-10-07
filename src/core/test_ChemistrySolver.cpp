@@ -1,5 +1,5 @@
-#include "ChemistrySolver.h"
-#include "DoctestUtils.h"
+#include "ChemistrySolver.hpp"
+#include "DoctestUtils.hpp"
 
 TEST_CASE("single species with creation and destruction")
 {

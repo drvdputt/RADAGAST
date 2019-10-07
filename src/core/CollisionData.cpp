@@ -1,6 +1,6 @@
-#include "CollisionData.h"
-#include "Error.h"
-#include "TemplatedUtils.h"
+#include "CollisionData.hpp"
+#include "Error.hpp"
+#include "TemplatedUtils.hpp"
 
 CollisionData::CollisionData() = default;
 

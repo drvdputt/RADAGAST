@@ -1,11 +1,11 @@
-#include "FreeBound.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "IOTools.h"
-#include "IonizationBalance.h"
-#include "SpecialFunctions.h"
-#include "TemplatedUtils.h"
-#include "Testing.h"
+#include "FreeBound.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "IOTools.hpp"
+#include "IonizationBalance.hpp"
+#include "SpecialFunctions.hpp"
+#include "TemplatedUtils.hpp"
+#include "Testing.hpp"
 
 #include <cmath>
 #include <fstream>

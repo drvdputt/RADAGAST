@@ -1,7 +1,7 @@
-#include "ChemistrySolver.h"
-#include "ChemicalNetwork.h"
-#include "DebugMacros.h"
-#include "Error.h"
+#include "ChemistrySolver.hpp"
+#include "ChemicalNetwork.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
 
 #include <algorithm>
 #include <iostream>

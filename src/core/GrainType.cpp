@@ -1,8 +1,8 @@
-#include "GrainType.h"
-#include "CarbonaceousGrain.h"
-#include "Constants.h"
-#include "Error.h"
-#include "SilicateGrain.h"
+#include "GrainType.hpp"
+#include "CarbonaceousGrain.hpp"
+#include "Constants.hpp"
+#include "Error.hpp"
+#include "SilicateGrain.hpp"
 
 GrainType::GrainType(GasModule::GrainTypeLabel l,
                      const GasModule::SfcInteractionPar& sfcInteractionPar, double heatPerH2,

@@ -1,10 +1,10 @@
 #include "doctest.h"
 
-#include "DoctestUtils.h"
-#include "HydrogenFromFiles.h"
-#include "LineProfile.h"
-#include "NLevel.h"
-#include "Testing.h"
+#include "DoctestUtils.hpp"
+#include "HydrogenFromFiles.hpp"
+#include "LineProfile.hpp"
+#include "NLevel.hpp"
+#include "Testing.hpp"
 
 namespace
 {

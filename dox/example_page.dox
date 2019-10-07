@@ -11,7 +11,7 @@ functions, especially those of what I call the `public interface' are documented
 @subsection setup_example_subsec Setup
 
 @code
-#include "GasInterface.h"
+#include "GasInterface.hpp"
 
 // Set up the gas module by creating a GasInterface object.
 GasModule::GasInterface gasInterface(frequencyv);
@@ -51,7 +51,7 @@ depend on the grain model are required. Let's keep it to a simple example, using
 grain types.
 
 @code
-#include "GrainInterface.h"
+#include "GrainInterface.hpp"
 
 GasModule::GrainInterface makeGrainInterface(cell) {
   // First make a list of populations. Use a unique pointer here, so the population vector can be

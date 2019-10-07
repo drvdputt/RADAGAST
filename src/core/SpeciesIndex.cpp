@@ -1,5 +1,5 @@
-#include "SpeciesIndex.h"
-#include "Error.h"
+#include "SpeciesIndex.hpp"
+#include "Error.hpp"
 
 const std::map<std::string, int> SpeciesIndex::_indexMap =
                 createSpeciesIndexm({"e-", "H+", "H", "H2"});

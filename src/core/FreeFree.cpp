@@ -1,10 +1,10 @@
-#include "FreeFree.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "Error.h"
-#include "IOTools.h"
-#include "TemplatedUtils.h"
-#include "Testing.h"
+#include "FreeFree.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
+#include "IOTools.hpp"
+#include "TemplatedUtils.hpp"
+#include "Testing.hpp"
 
 #include <cassert>
 

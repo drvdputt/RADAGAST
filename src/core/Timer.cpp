@@ -1,5 +1,5 @@
-#include "DebugMacros.h"
-#include "Timer.h"
+#include "DebugMacros.hpp"
+#include "Timer.hpp"
 
 Timer::Timer(const std::string& phrase)
                 : _i{std::chrono::high_resolution_clock::now()}, _phrase{phrase}

@@ -1,10 +1,10 @@
-#include "H2Levels.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "GasStruct.h"
-#include "H2FromFiles.h"
-#include "LevelSolver.h"
-#include "TemplatedUtils.h"
+#include "H2Levels.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "GasStruct.hpp"
+#include "H2FromFiles.hpp"
+#include "LevelSolver.hpp"
+#include "TemplatedUtils.hpp"
 
 using namespace std;
 

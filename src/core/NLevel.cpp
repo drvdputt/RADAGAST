@@ -1,10 +1,10 @@
-#include "NLevel.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "GasStruct.h"
-#include "LevelDataProvider.h"
-#include "TemplatedUtils.h"
-#include "Testing.h"
+#include "NLevel.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "GasStruct.hpp"
+#include "LevelDataProvider.hpp"
+#include "TemplatedUtils.hpp"
+#include "Testing.hpp"
 
 using namespace std;
 

@@ -99,7 +99,7 @@ CORELIB=$(LIBDIR)/lib$(LIBNAME).a
 # We also make an include directory with symlinks to some headers in the repo. These should be
 # the only headers that a client will ever need to include.
 $(shell mkdir -p $(PUBLIC_INCLUDEDIR) >/dev/null)
-INTERFACEHEADERS=GasInterface.h GasState.h GrainInterface.h
+INTERFACEHEADERS=GasInterface.hpp GasState.hpp GrainInterface.hpp
 INTERFACELINKS=$(patsubst %, $(PUBLIC_INCLUDEDIR)/%, $(INTERFACEHEADERS))
 
 # Dependency files.

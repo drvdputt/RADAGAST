@@ -1,6 +1,6 @@
-#include "WeingartnerDraine2001.h"
-#include "Constants.h"
-#include "Error.h"
+#include "WeingartnerDraine2001.hpp"
+#include "Constants.hpp"
+#include "Error.hpp"
 
 #include <cmath>
 

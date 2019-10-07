@@ -1,9 +1,9 @@
-#include "HydrogenHardcoded.h"
-#include "Constants.h"
-#include "GasStruct.h"
-#include "IonizationBalance.h"
-#include "SpeciesIndex.h"
-#include "TemplatedUtils.h"
+#include "HydrogenHardcoded.hpp"
+#include "Constants.hpp"
+#include "GasStruct.hpp"
+#include "IonizationBalance.hpp"
+#include "SpeciesIndex.hpp"
+#include "TemplatedUtils.hpp"
 
 #define NLV 6
 

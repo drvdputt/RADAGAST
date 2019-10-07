@@ -1,10 +1,10 @@
-#include "GrainInterface.h"
-#include "Array.h"
-#include "Constants.h"
-#include "DebugMacros.h"
-#include "Error.h"
-#include "GrainType.h"
-#include "SpecialFunctions.h"
+#include "GrainInterface.hpp"
+#include "Array.hpp"
+#include "Constants.hpp"
+#include "DebugMacros.hpp"
+#include "Error.hpp"
+#include "GrainType.hpp"
+#include "SpecialFunctions.hpp"
 
 #include <cassert>
 

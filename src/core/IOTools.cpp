@@ -1,5 +1,5 @@
-#include "IOTools.h"
-#include "DebugMacros.h"
+#include "IOTools.hpp"
+#include "DebugMacros.hpp"
 
 #ifndef REPOROOT
 #error "Please specify the main GasModule git directory on the compiler command line using -D\"/full/path/to/GasModule/git\""
