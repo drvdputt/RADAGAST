@@ -22,7 +22,7 @@ TEST_CASE("H2-specific algorithm")
 
 	SUBCASE("no radiation, high density, should go to LTE")
 	{
-		double n = 1e5;
+		double n = 1e8;
 		speciesNv(SpeciesIndex::ine()) = 100;
 		speciesNv(SpeciesIndex::inp()) = 100;
 		speciesNv(SpeciesIndex::inH()) = 100;
