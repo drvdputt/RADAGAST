@@ -135,12 +135,12 @@ def main():
                            yg[:max_h_level] / yc[:max_h_level], color=color)
 
         y2c = br.cloudy.get_h2_populations()
-        lc = axs[0][1].semilogy(range(len(y2c)), y2c, color=color)
-
         y2g = br.gasmodule.get_h2_populations()
-        axs[0][1].semilogy(range(len(y2c)), y2g[:len(y2c)], color=color, ls='dashed')
 
-        max_h2_level = min(len(y2c), len(y2g))
+        max_h2_level = min(len(y2c), len(y2g), 50)
+
+        lc = axs[0][1].semilogy(range(max_h2_level), y2c[:max_h2_level], color=color)
+        axs[0][1].semilogy(range(max_h2_level), y2g[:max_h2_level], color=color, ls='dashed')
         axs[1][1].semilogy(range(max_h2_level),
                            y2g[:max_h2_level] / y2c[:max_h2_level], color=color)
 
