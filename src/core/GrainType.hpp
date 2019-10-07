@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_BUILTINGRAINTYPE_H_
-#define GASMODULE_GIT_SRC_BUILTINGRAINTYPE_H_
+#ifndef CORE_BUILTINGRAINTYPE_H_
+#define CORE_BUILTINGRAINTYPE_H_
 
 #include "GrainInterface.hpp"
 
@@ -54,4 +54,4 @@ public:
 	static std::unique_ptr<GrainType> makeBuiltin(GasModule::GrainTypeLabel t);
 };
 
-#endif /* GASMODULE_GIT_SRC_BUILTINGRAINTYPE_H_ */
+#endif /* CORE_BUILTINGRAINTYPE_H_ */

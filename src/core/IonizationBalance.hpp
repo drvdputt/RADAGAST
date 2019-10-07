@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_IONIZATIONBALANCE_H_
-#define GASMODULE_GIT_SRC_IONIZATIONBALANCE_H_
+#ifndef CORE_IONIZATIONBALANCE_H_
+#define CORE_IONIZATIONBALANCE_H_
 
 #include "Spectrum.hpp"
 
@@ -32,4 +32,4 @@ double cooling(double nH, double np, double ne, double T);
 const double THRESHOLD = 3.28984196e15; // Hertz;
 }
 
-#endif /* GASMODULE_GIT_SRC_IONIZATIONBALANCE_H_ */
+#endif /* CORE_IONIZATIONBALANCE_H_ */

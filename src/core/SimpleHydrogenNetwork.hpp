@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_SIMPLEHYDROGENNETWORK_H_
-#define GASMODULE_GIT_SRC_SIMPLEHYDROGENNETWORK_H_
+#ifndef CORE_SIMPLEHYDROGENNETWORK_H_
+#define CORE_SIMPLEHYDROGENNETWORK_H_
 
 #include "ChemicalNetwork.hpp"
 
@@ -27,4 +27,4 @@ public:
 	                   double kDissFromH2Levels, double kH2FormationGrain) const override;
 };
 
-#endif /* GASMODULE_GIT_SRC_SIMPLEHYDROGENNETWORK_H_ */
+#endif /* CORE_SIMPLEHYDROGENNETWORK_H_ */

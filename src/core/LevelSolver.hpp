@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_LEVELSOLVER_H_
-#define GASMODULE_GIT_SRC_LEVELSOLVER_H_
+#ifndef CORE_LEVELSOLVER_H_
+#define CORE_LEVELSOLVER_H_
 
 #include "EigenAliases.hpp"
 
@@ -60,4 +60,4 @@ EVector statisticalEquilibrium_boltzman(double totalDensity, double T, const EVe
 
 } /* namespace LevelSolver */
 
-#endif /* GASMODULE_GIT_SRC_LEVELSOLVER_H_ */
+#endif /* CORE_LEVELSOLVER_H_ */

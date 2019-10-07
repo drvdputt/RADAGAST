@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
-#define GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_
+#ifndef CORE_PHOTOELECTRICHEATING_H_
+#define CORE_PHOTOELECTRICHEATING_H_
 
 #include "ChargeDistribution.hpp"
 #include "Constants.hpp"
@@ -141,4 +141,4 @@ private:
 	const double _maxWav{1000 * Constant::UM_CM};
 };
 
-#endif /* GASMODULE_GIT_SRC_PHOTOELECTRICHEATING_H_ */
+#endif /* CORE_PHOTOELECTRICHEATING_H_ */

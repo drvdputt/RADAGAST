@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_GRAININTERFACE_H_
-#define GASMODULE_GIT_SRC_GRAININTERFACE_H_
+#ifndef CORE_GRAININTERFACE_H_
+#define CORE_GRAININTERFACE_H_
 
 #include <functional>
 #include <memory>
@@ -157,4 +157,4 @@ private:
 };
 } /* namespace GasModule */
 
-#endif /* GASMODULE_GIT_SRC_GRAININTERFACE_H_ */
+#endif /* CORE_GRAININTERFACE_H_ */

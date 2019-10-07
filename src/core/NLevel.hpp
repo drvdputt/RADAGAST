@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_NLEVEL_H_
-#define GASMODULE_GIT_SRC_NLEVEL_H_
+#ifndef CORE_NLEVEL_H_
+#define CORE_NLEVEL_H_
 
 #include "EigenAliases.hpp"
 #include "LineProfile.hpp"
@@ -208,4 +208,4 @@ private:
 	EMatrix _extraAvv;
 };
 
-#endif /* GASMODULE_GIT_SRC_NLEVEL_H_ */
+#endif /* CORE_NLEVEL_H_ */

@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_H2LEVELS_H_
-#define GASMODULE_GIT_SRC_H2LEVELS_H_
+#ifndef CORE_H2LEVELS_H_
+#define CORE_H2LEVELS_H_
 
 #include "NLevel.hpp"
 
@@ -70,4 +70,4 @@ private:
 	std::vector<size_t> _levelsWithCrossSectionv;
 };
 
-#endif /* GASMODULE_GIT_SRC_H2LEVELS_H_ */
+#endif /* CORE_H2LEVELS_H_ */

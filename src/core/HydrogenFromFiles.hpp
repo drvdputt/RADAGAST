@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
-#define GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_
+#ifndef CORE_HYDROGENFROMFILES_H_
+#define CORE_HYDROGENFROMFILES_H_
 
 #include "Array.hpp"
 #include "HydrogenDataProvider.hpp"
@@ -255,4 +255,4 @@ private:
 	int _ine, _inp;
 };
 
-#endif /* GASMODULE_GIT_SRC_HYDROGENFROMFILES_H_ */
+#endif /* CORE_HYDROGENFROMFILES_H_ */

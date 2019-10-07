@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_TIMER_H_
-#define GASMODULE_GIT_SRC_TIMER_H_
+#ifndef CORE_TIMER_H_
+#define CORE_TIMER_H_
 
 #include <chrono>
 #include <string>
@@ -14,4 +14,4 @@ private:
 	std::string _phrase;
 };
 
-#endif /* GASMODULE_GIT_SRC_TIMER_H_ */
+#endif /* CORE_TIMER_H_ */

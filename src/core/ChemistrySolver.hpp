@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_CHEMISTRYSOLVER_H_
-#define GASMODULE_GIT_SRC_CHEMISTRYSOLVER_H_
+#ifndef CORE_CHEMISTRYSOLVER_H_
+#define CORE_CHEMISTRYSOLVER_H_
 
 #include "EigenAliases.hpp"
 
@@ -126,4 +126,4 @@ private:
 	int _numReactions, _numConserved;
 };
 
-#endif /* GASMODULE_GIT_SRC_CHEMISTRYSOLVER_H_ */
+#endif /* CORE_CHEMISTRYSOLVER_H_ */

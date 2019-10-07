@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_RECOMBINATIONRATE_H_
-#define GASMODULE_GIT_SRC_RECOMBINATIONRATE_H_
+#ifndef CORE_RECOMBINATIONRATE_H_
+#define CORE_RECOMBINATIONRATE_H_
 
 #include "Array.hpp"
 #include "Table.hpp"
@@ -33,4 +33,4 @@ private:
 	Array _temperaturev;
 	std::vector<std::vector<double>> _alphavv;
 };
-#endif /* GASMODULE_GIT_SRC_RECOMBINATIONRATE_H_ */
+#endif /* CORE_RECOMBINATIONRATE_H_ */

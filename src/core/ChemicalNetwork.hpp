@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_CHEMICALNETWORK_H_
-#define GASMODULE_GIT_SRC_CHEMICALNETWORK_H_
+#ifndef CORE_CHEMICALNETWORK_H_
+#define CORE_CHEMICALNETWORK_H_
 
 #include "EigenAliases.hpp"
 #include "Spectrum.hpp"
@@ -95,4 +95,4 @@ private:
 	std::vector<EVector> _conservationv;
 };
 
-#endif /* GASMODULE_GIT_SRC_CHEMICALNETWORK_H_ */
+#endif /* CORE_CHEMICALNETWORK_H_ */

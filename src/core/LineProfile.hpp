@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_LINEPROFILE_H
-#define GASMODULE_GIT_SRC_LINEPROFILE_H
+#ifndef CORE_LINEPROFILE_H
+#define CORE_LINEPROFILE_H
 
 #include "Spectrum.hpp"
 
@@ -50,4 +50,4 @@ private:
 void test_addToSpectrum();
 
 void test_integrateSpectrum();
-#endif /* GASMODULE_GIT_SRC_LINEPROFILE_H */
+#endif /* CORE_LINEPROFILE_H */

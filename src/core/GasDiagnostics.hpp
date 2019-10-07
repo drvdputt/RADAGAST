@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_GASDIAGNOSTICS_H_
-#define GASMODULE_GIT_SRC_GASDIAGNOSTICS_H_
+#ifndef CORE_GASDIAGNOSTICS_H_
+#define CORE_GASDIAGNOSTICS_H_
 
 #include "Array.hpp"
 
@@ -62,4 +62,4 @@ private:
 	std::map<std::string, double> _userValuem;
 };
 
-#endif /* GASMODULE_GIT_SRC_GASDIAGNOSTICS_H_ */
+#endif /* CORE_GASDIAGNOSTICS_H_ */

@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_SPECIESINDEX_H_
-#define GASMODULE_GIT_SRC_SPECIESINDEX_H_
+#ifndef CORE_SPECIESINDEX_H_
+#define CORE_SPECIESINDEX_H_
 
 #include "Array.hpp"
 #include "EigenAliases.hpp"
@@ -47,4 +47,4 @@ public:
 	                                    const Array& coefficientv);
 };
 
-#endif /* GASMODULE_GIT_SRC_SPECIESINDEX_H_ */
+#endif /* CORE_SPECIESINDEX_H_ */

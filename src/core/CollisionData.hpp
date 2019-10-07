@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_COLLISIONDATA_H_
-#define GASMODULE_GIT_SRC_COLLISIONDATA_H_
+#ifndef CORE_COLLISIONDATA_H_
+#define CORE_COLLISIONDATA_H_
 
 #include "Array.hpp"
 #include "EigenAliases.hpp"
@@ -77,4 +77,4 @@ private:
 	std::vector<std::array<int, 2>> _transitionv;
 };
 
-#endif /* GASMODULE_GIT_SRC_COLLISIONDATA_H_ */
+#endif /* CORE_COLLISIONDATA_H_ */

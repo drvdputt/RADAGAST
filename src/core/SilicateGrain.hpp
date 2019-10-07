@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_SILICATEGRAIN_H_
-#define GASMODULE_GIT_SRC_SILICATEGRAIN_H_
+#ifndef CORE_SILICATEGRAIN_H_
+#define CORE_SILICATEGRAIN_H_
 
 #include "GrainType.hpp"
 
@@ -26,4 +26,4 @@ public:
 	/**@}*/
 };
 
-#endif /* GASMODULE_GIT_SRC_SILICATEGRAIN_H_ */
+#endif /* CORE_SILICATEGRAIN_H_ */

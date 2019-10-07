@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_H2FROMFILES_H_
-#define GASMODULE_GIT_SRC_H2FROMFILES_H_
+#ifndef CORE_H2FROMFILES_H_
+#define CORE_H2FROMFILES_H_
 
 #include "CollisionData.hpp"
 #include "LevelDataProvider.hpp"
@@ -269,4 +269,4 @@ private:
 	std::vector<std::vector<Spectrum>> _dissociationCrossSectionv;
 };
 
-#endif /* GASMODULE_GIT_SRC_H2FROMFILES_H_ */
+#endif /* CORE_H2FROMFILES_H_ */

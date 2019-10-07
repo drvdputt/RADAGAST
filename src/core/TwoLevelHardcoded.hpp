@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_
-#define GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_
+#ifndef CORE_TWOLEVELHARDCODED_H_
+#define CORE_TWOLEVELHARDCODED_H_
 
 #include "LevelDataProvider.hpp"
 
@@ -25,4 +25,4 @@ private:
 	EVector the_gv{EVector::Zero(2)};
 };
 
-#endif /* GASMODULE_GIT_SRC_TWOLEVELHARDCODED_H_ */
+#endif /* CORE_TWOLEVELHARDCODED_H_ */

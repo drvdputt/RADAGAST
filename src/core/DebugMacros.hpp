@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_DEBUGMACROS_H_
-#define GASMODULE_GIT_SRC_DEBUGMACROS_H_
+#ifndef CORE_DEBUGMACROS_H_
+#define CORE_DEBUGMACROS_H_
 
 #include <iostream>
 #include <ios>
@@ -26,4 +26,4 @@
 	} while (0)
 #endif
 
-#endif /* GASMODULE_GIT_SRC_DEBUGMACROS_H_ */
+#endif /* CORE_DEBUGMACROS_H_ */

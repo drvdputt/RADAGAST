@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_GASGRAININTERACTION_H_
-#define GASMODULE_GIT_SRC_GASGRAININTERACTION_H_
+#ifndef CORE_GASGRAININTERACTION_H_
+#define CORE_GASGRAININTERACTION_H_
 
 #include "Array.hpp"
 #include "Constants.hpp"
@@ -32,4 +32,4 @@ const GasModule::SfcInteractionPar carSurface(520, 260, 800, 30000, 14, 3e12, 1.
 const GasModule::SfcInteractionPar silSurface(320, 110, 450, 30000, 14.4, 3e12, 1.3e13, 1e-10);
 
 } /* namespace GasGrain */
-#endif /* GASMODULE_GIT_SRC_GASGRAININTERACTION_H_ */
+#endif /* CORE_GASGRAININTERACTION_H_ */

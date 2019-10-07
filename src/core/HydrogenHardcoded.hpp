@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_HYDROGENHARDCODED_H_
-#define GASMODULE_GIT_SRC_HYDROGENHARDCODED_H_
+#ifndef CORE_HYDROGENHARDCODED_H_
+#define CORE_HYDROGENHARDCODED_H_
 
 #include "HydrogenDataProvider.hpp"
 
@@ -50,4 +50,4 @@ private:
 	EVector the_gv;
 };
 
-#endif /* GASMODULE_GIT_SRC_HYDROGENHARDCODED_H_ */
+#endif /* CORE_HYDROGENHARDCODED_H_ */

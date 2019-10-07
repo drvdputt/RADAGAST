@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_
-#define GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_
+#ifndef CORE_LEVELDATAPROVIDER_H_
+#define CORE_LEVELDATAPROVIDER_H_
 
 #include "EigenAliases.hpp"
 
@@ -63,4 +63,4 @@ public:
 	virtual EMatrix cvv(const GasStruct& gas) const = 0;
 };
 
-#endif /* GASMODULE_GIT_SRC_LEVELDATAPROVIDER_H_ */
+#endif /* CORE_LEVELDATAPROVIDER_H_ */

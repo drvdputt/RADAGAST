@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_GASSTRUCT_H_
-#define GASMODULE_GIT_SRC_GASSTRUCT_H_
+#ifndef CORE_GASSTRUCT_H_
+#define CORE_GASSTRUCT_H_
 
 #include "EigenAliases.hpp"
 #include "SpeciesIndex.hpp"
@@ -51,4 +51,4 @@ typedef struct GasStruct
 	EVector _h2Levelv{};
 } GasStruct;
 
-#endif /* GASMODULE_GIT_SRC_GASSTRUCT_H_ */
+#endif /* CORE_GASSTRUCT_H_ */

@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_CHARGEDISTRIBUTION_H_
-#define GASMODULE_GIT_SRC_CHARGEDISTRIBUTION_H_
+#ifndef CORE_CHARGEDISTRIBUTION_H_
+#define CORE_CHARGEDISTRIBUTION_H_
 
 #include <functional>
 #include <vector>
@@ -28,4 +28,4 @@ private:
 	int _zmin;
 };
 
-#endif /* GASMODULE_GIT_SRC_CHARGEDISTRIBUTION_H_ */
+#endif /* CORE_CHARGEDISTRIBUTION_H_ */

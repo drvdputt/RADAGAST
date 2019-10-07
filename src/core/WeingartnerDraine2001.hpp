@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_WEINGARTNERDRAINE2001_H_
-#define GASMODULE_GIT_SRC_WEINGARTNERDRAINE2001_H_
+#ifndef CORE_WEINGARTNERDRAINE2001_H_
+#define CORE_WEINGARTNERDRAINE2001_H_
 namespace WD01
 {
 /* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
@@ -40,4 +40,4 @@ double lambdaTilde(double tau, double ksi);
 double thetaKsi(double ksi);
 
 } /* namespace WD01 */
-#endif /* GASMODULE_GIT_SRC_WEINGARTNERDRAINE2001_H_ */
+#endif /* CORE_WEINGARTNERDRAINE2001_H_ */

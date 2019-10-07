@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_
-#define GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_
+#ifndef CORE_HYDROGENDATAPROVIDER_H_
+#define CORE_HYDROGENDATAPROVIDER_H_
 
 #include "LevelDataProvider.hpp"
 
@@ -28,4 +28,4 @@ public:
 	virtual std::array<size_t, 2> twoPhotonIndices() const = 0;
 };
 
-#endif /* GASMODULE_GIT_SRC_HYDROGENDATAPROVIDER_H_ */
+#endif /* CORE_HYDROGENDATAPROVIDER_H_ */

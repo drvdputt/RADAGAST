@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_HYDROGENLEVELS_H_
-#define GASMODULE_GIT_SRC_HYDROGENLEVELS_H_
+#ifndef CORE_HYDROGENLEVELS_H_
+#define CORE_HYDROGENLEVELS_H_
 
 #include "NLevel.hpp"
 #include "RecombinationRate.hpp"
@@ -50,4 +50,4 @@ private:
 	std::unique_ptr<const RecombinationRate> _rr;
 };
 
-#endif /* GASMODULE_GIT_SRC_HYDROGENLEVELS_H_ */
+#endif /* CORE_HYDROGENLEVELS_H_ */

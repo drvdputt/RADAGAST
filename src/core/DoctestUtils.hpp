@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_DOCTESTUTILS_H_
-#define GASMODULE_GIT_SRC_DOCTESTUTILS_H_
+#ifndef CORE_DOCTESTUTILS_H_
+#define CORE_DOCTESTUTILS_H_
 
 #include "EigenAliases.hpp"
 #include "TemplatedUtils.hpp"
@@ -73,4 +73,4 @@ void compareMatrices(const Eigen::MatrixBase<Derived>& a, const Eigen::MatrixBas
 
 } // namespace DoctestUtils
 
-#endif /* GASMODULE_GIT_SRC_DOCTESTUTILS_H_ */
+#endif /* CORE_DOCTESTUTILS_H_ */

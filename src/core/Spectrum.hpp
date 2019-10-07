@@ -1,5 +1,5 @@
-#ifndef GASMODULE_GIT_SRC_SPECTRUM_H_
-#define GASMODULE_GIT_SRC_SPECTRUM_H_
+#ifndef CORE_SPECTRUM_H_
+#define CORE_SPECTRUM_H_
 
 #include "Array.hpp"
 #include "TemplatedUtils.hpp"
@@ -57,4 +57,4 @@ private:
 	Array _frequencyv, _valuev;
 };
 
-#endif /* GASMODULE_GIT_SRC_SPECTRUM_H_ */
+#endif /* CORE_SPECTRUM_H_ */
