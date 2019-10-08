@@ -248,10 +248,6 @@ double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) 
 	                        nu_ij * _avv(upper, lower);
 	double densityFactor = s.nv(lower) * _gv(upper) / _gv(lower) - s.nv(upper);
 	double result = constantFactor * densityFactor;
-#ifdef SANITY
-	if (result < 0)
-		result = 0;
-#endif
 	return result;
 }
 
