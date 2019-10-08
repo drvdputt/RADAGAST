@@ -429,9 +429,6 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 		q_li_lf_goingDown(l - 1, l) = qUp;
 	}
 	const EMatrix result = (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
-#ifdef SANITY
-	assert((result.array() >= 0).all());
-#endif
 	return result.array().max(0);
 }
 
