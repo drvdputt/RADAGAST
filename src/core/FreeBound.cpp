@@ -3,6 +3,7 @@
 #include "DebugMacros.hpp"
 #include "IOTools.hpp"
 #include "IonizationBalance.hpp"
+#include "Options.hpp"
 #include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
@@ -46,52 +47,54 @@ FreeBound::FreeBound()
 	}
 
 	DEBUG("Constructed FreeBound" << endl);
-// #define DEBUG_CONTINUUM_DATA
-#ifdef DEBUG_CONTINUUM_DATA
-	// DEBUG: print out the table
-	ofstream out = IOTools::ofstreamFile("freebound/loadedContinuum.dat");
-	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
+	if (Options::freebound_debugData)
 	{
-		for (size_t iT = 0; iT < _gammaDaggervv.size(1); iT++)
-			out << scientific << _gammaDaggervv(iNu, iT) << '\t';
-		out << endl;
-	}
-	out.close();
-
-	// DEBUG: Test the temperature interpolation function (at least a copy pasta of a part)
-	out = IOTools::ofstreamFile("freebound/T-interpolatedContinuum.dat");
-	for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
-	{
-		for (double logT = 2; logT < 5; logT += 0.01)
+		// DEBUG: print out the table
+		ofstream out = IOTools::ofstreamFile("freebound/loadedContinuum.dat");
+		for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
 		{
-			// Find the grid point to the right of the requested log-temperature
-			size_t iRight = TemplatedUtils::index(logT, _logTemperaturev);
-			/* The weight of the point to the right (= 1 if T is Tright, = 0 if T is
-			   Tleft). */
-			double wRight = (logT - _logTemperaturev[iRight - 1]) /
-			                (_logTemperaturev[iRight] -
-			                 _logTemperaturev[iRight - 1]);
-
-			// Interpolate gamma^dagger linearly in log T space
-			double gammaDagger = (_gammaDaggervv(iNu, iRight - 1) * (1 - wRight) +
-			                      _gammaDaggervv(iNu, iRight) * wRight);
-			out << scientific << gammaDagger << "\t";
+			for (size_t iT = 0; iT < _gammaDaggervv.size(1); iT++)
+				out << scientific << _gammaDaggervv(iNu, iT) << '\t';
+			out << endl;
 		}
-		out << endl;
+		out.close();
+
+		// DEBUG: Test the temperature interpolation function (at least a copy pasta of a part)
+		out = IOTools::ofstreamFile("freebound/T-interpolatedContinuum.dat");
+		for (size_t iNu = 0; iNu < _gammaDaggervv.size(0); iNu++)
+		{
+			for (double logT = 2; logT < 5; logT += 0.01)
+			{
+				// Find the grid point to the right of the requested log-temperature
+				size_t iRight = TemplatedUtils::index(logT, _logTemperaturev);
+				/* The weight of the point to the right (= 1 if T is Tright, = 0 if T is
+			   Tleft). */
+				double wRight = (logT - _logTemperaturev[iRight - 1]) /
+				                (_logTemperaturev[iRight] -
+				                 _logTemperaturev[iRight - 1]);
+
+				// Interpolate gamma^dagger linearly in log T space
+				double gammaDagger = (_gammaDaggervv(iNu, iRight - 1) *
+				                                      (1 - wRight) +
+				                      _gammaDaggervv(iNu, iRight) * wRight);
+				out << scientific << gammaDagger << "\t";
+			}
+			out << endl;
+		}
+		out.close();
+
+		// DEBUG: test the gammanu function to obtain a figure like in the nebular paper
+		Array testFrequencyv =
+		                Testing::generateGeometricGridv(1000, _frequencyv[0], 1e16);
+
+		Array gammaNuv(testFrequencyv.size());
+		addEmissionCoefficientv(10000., testFrequencyv, gammaNuv);
+
+		out = IOTools::ofstreamFile("freebound/gammanufb.dat");
+		for (size_t iNu = 0; iNu < testFrequencyv.size(); iNu++)
+			out << testFrequencyv[iNu] << "\t" << gammaNuv[iNu] / 1.e-40 << endl;
+		out.close();
 	}
-	out.close();
-
-	// DEBUG: test the gammanu function to obtain a figure like in the nebular paper
-	Array testFrequencyv = Testing::generateGeometricGridv(1000, _frequencyv[0], 1e16);
-
-	Array gammaNuv(testFrequencyv.size());
-	addEmissionCoefficientv(10000., testFrequencyv, gammaNuv);
-
-	out = IOTools::ofstreamFile("freebound/gammanufb.dat");
-	for (size_t iNu = 0; iNu < testFrequencyv.size(); iNu++)
-		out << testFrequencyv[iNu] << "\t" << gammaNuv[iNu] / 1.e-40 << endl;
-	out.close();
-#endif /* DEBUG_CONTINUUM_DATA */
 }
 
 void FreeBound::readData(string file, vector<double>& fileFrequencyv,

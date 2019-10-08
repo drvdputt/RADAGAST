@@ -17,6 +17,11 @@ const bool lineprofile_optimizedLineIntegration = true;
 // the line is evaluated and added to the spectrum over the whole wavelength range.
 const bool lineprofile_optimizedLineAdd = true;
 
+// Write out the loaded, singly interpolate, and doubly interpolated freeBound continuum data
+// (gamma_nu) (written to working_directory/freebound/loadedContinuum.dat,
+// T-interpolatedContinuum.dat, and gammanufb.dat).
+const bool freebound_debugData = false;
+
 } /* namespace Options */
 
 #endif /* CORE_OPTIONS_H_ */
