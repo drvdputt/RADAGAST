@@ -3,6 +3,7 @@
 #include "Error.hpp"
 #include "GrainType.hpp"
 #include "IOTools.hpp"
+#include "Options.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include "WeingartnerDraine2001.hpp"
@@ -217,10 +218,9 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 
 	// The net heating rate (eq 41 without denominator)
 	double recCool{0};
-//#define INCLUDERECCOOL
-#ifdef INCLUDERECCOOL
-	recCool = recombinationCoolingRate(a, env, fZ, Zmin);
-#endif
+	if (Options::grainphotoelectriceffect_recombinationCooling)
+		recCool = recombinationCoolingRate(a, env, cd);
+
 	double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
 //#define PLOT_FZ
 #ifdef PLOT_FZ

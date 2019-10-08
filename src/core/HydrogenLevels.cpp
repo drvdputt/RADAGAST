@@ -74,7 +74,7 @@ EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 		}
 	}
 
-	if (Options::topoff)
+	if (Options::hlevels_topoff)
 	{
 		// The recombination coefficients should sum to the total one (the one used for the
 		// ionization balance calculation). Therefore, we calculate here how much we still

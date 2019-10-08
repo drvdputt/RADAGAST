@@ -9,7 +9,9 @@ namespace Options
 
 // To ensure self-consistency, add a source term to the upper level when the total recombination
 // rate is larger than the sum of recombination rates to individual levels.
-const bool topoff = true;
+const bool hlevels_topoff = true;
+
+const bool grainphotoelectriceffect_recombinationCooling = false;
 
 //////////////////////////////////////////////
 // NUMERIC / METHOD / ITERATION / PRECISION //
