@@ -22,6 +22,8 @@ const bool lineprofile_optimizedLineAdd = true;
 // T-interpolatedContinuum.dat, and gammanufb.dat).
 const bool freebound_debugData = false;
 
+const bool freefree_debugData = false;
+
 } /* namespace Options */
 
 #endif /* CORE_OPTIONS_H_ */

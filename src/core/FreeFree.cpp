@@ -3,8 +3,8 @@
 #include "DebugMacros.hpp"
 #include "Error.hpp"
 #include "IOTools.hpp"
+#include "Options.hpp"
 #include "TemplatedUtils.hpp"
-#include "Testing.hpp"
 
 #include <cassert>
 
@@ -360,25 +360,8 @@ double FreeFree::cooling(double np_ne, double T) const
 {
 	// Constant factor from 1998-Sutherland equation 18
 	constexpr double fk = 1.42554e-27;
-// #define CHECK_FREEFREE_INTEGRAL
-#ifdef CHECK_FREEFREE_INTEGRAL
-	// TODO: check if this frequencyv range is ok for this test, and maybe put this in a
-	// separate function.
-	Array integrationgridv = Testing::generateGeometricGridv(1000, 1e7, 1e16);
-	Array gamma_nuv(integrationgridv.size());
-	addEmissionCoefficientv(T, integrationgridv, gamma_nuv);
-
-	// emissivity = ne np / 4pi * gamma
-	// total emission = 4pi integral(emissivity) = ne np integral(gamma)
-	double manually_integrated =
-	                np_ne * TemplatedUtils::integrate<double>(integrationgridv, gamma_nuv);
-#endif
 	// Interpolate and use the frequency integrated gaunt factor
 	double logg2 = log10(Constant::RYDBERG / Constant::BOLTZMAN / T);
 	double from_data = np_ne * fk * sqrt(T) * integratedGauntFactor(logg2);
-#ifdef DEBUG_CONTINUUM_DATA
-	printf("Manually integrated: %e; from data: %e; ratio: %e\n", manually_integrated,
-	       from_data, from_data / manually_integrated);
-#endif
 	return from_data;
 }
