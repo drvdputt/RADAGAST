@@ -31,6 +31,10 @@ const bool lineprofile_optimizedLineAdd = true;
 // DEBUG //
 ///////////
 
+// Print the system to solve when using the Eigen solver for the statistical equilibrium
+// (currenly not used for H2).
+const bool levelsolver_printEquations = false;
+
 // Print the transition coefficients (A, B and C matrices) to standard output (only in DEBUG).
 // Currenly quite cryptic, as it happens in the general class NLevel, and therefore the species
 // is not mentioned in the output.

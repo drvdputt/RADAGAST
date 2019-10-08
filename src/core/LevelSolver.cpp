@@ -2,6 +2,7 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
+#include "Options.hpp"
 
 EVector LevelSolver::statisticalEquilibrium(double totalDensity,
                                             const EMatrix& totalTransitionRatesvv,
@@ -29,9 +30,12 @@ EVector LevelSolver::statisticalEquilibrium(double totalDensity,
 	Mvv.row(replaceByConservationEq) = EVector::Ones(Mvv.cols());
 	f(replaceByConservationEq) = totalDensity;
 
-#ifdef PRINT_LEVEL_MATRICES
-	DEBUG("System to solve:\n" << Mvv << " * nv\n=\n" << f << std::endl << std::endl);
-#endif
+	if (Options::levelsolver_printEquations)
+		DEBUG("System to solve:\n"
+		      << Mvv << " * nv\n=\n"
+		      << f << std::endl
+		      << std::endl);
+
 	// Call the linear solver for the system sum_j (Fij - diag[d_i]) * n_j = -f_i
 	EVector nv = Mvv.colPivHouseholderQr().solve(f);
 
@@ -187,8 +191,8 @@ EVector LevelSolver::statisticalEquilibrium_boltzman(double totalDensity, double
 	double eMin = ev.minCoeff();
 	double kT = Constant::BOLTZMAN * T;
 
-	                // g * exp((eMin - e) / kT)
-	                EVector pv = gv.array() * ((eMin - ev.array()) / kT).exp();
+	// g * exp((eMin - e) / kT)
+	EVector pv = gv.array() * ((eMin - ev.array()) / kT).exp();
 
 	return pv / pv.sum() * totalDensity;
 }
