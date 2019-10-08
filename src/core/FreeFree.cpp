@@ -296,23 +296,14 @@ void FreeFree::addEmissionCoefficientv(double T, const Array& eFrequencyv,
 	// TODO: use an intermediate spectrum object here, and then call its 'binned' function,
 	// if needed. Might be needed for very wide frequency bins, but the current way might be
 	// good enough
-#ifdef DEBUG_CONTINUUM_DATA
-	ofstream out = IOTools::ofstreamFile("freefree/gammanuff.dat");
-#endif
 	for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
 	{
 		double u = Constant::PLANCK * eFrequencyv[iFreq] / kT;
 		double logu = log10(u);
 		double gammaNu = gamma_nu_constantFactor / sqrtkT * exp(-u) *
 		                 gauntFactor(logu, logg2);
-#ifdef DEBUG_CONTINUUM_DATA
-		out << eFrequencyv[iFreq] << "\t" << gammaNu / 1.e-40 << endl;
-#endif
 		gamma_nuv[iFreq] += gammaNu;
 	}
-#ifdef DEBUG_CONTINUUM_DATA
-	out.close();
-#endif
 }
 
 void FreeFree::addOpacityCoefficientv(double T, const Array& oFrequencyv, Array& opCoeffv) const
