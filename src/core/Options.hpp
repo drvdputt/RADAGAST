@@ -11,7 +11,13 @@ namespace Options
 // rate is larger than the sum of recombination rates to individual levels.
 const bool hlevels_topoff = true;
 
+// Turn on the 'recombination cooling' term from WD01
 const bool grainphotoelectriceffect_recombinationCooling = false;
+
+// Instead of using the Emin of WD01, use the expression provided in van Hoof (2004). Last time
+// I tried this, weird things happened with the charge distribution, so please keep an eye on
+// the charges if you decide to use this.
+const bool weingartnerdraine2001_vanHoofEmin = false;
 
 //////////////////////////////////////////////
 // NUMERIC / METHOD / ITERATION / PRECISION //
