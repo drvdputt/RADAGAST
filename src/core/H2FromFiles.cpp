@@ -4,6 +4,7 @@
 #include "Error.hpp"
 #include "GasStruct.hpp"
 #include "IOTools.hpp"
+#include "Options.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 
@@ -27,19 +28,19 @@ H2FromFiles::H2FromFiles(int maxJ, int maxV)
 	readCollisions();
 	readDissProbs();
 	readDirectDissociation();
-// #define PLOT_LEVEL_MATRICES
-#ifdef PLOT_LEVEL_MATRICES
-	ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
-	avvOut << _avv << endl;
-	avvOut.close();
+	if (Options::h2fromfiles_plotLevelMatrices)
+	{
+		ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
+		avvOut << _avv << endl;
+		avvOut.close();
 
-	ofstream lvlOut = IOTools::ofstreamFile("h2/levels.dat");
-	lvlOut << "# eState\tv\tJ\tE\n";
-	for (const auto& l : _levelv)
-		lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j() << "\t"
-		       << l.e() << endl;
-	lvlOut.close();
-#endif
+		ofstream lvlOut = IOTools::ofstreamFile("h2/levels.dat");
+		lvlOut << "# eState\tv\tJ\tE\n";
+		for (const auto& l : _levelv)
+			lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j() << "\t"
+			       << l.e() << endl;
+		lvlOut.close();
+	}
 }
 
 size_t H2FromFiles::numLv() const { return _numL; }
