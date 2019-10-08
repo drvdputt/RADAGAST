@@ -22,6 +22,7 @@ public:
 	int zmax() const { return _zmin - 1 + _fz.size(); }
 	double value(int z) const;
 	double sumOverCharge(std::function<double(int z)> functionOfZ) const;
+	void plot(const std::string& file, const std::string& header) const;
 
 private:
 	std::vector<double> _fz;

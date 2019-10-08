@@ -220,22 +220,6 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 		recCool = recombinationCoolingRate(a, env, cd);
 
 	double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
-//#define PLOT_FZ
-#ifdef PLOT_FZ
-	stringstream filename;
-	filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
-	         << fixed << a / Constant::ANG_CM << ".txt";
-	ofstream outvar = IOTools::ofstreamFile(filename.str());
-	outvar << "# a = " << a << endl;
-	// outvar << "# Teff = " << _Tc << endl;
-	// outvar << "# G0 = " << _G0 << endl;
-	outvar << "# ne = " << env._ne << endl;
-	outvar << "# Tgas = " << env._T << endl;
-
-	for (int z = Zmin; z <= Zmax; z++)
-		outvar << z << '\t' << fZ[z - Zmin] << '\n';
-	outvar.close();
-#endif
 	return netHeatingForGrainSize;
 }
 
