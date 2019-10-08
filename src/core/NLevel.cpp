@@ -3,6 +3,7 @@
 #include "DebugMacros.hpp"
 #include "GasStruct.hpp"
 #include "LevelDataProvider.hpp"
+#include "Options.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 
@@ -52,11 +53,12 @@ EMatrix NLevel::totalTransitionRatesvv(const Spectrum& specificIntensity, const 
 	if (cvv_p)
 		*cvv_p = cvv;
 	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, cvv);
-#ifdef PRINT_LEVEL_MATRICES
-	DEBUG("Aij" << endl << _avv << endl << endl);
-	DEBUG("BPij" << endl << bpvv << endl << endl);
-	DEBUG("Cij" << endl << cvv << endl << endl);
-#endif
+	if (Options::nlevel_printLevelMatrices)
+	{
+		DEBUG("Aij" << endl << _avv << endl << endl);
+		DEBUG("BPij" << endl << bpvv << endl << endl);
+		DEBUG("Cij" << endl << cvv << endl << endl);
+	}
 	return _avv + _extraAvv + bpvv + cvv;
 }
 
@@ -154,14 +156,15 @@ double NLevel::cooling(const Solution& s) const
 double NLevel::netheating(const Solution& s) const
 {
 	double total = 0;
-	for (size_t up = 0; up <_numLv; up++)
+	for (size_t up = 0; up < _numLv; up++)
 	{
 		for (size_t lo = 0; lo < up; lo++)
 		{
 			double cul = s.cvv(up, lo);
 			double clu = s.cvv(lo, up);
 			if (cul > 0)
-				total += (_ev(up) - _ev(lo)) * (cul * s.nv(up) - clu * s.nv(lo));
+				total += (_ev(up) - _ev(lo)) *
+				         (cul * s.nv(up) - clu * s.nv(lo));
 		}
 	}
 	return total;

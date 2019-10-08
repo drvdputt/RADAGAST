@@ -29,6 +29,11 @@ const bool lineprofile_optimizedLineAdd = true;
 // DEBUG //
 ///////////
 
+// Print the transition coefficients (A, B and C matrices) to standard output (only in DEBUG).
+// Currenly quite cryptic, as it happens in the general class NLevel, and therefore the species
+// is not mentioned in the output.
+const bool nlevel_printLevelMatrices = false;
+
 // Write out the level matrices of h2 at setup (written to working_directory/h2/einsteinA.dat
 // and levels.dat)
 const bool h2fromfiles_plotLevelMatrices = false;

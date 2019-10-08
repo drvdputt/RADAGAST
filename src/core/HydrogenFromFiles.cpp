@@ -250,10 +250,6 @@ EMatrix HydrogenFromFiles::avv() const
 				the_avv(i, f) = einsteinA(ni, nf);
 		}
 	}
-#ifdef PRINT_LEVEL_MATRICES
-	DEBUG("Einstein A matrix:" << endl);
-	DEBUG(the_avv << endl);
-#endif
 	return the_avv;
 }
 
@@ -285,10 +281,6 @@ EMatrix HydrogenFromFiles::extraAvv() const
 		size_t index2 = indexOutput(2, -1);
 		the_extra(index2, index1s) = rate / 4.; // + 0 * 3 / 4.
 	}
-#ifdef PRINT_LEVEL_MATRICES
-	DEBUG("Extra A" << endl);
-	DEBUG(the_extra << endl);
-#endif
 	return the_extra;
 }
 
