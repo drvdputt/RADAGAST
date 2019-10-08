@@ -3,6 +3,7 @@
 #include "GasStruct.hpp"
 #include "HydrogenDataProvider.hpp"
 #include "IonizationBalance.hpp"
+#include "Options.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 
@@ -72,25 +73,27 @@ EVector HydrogenLevels::sourcev(const GasStruct& gas) const
 			result[index] += _rr->alpha(n, l, gas._T);
 		}
 	}
-	double ne = gas._speciesNv(SpeciesIndex::ine());
-	double np = gas._speciesNv(SpeciesIndex::inp());
-#define TOPOFF
-#ifdef TOPOFF
-	// The recombination coefficients should sum to the total one (the one used for the
-	// ionization balance calculation). Therefore, we calculate here how much we still
-	// need...
-	double total_rr = Ionization::recombinationRateCoeff(gas._T);
-	double topoff = total_rr - result.sum();
-	if (topoff > 0)
+
+	if (Options::topoff)
 	{
-		// ...and add it to the top n-level
-		for (int l = 0; l < nMax; l++)
+		// The recombination coefficients should sum to the total one (the one used for the
+		// ionization balance calculation). Therefore, we calculate here how much we still
+		// need...
+		double total_rr = Ionization::recombinationRateCoeff(gas._T);
+		double topoff = total_rr - result.sum();
+		if (topoff > 0)
 		{
-			size_t index = _hdp->indexOutput(nMax, l);
-			result[index] += topoff / nMax / nMax * (2 * l + 1);
+			// ...and add it to the top n-level
+			for (int l = 0; l < nMax; l++)
+			{
+				size_t index = _hdp->indexOutput(nMax, l);
+				result[index] += topoff / nMax / nMax * (2 * l + 1);
+			}
 		}
 	}
-#endif
+
+	double ne = gas._speciesNv(SpeciesIndex::ine());
+	double np = gas._speciesNv(SpeciesIndex::inp());
 	return result * ne * np;
 }
 

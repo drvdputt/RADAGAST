@@ -3,6 +3,18 @@
 
 namespace Options
 {
+/////////////
+// PHYSICS //
+/////////////
+
+// To ensure self-consistency, add a source term to the upper level when the total recombination
+// rate is larger than the sum of recombination rates to individual levels.
+const bool topoff = true;
+
+//////////////////////////////////////////////
+// NUMERIC / METHOD / ITERATION / PRECISION //
+//////////////////////////////////////////////
+
 // Write out the level matrices of h2 at setup (written to working_directory/h2/einsteinA.dat
 // and levels.dat)
 const bool h2fromfiles_plotLevelMatrices = false;
@@ -16,6 +28,10 @@ const bool lineprofile_optimizedLineIntegration = true;
 // spectrum), only evaluate the line profile where the contribution is significant. When false,
 // the line is evaluated and added to the spectrum over the whole wavelength range.
 const bool lineprofile_optimizedLineAdd = true;
+
+///////////
+// DEBUG //
+///////////
 
 // Write out the loaded, singly interpolate, and doubly interpolated freeBound continuum data
 // (gamma_nu) (written to working_directory/freebound/loadedContinuum.dat,
