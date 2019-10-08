@@ -11,8 +11,6 @@
 #include <cmath>
 #include <iomanip>
 
-//#define EXACTGRID
-
 using namespace std;
 
 GrainPhotoelectricEffect::GrainPhotoelectricEffect(const GrainType& grainType)
