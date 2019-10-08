@@ -125,16 +125,8 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
 
 void ChargeDistribution::plot(const std::string& file, const std::string& header) const
 {
-	// TODO: the commented code needs to move somewhere else. Preferably some function in Testing.cpp.
-	// filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
-	// << fixed << a / Constant::ANG_CM << ".txt";
-	std::ofstream out = IOTools::ofstreamFile(file);
 
-	// out << "# a = " << a << endl;
-	// out << "# Teff = " << _Tc << endl;
-	// out << "# G0 = " << _G0 << endl;
-	// outvar << "# ne = " << env._ne << endl;
-	// outvar << "# Tgas = " << env._T << endl;
+	std::ofstream out = IOTools::ofstreamFile(file);
 	out << header << '\n';
 	for (int i = 0; i <= _fz.size(); i++)
 		out << _zmin + i << '\t' << _fz[i] << '\n';

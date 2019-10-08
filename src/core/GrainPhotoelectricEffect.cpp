@@ -426,8 +426,18 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		double intensityQabsIntegral = TemplatedUtils::integrate<double>(
 		                frequencyv, intensityTimesQabs);
 
-		// Calculate and write out the heating efficiency
+		// Calculate and write out the charge distribution and heating efficiency
 		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabs);
+		stringstream filename;
+		filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
+			 << fixed << a / Constant::ANG_CM << ".txt";
+		stringstream header;
+		header << "# a = " << a << '\n';
+		header << "# Teff = " << _Tc << '\n';
+		header << "# ne = " << env._ne << '\n';
+		header << "# Tgas = " << env._T << '\n';
+		cd.plot(filename.str(), header.str());
+
 		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabs, cd);
 		double totalAbsorbed =
 		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
