@@ -55,11 +55,6 @@ void HydrogenFromFiles::readData()
 		double j, observedEnergy, theoreticalEnergy;
 		istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >>
 		                observedEnergy >> theoreticalEnergy;
-#ifdef ECHO_READIN
-		DEBUG(lvIndex << " " << config << " " << twoSplus1 << " " << lSymbol << " " << j
-		              << " " << observedEnergy << " " << theoreticalEnergy << " "
-		              << endl);
-#endif
 
 		// Get the first number from the config string
 		int n;
@@ -73,10 +68,6 @@ void HydrogenFromFiles::readData()
 
 		// Convert the energy from cm-1 to erg
 		double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
-#ifdef ECHO_READIN
-		DEBUG("n " << n << " l " << l << " 2j+1 " << twoJplus1 << " e "
-		           << e * Constant::ERG_EV << endl);
-#endif
 
 		/* The level indices in the data structures will go from 0 to number of levels minus
 		   one. The quantum numbers are also used as keys in a map, so we can quickly
@@ -109,20 +100,14 @@ void HydrogenFromFiles::readData()
 		   the transition: */
 		int upperIndex = max(leftIndex, rightIndex);
 		int lowerIndex = min(leftIndex, rightIndex);
-#ifdef ECHO_READIN
-		DEBUG(lowerIndex << " " << upperIndex << " " << wavAngstrom << " " << gf << " "
-		                 << A << endl);
-#endif
+
 		// Zero means two-photon transition, see CHIANTI user guide.
 		if (wavAngstrom > 0)
 			_chiantiAvv(upperIndex - 1, lowerIndex - 1) = A;
 		getline(wgfa, line);
 	}
 	wgfa.close();
-#ifdef ECHO_READIN
-	DEBUG("All chianti A coefficients:" << endl);
-	DEBUG(_chiantiAvv << endl);
-#endif
+
 	//---------------------//
 	// READ COLLISION DATA //
 	//---------------------//
@@ -146,16 +131,8 @@ void HydrogenFromFiles::readData()
 		iss >> upperIndex >> lowerIndex;
 		Array Upsilonv(8);
 		for (int t = 0; t < 8; t++)
-		{
 			iss >> Upsilonv[t];
-#ifdef ECHO_READIN
-			DEBUG("temp" << _andersonTempv[t]);
-			DEBUG(" " << Upsilonv[t] << " ");
-#endif
-		}
-#ifdef ECHO_READIN
-		DEBUG(endl);
-#endif
+
 		_andersonUpsilonvm[{upperIndex, lowerIndex}] = Upsilonv;
 		getline(h_coll_str, line);
 	}
