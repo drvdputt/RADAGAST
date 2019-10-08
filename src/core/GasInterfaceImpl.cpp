@@ -211,17 +211,6 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s
 		scv = scatteringOpacityv(s, oFrequencyv);
 	}
 	Array densityv(s.speciesNv.data(), s.speciesNv.size());
-#ifdef SANITY
-	for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
-	{
-		if (emv[iFreq] < 0 || opv[iFreq] < 0 || scv[iFreq] < 0)
-		{
-			Error::runtime("GasModule: negative value in one of the "
-			               "optical "
-			               "properties");
-		}
-	}
-#endif
 	return {emv, opv, scv, s.T, densityv};
 }
 
