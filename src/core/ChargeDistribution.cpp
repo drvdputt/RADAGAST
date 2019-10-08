@@ -128,7 +128,7 @@ void ChargeDistribution::plot(const std::string& file, const std::string& header
 
 	std::ofstream out = IOTools::ofstreamFile(file);
 	out << header << '\n';
-	for (int i = 0; i <= _fz.size(); i++)
+	for (int i = 0; i < _fz.size(); i++)
 		out << _zmin + i << '\t' << _fz[i] << '\n';
 	out.close();
 }
