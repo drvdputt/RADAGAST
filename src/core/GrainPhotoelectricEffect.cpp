@@ -473,12 +473,7 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
                                                    double np) const
 {
-// Wavelength grid
-#ifdef EXACTGRID
-	Array wavelengthv(Testing::FILELAMBDAV.data(), Testing::FILELAMBDAV.size());
-#else
 	Array wavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
-#endif
 	Array frequencyv = Testing::freqToWavGrid(wavelengthv);
 
 	// Input spectrum

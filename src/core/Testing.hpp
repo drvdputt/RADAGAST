@@ -32,6 +32,7 @@ Array generateGeometricGridv(size_t nPoints = 200, double min = 1e11, double max
 
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 
+// Frequency to wavelength (and the other way around). nu = c / lambda, lambda = c / nu
 Array freqToWavGrid(const Array& frequencyv);
 
 Array defaultFrequencyv(size_t numPoints = 100);
