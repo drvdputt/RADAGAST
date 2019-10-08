@@ -22,6 +22,8 @@ const bool lineprofile_optimizedLineAdd = true;
 // T-interpolatedContinuum.dat, and gammanufb.dat).
 const bool freebound_debugData = false;
 
+// Write out the data loaded for the free-free Gaunt factor, both 2D and integrated over
+// frequency (written to working_directory/freefree/gauntff.dat and integratedgauntff.dat)
 const bool freefree_debugData = false;
 
 } /* namespace Options */

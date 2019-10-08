@@ -141,17 +141,20 @@ void FreeFree::readFullData()
 		}
 		getline(input, line);
 	}
-#ifdef DEBUG_CONTINUUM_DATA
-	ofstream out = IOTools::ofstreamFile("freefree/gauntff.dat");
-	for (size_t ipu = 0; ipu < np_u; ipu++)
-	{
-		for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
-			out << _fileGauntFactorvv(ipu, ipg2) << '\t';
-		out << endl;
-	}
-	out.close();
-#endif
 	DEBUG("Successfully read gauntff.dat" << endl);
+
+	if (Options::freefree_debugData)
+	{
+		// Write out 2D guant factor data
+		ofstream out = IOTools::ofstreamFile("freefree/gauntff.dat");
+		for (size_t ipu = 0; ipu < np_u; ipu++)
+		{
+			for (size_t ipg2 = 0; ipg2 < np_gam2; ++ipg2)
+				out << _fileGauntFactorvv(ipu, ipg2) << '\t';
+			out << endl;
+		}
+		out.close();
+	}
 }
 
 void FreeFree::readIntegratedData()
@@ -213,13 +216,14 @@ void FreeFree::readIntegratedData()
 		getline(input, line);
 	}
 
-#ifdef DEBUG_CONTINUUM_DATA
-	ofstream out;
-	out.open("freefree/integratedgauntff.dat");
-	for (double logg2 = -5.9; logg2 < 9.9; logg2 += .1)
-		out << logg2 << '\t' << integratedGauntFactor(logg2) << '\n';
-	out.close();
-#endif
+	if (Options::freefree_debugData)
+	{
+		ofstream out;
+		out.open("freefree/integratedgauntff.dat");
+		for (double logg2 = -5.9; logg2 < 9.9; logg2 += .1)
+			out << logg2 << '\t' << integratedGauntFactor(logg2) << '\n';
+		out.close();
+	}
 }
 
 double FreeFree::gauntFactor(double logu, double logg2) const
