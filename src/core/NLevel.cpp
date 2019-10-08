@@ -179,22 +179,26 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 		// Calculate Pij for the lower triangle (= stimulated emission)
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
 		double lowResIntegral = lp.integrateSpectrum(specificIntensity, spectrumMax);
-// #define REPORT_SPEC_INTEGRAL
-#ifdef REPORT_SPEC_INTEGRAL
-		auto f = [&](double x) -> double {
-			return lp(x) * specificIntensity.evaluate(x);
-		};
-		// TODO: better use log grid here, and put this in a separate test function
-		size_t many_points = 1e6;
-		double manualIntegral = TemplatedUtils::integrateFunction<double>(
-		                f, specificIntensity.freqMin(), specificIntensity.freqMax(),
-		                many_points);
 
-		double ratio = manualIntegral / lowResIntegral;
+		if (Options::nlevel_reportSpecIntegral)
+		{
+			// Compare above integral to explicit calculation using the whole
+			// wavelength range with many points.
+			auto f = [&](double x) -> double {
+				return lp(x) * specificIntensity.evaluate(x);
+			};
+			// TODO: better use log grid here, and put this in a separate test function
+			size_t many_points = 1e6;
+			double manualIntegral = TemplatedUtils::integrateFunction<double>(
+			                f, specificIntensity.freqMin(),
+			                specificIntensity.freqMax(), many_points);
 
-		if (abs(ratio - 1.) > 1.e-6)
-			cout << lowResIntegral << "\t MR:" << ratio << endl;
-#endif /* REPORT_SPEC_INTEGRAL */
+			double ratio = manualIntegral / lowResIntegral;
+
+			if (abs(ratio - 1.) > 1.e-6)
+				cout << lowResIntegral << "\t MR:" << ratio << endl;
+		}
+
 		BPvv(upper, lower) = lowResIntegral;
 
 		// Multiply by Bij in terms of Aij, valid for i > j

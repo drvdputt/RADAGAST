@@ -40,6 +40,12 @@ const bool levelsolver_printEquations = false;
 // is not mentioned in the output.
 const bool nlevel_printLevelMatrices = false;
 
+// VERY COSTLY: When integrating the B-coefficients, also do the integration 'manually' on a
+// very fine grid, and report the difference between the optimized line integration and the
+// 'manual' way. This is implemented in NLevel, but is actually a check on the quality of
+// LineProfile::integrateSpectrum.
+const bool nlevel_reportSpecIntegral = false;
+
 // Write out the level matrices of h2 at setup (written to working_directory/h2/einsteinA.dat
 // and levels.dat)
 const bool h2fromfiles_plotLevelMatrices = false;
