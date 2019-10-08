@@ -18,10 +18,20 @@ public:
 	                              std::function<double(int z)> chargeDownRatef,
 	                              int zminGuess, int zmaxGuess);
 
+	/** Minimum charge for which data is stored */
 	int zmin() const { return _zmin; }
+
+	/** Maximum charge for which data is stored */
 	int zmax() const { return _zmin - 1 + _fz.size(); }
+
+	/** Get the value of the charge distribution at the given z. Returns 0 if out of
+	    range. */
 	double value(int z) const;
+
+	/** Evaluate a function for every charge and sum the relative contributions. */
 	double sumOverCharge(std::function<double(int z)> functionOfZ) const;
+
+	/** Write the charge distribution to a two-column file (Z, fZ) */
 	void plot(const std::string& file, const std::string& header) const;
 
 private:
