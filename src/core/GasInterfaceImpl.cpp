@@ -533,10 +533,6 @@ Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) co
 	{
 		double ionizOp_iFreq = nH0 * Ionization::crossSection(oFrequencyv[iFreq]);
 		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
-#ifdef SANITY
-		if (totalOp[iFreq] < 0)
-			cout << "Negative opacity!";
-#endif
 	}
 	return totalOp;
 }
