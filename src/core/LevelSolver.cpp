@@ -170,7 +170,6 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 	}
 	if (nv.array().isNaN().any())
 	{
-		// TODO: warn about this
 		// Error::runtime("nan in H2 level solution");
 		nv = (nv.array().isNaN()).select(0, nv);
 	}

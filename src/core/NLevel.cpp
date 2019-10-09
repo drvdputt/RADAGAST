@@ -183,11 +183,12 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 		if (Options::nlevel_reportSpecIntegral)
 		{
 			// Compare above integral to explicit calculation using the whole
-			// wavelength range with many points.
+			// wavelength range with many points. Useful check in case of steep
+			// slopes in the spectrum, or very wide wings of the line.
 			auto f = [&](double x) -> double {
 				return lp(x) * specificIntensity.evaluate(x);
 			};
-			// TODO: better use log grid here, and put this in a separate test function
+
 			size_t many_points = 1e6;
 			double manualIntegral = TemplatedUtils::integrateFunction<double>(
 			                f, specificIntensity.freqMin(),
