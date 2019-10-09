@@ -5,11 +5,11 @@
 
 #include <functional>
 
-/* Defines a number of mathematical functions, some 'special', others not so special. */
+/** Defines a number of mathematical functions, some 'special', others not so special. */
 namespace SpecialFunctions
 {
 /** This function returns the Voigt function \f[ H(a,x) = \frac{a}{\pi} \int_{-\infty}^\infty
-    \frac{ {\text{e}}^{-u^2}\,{\text{d}}u }{ (x-u)^2+a^2 } \f] We use an implementation based on
+    \frac{ e^{-u^2}\,{\rm{d}}u }{ (x-u)^2+a^2 } \f] We use an implementation based on
     the ROOT library. This implementation follows an algorithm developed by Humlicek (1982,
     JQSRT, 21, 437) and Wells (1999, JQSRT, 62, 29), and should be accurate to at least 5
     significant digits. */
