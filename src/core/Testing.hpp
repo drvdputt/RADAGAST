@@ -107,9 +107,6 @@ GasModule::GrainInterface genMRNDust(double nHtotal, const Spectrum& specificInt
     converges. */
 void runFullModel();
 
-/** A test run for the model with a fixed dust model included. */
-void runWithDust(bool write = true);
-
 /** A test with many dust grain sizes, following the MRN distribution (see Weingartner 2001,
     ApJ, 548, 296). */
 void runMRNDust(bool write = true, double nH = 1.e4, double Tc = 1.e4, double lumSol = 1.e2,

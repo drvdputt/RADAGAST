@@ -873,59 +873,6 @@ void Testing::runFullModel()
 	runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
 }
 
-void Testing::runWithDust(bool write)
-{
-	cout << "RUN_WITH_DUST\n";
-
-	// Gas model
-	GasModule::GasInterface gasInterface = genFullModel();
-
-	// Radiation field
-	double Tc{4e3};
-	double G0{1e2};
-	Array specificIntensityv =
-	                generateSpecificIntensityv(gasInterface.iFrequencyv(), Tc, G0);
-
-	// Gas density
-	double nHtotal{1000};
-	double Tinit{8000};
-
-	// TODO: need a reasonable grain size distribution and DGR for testing here
-	Array sizev, densityv, temperaturev;
-	// Provide sizes in cm
-	// 10 A, 100A ,1000 A
-	sizev = {1e-7, 1e-6, 1e-5};
-	densityv = {1e-5, 1e-8, 1e-11};
-	// number of grains per H atom (this should be very small, as grains are much heavier
-	// than a hydrogen atom AND their total mass is only about 1% of the hydrogen mass
-
-	densityv *= nHtotal; // density in cm-3
-	// densityv *= 0;
-
-	// Actually, a temperature distribution per grain size is the most detailed form we'll
-	// be using. Maybe we need multiple versions of the grain interface with regards to
-	// storing the grain temperatures.
-	temperaturev = {15, 10, 5};
-	// And now I need some absorption efficiencies for every wavelength. Let's try to use
-	// the old photoelectric heating test code.
-	bool car = true;
-	vector<Array> qAbsvv{qAbsvvForTesting(car, sizev, gasInterface.iFrequencyv())};
-
-	// TODO: check if the qabsvv has loaded correctly
-
-	// Construct grain info using list of population objects
-	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
-	grainPopv->emplace_back(GasModule::GrainTypeLabel::CAR, sizev, densityv, temperaturev,
-	                        qAbsvv);
-	GasModule::GrainInterface grainInterface(move(grainPopv));
-
-	// Run
-	GasModule::GasState gs;
-	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, grainInterface);
-	if (write)
-		writeGasState("withDust/", gasInterface, gs);
-}
-
 GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& specificIntensity)
 {
 	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};

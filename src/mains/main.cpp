@@ -43,7 +43,6 @@ int main(int argc, char** argv)
 		// something in the way that the ones above work.
 		// Testing::runFromFilesvsHardCoded();
 		// Testing::runFullModel();
-		// Testing::runWithDust(true);
 		// Testing::runH2(true);
 		if (argc == 1)
 			Testing::runMRNDust(true);
