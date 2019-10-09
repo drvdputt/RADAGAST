@@ -228,6 +228,7 @@ private:
 	    Cif and the temperature kT. */
 	double otherDirectionC(double Cif, int i, int f, double kT) const;
 
+	bool _bB, _bCplus, _bCminus;
 	int _maxJ, _maxV;
 
 	/* Contains the quantum numbers and energies of the levels. The output will be indexed

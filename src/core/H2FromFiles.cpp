@@ -12,13 +12,6 @@
 
 using namespace std;
 
-namespace
-{
-constexpr bool BLEVELS{true};
-constexpr bool CplusLEVELS{true};
-constexpr bool CminusLEVELS{false};
-} // namespace
-
 H2FromFiles::H2FromFiles(int maxJ, int maxV)
                 : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()},
                   _inH2{SpeciesIndex::inH2()}
@@ -37,8 +30,8 @@ H2FromFiles::H2FromFiles(int maxJ, int maxV)
 		ofstream lvlOut = IOTools::ofstreamFile("h2/levels.dat");
 		lvlOut << "# eState\tv\tJ\tE\n";
 		for (const auto& l : _levelv)
-			lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j() << "\t"
-			       << l.e() << endl;
+			lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j()
+			       << "\t" << l.e() << endl;
 		lvlOut.close();
 	}
 }
@@ -65,12 +58,23 @@ void H2FromFiles::readLevels()
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
 	_startOfExcitedIndices = _levelv.size();
-	if (BLEVELS) // Lyman
+	if (Options::h2fromfiles_numExcitedLevels >= 1)
+	{
+		// Lyman
 		readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
-	if (CplusLEVELS) // Werner
+		_bB = true;
+	}
+	if (Options::h2fromfiles_numExcitedLevels >= 2)
+	{
+		// Werner
 		readLevelFile("dat/h2/energy_C_plus.dat", ElectronicState::Cplus);
-	if (CminusLEVELS)
+		_bCplus = true;
+	}
+	if (Options::h2fromfiles_numExcitedLevels >= 3)
+	{
 		readLevelFile("dat/h2/energy_C_minus.dat", ElectronicState::Cminus);
+		_bCminus = true;
+	}
 	_numL = _levelv.size();
 }
 
@@ -81,13 +85,13 @@ void H2FromFiles::readTransProbs()
 	// Radiative transitions within ground stated. Fills _avv with data from Wolniewicz
 	// (1998)
 	readTransProbFile("dat/h2/transprob_X.dat", ElectronicState::X, ElectronicState::X);
-	if (BLEVELS)
+	if (_bB)
 		readTransProbFile("dat/h2/transprob_B.dat", ElectronicState::B,
 		                  ElectronicState::X);
-	if (CplusLEVELS)
+	if (_bCplus)
 		readTransProbFile("dat/h2/transprob_C_plus.dat", ElectronicState::Cplus,
 		                  ElectronicState::X);
-	if (CminusLEVELS)
+	if (_bCminus)
 		readTransProbFile("dat/h2/transprob_C_minus.dat", ElectronicState::Cminus,
 		                  ElectronicState::X);
 }
@@ -97,11 +101,11 @@ void H2FromFiles::readDissProbs()
 	_dissProbv = EVector::Zero(_numL);
 	_dissKinEv = EVector::Zero(_numL);
 
-	if (BLEVELS)
+	if (_bB)
 		readDissProbFile("dat/h2/dissprob_B.dat", ElectronicState::B);
-	if (CplusLEVELS)
+	if (_bCplus)
 		readDissProbFile("dat/h2/dissprob_C_plus.dat", ElectronicState::Cplus);
-	if (CminusLEVELS)
+	if (_bCminus)
 		readDissProbFile("dat/h2/dissprob_C_minus.dat", ElectronicState::Cminus);
 }
 
