@@ -31,6 +31,10 @@ const int h2fromfiles_numExcitedLevels = 2;
 // NUMERIC / METHOD / ITERATION / PRECISION //
 //////////////////////////////////////////////
 
+// The maximum allowed amount of iterations for the (levels --> chemrates --> chemistry -->
+// abundances --> levels)-loop.
+const int densities_maxiterations = 25;
+
 // When integrating the product of a line profile with a spectrum, use a cutoff heuristic to
 // optimize this integration. When false, the line is integrated over the whole wavelength range
 // instead.
