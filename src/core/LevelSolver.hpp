@@ -45,9 +45,7 @@ EVector statisticalEquilibrium(double totalDensity, const EMatrix& totalTransiti
     In practice, when updating one of the fully connected levels, the populations of all levels
     are included in the calculation. Conversely, when one of the unconnected levels is updated,
     only the fully connected levels' populations is used, as the levels within this set are
-    assumed to have no transitions between them.
-
-    TODO: diagram */
+    assumed to have no transitions between them. */
 EVector statisticalEquilibrium_iterative(double totalDensity,
                                          const EMatrix& totalTransitionRatesvv,
                                          const EVector& sourcev, const EVector& sinkv,

@@ -78,9 +78,9 @@ TEST_CASE("H2-specific algorithm")
 		CHECK((nv.tail(nv.size() - 2).array() < eps * n).all());
 	}
 
-	// TODO: This is not working as expected. Of course, the above examples do not depend
-	// on radiation field. I need a way to check that the effect on radiation on level
-	// populations is hanled correctly.
+	// I need a way to check that the effect of radiation on level populations is handles
+	// correctly. The following only seems to work when the initial guess is LTE (which is
+	// standard now).
 	SUBCASE("Blackbody radiation, no collisions, should also go to LTE?")
 	{
 		double n = 1;
