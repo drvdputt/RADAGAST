@@ -46,25 +46,32 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
 	double ip_v = (Z + .5) * e2_a;
 	if (Z >= 0)
 	{
-		// use the same expression for carbonaceous and silicate
+		// use the same expression for carbonaceous and silicate (WD01 eq 2)
 		ip_v += workFunction(carbonaceous) +
-		        (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a; // WD01 eq 2
+		        (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a;
 	}
 	// For negatively charged grains, different expressions are used for car and sil
 	else if (carbonaceous)
 	{
-		ip_v += workFunction(carbonaceous) -
-		        e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM); // WD01 eq 4
+		// WD01 eq 4 (using IP(Z < 0) = EA(Z + 1))
+		ip_v += workFunction(carbonaceous) - e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM);
 	}
 	else // if silicate
 	{
-		ip_v += 3 / Constant::ERG_EV; // WD01 eq 5
+		// WD01 eq 5 (using IP(Z < 0) = EA(Z + 1))
+		ip_v += 3 / Constant::ERG_EV;
 	}
 	return ip_v;
 }
 
-double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
+double WD01::energyIntegral(double Elow, double Ehigh, double Emin)
 {
+	// This integrates over a parabolic distribution, with zeros at Elow and Ehigh. The
+	// integration range is [Emin, Emax = Ehigh]. Emin has to be given, because we do not
+	// want to integrate over electrons that do not escape.
+
+	// I do this to make the code more readable. It looks more like my notes this way.
+	double Emax = Ehigh;
 	double Ediff = Ehigh - Elow;
 	double Ediff3 = Ediff * Ediff * Ediff;
 
@@ -80,26 +87,29 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin, double Emax)
 	        Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
-double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
+double WD01::escapingFraction(int Z, double Elow, double Ehigh)
 {
-	double ip_v = ionizationPotential(a, Z, carbonaceous);
-	double Emin = eMin(a, Z);
-	double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
-	double hnuDiff = hnu - hnu_pet;
+	// Calculate y2 from eq 11
+	double Ediff = Ehigh - Elow;
+	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
+	return y2;
+}
+
+double WD01::yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceous)
+{
 	// Below photoelectric threshold
 	if (hnuDiff < 0)
 		return 0;
 
-	double Emax = hnuDiff + Emin;
-
 	// Compute yield (y2, y1, y0, and finally Y)
 
-	// WD01 text between eq 10 and 11
+	// Energy distribution parameters (parabola that becomes zero at Elow and Ehigh. See
+	// WD01 text between eq 10 and 11).
 	double Elow, Ehigh;
 	if (Z < 0)
 	{
 		Elow = Emin;
-		Ehigh = Emax;
+		Ehigh = hnuDiff + Emin;
 	}
 	else
 	{
@@ -107,16 +117,15 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 		Ehigh = hnuDiff;
 	}
 
-	// Calculate y2 from eq 11
-	double Ediff = Ehigh - Elow;
-	double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
+	double y2 = escapingFraction(Z, Elow, Ehigh);
 
 	// Calculate y1 from grain properties and eq 13, 14
 	// double imaginaryRefIndex = 1; // should be wavelength-dependent
 	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
-	constexpr double la =
-	                100 *
-	                Constant::ANG_CM; // value from 1994-Bakes. WD01 uses the above one
+
+	// value from 1994-Bakes. WD01 uses the one in the comment above, which is more annoying
+	// to calculate.
+	constexpr double la = 100 * Constant::ANG_CM;
 	constexpr double le = 10 * Constant::ANG_CM;
 
 	double beta = a / la;
@@ -124,6 +133,10 @@ double WD01::yield(double a, int Z, double hnu, bool carbonaceous)
 	double beta2 = beta * beta;
 	double alpha2 = alpha * alpha;
 
+	/* TODO: expm1 is has a heavy weight in the yield calculation performance. I should
+	   cache these per grain size. However, As stated above, la might depend on the
+	   frequency in the future, so this might become harder than it seems. Of course,
+	   caching for each frequency and size should also be possible. */
 	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
 	            (beta2 - 2. * beta - 2. * expm1(-beta));
 
@@ -221,4 +234,14 @@ double WD01::thetaKsi(double ksi)
 		return ksi / (1. + 1. / sqrt(ksi));
 	else
 		return 0;
+}
+
+double WD01::sigmaPDT(int Z, double hnuDiff)
+{
+	constexpr double DeltaE = 3 / Constant::ERG_EV;
+	double x = hnuDiff / DeltaE;
+	double denom = 1 + x * x / 3;
+	// WD01 eq 20, with constant factor moved in front of integral
+	double sigma_pdt = 1.2e-17 * abs(Z) * x / denom / denom;
+	return sigma_pdt;
 }

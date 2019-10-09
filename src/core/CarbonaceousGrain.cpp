@@ -10,9 +10,9 @@ CarbonaceousGrain::CarbonaceousGrain()
 {
 }
 
-double CarbonaceousGrain::photoElectricYield(double a, int z, double hnu) const
+double CarbonaceousGrain::photoelectricYield(double a, int z, double hnuDiff, double Emin) const
 {
-	return WD01::yield(a, z, hnu, true);
+	return WD01::yield(a, z, hnuDiff, Emin, true);
 }
 double CarbonaceousGrain::ionizationPotential(double a, int z) const
 {

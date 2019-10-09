@@ -16,10 +16,13 @@ double eMin(double a, int Z);
 double ionizationPotential(double a, int Z, bool carbonaceous);
 
 /** Calculates the integral over the energy in WD01 equation 39. */
-double energyIntegral(double Elow, double Ehigh, double Emin, double Emax);
+double energyIntegral(double Elow, double Ehigh, double Emin);
+
+/** Calculate y2 from eq 11, the normalization of the averag energy integral. */
+double escapingFraction(int Z, double Elow, double Ehigh);
 
 /** Calculates the photoelectric yield according to WD01 equation 12. */
-double yield(double a, int Z, double hnu, bool carbonaceous);
+double yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceous);
 
 /** Implements WD01 equation 23. */
 double autoIonizationThreshold(double a, bool carbonaceous);
@@ -38,6 +41,9 @@ double lambdaTilde(double tau, double ksi);
 
 /** Draine & Sutin (1987) equation 2.4a (with nu replaced by ksi in notation). */
 double thetaKsi(double ksi);
+
+/** Photodetachment cross section (equation 20) */
+double sigmaPDT(int Z, double hnuDiff);
 
 } /* namespace WD01 */
 #endif /* CORE_WEINGARTNERDRAINE2001_H_ */
