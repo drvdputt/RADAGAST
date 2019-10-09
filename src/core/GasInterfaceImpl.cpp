@@ -15,6 +15,7 @@
 #include "IOTools.hpp"
 #include "IonizationBalance.hpp"
 #include "LevelSolver.hpp"
+#include "Options.hpp"
 #include "SimpleHydrogenNetwork.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
@@ -27,8 +28,6 @@
 using namespace std;
 
 constexpr int MAXCHEMISTRYITERATIONS{25};
-
-const bool GASGRAINCOL{true};
 
 GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
                                    unique_ptr<H2Levels> molecularModel)
@@ -172,7 +171,7 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 		Array grainHeatPerSizev(numSizes);
 		// Array grainPhotoPerSizev(numSizes);
 
-		if (type->heatingAvailable() && GASGRAINCOL)
+		if (type->heatingAvailable() && Options::cooling_gasGrainCollisions)
 		{
 			GrainPhotoelectricEffect gpe(*type);
 
@@ -192,9 +191,9 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 		const Array& h2FormationHeatv = GasGrain::surfaceH2FormationHeatPerSize(
 		                pop, s.T, s.speciesNv[_inH]);
 
-		pop.calculateTemperature(
-		                s.specificIntensity.frequencyv(), s.specificIntensity.valuev(),
-		                grainHeatPerSizev + h2FormationHeatv);
+		pop.calculateTemperature(s.specificIntensity.frequencyv(),
+		                         s.specificIntensity.valuev(),
+		                         grainHeatPerSizev + h2FormationHeatv);
 	}
 }
 
@@ -640,7 +639,7 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 				auto cd = gpe.calculateChargeDistribution(a, env, qAbsv);
 				grainPhotoelectricHeating +=
 				                nd * gpe.heatingRateA(a, env, qAbsv, cd);
-				if (GASGRAINCOL)
+				if (Options::cooling_gasGrainCollisions)
 					gasGrainCooling += nd *
 					                   gpe.gasGrainCollisionCooling(
 					                                   a, env, cd,

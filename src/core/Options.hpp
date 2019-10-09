@@ -7,6 +7,10 @@ namespace Options
 // PHYSICS //
 /////////////
 
+// Take into account cooling of the gas by collisions with the grains. Also activates the
+// corresponding heating term for the grains.
+const bool cooling_gasGrainCollisions = true;
+
 // To ensure self-consistency, add a source term to the upper level when the total recombination
 // rate is larger than the sum of recombination rates to individual levels.
 const bool hlevels_topoff = true;
