@@ -29,9 +29,9 @@ public:
 
 	/* Makes a plot of the heating efficiency in function of the grain size. Saved as a
 	   two-column file in $(pwd)/photoelectric using the filename. */
-	double heatingRateTest(double G0, double gasT, double ne) const;
+	void heatingRateTest(double G0, double gasT, double ne) const;
 
-	double chargeBalanceTest(double G0, double gasT, double ne, double np) const;
+	void chargeBalanceTest(double G0, double gasT, double ne, double np) const;
 
 private:
 	/** Calculates the integral of the partial emission rate (per wavelength interval)
@@ -154,12 +154,7 @@ private:
 	/* The radiation field to use for test will use this blackbody temperature to determine
 	   the shape. Its actual strength should be provided using the 'G0' argument of the test
 	   function. */
-	const double _Tc{3.e4};
 
-	// Wavelength grid to use for tests
-	const std::size_t _nWav{200};
-	const double _minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
-	const double _maxWav{1000 * Constant::UM_CM};
 };
 
 #endif /* CORE_PHOTOELECTRICHEATING_H_ */

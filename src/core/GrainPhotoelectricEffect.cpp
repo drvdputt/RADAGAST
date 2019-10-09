@@ -391,15 +391,25 @@ double GrainPhotoelectricEffect::yieldFunctionTest() const
 	return 0.0;
 }
 
-double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
+namespace
 {
-	// Frequency grid
-	const Array& frequencyv = Testing::generateGeometricGridv(
-	                _nWav, Constant::LIGHT / _maxWav, Constant::LIGHT / _minWav);
+// Wavelength grid to use for the tests
+void testSpectrum(double G0, Array& frequencyv, Array& specificIntensityv)
+{
+	const double minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
+	const double maxWav{1000 * Constant::UM_CM};
+	const double Tc{3.e4};
+	frequencyv = Testing::generateGeometricGridv(
+		200, Constant::LIGHT / maxWav, Constant::LIGHT / minWav);
+	specificIntensityv =
+	                Testing::generateSpecificIntensityv(frequencyv, Tc, G0);
+}
+}
 
-	// Input spectrum
-	const Array& specificIntensityv =
-	                Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
+void GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
+{
+	Array frequencyv, specificIntensityv;
+	testSpectrum(G0, frequencyv, specificIntensityv);
 
 	// Gather environment parameters
 	const Spectrum specificIntensity(frequencyv, specificIntensityv);
@@ -439,11 +449,10 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 		// Calculate and write out the charge distribution and heating efficiency
 		ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
 		stringstream filename;
-		filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2)
-			 << fixed << a / Constant::ANG_CM << ".txt";
+		filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8)
+		         << setprecision(2) << fixed << a / Constant::ANG_CM << ".txt";
 		stringstream header;
 		header << "# a = " << a << '\n';
-		header << "# Teff = " << _Tc << '\n';
 		header << "# ne = " << env._ne << '\n';
 		header << "# Tgas = " << env._T << '\n';
 		cd.plot(filename.str(), header.str());
@@ -470,17 +479,13 @@ double GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double 
 	avgQabsOf.close();
 	cout << "Wrote avgQabsInterp.txt" << endl;
 	cout << "Charging parameter = " << G0 * sqrt(gasT) / ne << endl;
-	return 0.0;
 }
 
-double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
+void GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
                                                    double np) const
 {
-	Array wavelengthv = Testing::generateGeometricGridv(_nWav, _minWav, _maxWav);
-	Array frequencyv = Testing::freqToWavGrid(wavelengthv);
-
-	// Input spectrum
-	Array specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, _Tc, G0);
+	Array frequencyv, specificIntensityv;
+	testSpectrum(G0, frequencyv, specificIntensityv);
 	Spectrum specificIntensity(frequencyv, specificIntensityv);
 	const Environment env(specificIntensity, gasT, ne, np, {-1, 1}, {ne, np},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
@@ -496,16 +501,10 @@ double GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, doubl
 
 	cout << "Zmax = " << cd.zmax() << " Zmin = " << cd.zmin() << '\n';
 
-	ofstream out = IOTools::ofstreamFile("photoelectric/fZ.txt");
-	out << "# a = " << a << endl;
-	out << "# Teff = " << _Tc << endl;
-	out << "# G0 = " << G0 << endl;
-	out << "# ne = " << ne << endl;
-	out << "# Tgas = " << gasT << endl;
-
-	for (int z = cd.zmin(); z <= cd.zmax(); z++)
-		out << z << '\t' << cd.value(z) << '\n';
-	out.close();
-
-	return 0.;
+	stringstream header;
+	header << "# a = " << a << endl;
+	header << "# G0 = " << G0 << endl;
+	header << "# ne = " << ne << endl;
+	header << "# Tgas = " << gasT << endl;
+	cd.plot("photoelectric/fZ.txt", header.str());
 }
