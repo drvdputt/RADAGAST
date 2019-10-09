@@ -147,14 +147,6 @@ private:
 private:
 	/* Graintype-specific properties are provided by this object. */
 	const GrainType& _grainType;
-
-	// TODO: THE MEMBERS BELOW SHOULD BE REMOVED EVENTUALLY. THEY ONLY PLAY A ROLE IN SOME OF
-	// THE TESTS
-
-	/* The radiation field to use for test will use this blackbody temperature to determine
-	   the shape. Its actual strength should be provided using the 'G0' argument of the test
-	   function. */
-
 };
 
 #endif /* CORE_PHOTOELECTRICHEATING_H_ */
