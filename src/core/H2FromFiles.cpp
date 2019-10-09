@@ -405,8 +405,6 @@ EMatrix H2FromFiles::cvv(const GasStruct& gas) const
 	double nH = gas._speciesNv(_inH);
 	addToCvv(the_cvv, T, H0, nH);
 
-	// TODO: (optional?) g-bar approximation for missing coefficients
-
 	// H2-H2 collisions.
 	double nH2 = gas._speciesNv(_inH2);
 	addToCvv(the_cvv, T, H2ORTHO, gas._orthoH2 * nH2);
