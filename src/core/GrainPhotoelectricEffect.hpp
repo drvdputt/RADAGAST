@@ -119,7 +119,7 @@ private:
 
 	/** The energy removed from the gas by particle sticking to a grain, WD01 equation 42.
 	    TODO: figure out how this fits in with the gas-grain collisional energy exchange.
-	    I've disabled this for now, using the INCLUDERECCOOL macro. */
+	    I've disabled this for now in Options.hpp. */
 	double recombinationCoolingRate(double a, const Environment& env,
 	                                const ChargeDistribution& cd) const;
 
