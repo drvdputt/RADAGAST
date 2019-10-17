@@ -3,11 +3,13 @@
 
 #include "Array.hpp"
 #include "EigenAliases.hpp"
+#include "GasState.hpp"
 #include "H2Model.hpp"
 #include "HModel.hpp"
 
 class GasDiagnostics;
 class GasInterfaceImpl;
+class GrainInterface;
 class Spectrum;
 
 /** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl
@@ -19,11 +21,15 @@ class GasSolution
 {
 public:
 	/** Pointer to gasInterfaceImpl (not sure if really needed, but for now) and inpinging
-	    radiation field are constant */
-	GasSolution(const GasInterfaceImpl* gi, const grainInterface& gri,
-	            const Spectrum& specificIntensity)
+	    radiation field are constant. Also, need to pass instances of HModel and H2Model
+	    here, as they could be abstract (transfer ownership using unique pointer). */
+	GasSolution(const GasInterfaceImpl* gi, const GrainInterface& gri,
+	            const Spectrum& specificIntensity, const HModel* hModel,
+	            const H2Model* h2Model)
 	                : _gasInterfaceImpl{gi}, _grainInterface{gri},
-	                  _specificIntensity{specificIntensity}
+	                  _specificIntensity{specificIntensity},
+	                  _hSolution{std::make_shared<HModel>(hModel)},
+	                  _h2Solution{std::make_shared<H2Model>(h2Model)}
 	{
 	}
 	/** The temperature */
@@ -36,12 +42,6 @@ public:
 	double nH() const;
 	double nH2() const;
 	double np() const;
-
-	/** Access to modify H solution  */
-	HModel* hSolution();
-
-	/** Access to modify H2 solution */
-	H2Model* h2Solution();
 
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
 	Array emisivityv(Array eFrequencyv) const;
@@ -89,8 +89,8 @@ private:
 	const Spectrum& _specificIntensity;
 	double _t;
 	EVector _speciesNv;
-	HModel _hSolution;
-	H2Model _h2Solution;
+	std::shared_ptr<HModel> _hSolution;
+	std::shared_ptr<H2Model> _h2Solution;
 };
 
 #endif // CORE_GASSOLUTION_HPP
