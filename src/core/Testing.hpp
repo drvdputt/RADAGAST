@@ -10,7 +10,7 @@
 
 class FreeBound;
 class GasInterfaceImpl;
-class NLevel;
+class LevelCoefficients;
 class Spectrum;
 
 namespace Testing
@@ -47,7 +47,7 @@ Array generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0);
 Array freqToWavSpecificIntensity(const Array& frequencyv, const Array& specificIntensity_nu);
 
 /** This clumsy thing should give us a grid with some extra points in the correct locations. */
-Array improveFrequencyGrid(const NLevel& boundBound, const Array& oldpoints);
+Array improveFrequencyGrid(const LevelCoefficients& boundBound, const Array& oldpoints);
 Array improveFrequencyGrid(const FreeBound& freeBound, const Array& oldPoints);
 
 // TEST RUNS //
