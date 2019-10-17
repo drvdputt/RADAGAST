@@ -10,6 +10,11 @@ class GasDiagnostics;
 class GasInterfaceImpl;
 class Spectrum;
 
+/** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl
+    are called. This class serves as a workspace, where all the dynamic values (i.e. changing
+    while searching for the equilibrium) are stored. Once a GasSolution objects has been
+    properly filled in, the public functions can be called to calculate any derived
+    quantities.*/
 class GasSolution
 {
 public:
@@ -27,7 +32,7 @@ public:
 
 	/** The chemistry solution */
 	EVector speciesNv() const;
-	void setSpeciesNv();
+	void setSpeciesNv(EVector nv);
 	double nH() const;
 	double nH2() const;
 	double np() const;

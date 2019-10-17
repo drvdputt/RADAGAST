@@ -15,40 +15,26 @@ class GasDiagnostics;
 class HydrogenLevels;
 class H2Levels;
 
-/** This class contains the actual implementation of the Gas Interface, and currently is the
-    backbone of the whole code. It calculates the abundances, level populations and net heating
-    rate of hydrogen repeatedly, until the equilibrium temperature is found.
+/** This class is the backbone of the whole code. It calculates the abundances, level
+    populations and net heating rate of hydrogen repeatedly, until the equilibrium temperature
+    is found.
 
-    For now, different parts of the code are grouped by the kind of process. When an instance of
+    The parts of the code are grouped by the kind of process. When an instance of
     GasInterfaceImpl is constructed, a few members which provide implementations of the various
-    processes are constructed too. Objects of the classes FreeFree, FreeBound and NLevel are
-    created, which decribe respectively the Brehmsstrahlung, the recombination continuum and
-    bound-bound processes (between energy levels of Hydrogen). During their construction, they
-    each read the data they need to perform their functions.
+    processes are constructed too. Objects of the classes FreeFree, FreeBound and Chemistry are
+    created, which decribe respectively the Brehmsstrahlung, the recombination continuum and the
+    chemical network. During their construction, they each read the data they need to perform
+    their functions.
 
-    The most recent addition is a chemistry network, which can calculate the abundances of the
-    different species, given a set of rate coefficients for the different formation and
-    destruction processes. The invocations of the chemistry calculation, level population
-    calculations for H2 and H, and deriving new rate coefficients are currently at the same
-    level in the call hierarchy. The implementation alternates between chemistry and level
-    population calculations, until a self-consistent result is reached. Functions which
-    calculate the optical properties and thermal effects of H and H2 are explicitly invoked from
-    this class (as opposed to, for example, putting all the "opacity-havers" in a list).
+    Another important member is the SpeciesModelManager, which contains all constant data for
+    specialized species models (currently H and H2). I also allows this class to create HModel
+    and H2Model objects, which will be given to a GasSolution object to store all the details of
+    H and H2.
 
-    The total net heating rate for the gas mixture should take into account chemical heating, as
-    well as the heating/cooling contributions which the species provide independently.
-
-    The decision still has to be made on how we want to group the processes. We could make a
-    list of objects representing each species, and indicate which of the objects provides
-    heating, cooling, line emission, continuum, emission, opacity... or we could make separate
-    lists of of heating providers, line emission providers, opacity providers ... (this smells of 
-    multiple inheritance).
-
-    It's pretty clear that we can put all the NLevel systems into a list, and call solveBalance.
-    So solveBalance should have the same signature for all subclasses of NLevel. But different
-    subclasses of NLevel provide some different information, such as HydrogenLevels for the
-    two-photon continuum, or H2Levels for dissociation rates. This explains the need for
-    subclassing. */
+    The main methods of this class return a GasSolution object, which is given a callback
+    pointer. Any quantities which depend on the specifics of the final equilibrium will be
+    calculated in that class, with some callbacks to this class to access some functions which
+    depend on constants stored here. */
 class GasInterfaceImpl
 {
 public:
