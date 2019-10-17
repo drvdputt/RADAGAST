@@ -116,6 +116,7 @@ private:
 	LineProfile lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const;
 
 private:
+	double _mass;
 	size_t _numLv{0};
 	EVector _ev;
 	EVector _gv;
