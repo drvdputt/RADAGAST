@@ -15,28 +15,33 @@ public:
 	    Make sure that the arguments passed to setCvv and setNv are dimensionally compatible
 	    with the given LevelCoefficients. A temperature and density are also needed to
 	    calculate the line width and normalization. */
-	LevelSolution(const LevelCoefficients* lc, double n, double t)
-	                : _levelCoefficients{lc}, _n{n}, _t{t}
+	LevelSolution(const LevelCoefficients* lc)
+	                : _levelCoefficients{lc}
 	{
 	}
+	/** Set new temperature */
+	void setT(double t){_t = t;}
 
 	/** Update the collision coefficients */
-	void setCvv(const EMatrix& cvv);
+	void setCvv(const EMatrix& cvv){_cvv = cvv;}
 
 	/** Update the level populations */
-	void setNv(const EVector& nv);
+	void setNv(const EVector& nv){_nv = nv;}
 
 	/** The spectrum emitted by the line transitions, expressed as the emission coefficient
 	    j_nu f * (erg/cm3/s/Hz). */
 	Array emissivity(const Array& eFrequencyv) const;
 
-	/** The line opacity alpha_nu, equivalent to kappaRho for dust (cm-1). */
+	/** The line opacity alpha_nu, equivalent to kappaRho for dust [cm-1]. */
 	Array opacityv(const Array& oFrequencyv) const;
+
+	/** Net heating due to (de-)excitation [erg s-1 cm-3] */
+	double netHeating() const;
 
 private:
 	const LevelCoefficients* _levelCoefficients;
-	double _n;
-	double _t;
+	double _n{0.};
+	double _t{0.};
 	EVector _nv;
 	EMatrix _cvv;
 };
