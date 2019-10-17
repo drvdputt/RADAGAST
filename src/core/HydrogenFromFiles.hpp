@@ -11,7 +11,7 @@
     the output functions (\c avv(), \c ev(), etc.) are called, the data is distilled into
     matrices/vectors which can be used by \c HydrogenLevels, to do the calculation of the level
     populations. */
-class HydrogenFromFiles : public HydrogenDataProvider
+class HydrogenFromFiles : public HData
 {
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
@@ -84,49 +84,17 @@ private:
 	   called after readData() has finished. These two calls should be made consecutively in
 	   either the constructor or a setup routine. */
 public:
-	// FUNCTIONS RETURNING CONSTANT DATA //
-	/** These functions convert the internally loaded data to usable matrices an vectors for
-	    level calculations. These are usually called only once, during the setup of a typical
-	    run. */
-
-	/* Returns the number of levels */
-	size_t numLv() const override;
-
-	/** Returns a vector containing the energy of each level. [erg] */
-	EVector ev() const override;
-
-	/** Returns a vector containing the degeneracy of each level. */
-	EVector gv() const override;
-
-	/** Returns a matrix containing the Einstein A coefficients for all levels. Indexed on
-	    (upper, lower), making it a lower triangle matrix. [s-1] */
-	EMatrix avv() const override;
-
-	/** Returns a matrix containing any extra spontaneous decays between levels. This matrix can
-	    be used to describe spontaneous decays that do NOT produce line radiation (for example
-	    two-photon processes, which generate a continuum instead). [s-1] */
-	EMatrix extraAvv() const override;
-
-	// FUNCTIONS RETURNING VARIABLE DATA //
-	/** These functions provide coefficients that depend on external variables such as the
-	    temperature. */
-
-	/** Returns a matrix containing the collisional transition rates (already multiplied with
-	    the partner density: [cm3 s-1 * cm-3 = s-1]), for a given temperature and proton and
-	    electron densities. */
 	EMatrix cvv(const GasStruct& gas) const override;
 
-	/** @name Specific for atomic hydrogen */
 	int nMax() const override { return 5; }
 
-	/**@{*/
 	/* Gives the index of the (n, l) energy level which is used in the output functions. To get
 	   the energy of the n=5, l=2 level for example, one can call i = indexOutput(5, 2). The
 	   energy you need will be the i'th element of the output vector produced by the
 	   ev()-function (which the client should have cached, since this function is "slow").
 
 	   If the n'th level is collapsed, the given l will be ignored. */
-	size_t indexOutput(int n, int l = 0) const override;
+	size_t index(int n, int l = 0) const override;
 
 	/** Return a pair of indices indication the upper and lower level of the two-photon
 	    transition (2s ans 1s respectively). When the upper level is collapsed, the index

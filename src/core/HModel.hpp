@@ -47,12 +47,10 @@ private:
 	EVector sinkv(const GasStruct& gas) const;
 
 	/** This function calculates the two-photon continuum using Nussbaumer \& Smutz (1984). */
-	Array twoPhotonEmissivityv(const Solution& s, const Array& eFrequencyv) const;
+	Array twoPhotonEmissivityv(const Array& eFrequencyv) const;
 
 	const HData* _hData{nullptr};
 	LevelSolution _levelSolution;
-
-	std::unique_ptr<const RecombinationRate> _rr;
 };
 
 #endif // CORE_HMODEL_HPP
