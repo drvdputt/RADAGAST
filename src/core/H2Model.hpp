@@ -1,0 +1,51 @@
+#ifndef CORE_H2MODEL_HPP
+#define CORE_H2MODEL_HPP
+
+#include "Array.hpp"
+
+class GasStruct;
+class Spectrum;
+
+/** Abstract class for the non-constant H2 properties, and the functions that depend on them. We
+    envision 2 subclasses: a large model which includes a full calculation of the level
+    populations, and dissociation / heating / etc. derived from these populations; and a smaller
+    model which implements more approximate recipes. */
+class H2Model
+{
+	/** Solve the state of H2, given a constant set of environmental parameters. Depending
+	    on the sublass, thie calculation can be trivial, or extremely heavy (solving the
+	    levels). */
+	virtual void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
+	                   double h2form = 0) = 0;
+
+	/** The dissociation rate, both by direct photodissociation and the indirect Solomon
+	    process. This rate can be used to calculate the H2 abundance using a chemical
+	    network. [s-1] */
+	virtual double dissociationRate(const Spectrum& specificIntensity) const = 0;
+
+	/** TODO: There are several processes which have leftover kinetic energy after the
+	    dissociation. In a nutshell, these processes convert radiation into kinetic energy.
+	    Solomon process dissociation (electronic excitation followed by transition into
+	    ground state continuum). Direct radiative dissociation (effect similar to H
+	    ionization). I think it should be possible to calculate this from the radiation
+	    field, the level populations, and the threshold energy for each level: (photon
+	    energy - threshold energy) times the rate. */
+	virtual double dissociationHeating(const Spectrum& specificIntensity) const = 0;
+
+	/** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this
+	    depends on the velocity distribution of the colliding particles, and the energy
+	    transferred during the collision, I will need data for this. Have found no
+	    candidates yet. */
+	virtual double lineHeating(const Spectrum& specificIntensity) const = 0;
+
+	/** Ortho-para ratio (ortho / total) */
+	virtual double orthoPara() const = 0;
+
+	/** H2 emission (if any) */
+	virtual Array emissivityv(const Array& eFrequencyv) const = 0;
+
+	/** H2 opacity, both by lines and the continuum cross section (if any) */
+	virtual Array opacityv(const Array& oFrequencyv) const = 0;
+};
+
+#endif // CORE_H2MODEL_HPP
