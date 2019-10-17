@@ -45,9 +45,13 @@ public:
 
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
 	Array emisivityv(Array eFrequencyv) const;
+	Array radiativeRecombinationEmissivityv(const Array& eFrequencyv) const;
+	Array freeFreeEmissivityv(const Array& eFrequencyv) const;
+	Array lineEmissivityv(const Array& eFrequencyv) const;
 
 	/** The total opacity at each frequency in 1 / cm */
 	Array opacityv(Array oFrequencyv) const;
+	Array ionizationOpacityv(const Array& eFrequencyv) const;
 
 	/** Total cooling */
 	double cooling() const;
@@ -55,12 +59,29 @@ public:
 	/** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
 	double heating() const;
 
+	/** The heating by the grains only (expensive to calculate), minus the cooling by
+	    collisions with the grains. Calculated together for efficiency. Optionally returns
+	    the individual constributions through the pointer arguments. */
+	double grainHeating(double* photoHeat = nullptr, double* collCool = nullptr) const;
+
 	/** Copies and/or recalculates many diagnostic values, and puts these in the given
 	    GasDiagnostics object */
 	void fillDiagnostics(GasDiagnostics*) const;
 
-	/** Fills a GasState object with the information contained in this solution */
-	void updateGasState(GasState&) const;
+	/** Calculate several extra contributions to the heating of the grains (collisions
+	    (Draine and Bertoldi 1996), H2 formation on the surface (Takahashi 2001). Passing
+	    some intermediary results of either the H2 level calculation or the grain
+	    photoelectric effect calculation might help in speeding up this computation, as well
+	    as using caching for the radiation emitted by the grains. TODO: there is something
+	    dirty here: the grain temperatures are updated while GrainInterface is constant...
+	    This is not safe at all. */
+	void updateGrainTemps() const;
+
+	/** Distills the GasSolution object into the necessary information to retrieve opacity
+	    and emissivity. Grids on which the opacity and emissivity will be discretized
+	    (before being stored in the gas state) need to be provided. */
+	GasModule::GasState makeGasState(const Array& oFrequencyv,
+	                                 const Array& eFrequencyv) const;
 
 private:
 	const GasInterfaceImpl* _gasInterfaceImpl;
