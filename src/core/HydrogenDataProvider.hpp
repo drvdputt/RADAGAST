@@ -1,24 +1,25 @@
 #ifndef CORE_HYDROGENDATAPROVIDER_H_
 #define CORE_HYDROGENDATAPROVIDER_H_
 
+#include "Constants.hpp"
 #include "LevelDataProvider.hpp"
+#include "NLevel.hpp"
+#include "RecombinationRate.hpp"
 
 #include <array>
 
-/** This class exists to underscore the main difference between a regular LevelDataProvider and one
-    suited for hydrogen. Using a LevelDataProvider of this subclass the two-photon continuum between
-    1s and 2s can be implemented, as it provides a function to retrieve the right indices. The rest
-    of the details about the levels remains hidden. */
-class HydrogenDataProvider : public LevelDataProvider
+/** Abstract class which specifies how to provide data for the hydrogen model. It inherits from
+    LevelCoefficients, so that level coefficients can be delivered in a consistent way. */
+class HData : public LevelCoefficients
 {
-protected:
-	HydrogenDataProvider() = default;
-	virtual ~HydrogenDataProvider() = default;
-
 public:
-	virtual int nMax() const = 0;
+	HData()
+	                : LevelCoefficients(Constant::HMASS_CGS),
+	                  _rr{std::make_unique<HydrogenADF48>()} {};
+	virtual ~HData();
 
-	virtual size_t indexOutput(int n, int l) const = 0;
+	virtual int nMax() const = 0;
+	virtual size_t index(int n, int l) const = 0;
 
 	/** Returns the upper and lower index (in that order) of the two photon transition as an
 	    array of size 2. This is a pure virtual function, as the indices returned depend on the
@@ -26,6 +27,9 @@ public:
 	    data is loaded. Therefore, subclasses which use different data will have different
 	    implementations for this. */
 	virtual std::array<size_t, 2> twoPhotonIndices() const = 0;
+
+private:
+	std::unique_ptr<const RecombinationRate> _rr;
 };
 
 #endif /* CORE_HYDROGENDATAPROVIDER_H_ */
