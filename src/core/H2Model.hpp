@@ -3,7 +3,7 @@
 
 #include "Array.hpp"
 
-class GasStruct;
+struct GasStruct;
 class Spectrum;
 
 /** Abstract class for the non-constant H2 properties, and the functions that depend on them. We
@@ -13,8 +13,9 @@ class Spectrum;
 class H2Model
 {
 	/** Solve the state of H2, given a constant set of environmental parameters. Depending
-	    on the sublass, thie calculation can be trivial, or extremely heavy (solving the
-	    levels). */
+	    on the sublass, the calculation can be trivial, or extremely heavy (solving the
+	    levels). The H2 formation tempo [cm-3 s-1] (from grain surfaces only) is need to
+	    normalize the source term, which describes the formation pumping. */
 	virtual void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
 	                   double h2form = 0) = 0;
 
@@ -32,11 +33,13 @@ class H2Model
 	    energy - threshold energy) times the rate. */
 	virtual double dissociationHeating(const Spectrum& specificIntensity) const = 0;
 
+	virtual double lineHeating(const Spectrum& specificIntensity) const = 0;
+
 	/** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this
 	    depends on the velocity distribution of the colliding particles, and the energy
 	    transferred during the collision, I will need data for this. Have found no
 	    candidates yet. */
-	virtual double lineHeating(const Spectrum& specificIntensity) const = 0;
+	// dissociationCooling
 
 	/** Ortho-para ratio (ortho / total) */
 	virtual double orthoPara() const = 0;
