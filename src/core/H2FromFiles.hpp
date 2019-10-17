@@ -2,7 +2,7 @@
 #define CORE_H2FROMFILES_H_
 
 #include "CollisionData.hpp"
-#include "LevelDataProvider.hpp"
+#include "NLevel.hpp"
 #include "Spectrum.hpp"
 
 #include <array>
@@ -12,7 +12,7 @@
 
 /** This class will implement the reading in and processing of all the files for the level model
     of H2. */
-class H2FromFiles : public LevelDataProvider
+class H2Data : public LevelCoefficients
 {
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
@@ -21,7 +21,7 @@ public:
 	/** Creates a new \c H2FromFiles object, reads in all the data. Optional arguments:
 	    upper limits for vibrational and rotational numbers. The data goes to 31 for J, and
 	    to 14 for v. */
-	H2FromFiles(int maxJ = 99, int maxV = 99);
+	H2Data(int maxJ = 99, int maxV = 99);
 
 	/** A clear way to index the electronic states of molecular hydrogen. The files from
 	    cloudy index these in the same order, from 0 to 6. To get this numerical index, it
@@ -134,15 +134,9 @@ private:
 	// PUBLIC FUNCTIONS AKA THE OUTPUT OF THIS CLASS //
 	//-----------------------------------------------//
 public:
-	/** @name The required overrides of the super class. */
-	/**@{*/
-	size_t numLv() const override;
-	EVector ev() const override;
-	EVector gv() const override;
-	EMatrix avv() const override;
-	EMatrix extraAvv() const override;
+	/** Implement this inherited function to provide collision coefficients for the level
+	    transitions */
 	EMatrix cvv(const GasStruct& gas) const override;
-	/**@}*/
 
 	/** @name Functionality specific for H2. */
 	/**@{*/
