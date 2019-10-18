@@ -32,6 +32,8 @@ HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo)
 	readData();
 	// Steps that need to happen after read-in
 	prepareForOutput();
+
+	setConstants(//TODO)
 }
 
 void HydrogenFromFiles::readData()
