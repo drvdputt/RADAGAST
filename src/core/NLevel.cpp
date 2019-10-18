@@ -61,61 +61,6 @@ EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntens
 	return _avv + _extraAvv + bpvv + the_cvv;
 }
 
-Array LevelCoefficients::opacityv(const Solution& s, const Array& oFrequencyv) const
-{
-	return lineOpacityv(s, oFrequencyv);
-}
-
-Array LevelCoefficients::lineOpacityv(const Solution& s, const Array& oFrequencyv) const
-{
-	Array total(oFrequencyv.size());
-	forActiveLinesDo([&](size_t upper, size_t lower) {
-		double factor = lineOpacityFactor(upper, lower, s);
-		LineProfile lp = lineProfile(upper, lower, s);
-		// lp.addToSpectrum(oFrequencyv, total, factor);
-		lp.addToBinned(oFrequencyv, total, factor);
-	});
-	return total;
-}
-
-double LevelCoefficients::heating(const Solution& s) const
-{
-	double total = 0;
-	for (size_t ini = 0; ini < _numLv; ini++)
-	{
-		for (size_t fin = 0; fin < _numLv; fin++)
-		{
-			// Downward transitions inject kinetic energy into the medium
-			if (_ev(ini) > _ev(fin))
-			{
-				double cul = s.cvv(ini, fin);
-				if (cul > 0)
-					total += (_ev(ini) - _ev(fin)) * cul * s.nv(ini);
-			}
-		}
-	}
-	return total;
-}
-
-double LevelCoefficients::cooling(const Solution& s) const
-{
-	double total = 0;
-	for (size_t ini = 0; ini < _numLv; ini++)
-	{
-		for (size_t fin = 0; fin < _numLv; fin++)
-		{
-			// Upward transitions absorb kinetic energy from the medium
-			if (_ev(ini) < _ev(fin))
-			{
-				double clu = s.cvv(ini, fin);
-				if (clu > 0)
-					total += (_ev(fin) - _ev(ini)) * clu * s.nv(ini);
-			}
-		}
-	}
-	return total;
-}
-
 EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
                                                    const EMatrix& Cvv) const
 {
