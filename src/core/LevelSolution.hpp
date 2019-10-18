@@ -21,6 +21,7 @@ public:
 	}
 	/** Set new temperature */
 	void setT(double t){_t = t;}
+	double t() const { return _t; }
 
 	/** Update the collision coefficients */
 	void setCvv(const EMatrix& cvv){_cvv = cvv;}
