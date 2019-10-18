@@ -3,10 +3,8 @@
 #include "Error.hpp"
 #include "GasInterfaceImpl.hpp"
 #include "H2FromFiles.hpp"
-#include "H2Levels.hpp"
 #include "HydrogenFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
-#include "HydrogenLevels.hpp"
 #include "Timer.hpp"
 #include "TwoLevelHardcoded.hpp"
 

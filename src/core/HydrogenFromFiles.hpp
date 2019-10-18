@@ -2,7 +2,7 @@
 #define CORE_HYDROGENFROMFILES_H_
 
 #include "Array.hpp"
-#include "HydrogenDataProvider.hpp"
+#include "HData.hpp"
 
 #include <map>
 #include <vector>

@@ -1,8 +1,7 @@
 #ifndef CORE_HMODEL_HPP
 #define CORE_HMODEL_HPP
 
-#include "Array.hpp"
-#include "HydrogenDataProvider.hpp"
+#include "HData.hpp"
 #include "LevelSolution.hpp"
 
 struct GasStruct;
