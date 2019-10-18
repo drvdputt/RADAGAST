@@ -15,19 +15,16 @@ public:
 	    Make sure that the arguments passed to setCvv and setNv are dimensionally compatible
 	    with the given LevelCoefficients. A temperature and density are also needed to
 	    calculate the line width and normalization. */
-	LevelSolution(const LevelCoefficients* lc)
-	                : _levelCoefficients{lc}
-	{
-	}
+	LevelSolution(const LevelCoefficients* lc) : _levelCoefficients{lc} {}
 	/** Set new temperature */
-	void setT(double t){_t = t;}
+	void setT(double t) { _t = t; }
 	double t() const { return _t; }
 
 	/** Update the collision coefficients */
-	void setCvv(const EMatrix& cvv){_cvv = cvv;}
+	void setCvv(const EMatrix& cvv) { _cvv = cvv; }
 
 	/** Update the level populations */
-	void setNv(const EVector& nv){_nv = nv;}
+	void setNv(const EVector& nv) { _nv = nv; }
 	EVector nv() const { return _nv; }
 
 	/** The spectrum emitted by the line transitions, expressed as the emission coefficient
