@@ -18,16 +18,7 @@ HydrogenHardcoded::HydrogenHardcoded()
 
 	the_gv = EVector(NLV);
 	the_gv << 2, 2, 6, 18, 32, 50;
-}
 
-size_t HydrogenHardcoded::numLv() const { return NLV; }
-
-EVector HydrogenHardcoded::ev() const { return the_ev; }
-
-EVector HydrogenHardcoded::gv() const { return the_gv; }
-
-EMatrix HydrogenHardcoded::avv() const
-{
 	/* Using NIST data (Wiese & Fuhr) */
 
 	/* Explicit implementation, for instructive purposes */
@@ -83,6 +74,9 @@ EMatrix HydrogenHardcoded::avv() const
 	double A54 = 2.6993e+06;
 
 	EMatrix the_avv(NLV, NLV);
+	// Two photon continuum adds extra spontaneous decay rate to A2s1, but does not produce
+	// line radiation */
+	EMatrix the_extraAvv(NLV, NLV);
 	// clang-format off
 	the_avv << 0, 0, 0, 0, 0, 0,
 	           A2s1, 0, 0, 0, 0, 0,
@@ -90,16 +84,6 @@ EMatrix HydrogenHardcoded::avv() const
 	           A31, A32s, A32p, 0, 0, 0,
 	           A41, A42s, A42p, A43, 0, 0,
 	           A51, A52s, A52p, A53, A54, 0;
-	// clang-format on
-	return the_avv;
-}
-
-EMatrix HydrogenHardcoded::extraAvv() const
-{
-	/* Two photon continuum adds extra spontaneous decay rate to A2s1, but does not produce line
-	   radiation */
-	EMatrix the_extraAvv(NLV, NLV);
-	// clang-format off
 	the_extraAvv << 0, 0, 0, 0, 0, 0,
 			8.23, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0,
@@ -107,7 +91,7 @@ EMatrix HydrogenHardcoded::extraAvv() const
 			0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0;
 	// clang-format on
-	return the_extraAvv;
+	setConstants(the_ev, the_gv, the_avv, the_extraAvv);
 }
 
 array<size_t, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
@@ -132,7 +116,7 @@ EMatrix HydrogenHardcoded::cvv(const GasStruct& gas) const
 	// data from 2002-anderson
 	// Electron temperatures in electron volt
 	const vector<double> grid_eT_eVv = {.5, 1., 3., 5., 10., 15., 20., 25.};
-	
+
 	double eT_eV = Constant::BOLTZMAN * T * Constant::ERG_EV;
 
 	// Naively inter- and extrapolate this data linearly
