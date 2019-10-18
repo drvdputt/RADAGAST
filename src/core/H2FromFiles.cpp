@@ -197,6 +197,12 @@ void H2Data::readDirectDissociation()
 				                      crossSectionv.size()));
 		}
 	}
+	// Remember which levels have cross sections, for easy iterating
+	_levelsWithCrossSectionv.reserve(_numL);
+	for (size_t i = 0; i < _numL; i++)
+		if (!_dissociationCrossSectionv[index].empty())
+			_levelsWithCrossSectionv.emplace_back(i);
+	_levelsWithCrossSectionv.shrink_to_fit();
 }
 
 void H2Data::readLevelFile(const string& repoFile, ElectronicState eState)

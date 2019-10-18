@@ -172,6 +172,10 @@ public:
 	    contains the minimum and maximum frequency. */
 	std::vector<Spectrum> directDissociationCrossSections(size_t index) const;
 
+	/** Return a list of all the levels for which a direct dissociation cross section is
+	    available */
+	std::vector<size_t> levelsWithCrossSectionv() const;
+
 	/** Return the distribution of newly formed hydrogen over the electronic ground state.
 	    For now, we use equation 19 from Draine and Bertoldi (1996), which does not depend
 	    on grain properties. */
@@ -262,6 +266,7 @@ private:
 	    electronic level) in the data file. These will be indexed arbitrarily, as the nature
 	    of the process shouldn't matter. */
 	std::vector<std::vector<Spectrum>> _dissociationCrossSectionv;
+	std::vector<size_t> _levelsWithCrossSectionv;
 };
 
 #endif /* CORE_H2FROMFILES_H_ */
