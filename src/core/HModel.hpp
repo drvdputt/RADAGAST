@@ -49,7 +49,7 @@ private:
 	/** This function calculates the two-photon continuum using Nussbaumer \& Smutz (1984). */
 	Array twoPhotonEmissivityv(const Array& eFrequencyv) const;
 
-	const HData* _hData{nullptr};
+	const HData* _hData;
 	LevelSolution _levelSolution;
 };
 
