@@ -34,7 +34,7 @@ protected:
 	/** For use by subclass during construction (workaround would be a virtual setup()
 	    function.) */
 	void setConstants(const EVector& ev, const EVector& gv, const EMatrix& avv,
-	                  const EMatrix& extraAvv());
+	                  const EMatrix& extraAvv);
 
 public:
 	/** Energy of the levels */
