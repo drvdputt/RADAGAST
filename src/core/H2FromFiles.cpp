@@ -43,8 +43,6 @@ H2Data::H2Data(int maxJ, int maxV)
 	}
 }
 
-size_t H2Data::numLv() const { return _numL; }
-
 size_t H2Data::indexOutput(ElectronicState eState, int j, int v) const
 {
 	// This cast is safe, as the default underlying type of an enum is int.
