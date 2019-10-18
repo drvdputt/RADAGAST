@@ -45,10 +45,6 @@ typedef struct GasStruct
 	// The fraction of ortho H2 might be important too. Default it here to .25, which
 	// corresponds to a ratio of 3 to 1
 	double _orthoH2{.75};
-
-	// The previous level solution can be used as initial conditions to speed up the level
-	// calculation. Empty by default.
-	EVector _h2Levelv{};
 } GasStruct;
 
 #endif /* CORE_GASSTRUCT_H_ */
