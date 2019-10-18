@@ -4,11 +4,20 @@
 
 void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity) {}
 
-Array HModel::emissivity(const Array eFrequencyv) const {}
+Array HModel::emissivity(const Array eFrequencyv) const
+{
+	return _levelSolution.emissivity(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
+}
 
-Array HModel::opacityv(const Array oFrequencyv) const {}
+Array HModel::opacityv(const Array oFrequencyv) const
+{
+	return _levelSolution.opacityv(oFrequencyv);
+}
 
-double HModel::netHeating() const {}
+double HModel::netHeating() const
+{
+	return _levelSolution.netHeating();
+}
 
 Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
 {
