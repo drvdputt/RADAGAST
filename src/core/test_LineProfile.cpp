@@ -91,8 +91,7 @@ TEST_CASE("H line profile normalizations")
 	double rtol = .01;
 
 	// Gather info about H lines
-	auto hff = std::make_shared<HydrogenFromFiles>();
-	NLevel hl(hff, Constant::HMASS_CGS);
+	HydrogenFromFiles hl;
 	int numLines;
 	Array lineFreqv;
 	Array naturalLineWidthv;

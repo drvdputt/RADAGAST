@@ -8,14 +8,15 @@
 
 TEST_CASE("H2-specific algorithm")
 {
-	H2FromFiles hff(99, 99);
+	H2Data hff(99, 99);
+	BigH2Model bigh2(&hff);
+
 	EVector ev = hff.ev();
-	H2Levels h2l(std::make_shared<const H2FromFiles>(hff));
 
 	double T = 500;
 
 	EVector speciesNv = EVector::Zero(SpeciesIndex::size());
-	EVector zerov = EVector::Zero(h2l.numLv());
+	EVector zerov = EVector::Zero(hff.numLv());
 	Array frequencyv = Testing::generateGeometricGridv();
 
 	double epsFrac = 1e-2;
@@ -32,19 +33,21 @@ TEST_CASE("H2-specific algorithm")
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
 
-		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
-		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
+		bigh2.solve(n, gas, specificIntensity);
+		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
+
+		const EVector& nv_sol = bigh2.levelSolution().nv();
 
 		// This test seems to work reasonably for the first three levels
-		for (size_t i = 0; i < std::min<int>(16, s0.nv.size()); i++)
+		for (size_t i = 0; i < std::min<int>(16, nv_lte.size()); i++)
 			DoctestUtils::checkTolerance("level " + std::to_string(i) +
 			                                             " from solver vs LTE",
-			                             s0.nv(i), sLTE.nv(i), epsFrac);
+			                             nv_sol(i), nv_lte(i), epsFrac);
 
 		// Check if the total density is correct
 		double eps = 1e-15;
-		DoctestUtils::checkTolerance("sum of s0.nv", s0.nv.sum(), n, eps);
-		DoctestUtils::checkTolerance("sum of sLTE.nv", sLTE.nv.sum(), n, eps);
+		DoctestUtils::checkTolerance("sum of s0.nv", nv_sol.sum(), n, eps);
+		DoctestUtils::checkTolerance("sum of sLTE.nv", nv_lte.sum(), n, eps);
 	}
 
 	SUBCASE("no radiation, low density, should go to ground state")
@@ -59,8 +62,8 @@ TEST_CASE("H2-specific algorithm")
 		const GasStruct gas(T, speciesNv);
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
-		EVector nv = s0.nv;
+		bigh2.solve(n, gas, specificIntensity);
+		const EVector& nv = bigh2.levelSolution().nv();
 
 		// Check if some individual levels are indeed close to 0
 		for (size_t i = 2; i < std::min<int>(16, nv.size()); i++)
@@ -94,15 +97,20 @@ TEST_CASE("H2-specific algorithm")
 			specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
 
-		NLevel::Solution s0 = h2l.customSolution(n, gas, specificIntensity);
-		NLevel::Solution sLTE = h2l.solveLTE(n, gas);
-		for (size_t i = 0; i < std::min<int>(16, s0.nv.size()); i++)
-			DoctestUtils::checkTolerance("level pop vs LTE", s0.nv(i), sLTE.nv(i),
-			                             epsFrac, true);
+		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
+
+		const EVector& nv_sol = bigh2.levelSolution().nv();
+
+		// This test seems to work reasonably for the first three levels
+		for (size_t i = 0; i < std::min<int>(16, nv_lte.size()); i++)
+			DoctestUtils::checkTolerance("level " + std::to_string(i) +
+			                                             " from solver vs LTE",
+			                             nv_sol(i), nv_lte(i), epsFrac);
 
 		// Check if the total density is correct
 		double eps = 1e-15;
-		DoctestUtils::checkTolerance("s0.nv.sum() vs n", s0.nv.sum(), n, eps);
-		DoctestUtils::checkTolerance("sLTE.nv.sum() vs n", sLTE.nv.sum(), n, eps);
+		DoctestUtils::checkTolerance("sum of s0.nv", nv_sol.sum(), n, eps);
+		DoctestUtils::checkTolerance("sum of sLTE.nv", nv_lte.sum(), n, eps);
+
 	}
 }

@@ -18,7 +18,7 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
 	GasStruct gas;
 	Spectrum specificIntensity;
 
-	CHECK(nlv.numLv() == 2);
+	CHECK(twolv.numLv() == 2);
 
 	int numLines;
 	Array lineFreqv, naturalLineWidthv;
