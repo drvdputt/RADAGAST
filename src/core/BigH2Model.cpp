@@ -1,5 +1,6 @@
 #include "BigH2Model.hpp"
 #include "Constants.hpp"
+#include "DebugMacros.hpp"
 #include "GasStruct.hpp"
 #include "LevelSolver.hpp"
 
