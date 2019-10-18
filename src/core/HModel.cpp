@@ -1,4 +1,6 @@
 #include "HModel.hpp"
+#include "GasStruct.hpp"
+#include "IonizationBalance.hpp"
 
 void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity) {}
 
@@ -51,4 +53,30 @@ Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
 		result[iFreq] = constFactor * y * Py;
 	}
 	return result;
+}
+
+EVector HModel::sourcev(const GasStruct& gas) const
+{
+	EVector result = _hData->recombinationRatev(gas._T);
+	double ne = gas._speciesNv(SpeciesIndex::ine());
+	double np = gas._speciesNv(SpeciesIndex::inp());
+	return result * ne * np;
+}
+
+EVector HModel::sinkv(const GasStruct& gas) const
+{
+	// TODO: ideally, this calculates the ionization rate from each level, using individual
+	// ionization cross sections.
+
+	/* The ionization rate calculation makes no distinction between the levels.  When
+	   the upper level population is small, and its decay rate is large, the second term
+	   doesn't really matter. Therefore, we choose the sink to be the same for each
+	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
+	   => sink = totalsource / n because n0/n + n1/n = 1. */
+	double ne = gas._speciesNv(SpeciesIndex::ine());
+	double np = gas._speciesNv(SpeciesIndex::inp());
+	double nH = gas._speciesNv(SpeciesIndex::inH());
+	double totalSource = ne * np * Ionization::recombinationRateCoeff(gas._T);
+	double sink = totalSource / nH; // Sink rate per (atom per cm3)
+	return EVector::Constant(_hData->numLv(), sink);
 }

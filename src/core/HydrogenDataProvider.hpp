@@ -28,6 +28,8 @@ public:
 	    implementations for this. */
 	virtual std::array<size_t, 2> twoPhotonIndices() const = 0;
 
+	EVector recombinationRatev(double T) const;
+
 private:
 	std::unique_ptr<const RecombinationRate> _rr;
 };
