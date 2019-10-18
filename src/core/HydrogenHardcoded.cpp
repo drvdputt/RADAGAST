@@ -175,7 +175,7 @@ EMatrix HydrogenHardcoded::cvv(const GasStruct& gas) const
 	return Cvv;
 }
 
-size_t HydrogenHardcoded::indexOutput(int n, int l) const
+size_t HydrogenHardcoded::index(int n, int l) const
 {
 	// Levels are
 	// 1, 2s, 2p, 3, 4, 5

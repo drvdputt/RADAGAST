@@ -1,7 +1,7 @@
 #ifndef CORE_HYDROGENHARDCODED_H_
 #define CORE_HYDROGENHARDCODED_H_
 
-#include "HydrogenDataProvider.hpp"
+#include "HData.hpp"
 
 /** This provides data for a hydrogen level model in a hardcoded way. It is mainly for educational
     and compararive purposes. I used it to check if the implementation of \c HydrogenFromFiles
