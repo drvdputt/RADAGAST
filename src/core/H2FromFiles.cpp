@@ -12,15 +12,22 @@
 
 using namespace std;
 
-H2FromFiles::H2FromFiles(int maxJ, int maxV)
-                : _maxJ{maxJ}, _maxV{maxV}, _inH{SpeciesIndex::inH()},
-                  _inH2{SpeciesIndex::inH2()}
+H2Data::H2Data(int maxJ, int maxV)
+                : LevelCoefficients(2 * Constant::HMASS_CGS), _maxJ{maxJ}, _maxV{maxV},
+                  _inH{SpeciesIndex::inH()}, _inH2{SpeciesIndex::inH2()}
 {
 	readLevels();
 	readTransProbs();
+
+	// Set these data members of the LevelCoefficients parent class
+	EVector the_ev = EVector::Zero(_numL);
+	EVector the_gv = EVector::Zero(_numL);
+	setConstants(the_ev, the_gv, _avv, EVector::Zero(_numL, _numL));
+
 	readCollisions();
 	readDissProbs();
 	readDirectDissociation();
+
 	if (Options::h2fromfiles_plotLevelMatrices)
 	{
 		ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
