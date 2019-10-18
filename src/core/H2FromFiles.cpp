@@ -43,15 +43,15 @@ H2Data::H2Data(int maxJ, int maxV)
 	}
 }
 
-size_t H2FromFiles::numLv() const { return _numL; }
+size_t H2Data::numLv() const { return _numL; }
 
-size_t H2FromFiles::indexOutput(ElectronicState eState, int j, int v) const
+size_t H2Data::indexOutput(ElectronicState eState, int j, int v) const
 {
 	// This cast is safe, as the default underlying type of an enum is int.
 	return _ejvToIndexm.at({static_cast<int>(eState), j, v});
 }
 
-int H2FromFiles::indexFind(ElectronicState eState, int j, int v) const
+int H2Data::indexFind(ElectronicState eState, int j, int v) const
 {
 	auto iter = _ejvToIndexm.find({static_cast<int>(eState), j, v});
 	if (iter == _ejvToIndexm.end())
@@ -60,7 +60,7 @@ int H2FromFiles::indexFind(ElectronicState eState, int j, int v) const
 		return (*iter).second;
 }
 
-void H2FromFiles::readLevels()
+void H2Data::readLevels()
 {
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
@@ -85,7 +85,7 @@ void H2FromFiles::readLevels()
 	_numL = _levelv.size();
 }
 
-void H2FromFiles::readTransProbs()
+void H2Data::readTransProbs()
 {
 	_avv = EMatrix::Zero(_numL, _numL);
 
@@ -103,7 +103,7 @@ void H2FromFiles::readTransProbs()
 		                  ElectronicState::X);
 }
 
-void H2FromFiles::readDissProbs()
+void H2Data::readDissProbs()
 {
 	_dissProbv = EVector::Zero(_numL);
 	_dissKinEv = EVector::Zero(_numL);
@@ -116,7 +116,7 @@ void H2FromFiles::readDissProbs()
 		readDissProbFile("dat/h2/dissprob_C_minus.dat", ElectronicState::Cminus);
 }
 
-void H2FromFiles::readCollisions()
+void H2Data::readCollisions()
 {
 	_qdataPerPartner.resize(_numPartners);
 	_hasQdata.resize(_numPartners, EMatrix_bool::Zero(_numL, _numL));
@@ -132,7 +132,7 @@ void H2FromFiles::readCollisions()
 	readCollisionFile("dat/h2/coll_rates_Hp.dat", HPLUS);
 }
 
-void H2FromFiles::readDirectDissociation()
+void H2Data::readDirectDissociation()
 {
 	_dissociationCrossSectionv.resize(_levelv.size());
 	ifstream cont_diss = IOTools::ifstreamRepoFile("dat/h2/cont_diss.dat");
@@ -199,7 +199,7 @@ void H2FromFiles::readDirectDissociation()
 	}
 }
 
-void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
+void H2Data::readLevelFile(const string& repoFile, ElectronicState eState)
 {
 	ifstream energy = IOTools::ifstreamRepoFile(repoFile);
 
@@ -240,8 +240,8 @@ void H2FromFiles::readLevelFile(const string& repoFile, ElectronicState eState)
 	DEBUG("Read in " << counter << " levels from " << repoFile << endl);
 }
 
-void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState upperE,
-                                    ElectronicState lowerE)
+void H2Data::readTransProbFile(const string& repoFile, ElectronicState upperE,
+                               ElectronicState lowerE)
 {
 	ifstream transprob = IOTools::ifstreamRepoFile(repoFile);
 
@@ -283,7 +283,7 @@ void H2FromFiles::readTransProbFile(const string& repoFile, ElectronicState uppe
 	DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
 }
 
-void H2FromFiles::readDissProbFile(const string& repoFile, ElectronicState eState)
+void H2Data::readDissProbFile(const string& repoFile, ElectronicState eState)
 {
 	ifstream dissprobs = IOTools::ifstreamRepoFile(repoFile);
 	int y, m, d;
@@ -318,7 +318,7 @@ void H2FromFiles::readDissProbFile(const string& repoFile, ElectronicState eStat
 	DEBUG("Read in " << counter << " dissociation rates from " << repoFile << endl);
 }
 
-void H2FromFiles::readCollisionFile(const string& repoFile, CollisionPartner iPartner)
+void H2Data::readCollisionFile(const string& repoFile, CollisionPartner iPartner)
 {
 	ifstream coll_rates = IOTools::ifstreamRepoFile(repoFile);
 
@@ -383,7 +383,7 @@ void H2FromFiles::readCollisionFile(const string& repoFile, CollisionPartner iPa
 	                 << " collision coefficients from " << repoFile << endl);
 }
 
-EVector H2FromFiles::ev() const
+EVector H2Data::ev() const
 {
 	EVector the_ev(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -391,7 +391,7 @@ EVector H2FromFiles::ev() const
 	return the_ev;
 }
 
-EVector H2FromFiles::gv() const
+EVector H2Data::gv() const
 {
 	EVector the_gv(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -399,11 +399,11 @@ EVector H2FromFiles::gv() const
 	return the_gv;
 }
 
-EMatrix H2FromFiles::avv() const { return _avv; }
+EMatrix H2Data::avv() const { return _avv; }
 
-EMatrix H2FromFiles::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
+EMatrix H2Data::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
 
-EMatrix H2FromFiles::cvv(const GasStruct& gas) const
+EMatrix H2Data::cvv(const GasStruct& gas) const
 {
 	double T = gas._T;
 	EMatrix the_cvv{EMatrix::Zero(_numL, _numL)};
@@ -425,12 +425,12 @@ EMatrix H2FromFiles::cvv(const GasStruct& gas) const
 	return the_cvv;
 }
 
-double H2FromFiles::directDissociationCrossSection(double nu, int j, int v) const
+double H2Data::directDissociationCrossSection(double nu, int j, int v) const
 {
 	return directDissociationCrossSection(nu, indexOutput(ElectronicState::X, j, v));
 }
 
-double H2FromFiles::directDissociationCrossSection(double nu, size_t index) const
+double H2Data::directDissociationCrossSection(double nu, size_t index) const
 {
 	double sigma{0.};
 	// Evaluate all the cross sections for this level at this frequency
@@ -439,15 +439,15 @@ double H2FromFiles::directDissociationCrossSection(double nu, size_t index) cons
 	return sigma;
 }
 
-vector<Spectrum> H2FromFiles::directDissociationCrossSections(size_t index) const
+vector<Spectrum> H2Data::directDissociationCrossSections(size_t index) const
 {
 	return _dissociationCrossSectionv[index];
 }
 
-bool H2FromFiles::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }
+bool H2Data::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }
 
-void H2FromFiles::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner,
-                           double nPartner) const
+void H2Data::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner,
+                      double nPartner) const
 {
 	if (nPartner <= 0)
 		return;
@@ -486,8 +486,8 @@ void H2FromFiles::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner
 	addGBarCvv(the_cvv, kT, iPartner, nPartner);
 }
 
-void H2FromFiles::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
-                             double nPartner) const
+void H2Data::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
+                        double nPartner) const
 {
 	// We only do this for the electronic ground state, and only if the current collision
 	// coefficient is still zero at this point.
@@ -526,14 +526,14 @@ void H2FromFiles::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPart
 	}
 }
 
-double H2FromFiles::otherDirectionC(double Cif, int i, int f, double kT) const
+double H2Data::otherDirectionC(double Cif, int i, int f, double kT) const
 {
 	double Cfi = Cif * _levelv[i].g() / static_cast<double>(_levelv[f].g()) *
 	             exp((_levelv[f].e() - _levelv[i].e()) / kT);
 	return Cfi;
 }
 
-EVector H2FromFiles::formationDistribution() const
+EVector H2Data::formationDistribution() const
 {
 	double kTf = Constant::BOLTZMAN * 5.e4;
 
