@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "GasStruct.hpp"
 
-TwoLevelHardcoded::TwoLevelHardcoded()
+TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS_CGS)
 {
 	// Level and transition information
 	//	_Ev << 0, .00786 / Constant::ERG_EV;
@@ -12,27 +12,18 @@ TwoLevelHardcoded::TwoLevelHardcoded()
 	// The only spontaneous transition is A_10
 	//	_Avv << 0, 0,
 	//		   2.29e-6, 0;
+	EVector the_ev(2);
+	EVector the_gv(2);
 	the_ev << 0, .00786 / Constant::ERG_EV;
 	the_gv << 1, 1;
-}
 
-size_t TwoLevelHardcoded::numLv() const { return 2; }
-
-EVector TwoLevelHardcoded::ev() const { return the_ev; }
-
-EVector TwoLevelHardcoded::gv() const { return the_gv; }
-
-EMatrix TwoLevelHardcoded::avv() const
-{
 	EMatrix the_avv(2, 2);
 	// clang-format off
 	the_avv << 0, 0,
 		   2.29e-6, 0;
 	// clang-format on
-	return the_avv;
+	setConstants(the_ev, the_gv, the_avv, EVector::Zero(2, 2));
 }
-
-EMatrix TwoLevelHardcoded::extraAvv() const { return EMatrix::Zero(2, 2); }
 
 EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const
 {
@@ -50,9 +41,9 @@ EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const
 		double T = gas._T;
 		double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
 
-		Cvv(1, 0) += beta / sqrt(T) * bigUpsilon10 / the_gv(1) * ne;
-		Cvv(0, 1) += Cvv(1, 0) * the_gv(1) / the_gv(0) *
-		             exp(-(the_ev(1) - the_ev(0)) / Constant::BOLTZMAN / T);
+		Cvv(1, 0) += beta / sqrt(T) * bigUpsilon10 / gv()(1) * ne;
+		Cvv(0, 1) += Cvv(1, 0) * gv()(1) / gv()(0) *
+		             exp(-(ev()(1) - ev()(0)) / Constant::BOLTZMAN / T);
 	}
 	return Cvv;
 }
