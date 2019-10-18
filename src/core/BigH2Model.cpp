@@ -113,7 +113,7 @@ double BigH2Model::orthoPara() const
 
 Array BigH2Model::emissivityv(const Array& eFrequencyv) const
 {
-	return _levelSolution.emissivity(eFrequencyv);
+	return _levelSolution.emissivityv(eFrequencyv);
 }
 
 Array BigH2Model::opacityv(const Array& oFrequencyv) const

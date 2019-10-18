@@ -17,6 +17,10 @@ public:
 	Array emissivityv(const Array& eFrequencyv) const override;
 	Array opacityv(const Array& oFrequencyv) const override;
 
+	/** Read acces to the level solution, should one wish to inspect the solution in more
+	    detail */
+	const LevelSolution& levelSolution() const { return _levelSolution; }
+
 private:
 	/** Level-resolved dissociation rates. By adding these to the sink terms when solving
 	    the statistical equilibrium, the effect of dissociation on the level population can
