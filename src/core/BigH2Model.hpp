@@ -11,6 +11,8 @@ public:
 	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
 	           double h2form = 0) override;
 	double dissociationRate(const Spectrum& specificIntensity) const override;
+	double dissociationHeating(const Spectrum& specificIntensity) const override;
+	double netHeating(const Spectrum& specificIntensity) const override;
 	double orthoPara() const override;
 	Array emissivityv(const Array& eFrequencyv) const override;
 	Array opacityv(const Array& oFrequencyv) const override;
@@ -25,13 +27,11 @@ private:
 	    integrating the cross section over the appropriate frequency range. If heatRate is
 	    true, the integrand is multiplied by (hnu - threshold), so that the heating rate
 	    [erg s-1] due to this process is given instead. */
-	EVector directDissociationIntegralv(const Spectrum& specificIntensityv,
+	EVector directDissociationIntegralv(const Spectrum& specificIntensity,
 	                                    bool heatRate = false) const;
 
 	/** Sink term due to the spontaneous dissociation rate. [s-1] */
 	EVector spontaneousDissociationSinkv() const;
-
-	/** TODO: need collisional dissociation contribution. */
 
 	const H2Data* _h2Data;
 	LevelSolution _levelSolution;
