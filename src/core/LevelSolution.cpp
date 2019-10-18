@@ -1,7 +1,7 @@
 #include "LevelSolution.hpp"
 #include "NLevel.hpp"
 
-Array LevelSolution::emissivity(const Array& eFrequencyv) const
+Array LevelSolution::emissivityv(const Array& eFrequencyv) const
 {
 	Array total(eFrequencyv.size());
 	_levelCoefficients->forActiveLinesDo([&](size_t upper, size_t lower) {
