@@ -1,12 +1,28 @@
 #include "HModel.hpp"
+#include "DebugMacros.hpp"
 #include "GasStruct.hpp"
 #include "IonizationBalance.hpp"
+#include "LevelSolver.hpp"
 
-void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity) {}
+void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity)
+{
+	double nH = gas._speciesNv[SpeciesIndex::inH()];
+	_levelSolution.setT(gas._T);
+
+	EMatrix Cvv;
+	EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, gas, &Cvv);
+	_levelSolution.setCvv(Cvv);
+
+	EVector the_sourcev = sourcev(gas);
+	EVector the_sinkv = sinkv(gas);
+	DEBUG("Solving levels nH = " << nH << std::endl);
+	EVector newNv = LevelSolver::statisticalEquilibrium(nH, Tvv, the_sourcev, the_sinkv);
+	_levelSolution.setNv(newNv);
+}
 
 Array HModel::emissivity(const Array eFrequencyv) const
 {
-	return _levelSolution.emissivity(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
+	return _levelSolution.emissivityv(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
 }
 
 Array HModel::opacityv(const Array oFrequencyv) const
@@ -14,10 +30,7 @@ Array HModel::opacityv(const Array oFrequencyv) const
 	return _levelSolution.opacityv(oFrequencyv);
 }
 
-double HModel::netHeating() const
-{
-	return _levelSolution.netHeating();
-}
+double HModel::netHeating() const { return _levelSolution.netHeating(); }
 
 Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
 {

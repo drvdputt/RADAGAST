@@ -4,8 +4,6 @@
 #include "HData.hpp"
 #include "LevelSolution.hpp"
 
-struct GasStruct;
-
 class HModel
 {
 public:
