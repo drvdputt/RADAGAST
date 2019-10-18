@@ -9,26 +9,25 @@
 
 using namespace std;
 
-NLevel::NLevel(shared_ptr<const LevelDataProvider> ldp, double mass)
-                : _ldp(ldp), _mass(mass), _numLv(_ldp->numLv()), _ev(_ldp->ev()),
-                  _gv(_ldp->gv()), _avv(_ldp->avv()), _extraAvv(_ldp->extraAvv())
+LevelCoefficients::LevelCoefficients(double mass) : _mass(mass)
 {
-	// Do a sanity check: All active transitions must be downward ones in energy
-	forActiveLinesDo([&](size_t upper, size_t lower) {
-		if (_ev(upper) - _ev(lower) < 0)
-		{
-			cout << "Eu - El = " << _ev(upper) - _ev(lower) << endl;
-			cout << "u l = " << upper << " " << lower
-			     << " Aul = " << _avv(upper, lower) << endl;
-			Error::runtime("There is an upward A-coefficient. This can't be "
-			               "correct");
-		}
-	});
+	// // Do a sanity check: All active transitions must be downward ones in energy
+	// forActiveLinesDo([&](size_t upper, size_t lower) {
+	// 	if (_ev(upper) - _ev(lower) < 0)
+	// 	{
+	// 		cout << "Eu - El = " << _ev(upper) - _ev(lower) << endl;
+	// 		cout << "u l = " << upper << " " << lower
+	// 		     << " Aul = " << _avv(upper, lower) << endl;
+	// 		Error::runtime("There is an upward A-coefficient. This can't be "
+	// 		               "correct");
+	// 	}
+	// });
 }
 
-NLevel::~NLevel() = default;
+LevelCoefficients::~LevelCoefficients() = default;
 
-void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const
+void LevelCoefficients::lineInfo(int& numLines, Array& lineFreqv,
+                                 Array& naturalLineWidthv) const
 {
 	// Count the number of active lines
 	numLines = 0;
@@ -46,64 +45,28 @@ void NLevel::lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv)
 	});
 }
 
-EMatrix NLevel::totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas,
-                                       EMatrix* cvv_p) const
+EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntensity,
+                                                  const GasStruct& gas, EMatrix* cvv_p) const
 {
-	EMatrix cvv = _ldp->cvv(gas);
+	EMatrix the_cvv = cvv(gas);
 	if (cvv_p)
-		*cvv_p = cvv;
-	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, cvv);
+		*cvv_p = the_cvv;
+	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, the_cvv);
 	if (Options::nlevel_printLevelMatrices)
 	{
 		DEBUG("Aij" << endl << _avv << endl << endl);
 		DEBUG("BPij" << endl << bpvv << endl << endl);
 		DEBUG("Cij" << endl << cvv << endl << endl);
 	}
-	return _avv + _extraAvv + bpvv + cvv;
+	return _avv + _extraAvv + bpvv + the_cvv;
 }
 
-NLevel::Solution NLevel::solveLTE(double density, const GasStruct& gas) const
-{
-	NLevel::Solution s;
-	s.n = density;
-	s.T = gas._T;
-	s.nv = density * solveBoltzmanEquations(gas._T);
-	s.cvv = _ldp->cvv(gas);
-	return s;
-}
-
-NLevel::Solution NLevel::solveZero(double T) const
-{
-	NLevel::Solution s;
-	s.n = 0;
-	s.T = T;
-	s.nv = EVector::Zero(_numLv);
-	s.cvv = EMatrix::Zero(_numLv, _numLv);
-	return s;
-}
-
-Array NLevel::emissivityv(const Solution& s, const Array& eFrequencyv) const
-{
-	return lineEmissivityv(s, eFrequencyv);
-}
-
-Array NLevel::lineEmissivityv(const Solution& s, const Array& eFrequencyv) const
-{
-	Array total(eFrequencyv.size());
-	forActiveLinesDo([&](size_t upper, size_t lower) {
-		double factor = lineIntensityFactor(upper, lower, s);
-		LineProfile lp = lineProfile(upper, lower, s);
-		lp.addToBinned(eFrequencyv, total, factor);
-	});
-	return total;
-}
-
-Array NLevel::opacityv(const Solution& s, const Array& oFrequencyv) const
+Array LevelCoefficients::opacityv(const Solution& s, const Array& oFrequencyv) const
 {
 	return lineOpacityv(s, oFrequencyv);
 }
 
-Array NLevel::lineOpacityv(const Solution& s, const Array& oFrequencyv) const
+Array LevelCoefficients::lineOpacityv(const Solution& s, const Array& oFrequencyv) const
 {
 	Array total(oFrequencyv.size());
 	forActiveLinesDo([&](size_t upper, size_t lower) {
@@ -115,7 +78,7 @@ Array NLevel::lineOpacityv(const Solution& s, const Array& oFrequencyv) const
 	return total;
 }
 
-double NLevel::heating(const Solution& s) const
+double LevelCoefficients::heating(const Solution& s) const
 {
 	double total = 0;
 	for (size_t ini = 0; ini < _numLv; ini++)
@@ -134,7 +97,7 @@ double NLevel::heating(const Solution& s) const
 	return total;
 }
 
-double NLevel::cooling(const Solution& s) const
+double LevelCoefficients::cooling(const Solution& s) const
 {
 	double total = 0;
 	for (size_t ini = 0; ini < _numLv; ini++)
@@ -153,25 +116,8 @@ double NLevel::cooling(const Solution& s) const
 	return total;
 }
 
-double NLevel::netheating(const Solution& s) const
-{
-	double total = 0;
-	for (size_t up = 0; up < _numLv; up++)
-	{
-		for (size_t lo = 0; lo < up; lo++)
-		{
-			double cul = s.cvv(up, lo);
-			double clu = s.cvv(lo, up);
-			if (cul > 0)
-				total += (_ev(up) - _ev(lo)) *
-				         (cul * s.nv(up) - clu * s.nv(lo));
-		}
-	}
-	return total;
-}
-
-EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
-                                        const EMatrix& Cvv) const
+EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
+                                                   const EMatrix& Cvv) const
 {
 	EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
 	double spectrumMax = specificIntensity.valMax();
@@ -214,7 +160,7 @@ EMatrix NLevel::prepareAbsorptionMatrix(const Spectrum& specificIntensity, doubl
 	return BPvv;
 }
 
-EVector NLevel::solveBoltzmanEquations(double T) const
+EVector LevelCoefficients::solveBoltzmanEquations(double T) const
 {
 	double eMin = _ev.minCoeff();
 	// Degeneracy factor
@@ -232,7 +178,7 @@ EVector NLevel::solveBoltzmanEquations(double T) const
 	return pv / pSum;
 }
 
-void NLevel::forActiveLinesDo(function<void(size_t ini, size_t fin)> thing) const
+void LevelCoefficients::forActiveLinesDo(function<void(size_t ini, size_t fin)> thing) const
 {
 	// Execute the same function for all transitions that are optically active.
 	for (size_t fin = 0; fin < _numLv; fin++)
@@ -241,27 +187,24 @@ void NLevel::forActiveLinesDo(function<void(size_t ini, size_t fin)> thing) cons
 				thing(ini, fin);
 }
 
-double NLevel::lineIntensityFactor(size_t upper, size_t lower, const Solution& s) const
+double LevelCoefficients::lineIntensityFactor(size_t upper, size_t lower,
+                                              double nu) const
 {
-	return (_ev(upper) - _ev(lower)) / Constant::FPI * s.nv(upper) * _avv(upper, lower);
+	return (_ev(upper) - _ev(lower)) / Constant::FPI * nu * _avv(upper, lower);
 }
 
-double NLevel::lineOpacityFactor(size_t upper, size_t lower, const Solution& s) const
+double LevelCoefficients::lineOpacityFactor(size_t upper, size_t lower, double nu, double nl) const
 {
 	double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
 	                        nu_ij * _avv(upper, lower);
-	double densityFactor = s.nv(lower) * _gv(upper) / _gv(lower) - s.nv(upper);
+	double densityFactor = nl * _gv(upper) / _gv(lower) - nu;
 	double result = constantFactor * densityFactor;
 	return result;
 }
 
-LineProfile NLevel::lineProfile(size_t upper, size_t lower, const Solution& s) const
-{
-	return lineProfile(upper, lower, s.T, s.cvv);
-}
-
-LineProfile NLevel::lineProfile(size_t upper, size_t lower, double T, const EMatrix& Cvv) const
+LineProfile LevelCoefficients::lineProfile(size_t upper, size_t lower, double T,
+                                           const EMatrix& Cvv) const
 {
 	double nu0 = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 

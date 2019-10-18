@@ -91,7 +91,7 @@ private:
 	    radiation field), but their product should always have units [s-1]. */
 	EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
 	                                const EMatrix& Cvv) const;
-
+public:
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all
 	    downward transitions have line activity, then this function will loop over all
@@ -101,7 +101,7 @@ private:
 	/** Calculates the integrated emission coefficient of a specific line [erg s-1 cm-3
 	    sr-1]. Multiplying with the line profile [Hz-1] will yield the specific intensity
 	    [erg s-1 cm-3 sr-1 Hz-1]. */
-	double lineIntensityFactor(size_t upper, size_t lower, double nu, double nl) const;
+	double lineIntensityFactor(size_t upper, size_t lower, double nu) const;
 
 	/** Computes the integrated opacity of a line [cm-1 Hz]. Multiplying with the line
 	    profile [Hz-1] will yield the opacity [cm-1] at each frequency. */
