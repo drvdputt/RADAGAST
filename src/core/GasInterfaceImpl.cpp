@@ -205,10 +205,9 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s
 	if (oFrequencyv.size() > 2)
 	{
 		opv = opacityv(s, oFrequencyv);
-		scv = scatteringOpacityv(s, oFrequencyv);
 	}
 	Array densityv(s.speciesNv.data(), s.speciesNv.size());
-	return {emv, opv, scv, s.T, densityv};
+	return {emv, opv, s.T, densityv};
 }
 
 void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
@@ -521,11 +520,6 @@ Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) co
 		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
 	}
 	return totalOp;
-}
-
-Array GasInterfaceImpl::scatteringOpacityv(const Solution&, const Array& oFrequencyv) const
-{
-	return Array(oFrequencyv.size());
 }
 
 Array GasInterfaceImpl::radiativeRecombinationEmissivityv(const Solution& s,
