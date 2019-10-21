@@ -36,7 +36,7 @@ TEST_CASE("H2-specific algorithm")
 		bigh2.solve(n, gas, specificIntensity);
 		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
 
-		const EVector& nv_sol = bigh2.levelSolution().nv();
+		const EVector& nv_sol = bigh2.levelSolution()->nv();
 
 		// This test seems to work reasonably for the first three levels
 		for (size_t i = 0; i < std::min<int>(16, nv_lte.size()); i++)
@@ -63,7 +63,7 @@ TEST_CASE("H2-specific algorithm")
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
 		bigh2.solve(n, gas, specificIntensity);
-		const EVector& nv = bigh2.levelSolution().nv();
+		const EVector& nv = bigh2.levelSolution()->nv();
 
 		// Check if some individual levels are indeed close to 0
 		for (size_t i = 2; i < std::min<int>(16, nv.size()); i++)
@@ -99,7 +99,7 @@ TEST_CASE("H2-specific algorithm")
 
 		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
 
-		const EVector& nv_sol = bigh2.levelSolution().nv();
+		const EVector& nv_sol = bigh2.levelSolution()->nv();
 
 		// This test seems to work reasonably for the first three levels
 		for (size_t i = 0; i < std::min<int>(16, nv_lte.size()); i++)

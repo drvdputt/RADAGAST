@@ -4,7 +4,6 @@
 #include "DebugMacros.hpp"
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
-#include "GasDiagnostics.hpp"
 #include "GasGrainInteraction.hpp"
 #include "GasStruct.hpp"
 #include "GrainType.hpp"
@@ -208,58 +207,6 @@ GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s
 	}
 	Array densityv(s.speciesNv.data(), s.speciesNv.size());
 	return {emv, opv, s.T, densityv};
-}
-
-void GasInterfaceImpl::fillGasDiagnosticsFromSolution(const Solution& s,
-                                                      const GasModule::GrainInterface& gri,
-                                                      GasDiagnostics* gd) const
-{
-	if (!gd)
-		Error::runtime("GasDiagnostics is nullptr!");
-
-	double h2form = GasGrain::surfaceH2FormationRateCoeff(gri, s.T);
-	double h2dissoc = _molecular ? _molecular->dissociationRate(s.H2Solution,
-	                                                            s.specificIntensity)
-	                             : 0;
-	double hphotoion = Ionization::photoRateCoeff(s.specificIntensity);
-	double hcolion = Ionization::collisionalRateCoeff(s.T);
-	double hrec = Ionization::recombinationRateCoeff(s.T);
-
-	gd->setReactionNames({"h2form", "h2dissoc", "hphotoion", "hcolion", "hrec"});
-	gd->setReactionRates({h2form, h2dissoc, hphotoion, hcolion, hrec});
-
-	if (gd->saveLevelPopulations())
-	{
-		gd->setHPopulations(Array(s.HSolution.nv.data(), s.HSolution.nv.size()));
-		gd->setH2Populations(Array(s.H2Solution.nv.data(), s.H2Solution.nv.size()));
-	}
-
-	double netHline = _atomicLevels->netheating(s.HSolution);
-	double netH2line = _molecular ? _molecular->netheating(s.H2Solution) : 0;
-
-	gd->setHeating("H ion", Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
-	                                            s.specificIntensity));
-	gd->setCooling("Hrec", Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp),
-	                                           s.speciesNv(_ine), s.T));
-	gd->setHeating("H deexc", netHline);
-	gd->setCooling("H exc", -netHline);
-
-	gd->setHeating("H2 deexc", netH2line);
-	gd->setCooling("H2 exc", -netH2line);
-	gd->setHeating("H2 dissoc",
-	               _molecular ? _molecular->dissociationHeating(s.H2Solution,
-	                                                            s.specificIntensity)
-	                          : 0);
-	gd->setHeating("freefree", _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity));
-	gd->setCooling("freefree", _freeFree->cooling(np(s) * ne(s), s.T));
-
-	// I need this per grain size. Doing this thing for now.
-	double grainPhotoHeat = 0;
-	double grainCollCool = 0;
-	double totalGrainHeat = grainHeating(s, gri, &grainPhotoHeat, &grainCollCool);
-	gd->setPhotoelectricHeating(Array({totalGrainHeat}));
-	gd->setHeating("total grainphoto", grainPhotoHeat);
-	gd->setCooling("grain collisions", grainCollCool);
 }
 
 GasInterfaceImpl::Solution
