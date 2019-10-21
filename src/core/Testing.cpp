@@ -211,7 +211,7 @@ double Testing::equilibriumTemperature(const Array& frequencyv, const Array& spe
 	return result;
 }
 
-Array Testing::improveFrequencyGrid(const NLevel& boundBound, const Array& oldPoints)
+Array Testing::improveFrequencyGrid(const LevelCoefficients& boundBound, const Array& oldPoints)
 {
 	// Add extra points for the lines
 	int numLines;
@@ -789,7 +789,7 @@ void Testing::runH2(bool write)
 	speciesNv(SpeciesIndex::inH()) = nH;
 
 	GasStruct gas(T, speciesNv);
-	NLevel::Solution s = h2l.customSolution(nH2, gas, specificIntensity);
+	LevelCoefficients::Solution s = h2l.customSolution(nH2, gas, specificIntensity);
 	if (write)
 	{
 		Array emissivityv = h2Levels.emissivityv(s, frequencyv);
