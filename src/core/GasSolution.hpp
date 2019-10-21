@@ -36,6 +36,10 @@ public:
 	                  _h2Solution(std::move(h2Model))
 	{
 	}
+
+	/** The radiation field */
+	const Spectrum& specificIntensity() const { return _specificIntensity; }
+
 	/** The temperature */
 	double t() const { return _t; }
 	void setT(double t) { _t = t; }

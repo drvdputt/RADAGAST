@@ -44,9 +44,9 @@ void GrainInterface::Population::test() const
 		Error::runtime("Grain of size 0 not allowed!");
 }
 
-void GrainInterface::Population::calculateTemperature(std::valarray<double> frequencyv,
-                                                      std::valarray<double> specificIntensityv,
-                                                      std::valarray<double> otherGrainHeat)
+void GrainInterface::Population::recalculateTemperature(
+                std::valarray<double> frequencyv, std::valarray<double> specificIntensityv,
+                std::valarray<double> otherGrainHeat)
 {
 	for (size_t i = 0; i < _sizev.size(); i++)
 	{

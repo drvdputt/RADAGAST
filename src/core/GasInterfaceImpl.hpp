@@ -87,6 +87,13 @@ public:
 	/** Cooling by free-free emission [erg s-1 cm-3] */
 	double freeFreeCool(double np_ne, double T) const;
 
+	/** Leaving this here for now, instead of moving it to GasSolution. GasSolution is not
+	    the owner of the GrainInterface object, and it would be weird to modify it from
+	    there. */
+	void updateGrainTemps(const GasSolution& s,
+			      GasModule::GrainInterface& g) const;
+
+
 private:
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]
 	int _ine, _inp, _inH, _inH2;

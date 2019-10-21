@@ -110,9 +110,9 @@ public:
 		    as collisional, needs to be given for each size). Some things can probably
 		    be cached should this be slow. No idea how to handle this if stochastic
 		    heating still needs to work. */
-		void calculateTemperature(std::valarray<double> frequencyv,
-		                          std::valarray<double> specificIntensityv,
-		                          std::valarray<double> otherGrainHeat);
+		void recalculateTemperature(std::valarray<double> frequencyv,
+		                            std::valarray<double> specificIntensityv,
+		                            std::valarray<double> otherGrainHeat);
 
 	private:
 		std::valarray<double> _sizev;

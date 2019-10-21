@@ -151,14 +151,14 @@ GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
 	return s;
 }
 
-void GasInterfaceImpl::updateGrainTemps(const Solution& s,
-                                        const GasModule::GrainInterface& g) const
+void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
+                                        GasModule::GrainInterface& g) const
 {
-	GrainPhotoelectricEffect::Environment env(s.specificIntensity, s.T, ne(s), np(s),
-	                                          {-1, 1, 0, 0}, {ne(s), np(s), nH(s), nH2(s)},
-	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS,
-	                                           Constant::HMASS_CGS,
-	                                           2 * Constant::HMASS_CGS});
+	GrainPhotoelectricEffect::Environment env(
+	                s.specificIntensity(), s.t(), s.ne(), s.np(), {-1, 1, 0, 0},
+	                {s.ne(), s.np(), s.nH(), s.nH2()},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
+	                 2 * Constant::HMASS_CGS});
 
 	for (auto& pop : *g.populationv())
 	{
@@ -185,12 +185,12 @@ void GasInterfaceImpl::updateGrainTemps(const Solution& s,
 			}
 		}
 
-		const Array& h2FormationHeatv = GasGrain::surfaceH2FormationHeatPerSize(
-		                pop, s.T, s.speciesNv[_inH]);
+		const Array& h2FormationHeatv =
+		                GasGrain::surfaceH2FormationHeatPerSize(pop, s.t(), s.nH());
 
-		pop.calculateTemperature(s.specificIntensity.frequencyv(),
-		                         s.specificIntensity.valuev(),
-		                         grainHeatPerSizev + h2FormationHeatv);
+		pop.recalculateTemperature(s.specificIntensity().frequencyv(),
+		                           s.specificIntensity().valuev(),
+		                           grainHeatPerSizev + h2FormationHeatv);
 	}
 }
 
