@@ -21,7 +21,6 @@ void writeGasState(const std::string&, const GasModule::GasInterface&,
 
 namespace GasModule
 {
-
 /** This class is part of the 'public' \c GasModule interface. It provides a way to store the
     output of the calculations done in the gas module in an opaque manner. A client code should
     typically have a list of \c GasState objects; one per computational volume element. The \c
@@ -35,7 +34,6 @@ namespace GasModule
 class GasState
 {
 	friend class GasInterface;
-	friend class ::GasInterfaceImpl;
 	friend void Testing::writeGasState(const std::string&, const GasModule::GasInterface&,
 	                                   const GasModule::GasState&);
 
@@ -45,21 +43,18 @@ public:
 	    GasInterface. */
 	GasState() {}
 
-	/** Returns the gas temperature in K. */
-	double temperature() const { return _temperature; }
-
-private:
-	/** Private constructor, only to be used by friended class which acts as a factory and
-	    can fill in all the members. */
+	/** Constructor, subject to change */
 	GasState(const std::valarray<double>& emissivityv,
-	         const std::valarray<double>& opacityv,
-	         const std::valarray<double>& scatteringOpacityv, double T,
+	         const std::valarray<double>& opacityv, double T,
 	         std::valarray<double>& densityv)
-	                : _emissivityv(emissivityv), _opacityv(opacityv),
-	                  _scatteringOpacityv(scatteringOpacityv), _temperature(T),
+	                : _emissivityv(emissivityv), _opacityv(opacityv), _temperature(T),
 	                  _densityv(densityv)
 	{
 	}
+	// TODO use setters instead?
+
+	/** Returns the gas temperature in K. */
+	double temperature() const { return _temperature; }
 
 private:
 	/** Memory-heavy, but simple implementation: just store all the output */
