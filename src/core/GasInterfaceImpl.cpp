@@ -36,14 +36,14 @@ GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& molec
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T,
-                                                const GasModule::GrainInterface& gi) const
+                                                const GasModule::GrainInterface& gri) const
 {
 	Array iFrequencyv = Testing::defaultFrequencyv(1000);
 	Array blackbodyv(iFrequencyv.size());
 	for (size_t i = 0; i < iFrequencyv.size(); i++)
 		blackbodyv[i] = SpecialFunctions::planck(iFrequencyv[i], T);
 
-	return solveTemperature(n, T, Spectrum(iFrequencyv, blackbodyv), gi);
+	return solveTemperature(n, T, Spectrum(iFrequencyv, blackbodyv), gri);
 }
 
 struct heating_f_params
@@ -66,11 +66,10 @@ double heating_f(double logT, void* params)
 	// Refresh the solution stored somewhere, with optimization based on the current
 	// solution
 	GasSolution& s = *p->solution_storage;
-	const GasSolution* previous =
-	                p->use_previous_solution ? p->solution_storage : nullptr;
+	const GasSolution* previous = p->use_previous_solution ? p->solution_storage : nullptr;
 
-	s = move(p->gasInterfacePimpl->solveDensities(p->n, pow(10., logT), *p->specificIntensity,
-						      *p->grainInterface, previous));
+	s = p->gasInterfacePimpl->solveDensities(p->n, pow(10., logT), *p->specificIntensity,
+	                                         *p->grainInterface, previous);
 
 	double heat = s.heating();
 	double cool = s.cooling();
@@ -81,26 +80,6 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/
                                                const Spectrum& specificIntensity,
                                                const GasModule::GrainInterface& gri) const
 {
-	// std::unique_ptr is the C++11 way to express exclusive ownership, but one of its most
-	// attractive features is that it easily and efficiently converts to a std::shared_ptr.
-
-	// This is a key part of why std::unique_ptr is so well suited as a factory function
-	// return type. Factory functions can’t know whether callers will want to use exclusive
-	// ownership semantics for the object they return or whether shared ownership (i.e.,
-	// std::shared_ptr) would be more appropriate. By returning a std::unique_ptr, factories
-	// provide callers with the most efficient smart pointer, but they don’t hinder callers
-	// from replacing it with its more flexible sibling.
-
-	// std::shared_ptr to std::unique_ptr is not allowed. Once you’ve turned lifetime
-	// management of a resource over to a std::shared_ptr, there’s no changing your mind.
-	// Even if the reference count is one, you can’t reclaim ownership of the resource in
-	// order to, say, have a std::unique_ptr manage it.
-
-	// Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
-	// C++14. Scott Meyers.
-	std::shared_ptr<HModel> hm = _manager.makeHModel();
-	std::shared_ptr<H2Model> h2m = _manager.makeH2Model();
-	GasSolution s(this, gri, specificIntensity, hm, h2m);
 
 	if (n <= 0)
 		s = solveDensities(0, 0, specificIntensity, gri);
@@ -158,69 +137,39 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/
 	return s;
 }
 
-void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
-                                        GasModule::GrainInterface& g) const
+GasSolution GasInterfaceImpl::solveDensities(double nHtotal, double T,
+                                             const Spectrum& specificIntensity,
+                                             const GasModule::GrainInterface& gri,
+                                             const GasSolution* previous,
+                                             double h2FormationOverride) const
 {
-	GrainPhotoelectricEffect::Environment env(
-	                s.specificIntensity(), s.t(), s.ne(), s.np(), {-1, 1, 0, 0},
-	                {s.ne(), s.np(), s.nH(), s.nH2()},
-	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
-	                 2 * Constant::HMASS_CGS});
+	// std::unique_ptr is the C++11 way to express exclusive ownership, but one of its most
+	// attractive features is that it easily and efficiently converts to a std::shared_ptr.
 
-	for (auto& pop : *g.populationv())
-	{
-		const GrainType* type = pop.type();
+	// This is a key part of why std::unique_ptr is so well suited as a factory function
+	// return type. Factory functions can’t know whether callers will want to use exclusive
+	// ownership semantics for the object they return or whether shared ownership (i.e.,
+	// std::shared_ptr) would be more appropriate. By returning a std::unique_ptr, factories
+	// provide callers with the most efficient smart pointer, but they don’t hinder callers
+	// from replacing it with its more flexible sibling.
 
-		size_t numSizes = pop.numSizes();
-		Array grainHeatPerSizev(numSizes);
-		// Array grainPhotoPerSizev(numSizes);
+	// std::shared_ptr to std::unique_ptr is not allowed. Once you’ve turned lifetime
+	// management of a resource over to a std::shared_ptr, there’s no changing your mind.
+	// Even if the reference count is one, you can’t reclaim ownership of the resource in
+	// order to, say, have a std::unique_ptr manage it.
 
-		if (type->heatingAvailable() && Options::cooling_gasGrainCollisions)
-		{
-			GrainPhotoelectricEffect gpe(*type);
+	// Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
+	// C++14. Scott Meyers.
 
-			for (int m = 0; m < numSizes; m++)
-			{
-				auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
-				                                          pop.qAbsv(m));
-				grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
-				                pop.size(m), env, cd, pop.temperature(m), true);
-				// cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
-
-				// grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
-				// cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
-			}
-		}
-
-		const Array& h2FormationHeatv =
-		                GasGrain::surfaceH2FormationHeatPerSize(pop, s.t(), s.nH());
-
-		pop.recalculateTemperature(s.specificIntensity().frequencyv(),
-		                           s.specificIntensity().valuev(),
-		                           grainHeatPerSizev + h2FormationHeatv);
-	}
-}
-
-GasInterfaceImpl::Solution
-GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& specificIntensity,
-                                 const GasModule::GrainInterface& gi,
-                                 const GasInterfaceImpl::Solution* previous,
-                                 double h2FormationOverride) const
-{
-	Solution s;
+	std::shared_ptr<HModel> hm = _manager.makeHModel();
+	std::shared_ptr<H2Model> h2m = _manager.makeH2Model();
+	GasSolution s(this, gri, specificIntensity, hm, h2m);
 
 	// We can already fill these in.
-	s.T = T;
-	s.specificIntensity = specificIntensity;
+	s.setT(T);
 
 	if (nHtotal <= 0)
-	{
-		s.speciesNv = EVector::Zero(SpeciesIndex::size());
-		s.HSolution = _atomicLevels->solveZero(T);
-		if (_molecular)
-			s.H2Solution = _molecular->solveZero(T);
-		return s;
-	}
+		s.makeZero();
 
 	DEBUG("Calculating densities for T = " << T << "K" << endl);
 
@@ -231,37 +180,39 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 	// use it
 	if (previous)
 	{
-		double fT = T / previous->T;
+		double fT = T / previous->t();
 		if (fT > 0.75 && fT < 1.5)
 		{
 			DEBUG("Using previous speciesNv as initial guess" << std::endl);
-			s.speciesNv = previous->speciesNv;
+			s.setSpeciesNv(previous->speciesNv());
 			manualGuess = false;
 		}
-		// If the difference in temperature is larger than a certain factor, do a manual
-		// guess anyway.
+		// else manualGuess stays true
 	}
 	if (manualGuess)
 	{
 		double ionFrac = Ionization::solveBalance(nHtotal, T, specificIntensity);
 		double molFrac = 0.1;
-		s.speciesNv = EVector(SpeciesIndex::size());
-		s.speciesNv(_ine) = ionFrac * nHtotal;
-		s.speciesNv(_inp) = s.speciesNv(_ine);
-		s.speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
-		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
+		EVector speciesNv = EVector::Zero((SpeciesIndex::size()));
+		speciesNv(_ine) = ionFrac * nHtotal;
+		speciesNv(_inp) = speciesNv(_ine);
+		speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
+		speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
+		s.setSpeciesNv(speciesNv);
 	}
 	else
 	{
 		// make sure that nHtotal and the initial guess are consistent
-		double nNeutralOfSpeciesNv = s.speciesNv(_inH) + 2 * s.speciesNv(_inH2);
-		double nHtotalOfSpeciesNv = s.speciesNv(_inp) + nNeutralOfSpeciesNv;
-		double ionFrac = s.speciesNv(_inp) / nHtotalOfSpeciesNv;
-		double molFrac = 2 * s.speciesNv(_inH2) / nNeutralOfSpeciesNv;
-		s.speciesNv(_ine) = ionFrac * nHtotal;
-		s.speciesNv(_inp) = s.speciesNv(_ine);
-		s.speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
-		s.speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
+		double nNeutralOfSpeciesNv = s.speciesNv()(_inH) + 2 * s.speciesNv()(_inH2);
+		double nHtotalOfSpeciesNv = s.speciesNv()(_inp) + nNeutralOfSpeciesNv;
+		double ionFrac = s.speciesNv()(_inp) / nHtotalOfSpeciesNv;
+		double molFrac = 2 * s.speciesNv()(_inH2) / nNeutralOfSpeciesNv;
+		EVector nv = EVector::Zero(SpeciesIndex::size());
+		nv(_ine) = ionFrac * nHtotal;
+		nv(_inp) = nv(_ine);
+		nv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
+		nv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
+		s.setSpeciesNv(nv);
 	}
 
 	// Package some gas parameters
@@ -339,7 +290,7 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		if (_molecular)
 		{
 			// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
-			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gi, T);
+			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
 			if (h2FormationOverride >= 0)
 				kFormH2 = h2FormationOverride;
 
@@ -395,7 +346,7 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		// Changing the grain temperature influences the following:
 		// h2 formation rate
 		// gas-dust energy exchange (gas cooling)
-		updateGrainTemps(s, gi);
+		updateGrainTemps(s, gri);
 
 		double newHeating = heating(s);
 		double newCooling = cooling(s);
@@ -423,6 +374,49 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 		                counter > MAXCHEMISTRYITERATIONS;
 	}
 	return s;
+}
+
+void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
+                                        GasModule::GrainInterface& g) const
+{
+	GrainPhotoelectricEffect::Environment env(
+	                s.specificIntensity(), s.t(), s.ne(), s.np(), {-1, 1, 0, 0},
+	                {s.ne(), s.np(), s.nH(), s.nH2()},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
+	                 2 * Constant::HMASS_CGS});
+
+	for (auto& pop : *g.populationv())
+	{
+		const GrainType* type = pop.type();
+
+		size_t numSizes = pop.numSizes();
+		Array grainHeatPerSizev(numSizes);
+		// Array grainPhotoPerSizev(numSizes);
+
+		if (type->heatingAvailable() && Options::cooling_gasGrainCollisions)
+		{
+			GrainPhotoelectricEffect gpe(*type);
+
+			for (int m = 0; m < numSizes; m++)
+			{
+				auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
+				                                          pop.qAbsv(m));
+				grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
+				                pop.size(m), env, cd, pop.temperature(m), true);
+				// cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
+
+				// grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
+				// cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
+			}
+		}
+
+		const Array& h2FormationHeatv =
+		                GasGrain::surfaceH2FormationHeatPerSize(pop, s.t(), s.nH());
+
+		pop.recalculateTemperature(s.specificIntensity().frequencyv(),
+		                           s.specificIntensity().valuev(),
+		                           grainHeatPerSizev + h2FormationHeatv);
+	}
 }
 
 Array GasInterfaceImpl::radiativeRecombinationEmissivityv(double T,

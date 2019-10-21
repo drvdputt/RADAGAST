@@ -95,9 +95,7 @@ public:
 	    Leaving this here for now, instead of moving it to GasSolution. GasSolution is not
 	    the owner of the GrainInterface object, and it would be weird to modify it from
 	    there. */
-	void updateGrainTemps(const GasSolution& s,
-			      GasModule::GrainInterface& g) const;
-
+	void updateGrainTemps(const GasSolution& s, GasModule::GrainInterface& g) const;
 
 private:
 	int _ine, _inp, _inH, _inH2;

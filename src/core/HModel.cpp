@@ -4,10 +4,16 @@
 #include "IonizationBalance.hpp"
 #include "LevelSolver.hpp"
 
-void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity)
+void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity)
 {
-	double nH = gas._speciesNv[SpeciesIndex::inH()];
 	_levelSolution.setT(gas._T);
+
+	if (n <= 0)
+	{
+		int numLv = _hData->numLv();
+		_levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
+		_levelSolution.setNv(EVector::Zero(numLv));
+	}
 
 	EMatrix Cvv;
 	EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, gas, &Cvv);
@@ -16,7 +22,7 @@ void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity)
 	EVector the_sourcev = sourcev(gas);
 	EVector the_sinkv = sinkv(gas);
 	DEBUG("Solving levels nH = " << nH << std::endl);
-	EVector newNv = LevelSolver::statisticalEquilibrium(nH, Tvv, the_sourcev, the_sinkv);
+	EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
 	_levelSolution.setNv(newNv);
 }
 

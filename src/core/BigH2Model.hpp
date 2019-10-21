@@ -8,6 +8,7 @@ class BigH2Model : public H2Model
 {
 public:
 	BigH2Model(const H2Data* h2Data) : _h2Data{h2Data}, _levelSolution(_h2Data) {}
+	BigH2Model(BigH2Model&&);
 	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
 	           double h2form = 0) override;
 	double dissociationRate(const Spectrum& specificIntensity) const override;

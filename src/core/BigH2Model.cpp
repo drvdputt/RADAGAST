@@ -7,8 +7,15 @@
 void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
                        double h2form)
 {
-	_n = n;
 	_levelSolution.setT(gas._T);
+	_n = n;
+
+	if (n <= 0)
+	{
+		int numLv = _h2Data->numLv();
+		_levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
+		_levelSolution.setNv(EVector::Zero(numLv));
+	}
 
 	EMatrix Cvv;
 	EMatrix Tvv = _h2Data->totalTransitionRatesvv(specificIntensity, gas, &Cvv);

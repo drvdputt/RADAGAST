@@ -2,9 +2,24 @@
 #include "GasDiagnostics.hpp"
 #include "GasGrainInteraction.hpp"
 #include "GasInterfaceImpl.hpp"
+#include "GasStruct.hpp"
 #include "GrainType.hpp"
 #include "IonizationBalance.hpp"
 #include "Options.hpp"
+
+void GasSolution::makeZero()
+{
+	_t = 0;
+	_speciesNv = EVector::Zero(SpeciesIndex::size());
+	solveLevels();
+}
+
+void GasSolution::solveLevels(double kFormH2)
+{
+	GasStruct gas = { _t, _speciesNv };
+	_hSolution->solve(nH(), gas, _specificIntensity);
+	_h2Solution->solve(nH2(), gas, _specificIntensity, kFormH2);
+}
 
 Array GasSolution::emissivityv(const Array& eFrequencyv) const
 {

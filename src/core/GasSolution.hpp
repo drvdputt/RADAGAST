@@ -29,13 +29,20 @@ public:
 	    about this. */
 	GasSolution(const GasInterfaceImpl* gi, const GasModule::GrainInterface& gri,
 	            const Spectrum& specificIntensity,
-	            const std::shared_ptr<const HModel> hModel,
-	            const std::shared_ptr<const H2Model> h2Model)
+	            const std::shared_ptr<HModel> hModel,
+	            const std::shared_ptr<H2Model> h2Model)
 	                : _gasInterfaceImpl{gi}, _grainInterface{gri},
 	                  _specificIntensity{specificIntensity}, _hSolution(std::move(hModel)),
 	                  _h2Solution(std::move(h2Model))
 	{
 	}
+
+	GasSolution(GasSolution&&) = default;
+
+	void makeZero();
+
+	/** Solve the level populations for each level model contained here */
+	void solveLevels(double kFormH2 = 0);
 
 	/** The radiation field */
 	const Spectrum& specificIntensity() const { return _specificIntensity; }
@@ -85,8 +92,8 @@ private:
 	const Spectrum& _specificIntensity;
 	double _t;
 	EVector _speciesNv;
-	std::shared_ptr<const HModel> _hSolution;
-	std::shared_ptr<const H2Model> _h2Solution;
+	std::shared_ptr<HModel> _hSolution;
+	std::shared_ptr<H2Model> _h2Solution;
 };
 
 #endif // CORE_GASSOLUTION_HPP

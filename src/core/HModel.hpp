@@ -12,7 +12,7 @@ public:
 	HModel(const HData* hData) : _hData{hData}, _levelSolution(_hData) {}
 
 	/** Solve the H levels, and store them in this object. */
-	void solve(const GasStruct& gas, const Spectrum& specificIntensity);
+	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity);
 
 	/** This function returns the line emission spectrum + the continuum emitted by the
 	    2s-1s two-photon process. */
