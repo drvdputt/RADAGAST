@@ -9,7 +9,7 @@ class H2Data;
 class SpeciesModelManager
 {
 public:
-	SpeciesModelManager(/* h settings, h2 settings */);
+	SpeciesModelManager(const std::string& hOption, const std::string& h2Option);
 	HModel makeHModel() const;
 	H2Model makeH2Model(/* heuristic parameters */) const;
 

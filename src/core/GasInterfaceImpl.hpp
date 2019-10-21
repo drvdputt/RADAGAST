@@ -46,8 +46,7 @@ public:
 	    which more than 1 usable subclass/configuration exists). The components can be set
 	    up outside of this constructor, and ownership is then transferred using a unique
 	    pointer. */
-	GasInterfaceImpl(std::unique_ptr<HydrogenLevels> atomModel,
-	                 std::unique_ptr<H2Levels> molecularModel);
+	GasInterfaceImpl(const std::string& atomChoice, const std::string& moleculeChoice);
 
 	~GasInterfaceImpl();
 
@@ -101,7 +100,6 @@ public:
 
 
 private:
-	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]
 	int _ine, _inp, _inH, _inH2;
 	std::unique_ptr<ChemistrySolver> _chemSolver;
 

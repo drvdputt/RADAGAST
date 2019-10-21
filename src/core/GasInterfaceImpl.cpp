@@ -7,8 +7,6 @@
 #include "GasGrainInteraction.hpp"
 #include "GasStruct.hpp"
 #include "GrainType.hpp"
-#include "H2FromFiles.hpp"
-#include "HydrogenFromFiles.hpp"
 #include "IOTools.hpp"
 #include "IonizationBalance.hpp"
 #include "LevelSolver.hpp"
@@ -24,17 +22,11 @@
 
 using namespace std;
 
-constexpr int MAXCHEMISTRYITERATIONS{25};
-
-GasInterfaceImpl::GasInterfaceImpl(unique_ptr<HydrogenLevels> atomModel,
-                                   unique_ptr<H2Levels> molecularModel)
-                : _atomicLevels(move(atomModel)), _molecular(move(molecularModel)),
-                  _freeBound(make_unique<FreeBound>()), _freeFree(make_unique<FreeFree>())
+GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& moleculeChoice)
+                : _freeBound(make_unique<FreeBound>()), _freeFree(make_unique<FreeFree>())
 {
-	if (_molecular)
-		_chemSolver = make_unique<ChemistrySolver>(
-		                make_unique<SimpleHydrogenNetwork>());
-
+	_chemSolver = make_unique<ChemistrySolver>(make_unique<SimpleHydrogenNetwork>());
+	_manager = make_unique<SpeciesModelManager>(atomChoice, moleculeChoice);
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
 	_inH = SpeciesIndex::index("H");
