@@ -34,6 +34,11 @@ private:
 	    number of resolved levels that was requested during construction. */
 	void prepareForOutput();
 
+	EMatrix makeEv() const;
+	EMatrix makeGv() const;
+	EMatrix makeAvv() const;
+	EMatrix makeExtraAvv() const;
+
 	/** A struct-like class to store info about levels in a named way. When a quantum number has
 	    the value -1, this means the level is collapsed over these numbers. To safeguard this
 	    mechanism, I changed this to a class instead of a struct, to make sure the members stay

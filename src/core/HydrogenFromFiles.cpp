@@ -32,8 +32,8 @@ HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo)
 	readData();
 	// Steps that need to happen after read-in
 	prepareForOutput();
-
-	setConstants(//TODO)
+	// Set required members of parent class
+	setConstants(makeEv(), makeGv(), makeAvv(), makeExtraAvv());
 }
 
 void HydrogenFromFiles::readData()
@@ -181,7 +181,7 @@ size_t HydrogenFromFiles::indexOutput(int n, int l) const
 		return _nlToOutputIndexm.at({n, l});
 }
 
-EVector HydrogenFromFiles::ev() const
+EVector HydrogenFromFiles::makeEv() const
 {
 	EVector the_ev(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -189,7 +189,7 @@ EVector HydrogenFromFiles::ev() const
 	return the_ev;
 }
 
-EVector HydrogenFromFiles::gv() const
+EVector HydrogenFromFiles::makeGv() const
 {
 	EVector the_gv(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -197,7 +197,7 @@ EVector HydrogenFromFiles::gv() const
 	return the_gv;
 }
 
-EMatrix HydrogenFromFiles::avv() const
+EMatrix HydrogenFromFiles::makeAvv() const
 {
 	EMatrix the_avv(_numL, _numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -232,7 +232,7 @@ EMatrix HydrogenFromFiles::avv() const
 	return the_avv;
 }
 
-EMatrix HydrogenFromFiles::extraAvv() const
+EMatrix HydrogenFromFiles::makeExtraAvv() const
 {
 	EMatrix the_extra = EMatrix::Zero(_numL, _numL);
 
