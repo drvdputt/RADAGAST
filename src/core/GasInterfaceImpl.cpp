@@ -425,42 +425,6 @@ GasInterfaceImpl::solveDensities(double nHtotal, double T, const Spectrum& speci
 	return s;
 }
 
-Array GasInterfaceImpl::emissivityv(const Solution& s, const Array& eFrequencyv) const
-{
-	Array lineEmv(eFrequencyv.size());
-	lineEmv = _atomicLevels->emissivityv(s.HSolution, eFrequencyv);
-	if (_molecular)
-		lineEmv += _molecular->emissivityv(s.H2Solution, eFrequencyv);
-
-	Array contEmCoeffv(eFrequencyv.size());
-	_freeBound->addEmissionCoefficientv(s.T, eFrequencyv, contEmCoeffv);
-	_freeFree->addEmissionCoefficientv(s.T, eFrequencyv, contEmCoeffv);
-
-	return lineEmv + (np(s) * ne(s) / Constant::FPI) * contEmCoeffv;
-}
-
-Array GasInterfaceImpl::opacityv(const Solution& s, const Array& oFrequencyv) const
-{
-	size_t numFreq = oFrequencyv.size();
-	Array lineOp(numFreq);
-	lineOp += _atomicLevels->opacityv(s.HSolution, oFrequencyv);
-	if (_molecular)
-		lineOp += _molecular->opacityv(s.H2Solution, oFrequencyv);
-
-	Array contOpCoeffv(numFreq);
-	_freeFree->addOpacityCoefficientv(s.T, oFrequencyv, contOpCoeffv);
-
-	double npne = np(s) * ne(s);
-	double nH0 = nH(s);
-	Array totalOp(numFreq);
-	for (size_t iFreq = 0; iFreq < numFreq; iFreq++)
-	{
-		double ionizOp_iFreq = nH0 * Ionization::crossSection(oFrequencyv[iFreq]);
-		totalOp[iFreq] = ionizOp_iFreq + npne * contOpCoeffv[iFreq] + lineOp[iFreq];
-	}
-	return totalOp;
-}
-
 Array GasInterfaceImpl::radiativeRecombinationEmissivityv(double T,
                                                           const Array& eFrequencyv) const
 {
