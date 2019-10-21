@@ -20,9 +20,7 @@ H2Data::H2Data(int maxJ, int maxV)
 	readTransProbs();
 
 	// Set these data members of the LevelCoefficients parent class
-	EVector the_ev = EVector::Zero(_numL);
-	EVector the_gv = EVector::Zero(_numL);
-	setConstants(the_ev, the_gv, _avv, EVector::Zero(_numL, _numL));
+	setConstants(makeEv(), makeGv(), _avv, EVector::Zero(_numL, _numL));
 
 	readCollisions();
 	readDissProbs();
@@ -387,7 +385,7 @@ void H2Data::readCollisionFile(const string& repoFile, CollisionPartner iPartner
 	                 << " collision coefficients from " << repoFile << endl);
 }
 
-EVector H2Data::ev() const
+EVector H2Data::makeEv() const
 {
 	EVector the_ev(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -395,17 +393,13 @@ EVector H2Data::ev() const
 	return the_ev;
 }
 
-EVector H2Data::gv() const
+EVector H2Data::makeGv() const
 {
 	EVector the_gv(_numL);
 	for (size_t i = 0; i < _numL; i++)
 		the_gv(i) = _levelv[i].g();
 	return the_gv;
 }
-
-EMatrix H2Data::avv() const { return _avv; }
-
-EMatrix H2Data::extraAvv() const { return EMatrix::Zero(_numL, _numL); }
 
 EMatrix H2Data::cvv(const GasStruct& gas) const
 {

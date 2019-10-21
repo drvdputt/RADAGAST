@@ -48,6 +48,9 @@ private:
 	    been some corrections, but the original data comes from Dabrowski (1984). */
 	void readLevels();
 
+	EVector makeEv() const;
+	EVector makeGv() const;
+
 	/** Load the data from Wolniewicz (1998) (electric) and Pachucki and Komasa (2011)
 	    (magnetic) for X; Abgrall (1994) for excited states. See also MOLAT database. */
 	void readTransProbs();
