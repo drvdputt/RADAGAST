@@ -99,10 +99,10 @@ double BigH2Model::dissociationHeating(const Spectrum& specificIntensity) const
 	return solomonHeat + directHeat;
 }
 
-double BigH2Model::netHeating(const Spectrum& specificIntensity) const
+double BigH2Model::netHeating() const
 {
 	// TODO cooling effect of collisional dissociation?
-	return dissociationHeating(specificIntensity) + _levelSolution.netHeating();
+	return _levelSolution.netHeating();
 }
 
 double BigH2Model::orthoPara() const

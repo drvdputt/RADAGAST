@@ -12,7 +12,7 @@ public:
 	           double h2form = 0) override;
 	double dissociationRate(const Spectrum& specificIntensity) const override;
 	double dissociationHeating(const Spectrum& specificIntensity) const override;
-	double netHeating(const Spectrum& specificIntensity) const override;
+	double netHeating() const override;
 	double orthoPara() const override;
 	Array emissivityv(const Array& eFrequencyv) const override;
 	Array opacityv(const Array& oFrequencyv) const override;

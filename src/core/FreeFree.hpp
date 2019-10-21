@@ -36,7 +36,8 @@ public:
 	    emissivity ([power][density]/[frequency interval]) can be obtained by multiplying
 	    this value with ne*np / 4pi. The contributions are added to the current contents of
 	    gamma_nu. */
-	void addEmissionCoefficientv(double T, const Array& eFrequencyv, Array& gamma_nuv) const;
+	void addEmissionCoefficientv(double T, const Array& eFrequencyv,
+	                             Array& gamma_nuv) const;
 
 	/** Calculate the opacity coefficient for the free-free continuum for all frequencies.
 	    The units are [density^-2][length^-1]. Multiplying with ne*np will give the opacity
@@ -55,7 +56,7 @@ public:
 	double heating(double np_ne, double T, const Spectrum& specificIntensity) const;
 
 	/** Calculate the cooling due to Bremsstrahlung, given the product of the electron and
-	    proton densities, and their kinetic temperature. */
+	    proton densities, and their kinetic temperature. [erg cm-3 s-1]. */
 	double cooling(double np_ne, double T) const;
 
 private:

@@ -34,7 +34,8 @@ public:
 	    energy - threshold energy) times the rate. */
 	virtual double dissociationHeating(const Spectrum& specificIntensity) const = 0;
 
-	virtual double netHeating(const Spectrum& specificIntensity) const = 0;
+	/** Calculate the net heating-cooling balance by (de-)excitation */
+	virtual double netHeating() const = 0;
 
 	/** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this
 	    depends on the velocity distribution of the colliding particles, and the energy

@@ -47,7 +47,7 @@ public:
 	    up outside of this constructor, and ownership is then transferred using a unique
 	    pointer. */
 	GasInterfaceImpl(std::unique_ptr<HydrogenLevels> atomModel,
-			 std::unique_ptr<H2Levels> molecularModel);
+	                 std::unique_ptr<H2Levels> molecularModel);
 
 	~GasInterfaceImpl();
 
@@ -55,20 +55,21 @@ public:
 	    populations for a certain electron temperature, under influence of a blackbody isrf
 	    of that same temperature. Can be used by the client to manually set the temperature
 	    and calculate some properties which can be used as an initial guess. */
-	GasSolution solveInitialGuess(double n, double T, const GasModule::GrainInterface&) const;
+	GasSolution solveInitialGuess(double n, double T,
+	                              const GasModule::GrainInterface&) const;
 
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
 	    temperature guess, and a Spectrum object containing the radiation field in specific
 	    intensity per frequency units. */
 	GasSolution solveTemperature(double n, double Tinit, const Spectrum& specificIntensity,
-				     const GasModule::GrainInterface&) const;
+	                             const GasModule::GrainInterface&) const;
 
 	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
 	    class until equilibrium is found. */
 	GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity,
-				   const GasModule::GrainInterface&,
-				   const GasSolution* previous = nullptr,
-				   double h2FormationOverride = -1) const;
+	                           const GasModule::GrainInterface&,
+	                           const GasSolution* previous = nullptr,
+	                           double h2FormationOverride = -1) const;
 
 	/** Emission coefficient for the free-bound recombination continuum (per cm-6, need to
 	    multiply with ne * np / 4pi) */
@@ -83,6 +84,9 @@ public:
 	    matters in radio, so maybe for 21 cm). */
 	Array freeFreeOpacityv(double T, const Array& oFrequencyv) const;
 
+	/** Cooling by free-free emission [erg s-1 cm-3] */
+	double freeFreeCool(double np_ne, double T) const;
+
 private:
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]
 	int _ine, _inp, _inH, _inH2;
@@ -91,7 +95,7 @@ private:
 	/* Pointers to other parts of the implementation, to make late initialization
 	   possible */
 	std::unique_ptr<SpeciesModelManager> _manager;
-	
+
 	/* Continuum processes */
 	std::unique_ptr<FreeBound> _freeBound;
 	std::unique_ptr<FreeFree> _freeFree;

@@ -544,49 +544,6 @@ Array GasInterfaceImple::freeFreeOpacityv(double T, const Array& oFrequencyv) co
 	return ffOpv;
 }
 
-double GasInterfaceImpl::cooling(const Solution& s) const
-{
-	double lineCool = _atomicLevels->cooling(s.HSolution);
-	if (_molecular)
-		lineCool = _molecular->cooling(s.H2Solution);
-
-	double freefreeCool = _freeFree->cooling(np(s) * ne(s), s.T);
-
-	double hRecCool = Ionization::cooling(s.speciesNv(_inH), s.speciesNv(_inp),
-	                                      s.speciesNv(_ine), s.T);
-
-	double h2dissCool = 0.;
-	if (_molecular)
-		h2dissCool += _molecular->dissociationCooling(s.H2Solution);
-
-	return lineCool + freefreeCool + hRecCool + h2dissCool;
-}
-
-double GasInterfaceImpl::heating(const Solution& s, const GasModule::GrainInterface& g) const
-{
-	double gasHeat = heating(s);
-	double grainHeat = grainHeating(s, g);
-	return gasHeat + grainHeat;
-}
-
-double GasInterfaceImpl::heating(const Solution& s) const
-{
-	double lineHeat = _atomicLevels->heating(s.HSolution);
-	if (_molecular)
-		lineHeat += _molecular->heating(s.H2Solution);
-
-	double freefreeHeat = _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity);
-
-	double hPhotoIonHeat = Ionization::heating(s.speciesNv(_inp), s.speciesNv(_ine), s.T,
-	                                           s.specificIntensity);
-
-	double dissHeat = 0.;
-	if (_molecular)
-		dissHeat = _molecular->dissociationHeating(s.H2Solution, s.specificIntensity);
-
-	return lineHeat + freefreeHeat + hPhotoIonHeat + dissHeat;
-}
-
 double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainInterface& g,
                                       double* photoHeat, double* collCool) const
 {
@@ -634,4 +591,9 @@ double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainI
 	if (collCool != nullptr)
 		*collCool = gasGrainCooling;
 	return grainPhotoelectricHeating - gasGrainCooling;
+}
+
+double GasInterfaceImpl::freeFreeCool(double np_ne, double T) const
+{
+	return _freeFree->cooling(np_ne, T);
 }
