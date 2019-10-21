@@ -544,55 +544,6 @@ Array GasInterfaceImple::freeFreeOpacityv(double T, const Array& oFrequencyv) co
 	return ffOpv;
 }
 
-double GasInterfaceImpl::grainHeating(const Solution& s, const GasModule::GrainInterface& g,
-                                      double* photoHeat, double* collCool) const
-{
-	double grainPhotoelectricHeating = 0;
-	double gasGrainCooling = 0;
-
-	// Specify the environment parameters
-	GrainPhotoelectricEffect::Environment env(s.specificIntensity, s.T, ne(s), np(s),
-	                                          {-1, 1, 0, 0}, {ne(s), np(s), nH(s), nH2(s)},
-	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS,
-	                                           Constant::HMASS_CGS,
-	                                           2 * Constant::HMASS_CGS});
-
-	size_t numPop = g.numPopulations();
-	for (size_t i = 0; i < numPop; i++)
-	{
-		const GasModule::GrainInterface::Population* pop = g.population(i);
-		const GrainType* type = pop->type();
-		if (type->heatingAvailable())
-		{
-			/* Choose the correct parameters for the photoelectric effect based on
-			   the type (a.k.a. composition) of the Population. */
-			GrainPhotoelectricEffect gpe(*type);
-
-			size_t numSizes = pop->numSizes();
-			for (int m = 0; m < numSizes; m++)
-			{
-				double a = pop->size(m);
-				const Array& qAbsv = pop->qAbsv(m);
-				double nd = pop->density(m);
-				auto cd = gpe.calculateChargeDistribution(a, env, qAbsv);
-				grainPhotoelectricHeating +=
-				                nd * gpe.heatingRateA(a, env, qAbsv, cd);
-				if (Options::cooling_gasGrainCollisions)
-					gasGrainCooling += nd *
-					                   gpe.gasGrainCollisionCooling(
-					                                   a, env, cd,
-					                                   pop->temperature(m),
-					                                   false);
-			}
-		}
-	}
-	if (photoHeat != nullptr)
-		*photoHeat = grainPhotoelectricHeating;
-	if (collCool != nullptr)
-		*collCool = gasGrainCooling;
-	return grainPhotoelectricHeating - gasGrainCooling;
-}
-
 double GasInterfaceImpl::freeFreeCool(double np_ne, double T) const
 {
 	return _freeFree->cooling(np_ne, T);
