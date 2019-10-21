@@ -4,13 +4,13 @@
 #include "Array.hpp"
 #include "EigenAliases.hpp"
 #include "GasState.hpp"
+#include "GrainInterface.hpp"
 #include "H2Model.hpp"
 #include "HModel.hpp"
 #include "SpeciesIndex.hpp"
 
 class GasDiagnostics;
 class GasInterfaceImpl;
-class GrainInterface;
 class Spectrum;
 
 /** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl
@@ -27,7 +27,7 @@ public:
 	    with shared pointer here, while the objects are const. Which means that they can
 	    only be changed from outside. Maybe this should be the other way around TODO: think
 	    about this. */
-	GasSolution(const GasInterfaceImpl* gi, const GrainInterface& gri,
+	GasSolution(const GasInterfaceImpl* gi, const GasModule::GrainInterface& gri,
 	            const Spectrum& specificIntensity,
 	            const std::shared_ptr<const HModel> hModel,
 	            const std::shared_ptr<const H2Model> h2Model)
@@ -86,7 +86,7 @@ public:
 
 private:
 	const GasInterfaceImpl* _gasInterfaceImpl;
-	const GrainInterface& _grainInterface;
+	const GasModule::GrainInterface& _grainInterface;
 	const Spectrum& _specificIntensity;
 	double _t;
 	EVector _speciesNv;

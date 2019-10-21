@@ -1,8 +1,8 @@
 #ifndef CORE_BIGH2MODEL_HPP
 #define CORE_BIGH2MODEL_HPP
+
 #include "H2FromFiles.hpp"
 #include "H2Model.hpp"
-#include "LevelSolution.hpp"
 
 class BigH2Model : public H2Model
 {
@@ -16,10 +16,11 @@ public:
 	double orthoPara() const override;
 	Array emissivityv(const Array& eFrequencyv) const override;
 	Array opacityv(const Array& oFrequencyv) const override;
+	bool hasLevels() const override { return true; }
 
 	/** Read acces to the level solution, should one wish to inspect the solution in more
 	    detail */
-	const LevelSolution& levelSolution() const { return _levelSolution; }
+	const LevelSolution* levelSolution() const override { return &_levelSolution; }
 
 private:
 	/** Level-resolved dissociation rates. By adding these to the sink terms when solving

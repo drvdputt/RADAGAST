@@ -2,6 +2,7 @@
 #define CORE_H2MODEL_HPP
 
 #include "Array.hpp"
+#include "LevelSolution.hpp"
 
 struct GasStruct;
 class Spectrum;
@@ -51,6 +52,11 @@ public:
 
 	/** H2 opacity, both by lines and the continuum cross section (if any) */
 	virtual Array opacityv(const Array& oFrequencyv) const = 0;
+
+	/** For debug / diagnostics purposes, a pointer to the level solution object can be
+	    given, if one exists in the subclass implementation */
+	virtual bool hasLevels() const { return false; }
+	virtual const LevelSolution* levelSolution() const { return nullptr; }
 };
 
 #endif // CORE_H2MODEL_HPP

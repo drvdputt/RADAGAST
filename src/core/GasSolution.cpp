@@ -1,6 +1,7 @@
 #include "GasSolution.hpp"
+#include "GasDiagnostics.hpp"
+#include "GasGrainInteraction.hpp"
 #include "GasInterfaceImpl.hpp"
-#include "GrainInterface.hpp"
 #include "GrainType.hpp"
 #include "IonizationBalance.hpp"
 #include "Options.hpp"
@@ -103,4 +104,53 @@ double GasSolution::grainHeating(double* photoHeat, double* collCool) const
 	if (collCool != nullptr)
 		*collCool = gasGrainCooling;
 	return grainPhotoelectricHeating - gasGrainCooling;
+}
+
+void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
+
+{
+	if (!gd)
+		Error::runtime("GasDiagnostics is nullptr!");
+
+	double h2form = GasGrain::surfaceH2FormationRateCoeff(_grainInterface, _t);
+	double h2dissoc = _h2Solution->dissociationRate(_specificIntensity);
+
+	double hphotoion = Ionization::photoRateCoeff(_specificIntensity);
+	double hcolion = Ionization::collisionalRateCoeff(_t);
+	double hrec = Ionization::recombinationRateCoeff(_t);
+
+	gd->setReactionNames({"h2form", "h2dissoc", "hphotoion", "hcolion", "hrec"});
+	gd->setReactionRates({h2form, h2dissoc, hphotoion, hcolion, hrec});
+
+	if (gd->saveLevelPopulations())
+	{
+		EVector hlv = _hSolution->levelSolution()->nv();
+		gd->setHPopulations(Array(hlv.data(), hlv.size()));
+		if (_h2Solution->hasLevels())
+		{
+			EVector h2lv = _h2Solution->levelSolution()->nv();
+			gd->setH2Populations(Array(h2lv.data(), h2lv.size()));
+		}
+	}
+	double netHline = _hSolution->netHeating();
+	double netH2line = _h2Solution->netHeating();
+
+	gd->setHeating("H ion", Ionization::heating(np(), ne(), _t, _specificIntensity));
+	gd->setCooling("Hrec", Ionization::cooling(nH(), np(), ne(), _t));
+	gd->setHeating("H deexc", netHline);
+	gd->setCooling("H exc", -netHline);
+
+	gd->setHeating("H2 deexc", netH2line);
+	gd->setCooling("H2 exc", -netH2line);
+	gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating(_specificIntensity));
+	// gd->setHeating("freefree", x);
+	gd->setCooling("freefree", _gasInterfaceImpl->freeFreeCool(np() * ne(), _t));
+
+	// I need this per grain size. Doing this thing for now.
+	double grainPhotoHeat = 0;
+	double grainCollCool = 0;
+	double totalGrainHeat = grainHeating(&grainPhotoHeat, &grainCollCool);
+	gd->setPhotoelectricHeating(Array({totalGrainHeat}));
+	gd->setHeating("total grainphoto", grainPhotoHeat);
+	gd->setCooling("grain collisions", grainCollCool);
 }

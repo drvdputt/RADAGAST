@@ -26,6 +26,10 @@ public:
 	    (de-)excitation */
 	double netHeating() const;
 
+	/** Read acces to the level solution, should one wish to inspect the solution in more
+	    detail */
+	const LevelSolution* levelSolution() const { return &_levelSolution; }
+
 private:
 	/** Returns a vector containing the source terms for the equilibrium equations, such as the
 	    partial recombination rates into each level. Note that this function is separated from
