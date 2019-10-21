@@ -215,133 +215,68 @@ GasSolution GasInterfaceImpl::solveDensities(double nHtotal, double T,
 		s.setSpeciesNv(nv);
 	}
 
-	// Package some gas parameters
-	GasStruct gas(T, s.speciesNv);
-
 	// Formation rate on grain surfaces. We declare it here so that it can be passed to the
 	// level population calculation too (needed for H2 formation pumping).
 	double kFormH2 = 0;
 
-	// Initial guess for the H2 solution (if no initial guess is provided, the solver will
-	// make its own)
-	if (_molecular && !manualGuess)
-		gas._h2Levelv = nHtotal * previous->H2Solution.nv /
-		                previous->H2Solution.nv.sum();
-
-	auto solveLevelBalances = [&]() {
-		double nH = s.speciesNv(_inH);
-		if (nH <= 0)
-			s.HSolution = _atomicLevels->solveZero(T);
-		else
-		{
-			s.HSolution.n = nH;
-			s.HSolution.T = T;
-			EMatrix Htransitionvv = _atomicLevels->totalTransitionRatesvv(
-			                specificIntensity, gas, &s.HSolution.cvv);
-			EVector Hsourcev = _atomicLevels->sourcev(gas);
-			EVector Hsinkv = _atomicLevels->sinkv(gas);
-			DEBUG("Solving levels nH = " << nH << endl);
-			s.HSolution.nv = LevelSolver::statisticalEquilibrium(nH, Htransitionvv,
-			                                                     Hsourcev, Hsinkv);
-			// s.HSolution = _atomicLevels->solveLTE(nH, gas);
-		}
-
-		if (_molecular)
-		{
-			double nH2 = s.speciesNv(_inH2);
-			DEBUG("Solving levels nH2 = " << nH2 << endl);
-			// gas is passed here to make an initial guess of the levels based on
-			// the gas properties
-			s.H2Solution = _molecular->customSolution(nH2, gas, specificIntensity,
-			                                          nH * kFormH2);
-
-			// the solution is also saved in the gas struct, so it can be used as an
-			// initial guess instead of just guessing based on the temperature
-			gas._h2Levelv = s.H2Solution.nv;
-			// s.H2Solution = _molecular->solveLTE(nH2, gas);
-		}
-	};
-
-	/* The main loop: e
-         v---------------------------------------------------<
+	/* The main loop:
+	 v---------------------------------------------------<
 	 > LEVELS SOLUTION, CHEMISTRY SOLUTION -> CHEM RATES |
-                                                             |
+							     |
 	   CHEM RATES -> CHEMISTRY SOLUTION                  |
-                                                             |
+							     |
 	   CHEMISTRY SOLUTION -> LEVEL SOURCE AND SINK RATES |
-                                                             |
+							     |
 	   LEVEL SOURCE AND SINK RATES -> LEVEL SOLUTION ----^
 	*/
 
 	int counter = 0;
 	bool stopCriterion = false;
-	EVector previousAbundancev = s.speciesNv;
+	EVector previousAbundancev = s.speciesNv();
 	double previousHeating = 0;
 	double previousCooling = 0;
 	while (!stopCriterion)
 	{
 		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
-		solveLevelBalances();
+		s.solveLevels(kFormH2);
 
 		if (previousAbundancev.array().isNaN().any())
 			Error::runtime("Nan in chemistry solution!");
 
-		// When including H2
-		if (_molecular)
-		{
-			// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
-			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
-			if (h2FormationOverride >= 0)
-				kFormH2 = h2FormationOverride;
-
-			double kDissH2Levels = _molecular->dissociationRate(
-			                s.H2Solution, s.specificIntensity);
-
-			if (kDissH2Levels < 0)
-				Error::runtime("negative dissociation rate!");
-
-			// CHEM RATES -> CHEMISTRY SOLUTION
-			EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
-			                T, specificIntensity, kDissH2Levels, kFormH2);
-			s.speciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv);
-
-			/* TODO: Add effect of grain charging to chemical network. I think it
-			   might be possible to do this by imposing a conservation equation for
-			   the number of electrons: ne + nH + nH2 = (ne + nH + nH2)_0 + <Cg>*ng.
-			   The average grain charge <Gg> should be updated together with the
-			   rates I guess? Another option would be to include the grain charge
-			   rates into the network as extra reactions. The production vector
-			   would be (1 0 0 0) while the reactant vector would be zero (the
-			   grains don't disappear when they lose an electron) Grain
-			   recombination / charge exchange reaction could also be added. I need
-			   to think about whether the 'disappearing' particles will cause
-			   problems when coupled with conservation equations. */
-		}
-		// When ignoring H2
+		// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
+		if (h2FormationOverride >= 0)
+			kFormH2 = h2FormationOverride;
 		else
-		{
-			// DIRECT SOLUTION (IONIZATION BALANCE ONLY, NO MOLECULES)
+			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
 
-			// Just solve the ionization balance in the nebular approximation.
-			double f = Ionization::solveBalance(nHtotal, T, specificIntensity);
-			DEBUG("Ionized fraction = " << f << endl);
+		double kDissH2Levels = s.kDissH2Levels();
+		if (kDissH2Levels < 0)
+			Error::runtime("negative dissociation rate!");
 
-			// Neutral fraction
-			s.speciesNv[_inH] = nHtotal * (1 - f);
-			// Ionized fraction
-			s.speciesNv[_inp] = nHtotal * f;
-			// Electron density is simply equal to proton density
-			s.speciesNv[_ine] = s.speciesNv[_inp];
-			s.speciesNv[_inH2] = 0;
-		}
+		// CHEM RATES -> CHEMISTRY SOLUTION
+		EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
+		                T, specificIntensity, kDissH2Levels, kFormH2);
+		EVector newSpeciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv());
 
-		// CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%
-		EArray changev = s.speciesNv - previousAbundancev;
-		// Or if it is negligible compared to the norm (or sum maybe?)
-		double norm = s.speciesNv.norm();
+		/* TODO: Add effect of grain charging to chemical network. I think it
+		   might be possible to do this by imposing a conservation equation for
+		   the number of electrons: ne + nH + nH2 = (ne + nH + nH2)_0 + <Cg>*ng.
+		   The average grain charge <Gg> should be updated together with the
+		   rates I guess? Another option would be to include the grain charge
+		   rates into the network as extra reactions. The production vector
+		   would be (1 0 0 0) while the reactant vector would be zero (the
+		   grains don't disappear when they lose an electron) Grain
+		   recombination / charge exchange reaction could also be added. I need
+		   to think about whether the 'disappearing' particles will cause
+		   problems when coupled with conservation equations. */
+
+		// CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%,
+		// or if the total amount is negligible compared to the norm.
+		EArray changev = s.speciesNv() - previousAbundancev;
+		double norm = s.speciesNv().norm();
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
-		                s.speciesNv.array() < 1.e-99 * norm;
+		                s.speciesNv().array() < 1.e-99 * norm;
 
 		// Changing the grain temperature influences the following:
 		// h2 formation rate
@@ -375,6 +310,26 @@ GasSolution GasInterfaceImpl::solveDensities(double nHtotal, double T,
 	}
 	return s;
 }
+
+// GasSolution GasInterfaceImpl::solveDensitiesNoH2(double n, double T,
+//                                                  const Spectrum& specificIntensity,
+//                                                  const GasModule::GrainInterface&) const;
+// {
+// // When ignoring H2
+// // DIRECT SOLUTION (IONIZATION BALANCE ONLY, NO MOLECULES)
+
+// // Just solve the ionization balance in the nebular approximation.
+// double f = Ionization::solveBalance(nHtotal, T, specificIntensity);
+// DEBUG("Ionized fraction = " << f << endl);
+
+// // Neutral fraction
+// s.speciesNv[_inH] = nHtotal * (1 - f);
+// // Ionized fraction
+// s.speciesNv[_inp] = nHtotal * f;
+// // Electron density is simply equal to proton density
+// s.speciesNv[_ine] = s.speciesNv[_inp];
+// s.speciesNv[_inH2] = 0;
+// }
 
 void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
                                         GasModule::GrainInterface& g) const

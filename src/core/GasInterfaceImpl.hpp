@@ -70,6 +70,10 @@ public:
 	                           const GasSolution* previous = nullptr,
 	                           double h2FormationOverride = -1) const;
 
+	/** TODO: rework old code */
+	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
+				       const GasModule::GrainInterface&) const;
+
 	/** Emission coefficient for the free-bound recombination continuum (per cm-6, need to
 	    multiply with ne * np / 4pi) */
 	Array radiativeRecombinationEmissivityv(double T, const Array& eFrequencyv) const;

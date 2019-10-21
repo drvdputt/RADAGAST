@@ -183,3 +183,8 @@ GasModule::GasState GasSolution::makeGasState(const Array& oFrequencyv,
 	Array densityv(_speciesNv.data(), _speciesNv.size());
 	return {emv, opv, _t, densityv};
 }
+
+double GasSolution::kDissH2Levels() const
+{
+	return _h2Solution->dissociationRate(_specificIntensity);
+}

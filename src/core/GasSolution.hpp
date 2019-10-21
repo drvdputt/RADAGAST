@@ -86,6 +86,8 @@ public:
 	GasModule::GasState makeGasState(const Array& oFrequencyv,
 	                                 const Array& eFrequencyv) const;
 
+	double kDissH2Levels() const;
+
 private:
 	const GasInterfaceImpl* _gasInterfaceImpl;
 	const GasModule::GrainInterface& _grainInterface;
