@@ -171,9 +171,7 @@ void HydrogenFromFiles::prepareForOutput()
 			_totalAv[i] += einsteinA(_levelOrdering[i], _levelOrdering[f]);
 }
 
-size_t HydrogenFromFiles::numLv() const { return _numL; }
-
-size_t HydrogenFromFiles::indexOutput(int n, int l) const
+size_t HydrogenFromFiles::index(int n, int l) const
 {
 	if (n > _resolvedUpTo)
 		return _nlToOutputIndexm.at({n, -1});
@@ -236,7 +234,7 @@ EMatrix HydrogenFromFiles::makeExtraAvv() const
 {
 	EMatrix the_extra = EMatrix::Zero(_numL, _numL);
 
-	size_t index1s = indexOutput(1, 0);
+	size_t index1s = index(1, 0);
 
 	// Check if the n2 level is resolved, and retrieve the Key, Value pair
 	auto index2sIt = _nlToOutputIndexm.find({2, 0});
@@ -257,7 +255,7 @@ EMatrix HydrogenFromFiles::makeExtraAvv() const
 	   rates from 2s (8.229) and 2p (0). */
 	else
 	{
-		size_t index2 = indexOutput(2, -1);
+		size_t index2 = index(2, -1);
 		the_extra(index2, index1s) = rate / 4.; // + 0 * 3 / 4.
 	}
 	return the_extra;
@@ -266,8 +264,8 @@ EMatrix HydrogenFromFiles::makeExtraAvv() const
 array<size_t, 2> HydrogenFromFiles::twoPhotonIndices() const
 {
 	// If any of the levels is not resolved on l, just return the index of the collapsed level.
-	size_t upper = _resolvedUpTo >= 2 ? indexOutput(2, 0) : indexOutput(2, -1);
-	size_t lower = _resolvedUpTo >= 1 ? indexOutput(1, 0) : indexOutput(1, -1);
+	size_t upper = _resolvedUpTo >= 2 ? index(2, 0) : index(2, -1);
+	size_t lower = _resolvedUpTo >= 1 ? index(1, 0) : index(1, -1);
 	return {upper, lower};
 }
 
@@ -319,10 +317,10 @@ EMatrix HydrogenFromFiles::cvv(const GasStruct& gas) const
 			// Fill in the collision rates for all combinations of li lf
 			for (int li = 0; li < n; li++)
 			{
-				size_t i = indexOutput(n, li);
+				size_t i = index(n, li);
 				for (int lf = 0; lf < n; lf++)
 				{
-					size_t f = indexOutput(n, lf);
+					size_t f = index(n, lf);
 					/* None of the previous contributions should have been
 					   l-changing */
 					assert(the_cvv(i, f) == 0);
@@ -359,8 +357,8 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 
 		/* eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
 		   prevented divergence in the calculations of PS64 */
-		size_t index = indexOutput(n, l);
-		double tau2 = 1. / _totalAv(index) / _totalAv(index);
+		size_t i = index(n, l);
+		double tau2 = 1. / _totalAv(i) / _totalAv(i);
 		double twoLog10Rc =
 		                min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
 

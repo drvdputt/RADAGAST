@@ -34,8 +34,8 @@ private:
 	    number of resolved levels that was requested during construction. */
 	void prepareForOutput();
 
-	EMatrix makeEv() const;
-	EMatrix makeGv() const;
+	EVector makeEv() const;
+	EVector makeGv() const;
 	EMatrix makeAvv() const;
 	EMatrix makeExtraAvv() const;
 
