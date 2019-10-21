@@ -6,7 +6,7 @@
 #include "IonizationBalance.hpp"
 #include "Options.hpp"
 
-Array GasSolution::emisivityv(const Array& eFrequencyv) const
+Array GasSolution::emissivityv(const Array& eFrequencyv) const
 {
 	Array lineEmv(eFrequencyv.size());
 	lineEmv += _hSolution->emissivityv(eFrequencyv);
@@ -153,4 +153,18 @@ void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
 	gd->setPhotoelectricHeating(Array({totalGrainHeat}));
 	gd->setHeating("total grainphoto", grainPhotoHeat);
 	gd->setCooling("grain collisions", grainCollCool);
+}
+
+GasModule::GasState GasSolution::makeGasState(const Array& oFrequencyv,
+                                              const Array& eFrequencyv) const
+{
+	Array emv, opv;
+	if (eFrequencyv.size() > 2)
+		emv = emissivityv(eFrequencyv);
+	if (oFrequencyv.size() > 2)
+	{
+		opv = opacityv(oFrequencyv);
+	}
+	Array densityv(_speciesNv.data(), _speciesNv.size());
+	return {emv, opv, _t, densityv};
 }

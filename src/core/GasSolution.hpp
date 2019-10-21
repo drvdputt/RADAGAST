@@ -53,7 +53,7 @@ public:
 	double ne() const { return _speciesNv(SpeciesIndex::ine()); }
 
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
-	Array emisivityv(const Array& eFrequencyv) const;
+	Array emissivityv(const Array& eFrequencyv) const;
 
 	/** The total opacity at each frequency in 1 / cm */
 	Array opacityv(const Array& oFrequencyv) const;
