@@ -78,10 +78,10 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
 	{
-		GasInterfaceImpl::Solution s = _pimpl->solveTemperature(n, Tinit, specificIntensity, grainInfo);
+		GasSolution s = _pimpl->solveTemperature(n, Tinit, specificIntensity, grainInfo);
 		// To fix the temperature, use this:
 		// GasInterfaceImpl::Solution s = _pimpl->solveDensities(n, 6000., specificIntensity, grainInfo);
-		gasState = _pimpl->makeGasStateFromSolution(s, _oFrequencyv, _eFrequencyv);
+		gasState = s.makeGasState(s, _oFrequencyv, _eFrequencyv);
 		if (gd)
 			_pimpl->fillGasDiagnosticsFromSolution(s, grainInfo, gd);
 	}
