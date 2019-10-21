@@ -104,7 +104,6 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/
 
 	if (n <= 0)
 		s = solveDensities(0, 0, specificIntensity, gri);
-
 	else
 	{
 		const double Tmax = 100000.;
@@ -200,21 +199,6 @@ void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
 		                           s.specificIntensity().valuev(),
 		                           grainHeatPerSizev + h2FormationHeatv);
 	}
-}
-
-GasModule::GasState GasInterfaceImpl::makeGasStateFromSolution(const Solution& s,
-                                                               const Array& oFrequencyv,
-                                                               const Array& eFrequencyv) const
-{
-	Array emv, opv, scv;
-	if (eFrequencyv.size() > 2)
-		emv = emissivityv(s, eFrequencyv);
-	if (oFrequencyv.size() > 2)
-	{
-		opv = opacityv(s, oFrequencyv);
-	}
-	Array densityv(s.speciesNv.data(), s.speciesNv.size());
-	return {emv, opv, s.T, densityv};
 }
 
 GasInterfaceImpl::Solution
