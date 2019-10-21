@@ -83,7 +83,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 		// GasInterfaceImpl::Solution s = _pimpl->solveDensities(n, 6000., specificIntensity, grainInfo);
 		gasState = s.makeGasState(_oFrequencyv, _eFrequencyv);
 		if (gd)
-			s.fillGasDiagnostics(gd);
+			s.fillDiagnostics(gd);
 	}
 	else
 		zeroOpticalProperties(gasState);
@@ -97,7 +97,7 @@ void GasInterface::initializeGasState(GasState& gasState, double n, double T,
 		GasSolution s = _pimpl->solveInitialGuess(n, T, grainInfo);
 		gasState = s.makeGasState(_oFrequencyv, _eFrequencyv);
 		if (gd)
-			s.fillGasDiagnostics(gd);
+			s.fillDiagnostics(gd);
 	}
 	else
 		zeroOpticalProperties(gasState);
