@@ -23,14 +23,17 @@ class GasSolution
 public:
 	/** Pointer to gasInterfaceImpl (not sure if really needed, but for now) and inpinging
 	    radiation field are constant. Also, need to pass instances of HModel and H2Model
-	    here, as they could be abstract (transfer ownership using unique pointer). */
+	    here, as they could be abstract (transfer ownership using unique pointer). Working
+	    with shared pointer here, while the objects are const. Which means that they can
+	    only be changed from outside. Maybe this should be the other way around TODO: think
+	    about this. */
 	GasSolution(const GasInterfaceImpl* gi, const GrainInterface& gri,
-	            const Spectrum& specificIntensity, const HModel* hModel,
-	            const H2Model* h2Model)
+	            const Spectrum& specificIntensity,
+	            const std::shared_ptr<const HModel> hModel,
+	            const std::shared_ptr<const H2Model> h2Model)
 	                : _gasInterfaceImpl{gi}, _grainInterface{gri},
-	                  _specificIntensity{specificIntensity},
-	                  _hSolution{std::make_shared<HModel>(hModel)},
-	                  _h2Solution{std::make_shared<H2Model>(h2Model)}
+	                  _specificIntensity{specificIntensity}, _hSolution(std::move(hModel)),
+	                  _h2Solution(std::move(h2Model))
 	{
 	}
 	/** The temperature */
@@ -87,8 +90,8 @@ private:
 	const Spectrum& _specificIntensity;
 	double _t;
 	EVector _speciesNv;
-	std::shared_ptr<HModel> _hSolution;
-	std::shared_ptr<H2Model> _h2Solution;
+	std::shared_ptr<const HModel> _hSolution;
+	std::shared_ptr<const H2Model> _h2Solution;
 };
 
 #endif // CORE_GASSOLUTION_HPP
