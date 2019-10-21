@@ -582,10 +582,9 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	// Initial
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
 	double T0 = 10000;
-	GasInterfaceImpl::Solution s =
-	                gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
+	GasSolution s = gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
 	GasDiagnostics gd;
-	gi.fillGasDiagnosticsFromSolution(s, gri, &gd);
+	s.fillDiagnostics(&gd);
 
 	ColumnFile heatFile(outputPath + "heatcool.dat",
 	                    {"temperature", "net", "heat", "cool", "grainheat"});
@@ -936,23 +935,24 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 	return grainInterface;
 }
 
-namespace {
-	/** writes out a map as a single line column file, where the keys are the column names */
-	void writeMapAsColumnFile(string filename, const map<string, double>& map)
+namespace
+{
+/** writes out a map as a single line column file, where the keys are the column names */
+void writeMapAsColumnFile(string filename, const map<string, double>& map)
+{
+	vector<string> namev;
+	vector<double> valuev;
+	namev.reserve(map.size());
+	valuev.reserve(map.size());
+	for (auto const& item : map)
 	{
-		vector<string> namev;
-		vector<double> valuev;
-		namev.reserve(map.size());
-		valuev.reserve(map.size());
-		for (auto const& item : map)
-		{
-			namev.emplace_back(item.first);
-			valuev.emplace_back(item.second);
-		}
-		ColumnFile f(filename, namev);
-		f.writeLine(valuev);
+		namev.emplace_back(item.first);
+		valuev.emplace_back(item.second);
 	}
+	ColumnFile f(filename, namev);
+	f.writeLine(valuev);
 }
+} // namespace
 
 void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool own_dir)
 {

@@ -1,4 +1,5 @@
 #include "SpeciesModelManager.hpp"
+#include "BigH2Model.hpp"
 #include "HydrogenFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
 
@@ -29,4 +30,14 @@ SpeciesModelManager::SpeciesModelManager(const std::string& hOption, const std::
 				       "\"maxJ maxV\"");
 		_h2Data = std::make_unique<H2Data>(maxJ, maxV);
 	}
+}
+
+std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const
+{
+	return std::make_unique<HModel>(_hData);
+}
+
+std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
+{
+	return std::make_unique<BigH2Model>(_h2Data);
 }

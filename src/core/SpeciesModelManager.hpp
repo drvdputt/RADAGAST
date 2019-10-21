@@ -4,14 +4,15 @@
 #include "HModel.hpp"
 #include "H2Model.hpp"
 
+class HData;
 class H2Data;
 
 class SpeciesModelManager
 {
 public:
 	SpeciesModelManager(const std::string& hOption, const std::string& h2Option);
-	HModel makeHModel() const;
-	H2Model makeH2Model(/* heuristic parameters */) const;
+	std::unique_ptr<HModel> makeHModel() const;
+	std::unique_ptr<H2Model> makeH2Model(/* heuristic parameters */) const;
 
 private:
 	std::unique_ptr<HData> _hData;

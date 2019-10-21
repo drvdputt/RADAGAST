@@ -7,6 +7,7 @@
 #include "GrainInterface.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "NLevel.hpp"
+#include "SpeciesModelManager.hpp"
 #include "Spectrum.hpp"
 
 class ChemistrySolver;
@@ -15,7 +16,6 @@ class FreeFree;
 class GasDiagnostics;
 class HydrogenLevels;
 class H2Levels;
-class SpeciesModelManager;
 
 /** This class is the backbone of the whole code. It calculates the abundances, level
     populations and net heating rate of hydrogen repeatedly, until the equilibrium temperature
@@ -105,7 +105,7 @@ private:
 
 	/* Pointers to other parts of the implementation, to make late initialization
 	   possible */
-	std::unique_ptr<SpeciesModelManager> _manager;
+	SpeciesModelManager _manager;
 
 	/* Continuum processes */
 	std::unique_ptr<FreeBound> _freeBound;

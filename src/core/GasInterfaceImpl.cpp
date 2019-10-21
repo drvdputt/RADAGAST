@@ -23,10 +23,10 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& moleculeChoice)
-                : _freeBound(make_unique<FreeBound>()), _freeFree(make_unique<FreeFree>())
+                : _manager(atomChoice, moleculeChoice), _freeBound(make_unique<FreeBound>()),
+                  _freeFree(make_unique<FreeFree>())
 {
 	_chemSolver = make_unique<ChemistrySolver>(make_unique<SimpleHydrogenNetwork>());
-	_manager = make_unique<SpeciesModelManager>(atomChoice, moleculeChoice);
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
 	_inH = SpeciesIndex::index("H");
@@ -35,17 +35,15 @@ GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& molec
 
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
-GasInterfaceImpl::Solution
-GasInterfaceImpl::solveInitialGuess(double n, double T,
-                                    const GasModule::GrainInterface& gi) const
+GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T,
+                                                const GasModule::GrainInterface& gi) const
 {
 	Array iFrequencyv = Testing::defaultFrequencyv(1000);
 	Array blackbodyv(iFrequencyv.size());
 	for (size_t i = 0; i < iFrequencyv.size(); i++)
 		blackbodyv[i] = SpecialFunctions::planck(iFrequencyv[i], T);
 
-	Solution s = solveTemperature(n, T, Spectrum(iFrequencyv, blackbodyv), gi);
-	return s;
+	return solveTemperature(n, T, Spectrum(iFrequencyv, blackbodyv), gi);
 }
 
 struct heating_f_params
@@ -54,7 +52,7 @@ struct heating_f_params
 	double n;
 	const Spectrum* specificIntensity;
 	const GasModule::GrainInterface* grainInterface;
-	GasInterfaceImpl::Solution* solution_storage;
+	GasSolution* solution_storage;
 	bool use_previous_solution;
 };
 
@@ -67,24 +65,42 @@ double heating_f(double logT, void* params)
 
 	// Refresh the solution stored somewhere, with optimization based on the current
 	// solution
-	GasInterfaceImpl::Solution& s = *p->solution_storage;
-	const GasInterfaceImpl::Solution* previous =
+	GasSolution& s = *p->solution_storage;
+	const GasSolution* previous =
 	                p->use_previous_solution ? p->solution_storage : nullptr;
 
-	s = p->gasInterfacePimpl->solveDensities(p->n, pow(10., logT), *p->specificIntensity,
-	                                         *p->grainInterface, previous);
+	s = move(p->gasInterfacePimpl->solveDensities(p->n, pow(10., logT), *p->specificIntensity,
+						      *p->grainInterface, previous));
 
-	double heat = p->gasInterfacePimpl->heating(s, *p->grainInterface);
-	double cool = p->gasInterfacePimpl->cooling(s);
+	double heat = s.heating();
+	double cool = s.cooling();
 	return heat - cool;
 }
 
-GasInterfaceImpl::Solution
-GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
-                                   const Spectrum& specificIntensity,
-                                   const GasModule::GrainInterface& gri) const
+GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
+                                               const Spectrum& specificIntensity,
+                                               const GasModule::GrainInterface& gri) const
 {
-	Solution s;
+	// std::unique_ptr is the C++11 way to express exclusive ownership, but one of its most
+	// attractive features is that it easily and efficiently converts to a std::shared_ptr.
+
+	// This is a key part of why std::unique_ptr is so well suited as a factory function
+	// return type. Factory functions can’t know whether callers will want to use exclusive
+	// ownership semantics for the object they return or whether shared ownership (i.e.,
+	// std::shared_ptr) would be more appropriate. By returning a std::unique_ptr, factories
+	// provide callers with the most efficient smart pointer, but they don’t hinder callers
+	// from replacing it with its more flexible sibling.
+
+	// std::shared_ptr to std::unique_ptr is not allowed. Once you’ve turned lifetime
+	// management of a resource over to a std::shared_ptr, there’s no changing your mind.
+	// Even if the reference count is one, you can’t reclaim ownership of the resource in
+	// order to, say, have a std::unique_ptr manage it.
+
+	// Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
+	// C++14. Scott Meyers.
+	std::shared_ptr<HModel> hm = _manager.makeHModel();
+	std::shared_ptr<H2Model> h2m = _manager.makeH2Model();
+	GasSolution s(this, gri, specificIntensity, hm, h2m);
 
 	if (n <= 0)
 		s = solveDensities(0, 0, specificIntensity, gri);
