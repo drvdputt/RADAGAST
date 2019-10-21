@@ -87,7 +87,13 @@ public:
 	/** Cooling by free-free emission [erg s-1 cm-3] */
 	double freeFreeCool(double np_ne, double T) const;
 
-	/** Leaving this here for now, instead of moving it to GasSolution. GasSolution is not
+	/** Calculate several extra contributions to the heating of the grains (collisions
+	    (Draine and Bertoldi 1996), H2 formation on the surface (Takahashi 2001). Passing
+	    some intermediary results of either the H2 level calculation or the grain
+	    photoelectric effect calculation might help in speeding up this computation, as well
+	    as using caching for the radiation emitted by the grains.
+
+	    Leaving this here for now, instead of moving it to GasSolution. GasSolution is not
 	    the owner of the GrainInterface object, and it would be weird to modify it from
 	    there. */
 	void updateGrainTemps(const GasSolution& s,
