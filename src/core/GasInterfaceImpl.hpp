@@ -70,8 +70,18 @@ public:
 				   const GasSolution* previous = nullptr,
 				   double h2FormationOverride = -1) const;
 
+	/** Emission coefficient for the free-bound recombination continuum (per cm-6, need to
+	    multiply with ne * np / 4pi) */
 	Array radiativeRecombinationEmissivityv(double T, const Array& eFrequencyv) const;
+
+	/** Emission coefficient for the free-free continuum (per cm-6, need to multiply with
+	    ne*np / 4pi to obtain [erg s-1 cm-2 sr-1 Hz-1] */
 	Array freeFreeEmissivityv(double T, const Array& eFrequencyv) const;
+
+	/** Opacity coefficient for the free-free continuum (per cm-6, need to multiply with
+	    ne*np to obtain [cm-1]) TODO: find out if this is relevant at all (I think it only
+	    matters in radio, so maybe for 21 cm). */
+	Array freeFreeOpacityv(double T, const Array& oFrequencyv) const;
 
 private:
 	// These are shorthand for ChemicalNetwork::speciesIndex.at["name"]

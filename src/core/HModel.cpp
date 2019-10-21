@@ -20,7 +20,7 @@ void HModel::solve(const GasStruct& gas, const Spectrum& specificIntensity)
 	_levelSolution.setNv(newNv);
 }
 
-Array HModel::emissivity(const Array eFrequencyv) const
+Array HModel::emissivityv(const Array eFrequencyv) const
 {
 	return _levelSolution.emissivityv(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
 }

@@ -6,6 +6,7 @@
 #include "GasState.hpp"
 #include "H2Model.hpp"
 #include "HModel.hpp"
+#include "SpeciesIndex.hpp"
 
 class GasDiagnostics;
 class GasInterfaceImpl;
@@ -33,25 +34,22 @@ public:
 	{
 	}
 	/** The temperature */
-	double t() const;
-	void setT(double t);
+	double t() const { return _t; }
+	void setT(double t) { _t = t; }
 
 	/** The chemistry solution */
-	EVector speciesNv() const;
-	void setSpeciesNv(EVector nv);
-	double nH() const;
-	double nH2() const;
-	double np() const;
+	EVector speciesNv() const { return _speciesNv; }
+	void setSpeciesNv(const EVector& nv) { _speciesNv = nv; }
+	double nH() const { return _speciesNv(SpeciesIndex::inH()); }
+	double nH2() const { return _speciesNv(SpeciesIndex::inH2()); }
+	double np() const { return _speciesNv(SpeciesIndex::inp()); }
+	double ne() const { return _speciesNv(SpeciesIndex::ine()); }
 
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
-	Array emisivityv(Array eFrequencyv) const;
-	Array radiativeRecombinationEmissivityv(const Array& eFrequencyv) const;
-	Array freeFreeEmissivityv(const Array& eFrequencyv) const;
-	Array lineEmissivityv(const Array& eFrequencyv) const;
+	Array emisivityv(const Array& eFrequencyv) const;
 
 	/** The total opacity at each frequency in 1 / cm */
-	Array opacityv(Array oFrequencyv) const;
-	Array ionizationOpacityv(const Array& eFrequencyv) const;
+	Array opacityv(const Array& oFrequencyv) const;
 
 	/** Total cooling */
 	double cooling() const;

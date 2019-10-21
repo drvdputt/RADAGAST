@@ -16,7 +16,7 @@ public:
 
 	/** This function returns the line emission spectrum + the continuum emitted by the
 	    2s-1s two-photon process. */
-	Array emissivity(const Array eFrequencyv) const;
+	Array emissivityv(const Array eFrequencyv) const;
 
 	/** This function returns the line opacity. TODO: maybe include bound-free cross section
 	    that depends on the level populations. */
