@@ -1,7 +1,5 @@
 #include "Testing.hpp"
 #include "BigH2Model.hpp"
-#include "ChemicalNetwork.hpp"
-#include "ChemistrySolver.hpp"
 #include "FreeBound.hpp"
 #include "GasDiagnostics.hpp"
 #include "GasInterface.hpp"
@@ -10,7 +8,6 @@
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
 #include "HFromFiles.hpp"
-#include "HHardCoded.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"
 #include "SpecialFunctions.hpp"
@@ -18,10 +15,6 @@
 #include "TemplatedUtils.hpp"
 
 #include <gsl/gsl_const_cgs.h>
-
-#include <iomanip>
-#include <iterator>
-#include <sstream>
 
 #include <sys/stat.h>
 
