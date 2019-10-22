@@ -22,7 +22,7 @@ GasInterface::~GasInterface() = default;
 
 void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
                                   const valarray<double>& specificIntensityv,
-                                  const GrainInterface& grainInfo, GasDiagnostics* gd) const
+                                  GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
 	Timer t("Update gas state");
 	// Create a spectrum object which makes it easier to pass around the frequencies and the
@@ -43,7 +43,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 }
 
 void GasInterface::initializeGasState(GasState& gasState, double n, double T,
-                                      const GrainInterface& grainInfo, GasDiagnostics* gd) const
+                                      GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
 	if (n > 0)
 	{

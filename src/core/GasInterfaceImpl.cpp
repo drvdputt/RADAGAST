@@ -36,7 +36,7 @@ GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& molec
 GasInterfaceImpl::~GasInterfaceImpl() = default;
 
 GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T,
-                                                const GasModule::GrainInterface& gri) const
+                                                GasModule::GrainInterface& gri) const
 {
 	Array iFrequencyv = Testing::defaultFrequencyv(1000);
 	Array blackbodyv(iFrequencyv.size());
@@ -51,8 +51,8 @@ struct heating_f_params
 	const GasInterfaceImpl* gasInterfacePimpl;
 	double n;
 	const Spectrum* specificIntensity;
-	const GasModule::GrainInterface* grainInterface;
-	GasSolution* solution_storage;
+	GasModule::GrainInterface* grainInterface;
+	std::unique_ptr<GasSolution> solution_storage;
 	bool use_previous_solution;
 };
 

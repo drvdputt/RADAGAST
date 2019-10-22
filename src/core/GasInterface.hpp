@@ -86,12 +86,12 @@ public:
 	    its constructor need to be the same as those given for the radiation field here. */
 	void updateGasState(GasState&, double n, double Tinit,
 	                    const std::valarray<double>& specificIntensityv,
-	                    const GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
+	                    GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
 	/** Does the same as the above, but without an input radiation field. Instead, a
 	    blackbody of the given temperature is used to calculate GasState. It is recommended
 	    to apply this function to all gas states before starting a simulation. */
-	void initializeGasState(GasState&, double n, double T, const GrainInterface&,
+	void initializeGasState(GasState&, double n, double T, GrainInterface&,
 	                        GasDiagnostics* gd = nullptr) const;
 
 	// USAGE 2: Translate GasState into optical properties //
