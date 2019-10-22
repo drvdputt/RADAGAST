@@ -1,5 +1,5 @@
-#ifndef CORE_GASSTATE_H_
-#define CORE_GASSTATE_H_
+#ifndef CORE_GASSTATE_HPP
+#define CORE_GASSTATE_HPP
 
 #include <string>
 #include <valarray>
@@ -67,4 +67,4 @@ private:
 };
 } /* namespace GasModule */
 
-#endif /* CORE_GASSTATE_H_ */
+#endif // CORE_GASSTATE_HPP

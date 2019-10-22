@@ -1,5 +1,5 @@
-#ifndef CORE_DEBUGMACROS_H_
-#define CORE_DEBUGMACROS_H_
+#ifndef CORE_DEBUGMACROS_HPP
+#define CORE_DEBUGMACROS_HPP
 
 #include <iostream>
 #include <ios>
@@ -16,4 +16,4 @@
 		std::cout << std::scientific << x;                                            \
 	} while (0)
 #endif
-#endif /* CORE_DEBUGMACROS_H_ */
+#endif // CORE_DEBUGMACROS_HPP

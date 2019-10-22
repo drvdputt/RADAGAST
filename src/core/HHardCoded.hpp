@@ -1,5 +1,5 @@
-#ifndef CORE_HYDROGENHARDCODED_H_
-#define CORE_HYDROGENHARDCODED_H_
+#ifndef CORE_HYDROGENHARDCODED_HPP
+#define CORE_HYDROGENHARDCODED_HPP
 
 #include "HData.hpp"
 
@@ -24,4 +24,4 @@ private:
 	EVector the_gv;
 };
 
-#endif /* CORE_HYDROGENHARDCODED_H_ */
+#endif // CORE_HYDROGENHARDCODED_HPP

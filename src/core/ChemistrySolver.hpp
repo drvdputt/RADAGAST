@@ -1,5 +1,5 @@
-#ifndef CORE_CHEMISTRYSOLVER_H_
-#define CORE_CHEMISTRYSOLVER_H_
+#ifndef CORE_CHEMISTRYSOLVER_HPP
+#define CORE_CHEMISTRYSOLVER_HPP
 
 #include "EigenAliases.hpp"
 
@@ -126,4 +126,4 @@ private:
 	int _numReactions, _numConserved;
 };
 
-#endif /* CORE_CHEMISTRYSOLVER_H_ */
+#endif // CORE_CHEMISTRYSOLVER_HPP

@@ -1,5 +1,5 @@
-#ifndef CORE_CHEMICALNETWORK_H_
-#define CORE_CHEMICALNETWORK_H_
+#ifndef CORE_CHEMICALNETWORK_HPP
+#define CORE_CHEMICALNETWORK_HPP
 
 #include "EigenAliases.hpp"
 #include "Spectrum.hpp"
@@ -95,4 +95,4 @@ private:
 	std::vector<EVector> _conservationv;
 };
 
-#endif /* CORE_CHEMICALNETWORK_H_ */
+#endif // CORE_CHEMICALNETWORK_HPP

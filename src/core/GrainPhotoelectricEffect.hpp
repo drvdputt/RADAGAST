@@ -1,5 +1,5 @@
-#ifndef CORE_PHOTOELECTRICHEATING_H_
-#define CORE_PHOTOELECTRICHEATING_H_
+#ifndef CORE_PHOTOELECTRICHEATING_HPP
+#define CORE_PHOTOELECTRICHEATING_HPP
 
 #include "ChargeDistribution.hpp"
 #include "Constants.hpp"
@@ -149,4 +149,4 @@ private:
 	const GrainType& _grainType;
 };
 
-#endif /* CORE_PHOTOELECTRICHEATING_H_ */
+#endif // CORE_PHOTOELECTRICHEATING_HPP

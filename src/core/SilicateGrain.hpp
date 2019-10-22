@@ -1,5 +1,5 @@
-#ifndef CORE_SILICATEGRAIN_H_
-#define CORE_SILICATEGRAIN_H_
+#ifndef CORE_SILICATEGRAIN_HPP
+#define CORE_SILICATEGRAIN_HPP
 
 #include "GrainType.hpp"
 
@@ -26,4 +26,4 @@ public:
 	/**@}*/
 };
 
-#endif /* CORE_SILICATEGRAIN_H_ */
+#endif // CORE_SILICATEGRAIN_HPP

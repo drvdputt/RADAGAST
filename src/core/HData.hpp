@@ -1,5 +1,5 @@
-#ifndef CORE_HDATA_H_
-#define CORE_HDATA_H_
+#ifndef CORE_HDATA_HPP
+#define CORE_HDATA_HPP
 
 #include "LevelCoefficients.hpp"
 #include "RecombinationRate.hpp"
@@ -30,4 +30,4 @@ private:
 	std::unique_ptr<const RecombinationRate> _rr;
 };
 
-#endif // CORE_HDATA_H_
+#endif // CORE_HDATA_HPP

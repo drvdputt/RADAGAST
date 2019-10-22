@@ -1,5 +1,5 @@
-#ifndef CORE_RECOMBINATIONRATE_H_
-#define CORE_RECOMBINATIONRATE_H_
+#ifndef CORE_RECOMBINATIONRATE_HPP
+#define CORE_RECOMBINATIONRATE_HPP
 
 #include "Array.hpp"
 #include "Table.hpp"
@@ -33,4 +33,4 @@ private:
 	Array _temperaturev;
 	std::vector<std::vector<double>> _alphavv;
 };
-#endif /* CORE_RECOMBINATIONRATE_H_ */
+#endif // CORE_RECOMBINATIONRATE_HPP

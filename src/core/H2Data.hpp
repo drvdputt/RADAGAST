@@ -1,5 +1,5 @@
-#ifndef CORE_H2FROMFILES_H_
-#define CORE_H2FROMFILES_H_
+#ifndef CORE_H2FROMFILES_HPP
+#define CORE_H2FROMFILES_HPP
 
 #include "CollisionData.hpp"
 #include "LevelCoefficients.hpp"
@@ -272,4 +272,4 @@ private:
 	std::vector<size_t> _levelsWithCrossSectionv;
 };
 
-#endif /* CORE_H2FROMFILES_H_ */
+#endif // CORE_H2FROMFILES_HPP

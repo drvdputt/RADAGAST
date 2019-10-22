@@ -1,5 +1,5 @@
-#ifndef CORE_GRAININTERFACE_H_
-#define CORE_GRAININTERFACE_H_
+#ifndef CORE_GRAININTERFACE_HPP
+#define CORE_GRAININTERFACE_HPP
 
 #include <functional>
 #include <memory>
@@ -161,4 +161,4 @@ private:
 };
 } /* namespace GasModule */
 
-#endif /* CORE_GRAININTERFACE_H_ */
+#endif // CORE_GRAININTERFACE_HPP

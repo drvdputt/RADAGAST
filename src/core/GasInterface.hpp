@@ -1,5 +1,5 @@
-#ifndef CORE_GASINTERFACE_H_
-#define CORE_GASINTERFACE_H_
+#ifndef CORE_GASINTERFACE_HPP
+#define CORE_GASINTERFACE_HPP
 
 #include "GasState.hpp"
 #include "GrainInterface.hpp"
@@ -138,4 +138,4 @@ public:
 	const GasInterfaceImpl* pimpl() const { return _pimpl.get(); }
 };
 } /* namespace GasModule */
-#endif /* CORE_GASINTERFACE_H_ */
+#endif // CORE_GASINTERFACE_HPP

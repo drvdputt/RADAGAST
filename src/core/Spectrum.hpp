@@ -1,5 +1,5 @@
-#ifndef CORE_SPECTRUM_H_
-#define CORE_SPECTRUM_H_
+#ifndef CORE_SPECTRUM_HPP
+#define CORE_SPECTRUM_HPP
 
 #include "Array.hpp"
 #include "TemplatedUtils.hpp"
@@ -57,4 +57,4 @@ private:
 	Array _frequencyv, _valuev;
 };
 
-#endif /* CORE_SPECTRUM_H_ */
+#endif // CORE_SPECTRUM_HPP

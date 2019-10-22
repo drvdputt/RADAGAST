@@ -1,5 +1,5 @@
-#ifndef CORE_SIMPLEHYDROGENNETWORK_H_
-#define CORE_SIMPLEHYDROGENNETWORK_H_
+#ifndef CORE_SIMPLEHYDROGENNETWORK_HPP
+#define CORE_SIMPLEHYDROGENNETWORK_HPP
 
 #include "ChemicalNetwork.hpp"
 
@@ -27,4 +27,4 @@ public:
 	                   double kDissFromH2Levels, double kH2FormationGrain) const override;
 };
 
-#endif /* CORE_SIMPLEHYDROGENNETWORK_H_ */
+#endif // CORE_SIMPLEHYDROGENNETWORK_HPP

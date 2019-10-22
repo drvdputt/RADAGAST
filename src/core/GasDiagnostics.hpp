@@ -1,5 +1,5 @@
-#ifndef CORE_GASDIAGNOSTICS_H_
-#define CORE_GASDIAGNOSTICS_H_
+#ifndef CORE_GASDIAGNOSTICS_HPP
+#define CORE_GASDIAGNOSTICS_HPP
 
 #include "Array.hpp"
 
@@ -62,4 +62,4 @@ private:
 	std::map<std::string, double> _userValuem;
 };
 
-#endif /* CORE_GASDIAGNOSTICS_H_ */
+#endif // CORE_GASDIAGNOSTICS_HPP

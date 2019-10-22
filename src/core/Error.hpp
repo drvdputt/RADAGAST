@@ -1,5 +1,5 @@
-#ifndef CORE_ERROR_H_
-#define CORE_ERROR_H_
+#ifndef CORE_ERROR_HPP
+#define CORE_ERROR_HPP
 
 #include <iostream>
 
@@ -46,4 +46,4 @@ template <typename T> void rangeCheck(std::string variable, T value, T min, T ma
 }
 
 } /* namespace Error */
-#endif /* CORE_ERROR_H_ */
+#endif // CORE_ERROR_HPP

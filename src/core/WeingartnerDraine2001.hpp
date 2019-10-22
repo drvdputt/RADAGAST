@@ -1,5 +1,5 @@
-#ifndef CORE_WEINGARTNERDRAINE2001_H_
-#define CORE_WEINGARTNERDRAINE2001_H_
+#ifndef CORE_WEINGARTNERDRAINE2001_HPP
+#define CORE_WEINGARTNERDRAINE2001_HPP
 namespace WD01
 {
 /* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
@@ -46,4 +46,4 @@ double thetaKsi(double ksi);
 double sigmaPDT(int Z, double hnuDiff);
 
 } /* namespace WD01 */
-#endif /* CORE_WEINGARTNERDRAINE2001_H_ */
+#endif // CORE_WEINGARTNERDRAINE2001_HPP

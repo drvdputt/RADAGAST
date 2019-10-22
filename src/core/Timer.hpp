@@ -1,5 +1,5 @@
-#ifndef CORE_TIMER_H_
-#define CORE_TIMER_H_
+#ifndef CORE_TIMER_HPP
+#define CORE_TIMER_HPP
 
 #include <chrono>
 #include <string>
@@ -14,4 +14,4 @@ private:
 	std::string _phrase;
 };
 
-#endif /* CORE_TIMER_H_ */
+#endif // CORE_TIMER_HPP

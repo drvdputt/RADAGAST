@@ -1,5 +1,5 @@
-#ifndef _FREEBOUND_H_
-#define _FREEBOUND_H_
+#ifndef CORE_FREEBOUND_HPP
+#define CORE_FREEBOUND_HPP
 
 #include "Table.hpp"
 
@@ -51,4 +51,4 @@ private:
 	Array _logTemperaturev;
 };
 
-#endif /* _FREEBOUND_H_ */
+#endif // CORE_FREEBOUND_HPP

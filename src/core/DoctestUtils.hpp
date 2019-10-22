@@ -1,5 +1,5 @@
-#ifndef CORE_DOCTESTUTILS_H_
-#define CORE_DOCTESTUTILS_H_
+#ifndef CORE_DOCTESTUTILS_HPP
+#define CORE_DOCTESTUTILS_HPP
 
 #include "EigenAliases.hpp"
 #include "TemplatedUtils.hpp"
@@ -73,4 +73,4 @@ void compareMatrices(const Eigen::MatrixBase<Derived>& a, const Eigen::MatrixBas
 
 } // namespace DoctestUtils
 
-#endif /* CORE_DOCTESTUTILS_H_ */
+#endif // CORE_DOCTESTUTILS_HPP

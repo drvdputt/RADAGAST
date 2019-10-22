@@ -1,5 +1,5 @@
-#ifndef CORE_GASSTRUCT_H_
-#define CORE_GASSTRUCT_H_
+#ifndef CORE_GASSTRUCT_HPP
+#define CORE_GASSTRUCT_HPP
 
 #include "EigenAliases.hpp"
 #include "SpeciesIndex.hpp"
@@ -47,4 +47,4 @@ typedef struct GasStruct
 	double _orthoH2{.75};
 } GasStruct;
 
-#endif /* CORE_GASSTRUCT_H_ */
+#endif // CORE_GASSTRUCT_HPP

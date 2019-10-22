@@ -1,5 +1,5 @@
-#ifndef CORE_LEVELSOLVER_H_
-#define CORE_LEVELSOLVER_H_
+#ifndef CORE_LEVELSOLVER_HPP
+#define CORE_LEVELSOLVER_HPP
 
 #include "EigenAliases.hpp"
 
@@ -56,4 +56,4 @@ EVector statisticalEquilibrium_boltzman(double totalDensity, double T, const EVe
 
 } /* namespace LevelSolver */
 
-#endif /* CORE_LEVELSOLVER_H_ */
+#endif // CORE_LEVELSOLVER_HPP

@@ -1,5 +1,5 @@
-#ifndef CORE_FREEFREE_H_
-#define CORE_FREEFREE_H_
+#ifndef CORE_FREEFREE_HPP
+#define CORE_FREEFREE_HPP
 
 #include "Spectrum.hpp"
 #include "Table.hpp"
@@ -76,4 +76,4 @@ private:
 	double _loggamma2Min_integrated{0}, _logStep_integrated{0}, _loggamma2Max_integrated{0};
 };
 
-#endif /* CORE_FREEFREE_H_ */
+#endif // CORE_FREEFREE_HPP

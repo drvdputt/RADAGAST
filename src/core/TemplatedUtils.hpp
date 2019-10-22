@@ -1,5 +1,5 @@
-#ifndef _TEMPLATEDUTILITIES_H_
-#define _TEMPLATEDUTILITIES_H_
+#ifndef CORE_TEMPLATEDUTILS_HPP
+#define CORE_TEMPLATEDUTILS_HPP
 
 #include <algorithm>
 #include <cmath>
@@ -50,4 +50,4 @@ T linearResample(const T1& function, const T2& knownPoints, const T3& newPoints,
 
 #include "TemplatedUtils.tpp"
 
-#endif /* _TEMPLATEDUTILITIES_H_ */
+#endif // CORE_TEMPLATEDUTILS_HPP

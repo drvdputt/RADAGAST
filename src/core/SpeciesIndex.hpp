@@ -1,5 +1,5 @@
-#ifndef CORE_SPECIESINDEX_H_
-#define CORE_SPECIESINDEX_H_
+#ifndef CORE_SPECIESINDEX_HPP
+#define CORE_SPECIESINDEX_HPP
 
 #include "Array.hpp"
 #include "EigenAliases.hpp"
@@ -47,4 +47,4 @@ public:
 	                                    const Array& coefficientv);
 };
 
-#endif /* CORE_SPECIESINDEX_H_ */
+#endif // CORE_SPECIESINDEX_HPP

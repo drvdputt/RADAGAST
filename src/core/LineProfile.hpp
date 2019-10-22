@@ -50,4 +50,4 @@ private:
 void test_addToSpectrum();
 
 void test_integrateSpectrum();
-#endif /* CORE_LINEPROFILE_H */
+#endif // CORE_LINEPROFILE_H */

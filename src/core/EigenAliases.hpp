@@ -1,5 +1,5 @@
-#ifndef CORE_EIGENALIASES_H_
-#define CORE_EIGENALIASES_H_
+#ifndef CORE_EIGENALIASES_HPP
+#define CORE_EIGENALIASES_HPP
 
 #include <Eigen/Dense>
 
@@ -10,4 +10,4 @@ using EMatrixRM = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::R
 using EVector = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 using EArray = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>;
 
-#endif /* CORE_EIGENALIASES_H_ */
+#endif // CORE_EIGENALIASES_HPP

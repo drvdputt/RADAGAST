@@ -1,5 +1,5 @@
-#ifndef _IOTOOLS_H_
-#define _IOTOOLS_H_
+#ifndef CORE_IOTOOLS_HPP
+#define CORE_IOTOOLS_HPP
 
 #include "Error.hpp"
 
@@ -59,4 +59,4 @@ void ColumnFile::writeLine(const T& colValuev)
 	_outFile << '\n';
 }
 
-#endif /* _IOTOOLS_H_ */
+#endif // CORE_IOTOOLS_HPP

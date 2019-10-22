@@ -1,5 +1,5 @@
-#ifndef CORE_CARBONACEOUSGRAIN_H_
-#define CORE_CARBONACEOUSGRAIN_H_
+#ifndef CORE_CARBONACEOUSGRAIN_HPP
+#define CORE_CARBONACEOUSGRAIN_HPP
 
 #include "GrainType.hpp"
 
@@ -28,4 +28,4 @@ public:
 	/**@}*/
 };
 
-#endif /* CORE_CARBONACEOUSGRAIN_H_ */
+#endif // CORE_CARBONACEOUSGRAIN_HPP

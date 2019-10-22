@@ -1,5 +1,5 @@
-#ifndef CORE_CHARGEDISTRIBUTION_H_
-#define CORE_CHARGEDISTRIBUTION_H_
+#ifndef CORE_CHARGEDISTRIBUTION_HPP
+#define CORE_CHARGEDISTRIBUTION_HPP
 
 #include <functional>
 #include <vector>
@@ -39,4 +39,4 @@ private:
 	int _zmin;
 };
 
-#endif /* CORE_CHARGEDISTRIBUTION_H_ */
+#endif // CORE_CHARGEDISTRIBUTION_HPP

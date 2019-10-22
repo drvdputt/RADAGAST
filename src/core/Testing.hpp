@@ -1,5 +1,5 @@
-#ifndef CORE_TESTING_H_
-#define CORE_TESTING_H_
+#ifndef CORE_TESTING_HPP
+#define CORE_TESTING_HPP
 
 #include "Array.hpp"
 #include "Constants.hpp"
@@ -113,4 +113,4 @@ void runMRNDust(bool write = true, double nH = 1.e4, double Tc = 1.e4, double lu
                 bool own_dir = false);
 } // namespace Testing
 
-#endif /* CORE_TESTING_H_ */
+#endif // CORE_TESTING_HPP

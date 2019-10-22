@@ -1,5 +1,5 @@
-#ifndef CORE_TWOLEVELHARDCODED_H_
-#define CORE_TWOLEVELHARDCODED_H_
+#ifndef CORE_TWOLEVELHARDCODED_HPP
+#define CORE_TWOLEVELHARDCODED_HPP
 
 #include "LevelCoefficients.hpp"
 
@@ -14,4 +14,4 @@ public:
 	EMatrix cvv(const GasStruct& gas) const override;
 };
 
-#endif /* CORE_TWOLEVELHARDCODED_H_ */
+#endif // CORE_TWOLEVELHARDCODED_HPP

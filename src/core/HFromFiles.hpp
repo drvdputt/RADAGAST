@@ -1,5 +1,5 @@
-#ifndef CORE_HYDROGENFROMFILES_H_
-#define CORE_HYDROGENFROMFILES_H_
+#ifndef CORE_HYDROGENFROMFILES_HPP
+#define CORE_HYDROGENFROMFILES_HPP
 
 #include "Array.hpp"
 #include "HData.hpp"
@@ -228,4 +228,4 @@ private:
 	int _ine, _inp;
 };
 
-#endif /* CORE_HYDROGENFROMFILES_H_ */
+#endif // CORE_HYDROGENFROMFILES_HPP
