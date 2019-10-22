@@ -58,5 +58,6 @@ TEST_CASE("Test LevelSolver using two-level LTE ")
 
 	// heating - cooling should be zero in LTE
 	double heat = s.netHeating();
-	CHECK(heat == 0);
+	CAPTURE(heat);
+	CHECK(abs(heat) < 1.e-30);
 }
