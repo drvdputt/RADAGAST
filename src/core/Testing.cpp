@@ -577,12 +577,12 @@ void Testing::plotHeatingCurve_main()
 
 void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath,
                                double n, const Spectrum& specificIntensity,
-                               const GasModule::GrainInterface& gri)
+                               GasModule::GrainInterface& gri)
 {
 	// Initial
 	Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
 	double T0 = 10000;
-	GasSolution s = gi.solveDensities(n, T0, specificIntensity, gri, nullptr);
+	GasSolution s = gi.solveDensities(n, T0, specificIntensity, gri);
 	GasDiagnostics gd;
 	s.fillDiagnostics(&gd);
 
@@ -600,9 +600,10 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 	size_t numSpecies = h_conservation.size();
 	vector<double> densFileLine(2 + numSpecies);
 
+	const GasSolution* previous = nullptr;
 	auto outputCooling = [&](double t) {
 		std::cout << "T = " << t << '\n';
-		GasSolution s = gi.solveDensities(n, t, specificIntensity, gri, nullptr);
+		gi.solveDensities(s, n, t, specificIntensity, gri, previous);
 		s.fillDiagnostics(&gd);
 
 		double heat = s.heating();

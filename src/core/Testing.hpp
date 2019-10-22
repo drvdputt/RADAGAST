@@ -70,7 +70,7 @@ void writeGrains(const std::string& outputPath, const GasModule::GrainInterface&
 
 void plotHeatingCurve_main();
 void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
-                      const Spectrum& specificIntensity, const GasModule::GrainInterface&);
+                      const Spectrum& specificIntensity, GasModule::GrainInterface&);
 
 void plotIonizationStuff();
 
