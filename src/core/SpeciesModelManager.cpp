@@ -24,7 +24,7 @@ SpeciesModelManager::SpeciesModelManager(const std::string& hOption,
 	else
 	{
 		int maxJ, maxV;
-		std::istringstream() >> maxJ >> maxV;
+		std::istringstream(h2Option) >> maxJ >> maxV;
 		if (maxJ < 0 || maxV < 0)
 			Error::runtime("moleculeChoice is not of a correct format. It "
 			               "should be "
