@@ -2,7 +2,6 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GasStruct.hpp"
-#include "LevelDataProvider.hpp"
 #include "Options.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
