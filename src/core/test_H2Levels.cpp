@@ -1,8 +1,7 @@
 #include "BigH2Model.hpp"
 #include "DoctestUtils.hpp"
 #include "GasStruct.hpp"
-#include "H2FromFiles.hpp"
-#include "LevelSolver.hpp"
+#include "H2Data.hpp"
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 

@@ -1,7 +1,7 @@
 #ifndef CORE_BIGH2MODEL_HPP
 #define CORE_BIGH2MODEL_HPP
 
-#include "H2FromFiles.hpp"
+#include "H2Data.hpp"
 #include "H2Model.hpp"
 
 class BigH2Model : public H2Model

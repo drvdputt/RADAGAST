@@ -1,9 +1,9 @@
 #ifndef CORE_SPECIESMODELMANAGER_HPP
 #define CORE_SPECIESMODELMANAGER_HPP
 
-#include "H2FromFiles.hpp"
-#include "HModel.hpp"
+#include "H2Data.hpp"
 #include "H2Model.hpp"
+#include "HModel.hpp"
 
 class HData;
 class H2Data;
