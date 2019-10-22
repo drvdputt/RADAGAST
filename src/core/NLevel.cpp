@@ -24,7 +24,15 @@ LevelCoefficients::LevelCoefficients(double mass) : _mass(mass)
 	// });
 }
 
-LevelCoefficients::~LevelCoefficients() = default;
+void LevelCoefficients::setConstants(const EVector& ev, const EVector& gv, const EMatrix& avv,
+                                    const EMatrix& extraAvv)
+{
+	_numLv = ev.size();
+	_ev = ev;
+	_gv = gv;
+	_avv = avv;
+	_extraAvv = extraAvv;
+}
 
 void LevelCoefficients::lineInfo(int& numLines, Array& lineFreqv,
                                  Array& naturalLineWidthv) const
