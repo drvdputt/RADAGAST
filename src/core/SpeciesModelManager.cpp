@@ -5,7 +5,8 @@
 
 #include <sstream>
 
-SpeciesModelManager::SpeciesModelManager(const std::string& hOption, const std::string& h2Option)
+SpeciesModelManager::SpeciesModelManager(const std::string& hOption,
+                                         const std::string& h2Option)
 {
 	// Choose hydrogen data
 	if (hOption == "hhc")
@@ -26,18 +27,18 @@ SpeciesModelManager::SpeciesModelManager(const std::string& hOption, const std::
 		std::istringstream() >> maxJ >> maxV;
 		if (maxJ < 0 || maxV < 0)
 			Error::runtime("moleculeChoice is not of a correct format. It "
-				       "should be "
-				       "\"maxJ maxV\"");
+			               "should be "
+			               "\"maxJ maxV\"");
 		_h2Data = std::make_unique<H2Data>(maxJ, maxV);
 	}
 }
 
 std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const
 {
-	return std::make_unique<HModel>(_hData);
+	return std::make_unique<HModel>(_hData.get());
 }
 
 std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
 {
-	return std::make_unique<BigH2Model>(_h2Data);
+	return std::make_unique<BigH2Model>(_h2Data.get());
 }
