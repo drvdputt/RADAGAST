@@ -4,7 +4,6 @@
 #include "GasStruct.hpp"
 #include "Options.hpp"
 #include "TemplatedUtils.hpp"
-#include "Testing.hpp"
 
 using namespace std;
 

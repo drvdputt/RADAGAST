@@ -1,7 +1,7 @@
 #include "SpeciesModelManager.hpp"
 #include "BigH2Model.hpp"
 #include "HFromFiles.hpp"
-#include "HHardcoded.hpp"
+#include "HHardCoded.hpp"
 
 #include <sstream>
 

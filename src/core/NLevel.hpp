@@ -4,14 +4,12 @@
 #include "EigenAliases.hpp"
 #include "LevelSolution.hpp"
 #include "LineProfile.hpp"
-#include "SpecialFunctions.hpp"
 #include "Spectrum.hpp"
 
 #include <array>
 #include <memory>
 
 struct GasStruct;
-class LevelDataProvider;
 
 /** This class deals with level coefficients. A data class (e.g. H2FromFiles) can inherit from
     this class to re-use the level coefficient infrastructure, if it also wants to read in level

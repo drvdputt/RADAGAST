@@ -2,6 +2,7 @@
 #include "DoctestUtils.hpp"
 #include "GasStruct.hpp"
 #include "H2Data.hpp"
+#include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 
