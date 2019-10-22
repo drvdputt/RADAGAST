@@ -602,11 +602,11 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 
 	auto outputCooling = [&](double t) {
 		std::cout << "T = " << t << '\n';
-		s = gi.solveDensities(n, t, specificIntensity, gri, nullptr);
-		gi.fillGasDiagnosticsFromSolution(s, gri, &gd);
+		GasSolution s = gi.solveDensities(n, t, specificIntensity, gri, nullptr);
+		s.fillDiagnostics(&gd);
 
-		double heat = gi.heating(s);
-		double cool = gi.cooling(s);
+		double heat = s.heating();
+		double cool = s.cooling();
 		double grainHeat = gd.photoelectricHeating().sum();
 		double netHeating = heat - cool + grainHeat;
 		heatFile.writeLine<Array>({t, netHeating, heat, cool, grainHeat});
@@ -615,8 +615,8 @@ void Testing::plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& ou
 		double totalH = 0;
 		for (int i = 0; i < numSpecies; i++)
 		{
-			densFileLine[1 + i] = s.speciesNv(i);
-			totalH += h_conservation[i] * s.speciesNv(i);
+			densFileLine[1 + i] = s.speciesNv()(i);
+			totalH += h_conservation[i] * s.speciesNv()(i);
 		}
 		densFileLine[1 + numSpecies] = totalH;
 		densFile.writeLine(densFileLine);

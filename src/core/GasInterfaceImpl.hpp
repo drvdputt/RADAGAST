@@ -67,6 +67,9 @@ public:
 	GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity,
 	                           GasModule::GrainInterface&,
 	                           double h2FormationOverride = -1) const;
+	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
+	                    GasModule::GrainInterface&, const GasSolution* previous = nullptr,
+	                    double h2FormationOverride = -1) const;
 
 	/** TODO: rework old code */
 	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
@@ -100,7 +103,8 @@ public:
 	void updateGrainTemps(const GasSolution& s, GasModule::GrainInterface& g) const;
 
 private:
-
+	GasSolution makeGasSolution(const Spectrum& specificIntensity,
+	                            const GasModule::GrainInterface&) const;
 	EVector guessSpeciesNv(double n, double ionToTotalFrac,
 	                       double moleculeToNeutralFrac) const;
 

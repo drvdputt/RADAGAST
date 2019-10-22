@@ -52,7 +52,7 @@ struct heating_f_params
 	double n;
 	const Spectrum* specificIntensity;
 	GasModule::GrainInterface* grainInterface;
-	std::unique_ptr<GasSolution> solution_storage;
+	GasSolution* solution_storage;
 	bool use_previous_solution;
 };
 
@@ -68,8 +68,8 @@ double heating_f(double logT, void* params)
 	GasSolution& s = *p->solution_storage;
 	const GasSolution* previous = p->use_previous_solution ? p->solution_storage : nullptr;
 
-	s = p->gasInterfacePimpl->solveDensities(p->n, pow(10., logT), *p->specificIntensity,
-	                                         *p->grainInterface, previous);
+	p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity,
+	                                     *p->grainInterface, previous);
 
 	double heat = s.heating();
 	double cool = s.cooling();
@@ -78,11 +78,11 @@ double heating_f(double logT, void* params)
 
 GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
                                                const Spectrum& specificIntensity,
-                                               const GasModule::GrainInterface& gri) const
+                                               GasModule::GrainInterface& gri) const
 {
-
+	GasSolution s = makeGasSolution(specificIntensity, gri);
 	if (n <= 0)
-		s = solveDensities(0, 0, specificIntensity, gri);
+		solveDensities(s, 0, 0, specificIntensity, gri);
 	else
 	{
 		const double Tmax = 100000.;
@@ -137,47 +137,25 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/
 	return s;
 }
 
-GasSolution GasInterfaceImpl::solveDensities(double nHtotal, double T,
+GasSolution GasInterfaceImpl::solveDensities(double n, double T,
                                              const Spectrum& specificIntensity,
-                                             const GasModule::GrainInterface& gri,
-                                             const GasSolution* previous,
+                                             GasModule::GrainInterface& gri,
                                              double h2FormationOverride) const
 {
-	// std::unique_ptr is the C++11 way to express exclusive ownership, but one of its most
-	// attractive features is that it easily and efficiently converts to a std::shared_ptr.
-
-	// This is a key part of why std::unique_ptr is so well suited as a factory function
-	// return type. Factory functions can’t know whether callers will want to use exclusive
-	// ownership semantics for the object they return or whether shared ownership (i.e.,
-	// std::shared_ptr) would be more appropriate. By returning a std::unique_ptr, factories
-	// provide callers with the most efficient smart pointer, but they don’t hinder callers
-	// from replacing it with its more flexible sibling.
-
-	// std::shared_ptr to std::unique_ptr is not allowed. Once you’ve turned lifetime
-	// management of a resource over to a std::shared_ptr, there’s no changing your mind.
-	// Even if the reference count is one, you can’t reclaim ownership of the resource in
-	// order to, say, have a std::unique_ptr manage it.
-
-	// Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
-	// C++14. Scott Meyers.
-
-	std::shared_ptr<HModel> hm = _manager.makeHModel();
-	std::shared_ptr<H2Model> h2m = _manager.makeH2Model();
-	GasSolution s(this, gri, specificIntensity, hm, h2m);
-EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac, double moleculeToNeutralFrac) const
-{
-	EVector speciesNv = EVector::Zero((SpeciesIndex::size()));
-	speciesNv(_ine) = ionToTotalFrac * n;
-	speciesNv(_inp) = speciesNv(_ine);
-	speciesNv(_inH) = (1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n;
-	speciesNv(_inH2) = moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2;
-	return speciesNv;
+	GasSolution s = makeGasSolution(specificIntensity, gri);
+	solveDensities(s, n, T, specificIntensity, gri, nullptr, h2FormationOverride);
+	return s;
 }
 
-	// We can already fill these in.
+void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
+                                      const Spectrum& specificIntensity,
+                                      GasModule::GrainInterface& gri,
+                                      const GasSolution* previous,
+                                      double h2FormationOverride) const
+{
 	s.setT(T);
 
-	if (nHtotal <= 0)
+	if (n <= 0)
 		s.makeZero();
 
 	DEBUG("Calculating densities for T = " << T << "K" << endl);
@@ -200,14 +178,9 @@ EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac, double
 	}
 	if (manualGuess)
 	{
-		double ionFrac = Ionization::solveBalance(nHtotal, T, specificIntensity);
+		double ionFrac = Ionization::solveBalance(n, T, specificIntensity);
 		double molFrac = 0.1;
-		EVector speciesNv = EVector::Zero((SpeciesIndex::size()));
-		speciesNv(_ine) = ionFrac * nHtotal;
-		speciesNv(_inp) = speciesNv(_ine);
-		speciesNv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
-		speciesNv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
-		s.setSpeciesNv(speciesNv);
+		s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
 	}
 	else
 	{
@@ -216,12 +189,7 @@ EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac, double
 		double nHtotalOfSpeciesNv = s.speciesNv()(_inp) + nNeutralOfSpeciesNv;
 		double ionFrac = s.speciesNv()(_inp) / nHtotalOfSpeciesNv;
 		double molFrac = 2 * s.speciesNv()(_inH2) / nNeutralOfSpeciesNv;
-		EVector nv = EVector::Zero(SpeciesIndex::size());
-		nv(_ine) = ionFrac * nHtotal;
-		nv(_inp) = nv(_ine);
-		nv(_inH) = (1 - molFrac) * (1 - ionFrac) * nHtotal;
-		nv(_inH2) = molFrac * (1 - ionFrac) * nHtotal / 2;
-		s.setSpeciesNv(nv);
+		s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
 	}
 
 	// Formation rate on grain surfaces. We declare it here so that it can be passed to the
@@ -408,4 +376,43 @@ Array GasInterfaceImple::freeFreeOpacityv(double T, const Array& oFrequencyv) co
 double GasInterfaceImpl::freeFreeCool(double np_ne, double T) const
 {
 	return _freeFree->cooling(np_ne, T);
+}
+
+GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
+                                              const GasModule::GrainInterface& gri) const
+{
+	// TODO: rethink how the GasSolution is passed around, taking the following into account:
+
+	// std::unique_ptr is the C++11 way to express exclusive ownership, but one of its most
+	// attractive features is that it easily and efficiently converts to a std::shared_ptr.
+
+	// This is a key part of why std::unique_ptr is so well suited as a factory function
+	// return type. Factory functions can’t know whether callers will want to use exclusive
+	// ownership semantics for the object they return or whether shared ownership (i.e.,
+	// std::shared_ptr) would be more appropriate. By returning a std::unique_ptr, factories
+	// provide callers with the most efficient smart pointer, but they don’t hinder callers
+	// from replacing it with its more flexible sibling.
+
+	// std::shared_ptr to std::unique_ptr is not allowed. Once you’ve turned lifetime
+	// management of a resource over to a std::shared_ptr, there’s no changing your mind.
+	// Even if the reference count is one, you can’t reclaim ownership of the resource in
+	// order to, say, have a std::unique_ptr manage it.
+
+	// Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
+	// C++14. Scott Meyers.
+	std::unique_ptr<HModel> hm = _manager.makeHModel();
+	std::unique_ptr<H2Model> h2m = _manager.makeH2Model();
+	GasSolution s(this, gri, specificIntensity, move(hm), move(h2m));
+	return s;
+}
+
+EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac,
+                                         double moleculeToNeutralFrac) const
+{
+	EVector speciesNv = EVector::Zero((SpeciesIndex::size()));
+	speciesNv(_ine) = ionToTotalFrac * n;
+	speciesNv(_inp) = speciesNv(_ine);
+	speciesNv(_inH) = (1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n;
+	speciesNv(_inH2) = moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2;
+	return speciesNv;
 }
