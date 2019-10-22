@@ -153,9 +153,11 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
                                       double h2FormationOverride) const
 {
 	s.setT(T);
-
 	if (n <= 0)
+	{
 		s.makeZero();
+		return;
+	}
 
 	DEBUG("Calculating densities for T = " << T << "K" << endl);
 

@@ -9,7 +9,6 @@
 
 void GasSolution::makeZero()
 {
-	_t = 0;
 	_speciesNv = EVector::Zero(SpeciesIndex::size());
 	solveLevels();
 }

@@ -60,11 +60,13 @@ public:
 	GasSolution solveTemperature(double n, double Tinit, const Spectrum& specificIntensity,
 	                             GasModule::GrainInterface&) const;
 
-	/** Calculates all the densities for a fixed temperature. Is repeatedly called by this
-	    class until equilibrium is found. */
+	/** Calculates all the densities for a fixed temperature. */
 	GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity,
 	                           GasModule::GrainInterface&,
 	                           double h2FormationOverride = -1) const;
+
+	/** Recalculate the densities for a GasSolution object, with a different temperature. Is
+	    repeatedly called by this class until equilibrium is found. */
 	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
 	                    GasModule::GrainInterface&, const GasSolution* previous = nullptr,
 	                    double h2FormationOverride = -1) const;
