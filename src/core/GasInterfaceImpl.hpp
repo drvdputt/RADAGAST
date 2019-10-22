@@ -102,6 +102,10 @@ public:
 	void updateGrainTemps(const GasSolution& s, GasModule::GrainInterface& g) const;
 
 private:
+
+	EVector guessSpeciesNv(double n, double ionToTotalFrac,
+	                       double moleculeToNeutralFrac) const;
+
 	int _ine, _inp, _inH, _inH2;
 	std::unique_ptr<ChemistrySolver> _chemSolver;
 

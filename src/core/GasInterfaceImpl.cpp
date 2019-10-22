@@ -164,6 +164,15 @@ GasSolution GasInterfaceImpl::solveDensities(double nHtotal, double T,
 	std::shared_ptr<HModel> hm = _manager.makeHModel();
 	std::shared_ptr<H2Model> h2m = _manager.makeH2Model();
 	GasSolution s(this, gri, specificIntensity, hm, h2m);
+EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac, double moleculeToNeutralFrac) const
+{
+	EVector speciesNv = EVector::Zero((SpeciesIndex::size()));
+	speciesNv(_ine) = ionToTotalFrac * n;
+	speciesNv(_inp) = speciesNv(_ine);
+	speciesNv(_inH) = (1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n;
+	speciesNv(_inH2) = moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2;
+	return speciesNv;
+}
 
 	// We can already fill these in.
 	s.setT(T);
