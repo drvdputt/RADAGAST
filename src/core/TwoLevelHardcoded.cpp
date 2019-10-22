@@ -22,7 +22,7 @@ TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS_
 	the_avv << 0, 0,
 		   2.29e-6, 0;
 	// clang-format on
-	setConstants(the_ev, the_gv, the_avv, EVector::Zero(2, 2));
+	setConstants(the_ev, the_gv, the_avv, EMatrix::Zero(2, 2));
 }
 
 EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const

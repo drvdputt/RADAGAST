@@ -20,7 +20,7 @@ H2Data::H2Data(int maxJ, int maxV)
 	readTransProbs();
 
 	// Set these data members of the LevelCoefficients parent class
-	setConstants(makeEv(), makeGv(), _avv, EVector::Zero(_numL, _numL));
+	setConstants(makeEv(), makeGv(), _avv, EMatrix::Zero(_numL, _numL));
 
 	readCollisions();
 	readDissProbs();
