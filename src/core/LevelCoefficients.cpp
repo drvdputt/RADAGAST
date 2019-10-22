@@ -62,7 +62,7 @@ EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntens
 	{
 		DEBUG("Aij" << endl << _avv << endl << endl);
 		DEBUG("BPij" << endl << bpvv << endl << endl);
-		DEBUG("Cij" << endl << cvv << endl << endl);
+		DEBUG("Cij" << endl << the_cvv << endl << endl);
 	}
 	return _avv + _extraAvv + bpvv + the_cvv;
 }

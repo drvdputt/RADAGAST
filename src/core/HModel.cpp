@@ -22,7 +22,7 @@ void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificInten
 
 	EVector the_sourcev = sourcev(gas);
 	EVector the_sinkv = sinkv(gas);
-	DEBUG("Solving levels nH = " << nH << std::endl);
+	DEBUG("Solving levels nH = " << n << std::endl);
 	EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
 	_levelSolution.setNv(newNv);
 }

@@ -267,7 +267,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		                newCooling, previousCooling, 1e-2);
 		counter++;
 		DEBUG("Chemistry: " << counter << '\n'
-		                    << s.speciesNv << '\n'
+		                    << s.speciesNv() << '\n'
 		                    << "convergence: \n"
 		                    << convergedv << '\n');
 		DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
@@ -281,7 +281,8 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		                convergedv.all() && heatingConverged && coolingConverged;
 
 		// Currently, the implementation without molecules does not need iteration.
-		stopCriterion = allQuantitiesConverged || counter > Options::densities_maxiterations;
+		stopCriterion = allQuantitiesConverged ||
+		                counter > Options::densities_maxiterations;
 	}
 }
 

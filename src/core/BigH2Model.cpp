@@ -28,7 +28,7 @@ void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificI
 
 	EVector sinkv = dissociationSinkv(specificIntensity);
 
-	if (_levelSolution.nv().size() == 0)
+	if (_levelSolution.nv().size() != _h2Data->numLv())
 	{
 		EVector initialGuessv = EVector::Zero(_h2Data->numLv());
 
