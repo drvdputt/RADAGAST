@@ -140,13 +140,13 @@ void LevelCoefficients::forActiveLinesDo(function<void(size_t ini, size_t fin)> 
 				thing(ini, fin);
 }
 
-double LevelCoefficients::lineIntensityFactor(size_t upper, size_t lower,
-                                              double nu) const
+double LevelCoefficients::lineIntensityFactor(size_t upper, size_t lower, double nu) const
 {
 	return (_ev(upper) - _ev(lower)) / Constant::FPI * nu * _avv(upper, lower);
 }
 
-double LevelCoefficients::lineOpacityFactor(size_t upper, size_t lower, double nu, double nl) const
+double LevelCoefficients::lineOpacityFactor(size_t upper, size_t lower, double nu,
+                                            double nl) const
 {
 	double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
 	double constantFactor = Constant::LIGHT * Constant::LIGHT / 8. / Constant::PI / nu_ij /
