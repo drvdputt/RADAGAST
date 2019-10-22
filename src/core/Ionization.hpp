@@ -1,5 +1,5 @@
-#ifndef CORE_IONIZATIONBALANCE_H_
-#define CORE_IONIZATIONBALANCE_H_
+#ifndef CORE_IONIZATION_HPP
+#define CORE_IONIZATION_HPP
 
 #include "Spectrum.hpp"
 
@@ -32,4 +32,4 @@ double cooling(double nH, double np, double ne, double T);
 const double THRESHOLD = 3.28984196e15; // Hertz;
 }
 
-#endif /* CORE_IONIZATIONBALANCE_H_ */
+#endif // CORE_IONIZATION_HPP

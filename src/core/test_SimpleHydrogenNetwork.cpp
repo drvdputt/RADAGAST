@@ -3,7 +3,7 @@
 #include "SimpleHydrogenNetwork.hpp"
 
 #include "ChemistrySolver.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 

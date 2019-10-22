@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "IOTools.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "Options.hpp"
 #include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"

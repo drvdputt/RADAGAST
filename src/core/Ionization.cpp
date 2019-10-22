@@ -1,4 +1,4 @@
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "TemplatedUtils.hpp"

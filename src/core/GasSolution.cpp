@@ -5,7 +5,7 @@
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "Options.hpp"
 
 void GasSolution::makeZero()

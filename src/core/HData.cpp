@@ -1,6 +1,6 @@
 #include "HData.hpp"
 #include "Constants.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "Options.hpp"
 
 HData::HData() : LevelCoefficients(Constant::HMASS_CGS), _rr{std::make_unique<HydrogenADF48>()}

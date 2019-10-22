@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GasStruct.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "LevelSolver.hpp"
 
 void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity)

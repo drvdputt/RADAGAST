@@ -1,6 +1,6 @@
 #include "SimpleHydrogenNetwork.hpp"
 #include "DebugMacros.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "SpeciesIndex.hpp"
 
 SimpleHydrogenNetwork::SimpleHydrogenNetwork()

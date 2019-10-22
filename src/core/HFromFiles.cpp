@@ -4,7 +4,7 @@
 #include "Error.hpp"
 #include "GasStruct.hpp"
 #include "IOTools.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 

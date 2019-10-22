@@ -7,7 +7,7 @@
 #include "GasGrainInteraction.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
-#include "IonizationBalance.hpp"
+#include "Ionization.hpp"
 #include "Options.hpp"
 #include "SimpleHydrogenNetwork.hpp"
 #include "SpecialFunctions.hpp"
