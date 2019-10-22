@@ -70,7 +70,6 @@ double heating_f(double logT, void* params)
 
 	p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity,
 	                                     *p->grainInterface, previous);
-
 	double heat = s.heating();
 	double cool = s.cooling();
 	return heat - cool;
@@ -260,8 +259,8 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		// gas-dust energy exchange (gas cooling)
 		updateGrainTemps(s, gri);
 
-		double newHeating = heating(s);
-		double newCooling = cooling(s);
+		double newHeating = s.heating();
+		double newCooling = s.cooling();
 		bool heatingConverged = TemplatedUtils::equalWithinTolerance(
 		                newHeating, previousHeating, 1e-2);
 		bool coolingConverged = TemplatedUtils::equalWithinTolerance(
@@ -274,7 +273,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
 		DEBUG("New cool: " << newCooling << " previous: " << previousCooling << '\n');
 
-		previousAbundancev = s.speciesNv;
+		previousAbundancev = s.speciesNv();
 		previousHeating = newHeating;
 		previousCooling = newCooling;
 
@@ -282,10 +281,8 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		                convergedv.all() && heatingConverged && coolingConverged;
 
 		// Currently, the implementation without molecules does not need iteration.
-		stopCriterion = !_molecular || allQuantitiesConverged ||
-		                counter > MAXCHEMISTRYITERATIONS;
+		stopCriterion = allQuantitiesConverged || counter > Options::densities_maxiterations;
 	}
-	return s;
 }
 
 // GasSolution GasInterfaceImpl::solveDensitiesNoH2(double n, double T,
