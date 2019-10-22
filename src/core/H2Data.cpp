@@ -26,7 +26,7 @@ H2Data::H2Data(int maxJ, int maxV)
 	readDissProbs();
 	readDirectDissociation();
 
-	if (Options::h2fromfiles_plotLevelMatrices)
+	if (Options::h2data_plotLevelMatrices)
 	{
 		ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
 		avvOut << _avv << endl;
@@ -61,19 +61,19 @@ void H2Data::readLevels()
 	// Expand levelv with the levels listed in these files
 	readLevelFile("dat/h2/energy_X.dat", ElectronicState::X);
 	_startOfExcitedIndices = _levelv.size();
-	if (Options::h2fromfiles_numExcitedLevels >= 1)
+	if (Options::h2data_numExcitedLevels >= 1)
 	{
 		// Lyman
 		readLevelFile("dat/h2/energy_B.dat", ElectronicState::B);
 		_bB = true;
 	}
-	if (Options::h2fromfiles_numExcitedLevels >= 2)
+	if (Options::h2data_numExcitedLevels >= 2)
 	{
 		// Werner
 		readLevelFile("dat/h2/energy_C_plus.dat", ElectronicState::Cplus);
 		_bCplus = true;
 	}
-	if (Options::h2fromfiles_numExcitedLevels >= 3)
+	if (Options::h2data_numExcitedLevels >= 3)
 	{
 		readLevelFile("dat/h2/energy_C_minus.dat", ElectronicState::Cminus);
 		_bCminus = true;

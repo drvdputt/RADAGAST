@@ -1,5 +1,5 @@
-#ifndef CORE_OPTIONS_H_
-#define CORE_OPTIONS_H_
+#ifndef CORE_OPTIONS_HPP
+#define CORE_OPTIONS_HPP
 
 namespace Options
 {
@@ -25,7 +25,7 @@ const bool weingartnerdraine2001_vanHoofEmin = false;
 
 // Choose the number of electronic levels for H2. Give a number from 1 to 3 to include up to: 1
 // B, 2 C+, 3 C-.
-const int h2fromfiles_numExcitedLevels = 2;
+const int h2data_numExcitedLevels = 2;
 
 //////////////////////////////////////////////
 // NUMERIC / METHOD / ITERATION / PRECISION //
@@ -56,17 +56,17 @@ const bool levelsolver_printEquations = false;
 // Print the transition coefficients (A, B and C matrices) to standard output (only in DEBUG).
 // Currenly quite cryptic, as it happens in the general class NLevel, and therefore the species
 // is not mentioned in the output.
-const bool nlevel_printLevelMatrices = false;
+const bool levelcoefficients_printLevelMatrices = false;
 
 // VERY COSTLY: When integrating the B-coefficients, also do the integration 'manually' on a
 // very fine grid, and report the difference between the optimized line integration and the
 // 'manual' way. This is implemented in NLevel, but is actually a check on the quality of
 // LineProfile::integrateSpectrum.
-const bool nlevel_reportSpecIntegral = false;
+const bool levelcoefficients_reportSpecIntegral = false;
 
 // Write out the level matrices of h2 at setup (written to working_directory/h2/einsteinA.dat
 // and levels.dat)
-const bool h2fromfiles_plotLevelMatrices = false;
+const bool h2data_plotLevelMatrices = false;
 
 // Write out the loaded, singly interpolate, and doubly interpolated freeBound continuum data
 // (gamma_nu) (written to working_directory/freebound/loadedContinuum.dat,
@@ -79,4 +79,4 @@ const bool freefree_debugData = false;
 
 } /* namespace Options */
 
-#endif /* CORE_OPTIONS_H_ */
+#endif // CORE_OPTIONS_HPP

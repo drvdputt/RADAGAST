@@ -58,7 +58,7 @@ EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntens
 	if (cvv_p)
 		*cvv_p = the_cvv;
 	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, the_cvv);
-	if (Options::nlevel_printLevelMatrices)
+	if (Options::levelcoefficients_printLevelMatrices)
 	{
 		DEBUG("Aij" << endl << _avv << endl << endl);
 		DEBUG("BPij" << endl << bpvv << endl << endl);
@@ -77,7 +77,7 @@ EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& specificInten
 		LineProfile lp = lineProfile(upper, lower, T, Cvv);
 		double lowResIntegral = lp.integrateSpectrum(specificIntensity, spectrumMax);
 
-		if (Options::nlevel_reportSpecIntegral)
+		if (Options::levelcoefficients_reportSpecIntegral)
 		{
 			// Compare above integral to explicit calculation using the whole
 			// wavelength range with many points. Useful check in case of steep
