@@ -722,7 +722,7 @@ void Testing::plotPS64Collisions()
 		                                     to_string(n) + "l.dat");
 		for (int li = 0; li < n; li++)
 		{
-			size_t nliIndex = hff.indexOutput(n, li);
+			size_t nliIndex = hff.index(n, li);
 			// Decay rate to all other levels
 			double anl = anlv(nliIndex);
 			double qnl = 0;
@@ -730,7 +730,7 @@ void Testing::plotPS64Collisions()
 			// Get the total decay rate due to l-changing collisions
 			for (int lf = 0; lf < n; lf++)
 			{
-				size_t nlfIndex = hff.indexOutput(n, lf);
+				size_t nlfIndex = hff.index(n, lf);
 				qnl += cvv(nliIndex, nlfIndex);
 
 				// l-changing collision rates should be zero except for changes
