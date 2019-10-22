@@ -11,10 +11,8 @@ namespace LevelSolver
     @note {External processes can influence the level balance by their contribution to the sink
     and source terms. Examples are: level-specific formation (think in the chemical network),
     ionization from specific levels, dissociation from specific levels... so some knowledge
-    about the nature of the levels will be necessary. Subclasses of NLevel can provide an
-    interface to whatever that knowledge may be (usually a mapping from quantum numbers to level
-    index), but the general NLevel implementation is completely oblivious to this, and hence
-    provides no source and sink coefficients.}
+    about the nature of the levels will be necessary. This knowledge is available in for example
+    the HModel and BigH2Model classes.
 
     Sets up F and b using M_ij and the external source terms.
     Returns the solution as a vector [cm-3].
