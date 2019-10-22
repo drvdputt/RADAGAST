@@ -3,7 +3,7 @@
 #include "DoctestUtils.hpp"
 #include "HFromFiles.hpp"
 #include "LineProfile.hpp"
-#include "NLevel.hpp"
+#include "LevelCoefficients.hpp"
 #include "Testing.hpp"
 
 namespace

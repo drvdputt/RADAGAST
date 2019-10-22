@@ -1,7 +1,7 @@
 #ifndef CORE_TWOLEVELHARDCODED_H_
 #define CORE_TWOLEVELHARDCODED_H_
 
-#include "NLevel.hpp"
+#include "LevelCoefficients.hpp"
 
 /** A toy subclass of \c LevelDataProvider, for testing and simple demonstrations. */
 class TwoLevelHardcoded : public LevelCoefficients

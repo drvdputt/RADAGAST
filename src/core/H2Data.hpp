@@ -2,7 +2,7 @@
 #define CORE_H2FROMFILES_H_
 
 #include "CollisionData.hpp"
-#include "NLevel.hpp"
+#include "LevelCoefficients.hpp"
 #include "Spectrum.hpp"
 
 #include <array>

@@ -3,7 +3,7 @@
 #include "Constants.hpp"
 #include "DoctestUtils.hpp"
 #include "GasStruct.hpp"
-#include "NLevel.hpp"
+#include "LevelCoefficients.hpp"
 #include "SpeciesIndex.hpp"
 #include "Spectrum.hpp"
 #include "Testing.hpp"

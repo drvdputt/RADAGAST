@@ -1,5 +1,5 @@
 #include "LevelSolution.hpp"
-#include "NLevel.hpp"
+#include "LevelCoefficients.hpp"
 
 Array LevelSolution::emissivityv(const Array& eFrequencyv) const
 {

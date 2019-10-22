@@ -1,7 +1,7 @@
 #ifndef CORE_HDATA_H_
 #define CORE_HDATA_H_
 
-#include "NLevel.hpp"
+#include "LevelCoefficients.hpp"
 #include "RecombinationRate.hpp"
 
 #include <array>

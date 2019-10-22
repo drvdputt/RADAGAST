@@ -1,5 +1,5 @@
-#ifndef CORE_NLEVEL_H_
-#define CORE_NLEVEL_H_
+#ifndef CORE_LEVELCOEFFICIENTS_HPP
+#define CORE_LEVELCOEFFICIENTS_HPP
 
 #include "EigenAliases.hpp"
 #include "LevelSolution.hpp"
@@ -122,4 +122,4 @@ private:
 	EMatrix _extraAvv;
 };
 
-#endif /* CORE_NLEVEL_H_ */
+#endif // CORE_LEVELCOEFFICIENTS_HPP
