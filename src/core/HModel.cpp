@@ -1,4 +1,5 @@
 #include "HModel.hpp"
+#include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GasStruct.hpp"
 #include "IonizationBalance.hpp"

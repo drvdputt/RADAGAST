@@ -1,4 +1,5 @@
 #include "HData.hpp"
+#include "Constants.hpp"
 #include "IonizationBalance.hpp"
 #include "Options.hpp"
 

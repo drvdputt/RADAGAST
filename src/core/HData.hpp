@@ -1,8 +1,6 @@
-#ifndef CORE_HYDROGENDATAPROVIDER_H_
-#define CORE_HYDROGENDATAPROVIDER_H_
+#ifndef CORE_HDATA_H_
+#define CORE_HDATA_H_
 
-#include "Constants.hpp"
-#include "LevelDataProvider.hpp"
 #include "NLevel.hpp"
 #include "RecombinationRate.hpp"
 
@@ -32,4 +30,4 @@ private:
 	std::unique_ptr<const RecombinationRate> _rr;
 };
 
-#endif /* CORE_HYDROGENDATAPROVIDER_H_ */
+#endif // CORE_HDATA_H_
