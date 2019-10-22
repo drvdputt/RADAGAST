@@ -811,8 +811,7 @@ void Testing::runFromFilesvsHardCoded()
 	                generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
-	// Hey, at least we'll get a decent frequency grid out of this hack
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(5));
+	HydrogenFromFiles hl(5);
 	FreeBound fb;
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
@@ -824,36 +823,41 @@ void Testing::runFromFilesvsHardCoded()
 	runGasInterfaceImpl(gihff, "fromfiles/");
 }
 
-GasModule::GasInterface Testing::genFullModel()
+GasModule::GasInterface Testing::genFullModel(bool refine)
 {
 	Array coarsev = defaultFrequencyv(3000);
+	Array eFrequencyv = coarsev;
 
-	cout << "Construction model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>(4));
-	FreeBound fb;
-	H2Levels h2l(make_shared<H2FromFiles>(99, 99));
-
-	Array frequencyv = coarsev;
-	// Array frequencyv = improveFrequencyGrid(hl, coarsev);
-	// frequencyv = improveFrequencyGrid(fb, frequencyv);
-	// frequencyv = improveFrequencyGrid(h2l, frequencyv);
+	if (refine)
+	{
+		cout << "Constructing model to help with refining frequency grid" << endl;
+		HydrogenFromFiles hl;
+		FreeBound fb;
+		H2Data h2l(99, 99);
+		Array frequencyv = improveFrequencyGrid(hl, coarsev);
+		frequencyv = improveFrequencyGrid(fb, frequencyv);
+		frequencyv = improveFrequencyGrid(h2l, frequencyv);
+	}
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
-	return {coarsev, coarsev, frequencyv, "", "99 99"};
+	return {coarsev, coarsev, eFrequencyv, "", "99 99"};
 }
 
 GasModule::GasInterface Testing::genHonlyModel()
 {
 	Array coarsev = defaultFrequencyv();
 
-	cout << "Construction model to help with refining frequency grid" << endl;
-	HydrogenLevels hl(make_shared<HydrogenFromFiles>());
+	cout << "Constructing H model to help with refining frequency grid" << endl;
+	HydrogenFromFiles hl;
 	FreeBound fb;
 
 	Array frequencyv = improveFrequencyGrid(hl, coarsev);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
 
 	cout << "Constructing new model using the improved frequency grid" << endl;
+
+	// TODO: make sure that this construction happens correctly. Since the rewrite, an Honly
+	// model needs to be done differently.
 	return {coarsev, coarsev, frequencyv, "", "none"};
 }
 

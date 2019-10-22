@@ -97,7 +97,7 @@ void runFromFilesvsHardCoded();
 
 /** Generates a GasInterface object with the maximum number of levels and a suitable frequency
     grid. */
-GasModule::GasInterface genFullModel();
+GasModule::GasInterface genFullModel(bool refine = false);
 
 GasModule::GasInterface genHonlyModel();
 
