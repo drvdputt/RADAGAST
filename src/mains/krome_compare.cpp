@@ -51,20 +51,18 @@ int main()
 	std::string outfname = "equilibrium_densities";
 	std::ofstream outfile(outfname);
 	outfile << "# T e H H2 H+ heat cool";
-	GasInterfaceImpl::Solution s;
-	GasInterfaceImpl::Solution* sp = nullptr;
 	for (double T = 1000; T < 100000; T *= 1.05)
 	{
-		s = pimpl->solveDensities(n, T, specificIntensity, gri, sp, kGrainH2);
+		GasSolution s = pimpl->solveDensities(n, T, specificIntensity, gri, kGrainH2);
 		// Uncomment this to re-use the previous solution as an initial guess
 		// sp = &s;
-		double heat = pimpl->heating(s, gri);
-		double cool = pimpl->cooling(s);
+		double heat = s.heating();
+		double cool = s.cooling();
 		outfile << T;
 		for (const std::string& name : {"e-", "H", "H2", "H+"})
 		{
 			int i = SpeciesIndex::index(name);
-			outfile << " " << s.speciesNv[i];
+			outfile << " " << s.speciesNv()[i];
 		}
 		outfile << " " << heat << " " << cool;
 		outfile << '\n';
@@ -72,15 +70,15 @@ int main()
 	}
 	for (double T = 100000; T > 10; T /= 1.05)
 	{
-		s = pimpl->solveDensities(n, T, specificIntensity, gri, sp, kGrainH2);
+		GasSolution s = pimpl->solveDensities(n, T, specificIntensity, gri, kGrainH2);
 		// sp = &s;
-		double heat = pimpl->heating(s, gri);
-		double cool = pimpl->cooling(s);
+		double heat = s.heating();
+		double cool = s.cooling();
 		outfile << T;
 		for (const std::string& name : {"e-", "H", "H2", "H+"})
 		{
 			int i = SpeciesIndex::index(name);
-			outfile << " " << s.speciesNv[i];
+			outfile << " " << s.speciesNv()[i];
 		}
 		outfile << " " << heat << " " << cool;
 		outfile << '\n';
