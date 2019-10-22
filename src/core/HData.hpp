@@ -13,10 +13,8 @@
 class HData : public LevelCoefficients
 {
 public:
-	HData()
-	                : LevelCoefficients(Constant::HMASS_CGS),
-	                  _rr{std::make_unique<HydrogenADF48>()} {};
-	virtual ~HData();
+	HData();
+	virtual ~HData() = default;
 
 	virtual int nMax() const = 0;
 	virtual size_t index(int n, int l) const = 0;

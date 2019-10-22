@@ -16,6 +16,7 @@ public:
 	    with the given LevelCoefficients. A temperature and density are also needed to
 	    calculate the line width and normalization. */
 	LevelSolution(const LevelCoefficients* lc) : _levelCoefficients{lc} {}
+
 	/** Set new temperature */
 	void setT(double t) { _t = t; }
 	double t() const { return _t; }
@@ -39,7 +40,6 @@ public:
 
 private:
 	const LevelCoefficients* _levelCoefficients;
-	double _n{0.};
 	double _t{0.};
 	EVector _nv;
 	EMatrix _cvv;

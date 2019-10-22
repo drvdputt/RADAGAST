@@ -28,7 +28,7 @@ public:
 	/** An atomic (or molecular) mass needs to be passed, as it will influence the thermal
 	    broadening of the lines. */
 	LevelCoefficients(double mass);
-	virtual ~LevelCoefficients();
+	virtual ~LevelCoefficients() = default;
 
 protected:
 	/** For use by subclass during construction (workaround would be a virtual setup()

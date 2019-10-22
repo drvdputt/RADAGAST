@@ -1,6 +1,10 @@
 #include "HData.hpp"
-#include "Options.hpp"
 #include "IonizationBalance.hpp"
+#include "Options.hpp"
+
+HData::HData() : LevelCoefficients(Constant::HMASS_CGS), _rr{std::make_unique<HydrogenADF48>()}
+{
+}
 
 EVector HData::recombinationRatev(double T) const
 {
