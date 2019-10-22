@@ -1,5 +1,4 @@
 #include "GasGrainInteraction.hpp"
-#include "Constants.hpp"
 #include "Error.hpp"
 #include "GrainType.hpp"
 

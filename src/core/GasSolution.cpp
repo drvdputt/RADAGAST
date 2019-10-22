@@ -3,6 +3,7 @@
 #include "GasGrainInteraction.hpp"
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
+#include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
 #include "IonizationBalance.hpp"
 #include "Options.hpp"

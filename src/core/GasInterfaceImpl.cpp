@@ -5,6 +5,7 @@
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasGrainInteraction.hpp"
+#include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
 #include "IonizationBalance.hpp"
 #include "Options.hpp"

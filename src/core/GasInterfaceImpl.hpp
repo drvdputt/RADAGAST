@@ -1,19 +1,15 @@
-#ifndef _HYDROGENCALCULATOR_H_
-#define _HYDROGENCALCULATOR_H_
+#ifndef CORE_GASINTERFACEIMPL_HPP
+#define CORE_GASINTERFACEIMPL_HPP
 
 #include "Array.hpp"
 #include "GasSolution.hpp"
-#include "GasState.hpp"
 #include "GrainInterface.hpp"
-#include "GrainPhotoelectricEffect.hpp"
-#include "NLevel.hpp"
 #include "SpeciesModelManager.hpp"
 #include "Spectrum.hpp"
 
 class ChemistrySolver;
 class FreeBound;
 class FreeFree;
-class GasDiagnostics;
 
 /** This class is the backbone of the whole code. It calculates the abundances, level
     populations and net heating rate of hydrogen repeatedly, until the equilibrium temperature
@@ -120,4 +116,4 @@ private:
 	std::unique_ptr<FreeFree> _freeFree;
 };
 
-#endif /* _HYDROGENCALCULATOR_H_ */
+#endif // CORE_GASINTERFACEIMPL_HPP

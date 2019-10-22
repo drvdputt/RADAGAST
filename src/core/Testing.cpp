@@ -7,6 +7,7 @@
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
+#include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
 #include "HydrogenFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
