@@ -14,8 +14,6 @@ class ChemistrySolver;
 class FreeBound;
 class FreeFree;
 class GasDiagnostics;
-class HydrogenLevels;
-class H2Levels;
 
 /** This class is the backbone of the whole code. It calculates the abundances, level
     populations and net heating rate of hydrogen repeatedly, until the equilibrium temperature
