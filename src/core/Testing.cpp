@@ -10,7 +10,7 @@
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
 #include "HFromFiles.hpp"
-#include "HydrogenHardcoded.hpp"
+#include "HHardcoded.hpp"
 #include "IOTools.hpp"
 #include "IonizationBalance.hpp"
 #include "SpecialFunctions.hpp"

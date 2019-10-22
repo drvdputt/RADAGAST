@@ -3,7 +3,7 @@
 #include "EigenAliases.hpp"
 #include "GasStruct.hpp"
 #include "HFromFiles.hpp"
-#include "HydrogenHardcoded.hpp"
+#include "HHardcoded.hpp"
 #include "SpeciesIndex.hpp"
 
 TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")

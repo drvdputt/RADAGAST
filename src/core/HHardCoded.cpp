@@ -1,7 +1,6 @@
-#include "HydrogenHardcoded.hpp"
+#include "HHardCoded.hpp"
 #include "Constants.hpp"
 #include "GasStruct.hpp"
-#include "IonizationBalance.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 
