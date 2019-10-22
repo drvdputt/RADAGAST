@@ -9,7 +9,7 @@
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
-#include "HydrogenFromFiles.hpp"
+#include "HFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
 #include "IOTools.hpp"
 #include "IonizationBalance.hpp"
@@ -706,7 +706,7 @@ void Testing::plotPS64Collisions()
 	const double ne = 1e4;
 	const double np = 1e4;
 
-	HydrogenFromFiles hff(5);
+	HFromFiles hff(5);
 	EMatrix avv = hff.avv();
 	EVector speciesNv = EVector::Zero(SpeciesIndex::size());
 	speciesNv(SpeciesIndex::ine()) = ne;
@@ -812,7 +812,7 @@ void Testing::runFromFilesvsHardCoded()
 	                generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.00001 * Constant::UM_CM));
 
-	HydrogenFromFiles hl(5);
+	HFromFiles hl(5);
 	FreeBound fb;
 	Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
 	frequencyv = improveFrequencyGrid(fb, frequencyv);
@@ -832,7 +832,7 @@ GasModule::GasInterface Testing::genFullModel(bool refine)
 	if (refine)
 	{
 		cout << "Constructing model to help with refining frequency grid" << endl;
-		HydrogenFromFiles hl;
+		HFromFiles hl;
 		FreeBound fb;
 		H2Data h2l(99, 99);
 		Array frequencyv = improveFrequencyGrid(hl, coarsev);
@@ -849,7 +849,7 @@ GasModule::GasInterface Testing::genHonlyModel()
 	Array coarsev = defaultFrequencyv();
 
 	cout << "Constructing H model to help with refining frequency grid" << endl;
-	HydrogenFromFiles hl;
+	HFromFiles hl;
 	FreeBound fb;
 
 	Array frequencyv = improveFrequencyGrid(hl, coarsev);

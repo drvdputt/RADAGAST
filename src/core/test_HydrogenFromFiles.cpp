@@ -2,7 +2,7 @@
 
 #include "EigenAliases.hpp"
 #include "GasStruct.hpp"
-#include "HydrogenFromFiles.hpp"
+#include "HFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
 #include "SpeciesIndex.hpp"
 
@@ -10,7 +10,7 @@ TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")
 {
 	/** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
 	    NIST values between different n. */
-	HydrogenFromFiles hff(0);
+	HFromFiles hff(0);
 	EMatrix avv = hff.avv().array();
 	// cout << hff.avv() << endl;
 	// cout << "Compare this with values directly from NIST below:" << endl;
@@ -32,7 +32,7 @@ TEST_CASE("Perform a direct comparison of the two LevelDataProvider classes Hydr
           "and HydrogenFromFiles.")
 {
 	HydrogenHardcoded hhc;
-	HydrogenFromFiles hff(2);
+	HFromFiles hff(2);
 
 	// auto hc_vs_ff = [&](auto hc_thing, auto ff_thing) {
 	// 	cout << "Hardcoded" << endl;

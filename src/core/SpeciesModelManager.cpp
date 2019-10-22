@@ -1,6 +1,6 @@
 #include "SpeciesModelManager.hpp"
 #include "BigH2Model.hpp"
-#include "HydrogenFromFiles.hpp"
+#include "HFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
 
 #include <sstream>
@@ -12,11 +12,11 @@ SpeciesModelManager::SpeciesModelManager(const std::string& hOption,
 	if (hOption == "hhc")
 		_hData = std::make_unique<HydrogenHardcoded>();
 	else if (hOption == "hff2")
-		_hData = std::make_unique<HydrogenFromFiles>(2);
+		_hData = std::make_unique<HFromFiles>(2);
 	else if (hOption == "hff4")
-		_hData = std::make_unique<HydrogenFromFiles>(4);
+		_hData = std::make_unique<HFromFiles>(4);
 	else
-		_hData = std::make_unique<HydrogenFromFiles>();
+		_hData = std::make_unique<HFromFiles>();
 
 	// H2 data
 	if (h2Option.empty())

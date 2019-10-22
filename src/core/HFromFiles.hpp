@@ -11,7 +11,7 @@
     the output functions (\c avv(), \c ev(), etc.) are called, the data is distilled into
     matrices/vectors which can be used by \c HydrogenLevels, to do the calculation of the level
     populations. */
-class HydrogenFromFiles : public HData
+class HFromFiles : public HData
 {
 	//------------------------------//
 	// CONSTRUCTION, READ-IN, SETUP //
@@ -19,7 +19,7 @@ class HydrogenFromFiles : public HData
 public:
 	/** Creates a new \c HydrogenFromFiles object, reads in all the data, and fills in a couple
 	    of data members useful for the output functions. */
-	HydrogenFromFiles(int resolvedUpTo = 5);
+	HFromFiles(int resolvedUpTo = 5);
 
 private:
 	/** Reads levels and their quantum numbers from CHIANTI, as well as the A coefficients

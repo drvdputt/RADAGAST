@@ -1,7 +1,7 @@
 #include "doctest.h"
 
 #include "DoctestUtils.hpp"
-#include "HydrogenFromFiles.hpp"
+#include "HFromFiles.hpp"
 #include "LineProfile.hpp"
 #include "NLevel.hpp"
 #include "Testing.hpp"
@@ -91,7 +91,7 @@ TEST_CASE("H line profile normalizations")
 	double rtol = .01;
 
 	// Gather info about H lines
-	HydrogenFromFiles hl;
+	HFromFiles hl;
 	int numLines;
 	Array lineFreqv;
 	Array naturalLineWidthv;

@@ -1,4 +1,4 @@
-#include "HydrogenFromFiles.hpp"
+#include "HFromFiles.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
@@ -22,7 +22,7 @@ inline vector<int> twoJplus1range(int l)
 }
 } /* namespace */
 
-HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo)
+HFromFiles::HFromFiles(int resolvedUpTo)
                 : _resolvedUpTo(resolvedUpTo), _ine{SpeciesIndex::ine()},
                   _inp{SpeciesIndex::inp()}
 {
@@ -36,7 +36,7 @@ HydrogenFromFiles::HydrogenFromFiles(int resolvedUpTo)
 	setConstants(makeEv(), makeGv(), makeAvv(), makeExtraAvv());
 }
 
-void HydrogenFromFiles::readData()
+void HFromFiles::readData()
 {
 	const string basename{REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1"};
 
@@ -141,7 +141,7 @@ void HydrogenFromFiles::readData()
 	h_coll_str.close();
 }
 
-void HydrogenFromFiles::prepareForOutput()
+void HFromFiles::prepareForOutput()
 {
 	//-------------------------------------//
 	// SET PARAMETERS FOR HELP WITH OUTPUT //
@@ -171,7 +171,7 @@ void HydrogenFromFiles::prepareForOutput()
 			_totalAv[i] += einsteinA(_levelOrdering[i], _levelOrdering[f]);
 }
 
-size_t HydrogenFromFiles::index(int n, int l) const
+size_t HFromFiles::index(int n, int l) const
 {
 	if (n > _resolvedUpTo)
 		return _nlToOutputIndexm.at({n, -1});
@@ -179,7 +179,7 @@ size_t HydrogenFromFiles::index(int n, int l) const
 		return _nlToOutputIndexm.at({n, l});
 }
 
-EVector HydrogenFromFiles::makeEv() const
+EVector HFromFiles::makeEv() const
 {
 	EVector the_ev(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -187,7 +187,7 @@ EVector HydrogenFromFiles::makeEv() const
 	return the_ev;
 }
 
-EVector HydrogenFromFiles::makeGv() const
+EVector HFromFiles::makeGv() const
 {
 	EVector the_gv(_numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -195,7 +195,7 @@ EVector HydrogenFromFiles::makeGv() const
 	return the_gv;
 }
 
-EMatrix HydrogenFromFiles::makeAvv() const
+EMatrix HFromFiles::makeAvv() const
 {
 	EMatrix the_avv(_numL, _numL);
 	for (size_t i = 0; i < _numL; i++)
@@ -230,7 +230,7 @@ EMatrix HydrogenFromFiles::makeAvv() const
 	return the_avv;
 }
 
-EMatrix HydrogenFromFiles::makeExtraAvv() const
+EMatrix HFromFiles::makeExtraAvv() const
 {
 	EMatrix the_extra = EMatrix::Zero(_numL, _numL);
 
@@ -261,7 +261,7 @@ EMatrix HydrogenFromFiles::makeExtraAvv() const
 	return the_extra;
 }
 
-array<size_t, 2> HydrogenFromFiles::twoPhotonIndices() const
+array<size_t, 2> HFromFiles::twoPhotonIndices() const
 {
 	// If any of the levels is not resolved on l, just return the index of the collapsed level.
 	size_t upper = _resolvedUpTo >= 2 ? index(2, 0) : index(2, -1);
@@ -269,7 +269,7 @@ array<size_t, 2> HydrogenFromFiles::twoPhotonIndices() const
 	return {upper, lower};
 }
 
-EMatrix HydrogenFromFiles::cvv(const GasStruct& gas) const
+EMatrix HFromFiles::cvv(const GasStruct& gas) const
 {
 	// Calculate the temperature in erg and in electron volt
 	double T = gas._T;
@@ -333,7 +333,7 @@ EMatrix HydrogenFromFiles::cvv(const GasStruct& gas) const
 	return the_cvv.array().max(0);
 }
 
-EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) const
+EMatrix HFromFiles::PS64CollisionRateCoeff(int n, double T, double np) const
 {
 	EMatrix q_li_lf_goingUp = EMatrix::Zero(n, n);
 	EMatrix q_li_lf_goingDown = EMatrix::Zero(n, n);
@@ -397,7 +397,7 @@ EMatrix HydrogenFromFiles::PS64CollisionRateCoeff(int n, double T, double np) co
 	return result.array().max(0);
 }
 
-double HydrogenFromFiles::energy(int n, int l) const
+double HFromFiles::energy(int n, int l) const
 {
 	// Take an average over the j states
 	double esum = 0;
@@ -406,7 +406,7 @@ double HydrogenFromFiles::energy(int n, int l) const
 	return esum / (4 * l + 2);
 }
 
-double HydrogenFromFiles::energy(int n) const
+double HFromFiles::energy(int n) const
 {
 	// Average over the l states
 	double esum = 0;
@@ -415,7 +415,7 @@ double HydrogenFromFiles::energy(int n) const
 	return esum / (n * n);
 }
 
-double HydrogenFromFiles::einsteinA(int ni, int li, int nf, int lf) const
+double HFromFiles::einsteinA(int ni, int li, int nf, int lf) const
 {
 	if (ni < nf)
 		return 0.;
@@ -439,7 +439,7 @@ double HydrogenFromFiles::einsteinA(int ni, int li, int nf, int lf) const
 	}
 }
 
-double HydrogenFromFiles::einsteinA(int ni, int nf, int lf) const
+double HFromFiles::einsteinA(int ni, int nf, int lf) const
 {
 	// average over the initial l states
 	double Asum = 0;
@@ -448,7 +448,7 @@ double HydrogenFromFiles::einsteinA(int ni, int nf, int lf) const
 	return Asum / (ni * ni);
 }
 
-double HydrogenFromFiles::einsteinA(int ni, int nf) const
+double HFromFiles::einsteinA(int ni, int nf) const
 {
 	// sum over the final l states
 	double Asum = 0;
@@ -457,7 +457,7 @@ double HydrogenFromFiles::einsteinA(int ni, int nf) const
 	return Asum;
 }
 
-double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial,
+double HFromFiles::einsteinA(const HydrogenLevel& initial,
                                     const HydrogenLevel& final) const
 {
 	// No output for upward transitions
@@ -485,7 +485,7 @@ double HydrogenFromFiles::einsteinA(const HydrogenLevel& initial,
 	}
 }
 
-double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
+double HFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const
 {
 	/* Find the requested transition in the map that translates n,l to the index in the
 	   Anderson file. */
@@ -516,7 +516,7 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, dou
 	return max(Upsilon_ip, 0.);
 }
 
-double HydrogenFromFiles::eCollisionStrength(int ni, int nf, int lf, double T_eV) const
+double HFromFiles::eCollisionStrength(int ni, int nf, int lf, double T_eV) const
 {
 	// Collision strengths must be summed over all initial states
 	double Upsilonsum = 0;
@@ -525,7 +525,7 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int nf, int lf, double T_eV
 	return Upsilonsum;
 }
 
-double HydrogenFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
+double HFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
 {
 	// Also sum over all final states
 	double Upsilonsum = 0;
@@ -534,7 +534,7 @@ double HydrogenFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
 	return Upsilonsum;
 }
 
-double HydrogenFromFiles::eCollisionStrength(const HydrogenLevel& initial,
+double HFromFiles::eCollisionStrength(const HydrogenLevel& initial,
                                              const HydrogenLevel& final, double T_eV) const
 {
 	// No output for upward transitions
