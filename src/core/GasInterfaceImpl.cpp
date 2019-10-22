@@ -363,10 +363,10 @@ Array GasInterfaceImpl::freeFreeEmissivityv(double T, const Array& eFrequencyv) 
 	return ffEmv;
 }
 
-Array GasInterfaceImple::freeFreeOpacityv(double T, const Array& oFrequencyv) const
+Array GasInterfaceImpl::freeFreeOpacityv(double T, const Array& oFrequencyv) const
 {
 	Array ffOpv(oFrequencyv.size());
-	_freeFree->addOpacityCoefficientv(T, oFrequencyv, contOpCoeffv);
+	_freeFree->addOpacityCoefficientv(T, oFrequencyv, ffOpv);
 	return ffOpv;
 }
 
