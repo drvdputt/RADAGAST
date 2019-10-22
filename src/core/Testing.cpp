@@ -993,23 +993,17 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		auto gi_pimpl = gasInterface.pimpl();
 		// calculate again to obtain the complete solution object (this data is hidden normally)
 		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		GasInterfaceImpl::Solution s =
-		                gi_pimpl->solveDensities(nHtotal, gs.temperature(), I_nu, gri);
-
-		double ne = s.speciesNv[SpeciesIndex::ine()];
-		double np = s.speciesNv[SpeciesIndex::inp()];
-		double nHI = s.speciesNv[SpeciesIndex::inH()];
-		double nH2 = s.speciesNv[SpeciesIndex::inH2()];
+		GasSolution s = gi_pimpl->solveDensities(nHtotal, gs.temperature(), I_nu, gri);
 
 		ColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
-		overview.writeLine<Array>({gs.temperature(), ne, np, nHI, nH2});
-		cout << "Htot = " << gi_pimpl->heating(s, gri) << '\n';
+		overview.writeLine<Array>({gs.temperature(), s.ne(), s.np(), s.nH(), s.nH2()});
+		cout << "Htot = " << s.heating() << '\n';
 		cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
-		cout << "Ctot = " << gi_pimpl->cooling(s) << '\n';
-		cout << "eden = " << ne << '\n';
-		cout << "H+ " << np << '\n';
-		cout << "HI " << nHI << '\n';
-		cout << "H2 " << nH2 << '\n';
+		cout << "Ctot = " << s.cooling() << '\n';
+		cout << "eden = " << s.ne() << '\n';
+		cout << "H+ " << s.np() << '\n';
+		cout << "HI " << s.nH() << '\n';
+		cout << "H2 " << s.nH2() << '\n';
 		for (size_t i = 0; i < gd.reactionNames().size(); i++)
 			cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
 
