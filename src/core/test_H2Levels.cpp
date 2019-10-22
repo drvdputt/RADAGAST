@@ -96,9 +96,8 @@ TEST_CASE("H2-specific algorithm")
 		for (size_t i = 0; i < frequencyv.size(); i++)
 			specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-
+		bigh2.solve(n, gas, specificIntensity);
 		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
-
 		const EVector& nv_sol = bigh2.levelSolution()->nv();
 
 		// This test seems to work reasonably for the first three levels
