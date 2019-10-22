@@ -1,4 +1,5 @@
 #include "Testing.hpp"
+#include "BigH2Model.hpp"
 #include "ChemicalNetwork.hpp"
 #include "ChemistrySolver.hpp"
 #include "FreeBound.hpp"
@@ -7,7 +8,6 @@
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
 #include "GrainType.hpp"
-#include "H2FromFiles.hpp"
 #include "HydrogenFromFiles.hpp"
 #include "HydrogenHardcoded.hpp"
 #include "IOTools.hpp"
@@ -775,11 +775,8 @@ void Testing::runH2(bool write)
 	Spectrum specificIntensity(unrefinedv, specificIntensityv);
 
 	// Add points for H2 lines
-	H2Levels h2l(make_shared<H2FromFiles>(maxJ, maxV));
+	H2Data h2l(maxJ, maxV);
 	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
-
-	auto h2Data{make_shared<H2FromFiles>(maxJ, maxV)};
-	H2Levels h2Levels{h2Data};
 
 	// Set the densities
 	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
@@ -789,13 +786,12 @@ void Testing::runH2(bool write)
 	speciesNv(SpeciesIndex::inH()) = nH;
 
 	GasStruct gas(T, speciesNv);
-	LevelCoefficients::Solution s = h2l.customSolution(nH2, gas, specificIntensity);
+	BigH2Model h2m(&h2l);
+	h2m.solve(nH2, gas, specificIntensity);
 	if (write)
 	{
-		Array emissivityv = h2Levels.emissivityv(s, frequencyv);
-		Array opacityv = h2Levels.opacityv(s, unrefinedv);
-		Array lineOp = h2Levels.lineOpacityv(s, unrefinedv);
-
+		Array emissivityv = h2m.emissivityv(frequencyv);
+		Array opacityv = h2m.opacityv(unrefinedv);
 		ofstream h2optical = IOTools::ofstreamFile("h2/opticalProperties.dat");
 		h2optical << "# nu (hz)\tlambda (micron)\temissivity\topacity\tlineOpacity\n";
 		const string tab{"\t"};
@@ -803,8 +799,8 @@ void Testing::runH2(bool write)
 		{
 			h2optical << frequencyv[iFreq] << tab
 			          << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM
-			          << tab << emissivityv[iFreq] << tab << opacityv[iFreq] << tab
-			          << lineOp[iFreq] << endl;
+			          << tab << emissivityv[iFreq] << tab << opacityv[iFreq]
+			          << '\n';
 		}
 	}
 }
