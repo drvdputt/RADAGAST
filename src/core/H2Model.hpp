@@ -14,6 +14,8 @@ class Spectrum;
 class H2Model
 {
 public:
+	virtual ~H2Model() = default;
+
 	/** Solve the state of H2, given a constant set of environmental parameters. Depending
 	    on the sublass, the calculation can be trivial, or extremely heavy (solving the
 	    levels). The H2 formation tempo [cm-3 s-1] (from grain surfaces only) is need to
