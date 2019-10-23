@@ -13,6 +13,9 @@
     classes and functions in the aforementioned files), falls under the namepace GasModule. */
 class GasInterfaceImpl;
 
+/** The full solution */
+class GasSolution;
+
 /** More details about the gas can be retrieved by passing an object of this class. Include its
     header to construct one, and then pass a pointer to the update function */
 class GasDiagnostics;
@@ -34,22 +37,14 @@ public:
 	    - iFrequencyv is the grid used to discretize the input radiation field (the specific
               intensity at a certain point in space, in [erg s-1 cm-1 Hz-1 units]).
 
-	    - frequencyv is used for all the rest, until we replace it by (maybe):
-
-	    - eFrequencyv will be the grid on which the emissivity is calculated. Following a
-              recent discussion on the future design of SKIRT, this can typically have a
-              somewhat larger resolution, if you do your radiative transfer per cell for
-              example.
+	    - eFrequencyv will be the grid on which the emissivity is calculated.
 
 	    - oFrequencyv is the grid that will be used to discretize the output opacity. This
 	      is typically coarser because a radiative transfer algorithm usually needs the
 	      opacity in each grid cell.
 
-	    (other approaches are still considered)
-
-	    Some configuration options in the form of strings are also provided. These are
-	    subject to change, and it is currently best to look at the source code of this
-	    function to see which options are available. */
+	    Some configuration options in the form of strings are also provided. These need to
+	    be changed once the rest of the code is ready. */
 	GasInterface(const std::valarray<double>& iFrequencyv,
 	             const std::valarray<double>& oFrequencyv,
 	             const std::valarray<double>& eFrequencyv,
@@ -60,31 +55,27 @@ public:
 
 	~GasInterface();
 
-	/** Return the frequency grid used for the specific intensity (the one the user gave at
-	    construction. */
 	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
 	std::valarray<double> oFrequencyv() const { return _oFrequencyv; }
 	std::valarray<double> eFrequencyv() const { return _eFrequencyv; }
 
 	// USAGE 1: Calculate GasState objects //
 
-	/** Exports the state of the gas as a compact, opaque object. Codes which make use of
-	    the gas module can use these objects to store a number of gas states. They can then
-	    repeatedly give objects of this type to a single instance of the HydrogenCalculator
-	    to calculate any optical properties on-the-fly. The exact contents of a GasState and
-	    the way the optical properties are calculated (derived from densities vs caching
-	    them for example) are entirely up to the implementations of the functions below and
-	    the definition in GasState.h.
+	/** The main way to run the code for a cell. A minimal set of results is stored in the
+	    given GasState object. The exact contents of the GasState are not known to the user.
+	    Through this interface, the variable information contained in the gas state can be
+	    combined with other constants and functions to retrieve the opacity and emissivity
+	    of the gas.
 
-	    The arguments to be provided here are a GasState object to which the results will be
-	    written; the density of hydrogen nuclei, n; the ambient radiation field in [erg s-1
-	    cm-1 Hz-1] units, as discretized on the @c iFrequencyv grid given as an argument to
-	    the constructor, originally; and a GrainInterface object, describing the properties
-	    of the grains within the cell for which the user wants to solve the gas state. See
-	    the @c GrainInterface documentation for information on how to construct one of these
-	    objects. The frequencies used to tabulate the absorption efficiency of the grains in
-	    its constructor need to be the same as those given for the radiation field here. */
-	void updateGasState(GasState&, double n, double Tinit,
+	    The other arguments reflect the physical conditions in the cell for which a gas
+	    state is being calculated. The density of hydrogen nuclei, n; the ambient radiation
+	    field in [erg s-1 cm-1 Hz-1] units, as discretized on the @c iFrequencyv grid given
+	    as an argument to the constructor, originally; and a GrainInterface object,
+	    describing the properties of the grains within the cell for which the user wants to
+	    solve the gas state. See the @c GrainInterface documentation for information on how
+	    to construct one of these objects. The absorption efficiency of the grains currently
+	    needs to be tabulated for the frequencies contained in iFrequencyv. */
+	void updateGasState(GasState&, double n,
 	                    const std::valarray<double>& specificIntensityv,
 	                    GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
@@ -97,25 +88,23 @@ public:
 	// USAGE 2: Translate GasState into optical properties //
 
 	/** The functions below hould provide a fast implementation to obtain the optical
-	    properties. The implementation will depend on what is stored in a GasState object. A
-	    good balance between the size of the GasState objects and the computation time
-	    needed for the optical properties needs to be found. */
+	    properties from the information stored in the GasState + constant information stored
+	    in the GasInterface. */
 
-	/** Based on the information in the given GasState, this function returns the emissivity
-	    in SI units, for a given frequency index. (converted from 1 erg / cm3 / s / Hz / sr
-	    = 0.1 J / m3 / s / Hz / sr). [W m-3 Hz-1 sr-1] */
+	/** The emissivity in SI units, for a given frequency index. (converted using 1 erg cm-3
+	    s-1 Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1 sr-1). [W m-3 Hz-1 sr-1] */
 	double emissivity_SI(const GasState& gs, size_t iFreq) const;
 
-	/** Returns the total opacity in SI units (converted from 1 / cm = 100 * 1 / m). [m-1]*/
+	/** Returns the total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1]*/
 	double opacity_SI(const GasState& gs, size_t iFreq) const;
 
-	/** Returns the scattering opacity. Currently there is are no contributions, and this
-	    function simply returns zero for each prequency. [m-1] */
-	double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
+	// /** Returns the scattering opacity. Currently there is are no contributions, and this
+	//     function simply returns zero for each prequency. [m-1] */
+	// double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
 
-	/** Return the absorption opacity. Currently, all opacity is absorption opacity and the
-	    albedo is therefore zero. [m-1] */
-	double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
+	// /** Return the absorption opacity. Currently, all opacity is absorption opacity and the
+	//     albedo is therefore zero. [m-1] */
+	// double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
 
 private:
 	/** Modifies the contents of a GasState so that it is equivalent to no gas at all. */

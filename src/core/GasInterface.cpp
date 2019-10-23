@@ -20,7 +20,7 @@ GasInterface::GasInterface(const valarray<double>& iFrequencyv,
 
 GasInterface::~GasInterface() = default;
 
-void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
+void GasInterface::updateGasState(GasState& gasState, double n,
                                   const valarray<double>& specificIntensityv,
                                   GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
@@ -31,7 +31,7 @@ void GasInterface::updateGasState(GasState& gasState, double n, double Tinit,
 	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
 	if (n > 0)
 	{
-		GasSolution s = _pimpl->solveTemperature(n, Tinit, specificIntensity, grainInfo);
+		GasSolution s = _pimpl->solveTemperature(n, specificIntensity, grainInfo);
 		// To fix the temperature, use this:
 		// GasInterfaceImpl::Solution s = _pimpl->solveDensities(n, 6000., specificIntensity, grainInfo);
 		gasState = s.makeGasState(_oFrequencyv, _eFrequencyv);
@@ -67,14 +67,14 @@ double GasInterface::opacity_SI(const GasState& gs, size_t iFreq) const
 	return 100 * (gs._opacityv[iFreq] + gs._scatteringOpacityv[iFreq]);
 }
 
-double GasInterface::scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
-{
-	return 100 * gs._scatteringOpacityv[iFreq];
-}
-double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
-{
-	return 100 * gs._opacityv[iFreq];
-}
+// double GasInterface::scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
+// {
+// 	return 100 * gs._scatteringOpacityv[iFreq];
+// }
+// double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
+// {
+// 	return 100 * gs._opacityv[iFreq];
+// }
 
 void GasInterface::zeroOpticalProperties(GasState& gs) const
 {

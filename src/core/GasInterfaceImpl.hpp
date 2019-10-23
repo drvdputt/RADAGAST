@@ -53,7 +53,7 @@ public:
 	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
 	    temperature guess, and a Spectrum object containing the radiation field in specific
 	    intensity per frequency units. */
-	GasSolution solveTemperature(double n, double Tinit, const Spectrum& specificIntensity,
+	GasSolution solveTemperature(double n, const Spectrum& specificIntensity,
 	                             GasModule::GrainInterface&) const;
 
 	/** Calculates all the densities for a fixed temperature. */

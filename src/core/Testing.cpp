@@ -439,14 +439,13 @@ void Testing::plotIonizationStuff()
 }
 
 void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
-                                  const std::string& outputPath, double Tc, double G0, double n,
-                                  double expectedTemperature)
+                                  const std::string& outputPath, double Tc, double G0, double n)
 {
 	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
 	GasModule::GrainInterface gri{};
-	gi.updateGasState(gs, n, expectedTemperature, specificIntensityv, gri);
+	gi.updateGasState(gs, n, specificIntensityv, gri);
 	writeGasState(outputPath, gi, gs);
 }
 
@@ -957,7 +956,6 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 	// Gas model
 	GasModule::GasInterface gasInterface = genFullModel();
 	double nHtotal = nH;
-	double Tinit{8000};
 
 	// Radiation field
 	// Tc argument is color temperature
@@ -978,7 +976,7 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 
 	auto gi_pimpl = gasInterface.pimpl();
 	Spectrum specificIntensity(frequencyv, specificIntensityv);
-	GasSolution s = gi_pimpl->solveTemperature(nHtotal, Tinit, specificIntensity, gri);
+	GasSolution s = gi_pimpl->solveTemperature(nHtotal, specificIntensity, gri);
 	// Fixed temperature call, for convenience when testing:
 	// GasSolution s = gi_pimpl->solveDensities(nHtotal, 49.4, specificIntensity, gri);
 	if (write)

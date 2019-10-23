@@ -57,8 +57,7 @@ Array improveFrequencyGrid(const FreeBound& freeBound, const Array& oldPoints);
     and a mean UV intensity of G0 habing, and the gas density is n. The initial temperature can
     also be chosen. */
 void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath,
-                         double Tc = 20000, double G0 = 2, double n = 10,
-                         double expectedTemperature = 8000);
+                         double Tc = 20000, double G0 = 2, double n = 10);
 
 void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi,
                    const GasModule::GasState& gs);

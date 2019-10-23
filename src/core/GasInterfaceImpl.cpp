@@ -40,8 +40,7 @@ GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T,
 	Array blackbodyv(iFrequencyv.size());
 	for (size_t i = 0; i < iFrequencyv.size(); i++)
 		blackbodyv[i] = SpecialFunctions::planck(iFrequencyv[i], T);
-
-	return solveTemperature(n, T, Spectrum(iFrequencyv, blackbodyv), gri);
+	return solveTemperature(n, Spectrum(iFrequencyv, blackbodyv), gri);
 }
 
 struct heating_f_params
@@ -71,8 +70,7 @@ double heating_f(double logT, void* params)
 	return heat - cool;
 }
 
-GasSolution GasInterfaceImpl::solveTemperature(double n, double /*unused Tinit*/,
-                                               const Spectrum& specificIntensity,
+GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specificIntensity,
                                                GasModule::GrainInterface& gri) const
 {
 	GasSolution s = makeGasSolution(specificIntensity, gri);
