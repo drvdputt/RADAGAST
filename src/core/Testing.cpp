@@ -976,21 +976,14 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 	// Dust model
 	auto gri = genMRNDust(nHtotal, Spectrum{frequencyv, specificIntensityv});
 
-	GasModule::GasState gs;
-	GasDiagnostics gd;
-	gasInterface.updateGasState(gs, nHtotal, Tinit, specificIntensityv, gri, &gd);
-
+	auto gi_pimpl = gasInterface.pimpl();
+	Spectrum specificIntensity(frequencyv, specificIntensityv);
+	GasSolution s = gi_pimpl->solveTemperature(nHtotal, Tinit, specificIntensity, gri);
 	if (write)
 	{
-		string prefix = "MRNDust/";
+		GasDiagnostics gd;
+		s.fillDiagnostics(&gd);
 
-		auto gi_pimpl = gasInterface.pimpl();
-		// calculate again to obtain the complete solution object (this data is hidden normally)
-		Spectrum I_nu = Spectrum(gasInterface.iFrequencyv(), specificIntensityv);
-		GasSolution s = gi_pimpl->solveDensities(nHtotal, gs.temperature(), I_nu, gri);
-
-		ColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
-		overview.writeLine<Array>({gs.temperature(), s.ne(), s.np(), s.nH(), s.nH2()});
 		cout << "Htot = " << s.heating() << '\n';
 		cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
 		cout << "Ctot = " << s.cooling() << '\n';
@@ -1001,12 +994,7 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 		for (size_t i = 0; i < gd.reactionNames().size(); i++)
 			cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
 
-		ColumnFile rates(prefix + "rates.dat", gd.reactionNames());
-		rates.writeLine(gd.reactionRates());
-
-		writeMapAsColumnFile(prefix + "heat.dat", gd.otherHeating());
-		writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
-
+		string prefix = "MRNDust/";
 		if (own_dir)
 		{
 			stringstream ss;
@@ -1016,6 +1004,16 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 			if (prefix[prefix.size() - 1] == '/')
 				mkdir(prefix.c_str(), 0755);
 		}
+
+		ColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
+		overview.writeLine<Array>({s.t(), s.ne(), s.np(), s.nH(), s.nH2()});
+
+		ColumnFile rates(prefix + "rates.dat", gd.reactionNames());
+		rates.writeLine(gd.reactionRates());
+
+		writeMapAsColumnFile(prefix + "heat.dat", gd.otherHeating());
+		writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
+
 		ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
 		for (size_t i = 0; i < frequencyv.size(); i++)
 		{
@@ -1024,6 +1022,8 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
 			                           Constant::FPI * frequencyv[i] *
 			                                           specificIntensityv[i]});
 		}
+		GasModule::GasState gs = s.makeGasState(gasInterface.oFrequencyv(),
+		                                        gasInterface.eFrequencyv());
 		writeGasState(prefix, gasInterface, gs);
 		writeGrains(prefix, gri);
 		// plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
