@@ -36,14 +36,9 @@ class GasInterfaceImpl
 {
 public:
 	/** Creates an instance of the gas module. Multiple frequency grids are used, which need
-	    to be specified by the user.
-
-	    - oFrequencyv is the grid that will be used to discretize the output opacity. This
-	      is typically coarser because a radiative transfer algorithm usually needs the
-	      opacity in each grid cell.
-
-	    Some configuration options in the form of strings are also provided. Currently, they
-	    only influence the settings of the H and H2 models. */
+	    to be specified by the user. Some configuration options in the form of strings are
+	    also provided. Currently, they only influence the settings of the H and H2
+	    models. */
 	GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv,
 	                 const Array& eFrequencyv, const std::string& atomChoice = "",
 	                 const std::string& moleculeChoice = "");
