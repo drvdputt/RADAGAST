@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
+class GasDiagnostics;
 class GasInterfaceImpl;
 class GasSolution;
-class GasDiagnostics;
 class Spectrum;
 
 namespace GasModule
@@ -26,6 +26,15 @@ public:
 	             const std::valarray<double>& eFrequencyv,
 	             const std::string& atomChoice = "",
 	             const std::string& moleculeChoice = "");
+
+	/** Needed because of the unique_ptr member. Also, putting "= default" here actually
+	    works with GDB if I remember correctly, but not with clang. In the cpp file, it
+	    works for both because there GasInterfaceImpl is a complete type. */
+	~GasInterface();
+
+	/** This move constructor enables move semantics when utility functions in Testing
+	    return a GasInterface object. Again, necessary because of the unique_ptr. */
+	GasInterface(GasInterface&&);
 
 	std::valarray<double> iFrequencyv() const;
 	std::valarray<double> oFrequencyv() const;
