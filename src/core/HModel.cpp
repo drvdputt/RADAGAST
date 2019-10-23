@@ -14,6 +14,7 @@ void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificInten
 		int numLv = _hData->numLv();
 		_levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
 		_levelSolution.setNv(EVector::Zero(numLv));
+		return;
 	}
 
 	EMatrix Cvv;

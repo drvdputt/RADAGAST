@@ -56,20 +56,20 @@ Array GasSolution::opacityv(const Array& oFrequencyv) const
 
 double GasSolution::cooling() const
 {
-	double lineCool = -(_hSolution->netHeating() + _h2Solution->netHeating());
 	double freefreeCool = _gasInterfaceImpl->freeFreeCool(np() * ne(), _t);
 	double hRecCool = Ionization::cooling(nH(), np(), ne(), _t);
-	return lineCool + freefreeCool + hRecCool;
+	return freefreeCool + hRecCool;
 }
 
 double GasSolution::heating() const
 {
 	// double freefreeHeat = _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity);
 	// TODO: decide whether to keep the above, as it is negligible in any case I can imagine
+	double lineHeat = _hSolution->netHeating() + _h2Solution->netHeating();
 	double hPhotoIonHeat = Ionization::heating(np(), ne(), _t, _specificIntensity);
 	double dissHeat = _h2Solution->dissociationHeating(_specificIntensity);
 	double grainHeat = grainHeating();
-	return hPhotoIonHeat + dissHeat + grainHeat;
+	return lineHeat + hPhotoIonHeat + dissHeat + grainHeat;
 }
 
 double GasSolution::grainHeating(double* photoHeat, double* collCool) const

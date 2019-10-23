@@ -36,7 +36,7 @@ double LevelSolution::netHeating() const
 		{
 			double cul = _cvv(up, lo);
 			double clu = _cvv(lo, up);
-			if (cul > 0)
+			if (cul > 0 || clu > 0)
 				total += (ev(up) - ev(lo)) * (cul * _nv(up) - clu * _nv(lo));
 		}
 	}

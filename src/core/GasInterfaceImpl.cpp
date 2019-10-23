@@ -144,8 +144,7 @@ GasSolution GasInterfaceImpl::solveDensities(double n, double T,
 
 void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
                                       const Spectrum& specificIntensity,
-                                      GasModule::GrainInterface& gri,
-				      bool startFromCurrent,
+                                      GasModule::GrainInterface& gri, bool startFromCurrent,
                                       double h2FormationOverride) const
 {
 	if (n <= 0)
@@ -178,6 +177,9 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		double molFrac = 0.1;
 		s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
 	}
+
+	DEBUG("Set initial guess for speciesNv to\n" << s.speciesNv() << '\n');
+
 	// else
 	// {
 	// 	// make sure that nHtotal and the initial guess are consistent
@@ -237,6 +239,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
 		                T, specificIntensity, kDissH2Levels, kFormH2);
 		EVector newSpeciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv());
+		s.setSpeciesNv(newSpeciesNv);
 
 		/* TODO: Add effect of grain charging to chemical network. I think it
 		   might be possible to do this by imposing a conservation equation for

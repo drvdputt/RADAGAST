@@ -15,6 +15,7 @@ void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificI
 		int numLv = _h2Data->numLv();
 		_levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
 		_levelSolution.setNv(EVector::Zero(numLv));
+		return;
 	}
 
 	EMatrix Cvv;
