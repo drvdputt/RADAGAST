@@ -1,8 +1,5 @@
 #include "GasInterface.hpp"
-#include "Array.hpp"
-#include "Error.hpp"
 #include "GasInterfaceImpl.hpp"
-#include "Timer.hpp"
 
 using namespace std;
 
@@ -12,76 +9,81 @@ GasInterface::GasInterface(const valarray<double>& iFrequencyv,
                            const valarray<double>& oFrequencyv,
                            const valarray<double>& eFrequencyv, const string& atomChoice,
                            const string& moleculeChoice)
-                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
-                  _eFrequencyv{eFrequencyv}, _pimpl{make_unique<GasInterfaceImpl>(
-                                                             atomChoice, moleculeChoice)}
+                : _pimpl{make_unique<GasInterfaceImpl>(iFrequencyv, oFrequencyv, eFrequencyv,
+                                                       atomChoice, moleculeChoice)}
 {
 }
 
-GasInterface::~GasInterface() = default;
-
-void GasInterface::updateGasState(GasState& gasState, double n,
-                                  const valarray<double>& specificIntensityv,
-                                  GrainInterface& grainInfo, GasDiagnostics* gd) const
+std::valarray<double> GasInterface::iFrequencyv() const
 {
-	Timer t("Update gas state");
-	// Create a spectrum object which makes it easier to pass around the frequencies and the
-	// values for the specific intensity. It can also be used to easily interpolate the
-	// specific intensity for a certain frequency.
-	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
-	if (n > 0)
-	{
-		GasSolution s = _pimpl->solveTemperature(n, specificIntensity, grainInfo);
-		// To fix the temperature, use this:
-		// GasInterfaceImpl::Solution s = _pimpl->solveDensities(n, 6000., specificIntensity, grainInfo);
-		gasState = s.makeGasState(_oFrequencyv, _eFrequencyv);
-		if (gd)
-			s.fillDiagnostics(gd);
-	}
-	else
-		zeroOpticalProperties(gasState);
+	return _pimpl->iFrequencyv();
 }
 
-void GasInterface::initializeGasState(GasState& gasState, double n, double T,
-                                      GrainInterface& grainInfo, GasDiagnostics* gd) const
+std::valarray<double> GasInterface::oFrequencyv() const
 {
-	if (n > 0)
-	{
-		GasSolution s = _pimpl->solveInitialGuess(n, T, grainInfo);
-		gasState = s.makeGasState(_oFrequencyv, _eFrequencyv);
-		if (gd)
-			s.fillDiagnostics(gd);
-	}
-	else
-		zeroOpticalProperties(gasState);
+	return _pimpl->oFrequencyv();
+}
+
+std::valarray<double> GasInterface::eFrequencyv() const
+{
+	return _pimpl->eFrequencyv();
+}
+
+void GasInterface::updateGasState(GasState& gs, double n,
+                                  const std::valarray<double>& specificIntensityv,
+                                  GrainInterface& gri, GasDiagnostics* gd) const
+{
+	_pimpl->updateGasState(gs, n, specificIntensityv, gri, gd);
+}
+
+void GasInterface::initializeGasState(GasState& gs, double n, double T, GrainInterface& gri,
+                                      GasDiagnostics* gd) const
+{
+	_pimpl->initializeGasState(gs, n, T, gri, gd);
 }
 
 double GasInterface::emissivity_SI(const GasState& gs, size_t iFreq) const
 {
-	return 0.1 * gs._emissivityv[iFreq];
+	return _pimpl->emissivity_SI(gs, iFreq);
 }
 
-// 1 / cm = 100 / m
 double GasInterface::opacity_SI(const GasState& gs, size_t iFreq) const
 {
-	return 100 * (gs._opacityv[iFreq] + gs._scatteringOpacityv[iFreq]);
+	return _pimpl->opacity_SI(gs, iFreq);
 }
 
-// double GasInterface::scatteringOpacity_SI(const GasState& gs, size_t iFreq) const
-// {
-// 	return 100 * gs._scatteringOpacityv[iFreq];
-// }
-// double GasInterface::absorptionOpacity_SI(const GasState& gs, size_t iFreq) const
-// {
-// 	return 100 * gs._opacityv[iFreq];
-// }
-
-void GasInterface::zeroOpticalProperties(GasState& gs) const
+GasSolution GasInterface::solveInitialGuess(double n, double T, GrainInterface& gri) const
 {
-	gs._emissivityv = Array(_eFrequencyv.size());
-	gs._opacityv = Array(_oFrequencyv.size());
-	gs._scatteringOpacityv = Array(_oFrequencyv.size());
-	gs._temperature = 0;
-	gs._densityv = Array{0, 0, 0, 0};
+	return _pimpl->solveInitialGuess(n, T, gri);
 }
-} /* namespace GasModule */
+
+GasSolution GasInterface::solveTemperature(double n, const Spectrum& specificIntensity,
+                                           GasModule::GrainInterface& gri) const
+{
+	return _pimpl->solveTemperature(n, specificIntensity, gri);
+}
+
+GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& specificIntensity,
+                                         GasModule::GrainInterface& gri,
+                                         double h2FormationOverride) const
+{
+	return _pimpl->solveDensities(n, T, specificIntensity, gri, h2FormationOverride);
+}
+
+void GasInterface::solveDensities(GasSolution& s, double n, double T,
+                                  const Spectrum& specificIntensity,
+                                  GasModule::GrainInterface& gri, bool startFromCurrent,
+                                  double h2FormationOverride) const
+{
+	_pimpl->solveDensities(s, n, T, specificIntensity, gri, startFromCurrent,
+	                       h2FormationOverride);
+}
+
+// GasSolution GasInterface::solveDensitiesNoH2(double n, double T,
+//                                              const Spectrum& specificIntensity,
+//                                              GasModule::GrainInterface& gri) const
+// {
+// 	return _pimpl->solveDensitiesNoH2(n, T, specificIntensity, gri);
+// }
+
+} // namespace GasModule

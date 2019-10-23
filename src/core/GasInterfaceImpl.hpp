@@ -2,9 +2,11 @@
 #define CORE_GASINTERFACEIMPL_HPP
 
 #include "Array.hpp"
+#include "ChemistrySolver.hpp"
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasSolution.hpp"
+#include "GasState.hpp"
 #include "GrainInterface.hpp"
 #include "SpeciesModelManager.hpp"
 #include "Spectrum.hpp"
@@ -33,11 +35,67 @@ class ChemistrySolver;
 class GasInterfaceImpl
 {
 public:
-	/** The constructor takes the same arguments as GasInterface. They are simply passed to
-	    the SpeciesModelManager. */
-	GasInterfaceImpl(const std::string& atomChoice, const std::string& moleculeChoice);
+	/** Creates an instance of the gas module. Multiple frequency grids are used, which need
+	    to be specified by the user.
 
-	~GasInterfaceImpl();
+	    - oFrequencyv is the grid that will be used to discretize the output opacity. This
+	      is typically coarser because a radiative transfer algorithm usually needs the
+	      opacity in each grid cell.
+
+	    Some configuration options in the form of strings are also provided. Currently, they
+	    only influence the settings of the H and H2 models. */
+	GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv,
+	                 const Array& eFrequencyv, const std::string& atomChoice = "",
+	                 const std::string& moleculeChoice = "");
+
+	/** The grid used to discretize the input radiation field */
+	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
+
+	/** The grid that will be used to discretize the output opacity. This is typically
+	    coarser because a radiative transfer algorithm usually needs the opacity in each
+	    grid cell. */
+	std::valarray<double> oFrequencyv() const { return _oFrequencyv; }
+
+	/** The grid on which the emissivity is calculated. */
+	std::valarray<double> eFrequencyv() const { return _eFrequencyv; }
+
+	// GASSTATE TOOLS (minimal information, works with GasSolution under the hood) //
+
+	/** The main way to run the code for a cell. A minimal set of results is stored in the
+	    given GasState object. The exact contents of the GasState are not known to the user.
+	    Through this interface, the variable information contained in the gas state can be
+	    combined with other constants and functions to retrieve the opacity and emissivity
+	    of the gas.
+
+	    The other arguments reflect the physical conditions in the cell for which a gas
+	    state is being calculated. The density of hydrogen nuclei, n; the ambient radiation
+	    field in [erg s-1 cm-1 Hz-1] units, as discretized on the @c iFrequencyv grid given
+	    as an argument to the constructor, originally; and a GrainInterface object,
+	    describing the properties of the grains within the cell for which the user wants to
+	    solve the gas state. See the @c GrainInterface documentation for information on how
+	    to construct one of these objects. The absorption efficiency of the grains currently
+	    needs to be tabulated for the frequencies contained in iFrequencyv.
+
+	    Note that the temperatures in GrainInterface can be modified, to take into account
+	    the effect of gas-grain collisions. */
+	void updateGasState(GasModule::GasState&, double n,
+	                    const std::valarray<double>& specificIntensityv,
+	                    GasModule::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
+
+	/** Does the same as the above, but without an input radiation field. Instead, a
+	    blackbody of the given temperature is used to calculate GasState. It is recommended
+	    to apply this function to all gas states before starting a simulation. */
+	void initializeGasState(GasModule::GasState&, double n, double T,
+	                        GasModule::GrainInterface&, GasDiagnostics* gd = nullptr) const;
+
+	/** The emissivity in SI units, for a given frequency index. (converted using 1 erg cm-3
+	    s-1 Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1 sr-1). [W m-3 Hz-1 sr-1] */
+	double emissivity_SI(const GasModule::GasState& gs, size_t iFreq) const;
+
+	/** Returns the total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1]*/
+	double opacity_SI(const GasModule::GasState& gs, size_t iFreq) const;
+
+	// GASSOLUTION TOOLS (full information) //
 
 	/** This convenience function runs solveTemperature for a blackbody radiation field. The
 	    final temperature should be close to the given blackbody temperature (?) */
@@ -81,14 +139,13 @@ private:
 	EVector guessSpeciesNv(double n, double ionToTotalFrac,
 	                       double moleculeToNeutralFrac) const;
 
+	std::valarray<double> _iFrequencyv;
+	std::valarray<double> _oFrequencyv;
+	std::valarray<double> _eFrequencyv;
+
 	int _ine, _inp, _inH, _inH2;
-	std::unique_ptr<ChemistrySolver> _chemSolver;
-
-	/* Pointers to other parts of the implementation, to make late initialization
-	   possible */
+	ChemistrySolver _chemSolver;
 	SpeciesModelManager _manager;
-
-	/* Continuum processes (no arguments needed) */
 	FreeBound _freeBound{};
 	FreeFree _freeFree{};
 };

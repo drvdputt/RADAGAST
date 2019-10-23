@@ -43,7 +43,6 @@ int main()
 
 	// Load a model, and grab the underlying implementation
 	GasModule::GasInterface gasInterface(frequencyv, frequencyv, frequencyv, "", "5 0");
-	auto pimpl = gasInterface.pimpl();
 
 	// No grains, we will manually override the h2 formation rate instead
 	GasModule::GrainInterface gri{};
@@ -53,7 +52,7 @@ int main()
 	outfile << "# T e H H2 H+ heat cool";
 	for (double T = 1000; T < 100000; T *= 1.05)
 	{
-		GasSolution s = pimpl->solveDensities(n, T, specificIntensity, gri, kGrainH2);
+		GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri, kGrainH2);
 		// Uncomment this to re-use the previous solution as an initial guess
 		// sp = &s;
 		double heat = s.heating();
@@ -70,7 +69,7 @@ int main()
 	}
 	for (double T = 100000; T > 10; T /= 1.05)
 	{
-		GasSolution s = pimpl->solveDensities(n, T, specificIntensity, gri, kGrainH2);
+		GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri, kGrainH2);
 		// sp = &s;
 		double heat = s.heating();
 		double cool = s.cooling();

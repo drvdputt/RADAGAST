@@ -7,8 +7,8 @@
 // Forward declarations for friend functions
 namespace GasModule
 {
-class GasInterface;
 class GasState;
+class GasInterface;
 } // namespace GasModule
 
 class GasInterfaceImpl;
@@ -33,7 +33,7 @@ namespace GasModule
     properties). */
 class GasState
 {
-	friend class GasInterface;
+	friend class ::GasInterfaceImpl;
 	friend void Testing::writeGasState(const std::string&, const GasModule::GasInterface&,
 	                                   const GasModule::GasState&);
 

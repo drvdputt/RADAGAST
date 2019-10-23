@@ -1,5 +1,4 @@
 #include "GasInterfaceImpl.hpp"
-#include "ChemistrySolver.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GasGrainInteraction.hpp"
@@ -12,23 +11,58 @@
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
+#include "Timer.hpp"
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 
 using namespace std;
 
-GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& moleculeChoice)
-                : _manager(atomChoice, moleculeChoice)
+GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv,
+                                   const Array& eFrequencyv, const string& atomChoice,
+                                   const string& moleculeChoice)
+                : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
+                  _eFrequencyv{eFrequencyv}, _chemSolver(make_unique<SimpleHydrogenNetwork>()),
+                  _manager(atomChoice, moleculeChoice)
 {
-	_chemSolver = make_unique<ChemistrySolver>(make_unique<SimpleHydrogenNetwork>());
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
 	_inH = SpeciesIndex::index("H");
 	_inH2 = SpeciesIndex::index("H2");
 }
 
-GasInterfaceImpl::~GasInterfaceImpl() = default;
+void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
+                                      const valarray<double>& specificIntensityv,
+                                      GasModule::GrainInterface& grainInfo,
+                                      GasDiagnostics* gd) const
+{
+	Timer t("Update gas state");
+	Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
+	GasSolution s = solveTemperature(n, specificIntensity, grainInfo);
+	gs = s.makeGasState(_oFrequencyv, _eFrequencyv);
+	if (gd)
+		s.fillDiagnostics(gd);
+}
+
+void GasInterfaceImpl::initializeGasState(GasModule::GasState& gs, double n, double T,
+                                          GasModule::GrainInterface& gri,
+                                          GasDiagnostics* gd) const
+{
+	GasSolution s = solveInitialGuess(n, T, gri);
+	gs = s.makeGasState(_oFrequencyv, _eFrequencyv);
+	if (gd)
+		s.fillDiagnostics(gd);
+}
+
+double GasInterfaceImpl::emissivity_SI(const GasModule::GasState& gs, size_t iFreq) const
+{
+	return 0.1 * gs._emissivityv[iFreq];
+}
+
+double GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs, size_t iFreq) const
+{
+	return 100 * gs._opacityv[iFreq];
+}
 
 GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T,
                                                 GasModule::GrainInterface& gri) const
@@ -40,6 +74,8 @@ GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T,
 	return solveTemperature(n, Spectrum(iFrequencyv, blackbodyv), gri);
 }
 
+namespace
+{
 struct heating_f_params
 {
 	const GasInterfaceImpl* gasInterfacePimpl;
@@ -66,6 +102,7 @@ double heating_f(double logT, void* params)
 	double cool = s.cooling();
 	return heat - cool;
 }
+} // namespace
 
 GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specificIntensity,
                                                GasModule::GrainInterface& gri) const
@@ -231,9 +268,9 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 			Error::runtime("negative dissociation rate!");
 
 		// CHEM RATES -> CHEMISTRY SOLUTION
-		EVector reactionRates = _chemSolver->chemicalNetwork()->rateCoeffv(
+		EVector reactionRates = _chemSolver.chemicalNetwork()->rateCoeffv(
 		                T, specificIntensity, kDissH2Levels, kFormH2);
-		EVector newSpeciesNv = _chemSolver->solveBalance(reactionRates, s.speciesNv());
+		EVector newSpeciesNv = _chemSolver.solveBalance(reactionRates, s.speciesNv());
 		s.setSpeciesNv(newSpeciesNv);
 
 		/* TODO: Add effect of grain charging to chemical network. I think it

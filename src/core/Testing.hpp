@@ -68,7 +68,7 @@ void writeGrains(const std::string& outputPath, const GasModule::GrainInterface&
                  bool bulkCar = true);
 
 void plotHeatingCurve_main();
-void plotHeatingCurve(const GasInterfaceImpl& gi, const std::string& outputPath, double n,
+void plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
                       const Spectrum& specificIntensity, GasModule::GrainInterface&);
 
 void plotIonizationStuff();

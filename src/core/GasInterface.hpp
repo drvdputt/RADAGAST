@@ -7,30 +7,20 @@
 #include <memory>
 #include <string>
 
-/** The real implementation is in GasInterfaceImpl(.h/.cpp). We only forward declare here, to
-    hide as many dependencies as possible. Currently, a client code only needs GasState.h,
-    GrainInterface.h, and this file in its include path. All public facing functionality (all
-    classes and functions in the aforementioned files), falls under the namepace GasModule. */
 class GasInterfaceImpl;
-
-/** The full solution */
 class GasSolution;
-
-/** More details about the gas can be retrieved by passing an object of this class. Include its
-    header to construct one, and then pass a pointer to the update function */
 class GasDiagnostics;
+class Spectrum;
 
 namespace GasModule
 {
-/** The interface class that other codes should use. This class and GasState should be the only
-    direct dependencies introduced in another code. Hence, the rest of the gas module code does
-    not have to be recompiled whenever a change is made to a source file of the host code which
-    makes use of this module. */
+/** The interface class that other codes should use. We use the PIMPL pattern here to minimize
+    the amount of includes necessary on the client side, so that the internals of the gas module
+    can be changed without having to recompile the client code. For the documentation, see
+    GasInterfaceImpl. */
 class GasInterface
 {
 public:
-	// SETUP //
-
 	/** Creates an instance of the gas module. Multiple frequency grids are used, of which 3
 	    need to be specified by the user.
 
@@ -51,15 +41,9 @@ public:
 	             const std::string& atomChoice = "",
 	             const std::string& moleculeChoice = "");
 
-	GasInterface(GasInterface&&) = default;
-
-	~GasInterface();
-
-	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
-	std::valarray<double> oFrequencyv() const { return _oFrequencyv; }
-	std::valarray<double> eFrequencyv() const { return _eFrequencyv; }
-
-	// USAGE 1: Calculate GasState objects //
+	std::valarray<double> iFrequencyv() const;
+	std::valarray<double> oFrequencyv() const;
+	std::valarray<double> eFrequencyv() const;
 
 	/** The main way to run the code for a cell. A minimal set of results is stored in the
 	    given GasState object. The exact contents of the GasState are not known to the user.
@@ -74,7 +58,10 @@ public:
 	    describing the properties of the grains within the cell for which the user wants to
 	    solve the gas state. See the @c GrainInterface documentation for information on how
 	    to construct one of these objects. The absorption efficiency of the grains currently
-	    needs to be tabulated for the frequencies contained in iFrequencyv. */
+	    needs to be tabulated for the frequencies contained in iFrequencyv.
+
+	    Note that the temperatures in GrainInterface can be modified, to take into account
+	    the effect of gas-grain collisions. */
 	void updateGasState(GasState&, double n,
 	                    const std::valarray<double>& specificIntensityv,
 	                    GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
@@ -85,12 +72,6 @@ public:
 	void initializeGasState(GasState&, double n, double T, GrainInterface&,
 	                        GasDiagnostics* gd = nullptr) const;
 
-	// USAGE 2: Translate GasState into optical properties //
-
-	/** The functions below hould provide a fast implementation to obtain the optical
-	    properties from the information stored in the GasState + constant information stored
-	    in the GasInterface. */
-
 	/** The emissivity in SI units, for a given frequency index. (converted using 1 erg cm-3
 	    s-1 Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1 sr-1). [W m-3 Hz-1 sr-1] */
 	double emissivity_SI(const GasState& gs, size_t iFreq) const;
@@ -98,33 +79,29 @@ public:
 	/** Returns the total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1]*/
 	double opacity_SI(const GasState& gs, size_t iFreq) const;
 
-	// /** Returns the scattering opacity. Currently there is are no contributions, and this
-	//     function simply returns zero for each prequency. [m-1] */
-	// double scatteringOpacity_SI(const GasState& gs, size_t iFreq) const;
+	GasSolution solveInitialGuess(double n, double T, GrainInterface&) const;
 
-	// /** Return the absorption opacity. Currently, all opacity is absorption opacity and the
-	//     albedo is therefore zero. [m-1] */
-	// double absorptionOpacity_SI(const GasState& gs, size_t iFreq) const;
+	GasSolution solveTemperature(double n, const Spectrum& specificIntensity,
+	                             GasModule::GrainInterface&) const;
+
+	GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity,
+	                           GasModule::GrainInterface&,
+	                           double h2FormationOverride = -1) const;
+
+	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
+	                    GasModule::GrainInterface&, bool startFromCurrent = false,
+	                    double h2FormationOverride = -1) const;
+
+	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
+	                               GasModule::GrainInterface&) const;
 
 private:
-	/** Modifies the contents of a GasState so that it is equivalent to no gas at all. */
-	void zeroOpticalProperties(GasState& gs) const;
-
-	std::valarray<double> _iFrequencyv;
-	std::valarray<double> _oFrequencyv;
-	std::valarray<double> _eFrequencyv;
-
 	/* The implementation details, especially those that require the inclusion of other
 	   files than 'GasState.h' in this header, are hidden behind this pointer. This way, the
 	   dependency chain is broken off just before the top level of abstraction (i.e. this
 	   header). This simplifies the include statements used for compiling a code which hosts
 	   the gas module. */
 	std::unique_ptr<GasInterfaceImpl> _pimpl;
-
-public:
-	/* This can be used to test individual components of the implementation. TODO: remove
-	   this eventually.*/
-	const GasInterfaceImpl* pimpl() const { return _pimpl.get(); }
 };
-} /* namespace GasModule */
+} // namespace GasModule
 #endif // CORE_GASINTERFACE_HPP
