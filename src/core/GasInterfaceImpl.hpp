@@ -2,21 +2,20 @@
 #define CORE_GASINTERFACEIMPL_HPP
 
 #include "Array.hpp"
+#include "FreeBound.hpp"
+#include "FreeFree.hpp"
 #include "GasSolution.hpp"
 #include "GrainInterface.hpp"
 #include "SpeciesModelManager.hpp"
 #include "Spectrum.hpp"
 
 class ChemistrySolver;
-class FreeBound;
-class FreeFree;
 
 /** This class is the backbone of the whole code. It calculates the abundances, level
     populations and net heating rate of hydrogen repeatedly, until the equilibrium temperature
     is found.
 
-    The parts of the code are grouped by the kind of process. When an instance of
-    GasInterfaceImpl is constructed, a few members which provide implementations of the various
+    When an instance is constructed, a few members which provide implementations of the various
     processes are constructed too. Objects of the classes FreeFree, FreeBound and Chemistry are
     created, which decribe respectively the Brehmsstrahlung, the recombination continuum and the
     chemical network. During their construction, they each read the data they need to perform
@@ -29,30 +28,24 @@ class FreeFree;
 
     The main methods of this class return a GasSolution object, which is given a callback
     pointer. Any quantities which depend on the specifics of the final equilibrium will be
-    calculated in that class, with some callbacks to this class to access some functions which
-    depend on constants stored here. */
+    calculated in that class. This class has a handful of extra functions, to give the
+    GasSolution access to some of the functionality of FreeFree and FreeBound. */
 class GasInterfaceImpl
 {
 public:
-	/** Creates an object which can calculates the NLTE state, of a pure (ionized and
-	    atomic) hydrogen gas and the resulting opacity and emission on the provided
-	    frequency grid. A constructor for manual setup (an argument for each subprocess of
-	    which more than 1 usable subclass/configuration exists). The components can be set
-	    up outside of this constructor, and ownership is then transferred using a unique
-	    pointer. */
+	/** The constructor takes the same arguments as GasInterface. They are simply passed to
+	    the SpeciesModelManager. */
 	GasInterfaceImpl(const std::string& atomChoice, const std::string& moleculeChoice);
 
 	~GasInterfaceImpl();
 
-	/** Used by the balance solver to calculate the ionization fraction and level
-	    populations for a certain electron temperature, under influence of a blackbody isrf
-	    of that same temperature. Can be used by the client to manually set the temperature
-	    and calculate some properties which can be used as an initial guess. */
+	/** This convenience function runs solveTemperature for a blackbody radiation field. The
+	    final temperature should be close to the given blackbody temperature (?) */
 	GasSolution solveInitialGuess(double n, double T, GasModule::GrainInterface&) const;
 
-	/** Solves for the NLTE, given a total hydrogen density n, an initial (electron)
-	    temperature guess, and a Spectrum object containing the radiation field in specific
-	    intensity per frequency units. */
+	/** Find a fully self-consistent solution, given a total hydrogen density n and a
+	    Spectrum object describing the radiation field in specific intensity units [erg s-1
+	    sr-1 cm-2]. */
 	GasSolution solveTemperature(double n, const Spectrum& specificIntensity,
 	                             GasModule::GrainInterface&) const;
 
@@ -70,22 +63,6 @@ public:
 	/** TODO: rework old code */
 	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
 	                               GasModule::GrainInterface&) const;
-
-	/** Emission coefficient for the free-bound recombination continuum (per cm-6, need to
-	    multiply with ne * np / 4pi) */
-	Array radiativeRecombinationEmissivityv(double T, const Array& eFrequencyv) const;
-
-	/** Emission coefficient for the free-free continuum (per cm-6, need to multiply with
-	    ne*np / 4pi to obtain [erg s-1 cm-2 sr-1 Hz-1] */
-	Array freeFreeEmissivityv(double T, const Array& eFrequencyv) const;
-
-	/** Opacity coefficient for the free-free continuum (per cm-6, need to multiply with
-	    ne*np to obtain [cm-1]) TODO: find out if this is relevant at all (I think it only
-	    matters in radio, so maybe for 21 cm). */
-	Array freeFreeOpacityv(double T, const Array& oFrequencyv) const;
-
-	/** Cooling by free-free emission [erg s-1 cm-3] */
-	double freeFreeCool(double np_ne, double T) const;
 
 	/** Calculate several extra contributions to the heating of the grains (collisions
 	    (Draine and Bertoldi 1996), H2 formation on the surface (Takahashi 2001). Passing
@@ -111,9 +88,9 @@ private:
 	   possible */
 	SpeciesModelManager _manager;
 
-	/* Continuum processes */
-	std::unique_ptr<FreeBound> _freeBound;
-	std::unique_ptr<FreeFree> _freeFree;
+	/* Continuum processes (no arguments needed) */
+	FreeBound _freeBound{};
+	FreeFree _freeFree{};
 };
 
 #endif // CORE_GASINTERFACEIMPL_HPP

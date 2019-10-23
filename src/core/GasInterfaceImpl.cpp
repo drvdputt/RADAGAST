@@ -2,8 +2,6 @@
 #include "ChemistrySolver.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
-#include "FreeBound.hpp"
-#include "FreeFree.hpp"
 #include "GasGrainInteraction.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
@@ -21,8 +19,7 @@
 using namespace std;
 
 GasInterfaceImpl::GasInterfaceImpl(const string& atomChoice, const string& moleculeChoice)
-                : _manager(atomChoice, moleculeChoice), _freeBound(make_unique<FreeBound>()),
-                  _freeFree(make_unique<FreeFree>())
+                : _manager(atomChoice, moleculeChoice)
 {
 	_chemSolver = make_unique<ChemistrySolver>(make_unique<SimpleHydrogenNetwork>());
 	_ine = SpeciesIndex::index("e-");
@@ -354,33 +351,6 @@ void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
 	}
 }
 
-Array GasInterfaceImpl::radiativeRecombinationEmissivityv(double T,
-                                                          const Array& eFrequencyv) const
-{
-	Array rrEmv(eFrequencyv.size());
-	_freeBound->addEmissionCoefficientv(T, eFrequencyv, rrEmv);
-	return rrEmv;
-}
-
-Array GasInterfaceImpl::freeFreeEmissivityv(double T, const Array& eFrequencyv) const
-{
-	Array ffEmv(eFrequencyv.size());
-	_freeFree->addEmissionCoefficientv(T, eFrequencyv, ffEmv);
-	return ffEmv;
-}
-
-Array GasInterfaceImpl::freeFreeOpacityv(double T, const Array& oFrequencyv) const
-{
-	Array ffOpv(oFrequencyv.size());
-	_freeFree->addOpacityCoefficientv(T, oFrequencyv, ffOpv);
-	return ffOpv;
-}
-
-double GasInterfaceImpl::freeFreeCool(double np_ne, double T) const
-{
-	return _freeFree->cooling(np_ne, T);
-}
-
 GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
                                               const GasModule::GrainInterface& gri) const
 {
@@ -405,7 +375,7 @@ GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
 	// C++14. Scott Meyers.
 	std::unique_ptr<HModel> hm = _manager.makeHModel();
 	std::unique_ptr<H2Model> h2m = _manager.makeH2Model();
-	GasSolution s(this, gri, specificIntensity, move(hm), move(h2m));
+	GasSolution s(gri, specificIntensity, move(hm), move(h2m), _freeBound, _freeFree);
 	return s;
 }
 

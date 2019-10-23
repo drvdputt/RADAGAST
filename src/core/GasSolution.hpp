@@ -9,8 +9,9 @@
 #include "HModel.hpp"
 #include "SpeciesIndex.hpp"
 
+class FreeBound;
+class FreeFree;
 class GasDiagnostics;
-class GasInterfaceImpl;
 class Spectrum;
 
 /** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl
@@ -21,19 +22,15 @@ class Spectrum;
 class GasSolution
 {
 public:
-	/** Pointer to gasInterfaceImpl (not sure if really needed, but for now) and inpinging
-	    radiation field are constant. Also, need to pass instances of HModel and H2Model
-	    here, as they could be abstract (transfer ownership using unique pointer). Working
-	    with shared pointer here, while the objects are const. Which means that they can
-	    only be changed from outside. Maybe this should be the other way around TODO: think
-	    about this. */
-	GasSolution(const GasInterfaceImpl* gi, const GasModule::GrainInterface& gri,
-	            const Spectrum& specificIntensity,
-	            const std::shared_ptr<HModel> hModel,
-	            const std::shared_ptr<H2Model> h2Model)
-	                : _gasInterfaceImpl{gi}, _grainInterface{gri},
-	                  _specificIntensity{specificIntensity}, _hSolution(std::move(hModel)),
-	                  _h2Solution(std::move(h2Model))
+	/** Some references to environmental parameters and other models are passed here. For
+	    the HModel and H2Model, ownership is transferred (using move) to this object, since
+	    their contents change while searching for the solution. */
+	GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
+	            std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
+	            const FreeBound& freeBound, const FreeFree& freeFree)
+	                : _grainInterface{gri}, _specificIntensity{specificIntensity},
+	                  _hSolution(std::move(hModel)), _h2Solution(std::move(h2Model)),
+	                  _freeBound{freeBound}, _freeFree{freeFree}
 	{
 	}
 
@@ -90,13 +87,14 @@ public:
 	double kDissH2Levels() const;
 
 private:
-	const GasInterfaceImpl* _gasInterfaceImpl;
 	const GasModule::GrainInterface& _grainInterface;
 	const Spectrum& _specificIntensity;
 	double _t;
 	EVector _speciesNv;
 	std::shared_ptr<HModel> _hSolution;
 	std::shared_ptr<H2Model> _h2Solution;
+	const FreeBound& _freeBound;
+	const FreeFree& _freeFree;
 };
 
 #endif // CORE_GASSOLUTION_HPP

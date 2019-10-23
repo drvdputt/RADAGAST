@@ -1,7 +1,8 @@
 #include "GasSolution.hpp"
+#include "FreeBound.hpp"
+#include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
 #include "GasGrainInteraction.hpp"
-#include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainType.hpp"
@@ -16,7 +17,7 @@ void GasSolution::makeZero()
 
 void GasSolution::solveLevels(double formH2)
 {
-	GasStruct gas = { _t, _speciesNv };
+	GasStruct gas = {_t, _speciesNv};
 	_hSolution->solve(nH(), gas, _specificIntensity);
 	_h2Solution->solve(nH2(), gas, _specificIntensity, formH2);
 }
@@ -28,8 +29,8 @@ Array GasSolution::emissivityv(const Array& eFrequencyv) const
 	lineEmv += _h2Solution->emissivityv(eFrequencyv);
 
 	Array contEmCoeffv(eFrequencyv.size());
-	contEmCoeffv += _gasInterfaceImpl->radiativeRecombinationEmissivityv(_t, eFrequencyv);
-	contEmCoeffv += _gasInterfaceImpl->freeFreeEmissivityv(_t, eFrequencyv);
+	_freeBound.addEmissionCoefficientv(_t, eFrequencyv, contEmCoeffv);
+	_freeFree.addEmissionCoefficientv(_t, eFrequencyv, contEmCoeffv);
 
 	return lineEmv + (np() * ne() / Constant::FPI) * contEmCoeffv;
 }
@@ -41,7 +42,9 @@ Array GasSolution::opacityv(const Array& oFrequencyv) const
 	lineOpv += _hSolution->opacityv(oFrequencyv);
 	lineOpv += _h2Solution->opacityv(oFrequencyv);
 
-	Array contOpv = np() * ne() * _gasInterfaceImpl->freeFreeOpacityv(_t, oFrequencyv);
+	Array contOpv(numFreq);
+	_freeFree.addOpacityCoefficientv(_t, oFrequencyv, contOpv);
+	contOpv *= np() * ne();
 
 	Array totalOpv(numFreq);
 	for (size_t i = 0; i < numFreq; i++)
@@ -56,7 +59,7 @@ Array GasSolution::opacityv(const Array& oFrequencyv) const
 
 double GasSolution::cooling() const
 {
-	double freefreeCool = _gasInterfaceImpl->freeFreeCool(np() * ne(), _t);
+	double freefreeCool = _freeFree.cooling(np() * ne(), _t);
 	double hRecCool = Ionization::cooling(nH(), np(), ne(), _t);
 	return freefreeCool + hRecCool;
 }
@@ -159,7 +162,7 @@ void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
 	gd->setCooling("H2 exc", -netH2line);
 	gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating(_specificIntensity));
 	// gd->setHeating("freefree", x);
-	gd->setCooling("freefree", _gasInterfaceImpl->freeFreeCool(np() * ne(), _t));
+	gd->setCooling("freefree", _freeFree.cooling(np() * ne(), _t));
 
 	// I need this per grain size. Doing this thing for now.
 	double grainPhotoHeat = 0;
