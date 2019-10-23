@@ -64,10 +64,8 @@ double heating_f(double logT, void* params)
 	// Refresh the solution stored somewhere, with optimization based on the current
 	// solution
 	GasSolution& s = *p->solution_storage;
-	const GasSolution* previous = p->use_previous_solution ? p->solution_storage : nullptr;
-
 	p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity,
-	                                     *p->grainInterface, previous);
+	                                     *p->grainInterface, p->use_previous_solution);
 	double heat = s.heating();
 	double cool = s.cooling();
 	return heat - cool;
@@ -140,19 +138,19 @@ GasSolution GasInterfaceImpl::solveDensities(double n, double T,
                                              double h2FormationOverride) const
 {
 	GasSolution s = makeGasSolution(specificIntensity, gri);
-	solveDensities(s, n, T, specificIntensity, gri, nullptr, h2FormationOverride);
+	solveDensities(s, n, T, specificIntensity, gri, false, h2FormationOverride);
 	return s;
 }
 
 void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
                                       const Spectrum& specificIntensity,
                                       GasModule::GrainInterface& gri,
-                                      const GasSolution* previous,
+				      bool startFromCurrent,
                                       double h2FormationOverride) const
 {
-	s.setT(T);
 	if (n <= 0)
 	{
+		s.setT(T);
 		s.makeZero();
 		return;
 	}
@@ -164,13 +162,12 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 
 	// If a previous solution is available (pointer is nonzero), then check if we want to
 	// use it
-	if (previous)
+	if (startFromCurrent)
 	{
-		double fT = T / previous->t();
+		double fT = T / s.t();
 		if (fT > 0.75 && fT < 1.5)
 		{
 			DEBUG("Using previous speciesNv as initial guess" << std::endl);
-			s.setSpeciesNv(previous->speciesNv());
 			manualGuess = false;
 		}
 		// else manualGuess stays true
@@ -181,19 +178,24 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		double molFrac = 0.1;
 		s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
 	}
-	else
-	{
-		// make sure that nHtotal and the initial guess are consistent
-		double nNeutralOfSpeciesNv = s.speciesNv()(_inH) + 2 * s.speciesNv()(_inH2);
-		double nHtotalOfSpeciesNv = s.speciesNv()(_inp) + nNeutralOfSpeciesNv;
-		double ionFrac = s.speciesNv()(_inp) / nHtotalOfSpeciesNv;
-		double molFrac = 2 * s.speciesNv()(_inH2) / nNeutralOfSpeciesNv;
-		s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
-	}
+	// else
+	// {
+	// 	// make sure that nHtotal and the initial guess are consistent
+	// 	double nNeutralOfSpeciesNv = s.speciesNv()(_inH) + 2 * s.speciesNv()(_inH2);
+	// 	double nHtotalOfSpeciesNv = s.speciesNv()(_inp) + nNeutralOfSpeciesNv;
+	// 	double ionFrac = s.speciesNv()(_inp) / nHtotalOfSpeciesNv;
+	// 	double molFrac = 2 * s.speciesNv()(_inH2) / nNeutralOfSpeciesNv;
+	// 	s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
+	// }
+	s.setT(T);
 
 	// Formation rate on grain surfaces. We declare it here so that it can be passed to the
 	// level population calculation too (needed for H2 formation pumping).
-	double kFormH2 = 0;
+	double kFormH2;
+	if (h2FormationOverride >= 0)
+		kFormH2 = h2FormationOverride;
+	else
+		kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
 
 	/* The main loop:
 	 v---------------------------------------------------<
@@ -214,16 +216,18 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 	while (!stopCriterion)
 	{
 		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
-		s.solveLevels(kFormH2);
+		s.solveLevels(kFormH2 * s.speciesNv()(_inH));
 
 		if (previousAbundancev.array().isNaN().any())
 			Error::runtime("Nan in chemistry solution!");
 
 		// LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
-		if (h2FormationOverride >= 0)
-			kFormH2 = h2FormationOverride;
-		else
+		if (h2FormationOverride < 0)
+		{
+			// update h2 formation rate if not overriden by a constant (need to
+			// update every iteration because grain temperature can change)
 			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
+		}
 
 		double kDissH2Levels = s.kDissH2Levels();
 		if (kDissH2Levels < 0)

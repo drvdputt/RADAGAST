@@ -41,8 +41,9 @@ public:
 
 	void makeZero();
 
-	/** Solve the level populations for each level model contained here */
-	void solveLevels(double kFormH2 = 0);
+	/** Solve the level populations for each level model contained here. The formation rate
+	    of H2 needs to be passed, because it pumps the H2 level populations. */
+	void solveLevels(double formH2 = 0);
 
 	/** The radiation field */
 	const Spectrum& specificIntensity() const { return _specificIntensity; }

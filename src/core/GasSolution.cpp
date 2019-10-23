@@ -14,11 +14,11 @@ void GasSolution::makeZero()
 	solveLevels();
 }
 
-void GasSolution::solveLevels(double kFormH2)
+void GasSolution::solveLevels(double formH2)
 {
 	GasStruct gas = { _t, _speciesNv };
 	_hSolution->solve(nH(), gas, _specificIntensity);
-	_h2Solution->solve(nH2(), gas, _specificIntensity, kFormH2);
+	_h2Solution->solve(nH2(), gas, _specificIntensity, formH2);
 }
 
 Array GasSolution::emissivityv(const Array& eFrequencyv) const

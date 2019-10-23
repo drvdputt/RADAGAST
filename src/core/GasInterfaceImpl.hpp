@@ -64,7 +64,7 @@ public:
 	/** Recalculate the densities for a GasSolution object, with a different temperature. Is
 	    repeatedly called by this class until equilibrium is found. */
 	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
-	                    GasModule::GrainInterface&, const GasSolution* previous = nullptr,
+	                    GasModule::GrainInterface&, bool startFromCurrent = false,
 	                    double h2FormationOverride = -1) const;
 
 	/** TODO: rework old code */
