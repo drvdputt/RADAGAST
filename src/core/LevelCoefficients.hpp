@@ -58,12 +58,11 @@ public:
 
 	/** Construct the rate matrix T_ij for the given radiation field and gas properties.
 	    This is the sum of the spontaneous (Aij), induced (Bij) and collisional (Cij)
-	    transitions. The collision data are obtained from the LevelDataProvider, while the
-	    induced transitions rates (B coefficients * line power) are derived from the given
-	    specific intensity. Optionally, the collision coefficients can be returned
-	    separately by pointer, so they don't have to be calculated again later (the result
-	    is exactly the same as calling cvv() but it is more efficient to calculate the total
-	    matrix and cvv at the same time). [s-1] */
+	    transitions. The induced transitions rates (B coefficients * line power) are derived
+	    from the given specific intensity. Optionally, the collision coefficients can be
+	    returned separately by pointer, so they don't have to be calculated again later (the
+	    result is exactly the same as calling cvv() but it is more efficient to calculate
+	    the total matrix and cvv at the same time). [s-1] */
 	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas,
 	                               EMatrix* cvv_p = nullptr) const;
 

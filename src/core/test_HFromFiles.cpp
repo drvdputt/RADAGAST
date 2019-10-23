@@ -28,8 +28,7 @@ TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")
 	DoctestUtils::compareMatrices(avv, nistA, 0.002);
 }
 
-TEST_CASE("Perform a direct comparison of the two LevelDataProvider classes HydrogenHardcoded "
-          "and HydrogenFromFiles.")
+TEST_CASE("Compare HHardcoded and HFromFiles.")
 {
 	HydrogenHardcoded hhc;
 	HFromFiles hff(2);

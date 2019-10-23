@@ -211,7 +211,7 @@ private:
 private:
 	int _resolvedUpTo{5};
 
-	/* Number of levels outputted by this LevelDataProvider */
+	// Number of levels
 	size_t _numL{0};
 
 	/* Contains the quantum numbers of the levels actually used for the output. l = -1 means

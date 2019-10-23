@@ -54,14 +54,14 @@ const bool lineprofile_optimizedLineAdd = true;
 const bool levelsolver_printEquations = false;
 
 // Print the transition coefficients (A, B and C matrices) to standard output (only in DEBUG).
-// Currenly quite cryptic, as it happens in the general class NLevel, and therefore the species
-// is not mentioned in the output.
+// Currenly quite cryptic, as it happens in the general class, and therefore the species is not
+// mentioned in the output.
 const bool levelcoefficients_printLevelMatrices = false;
 
 // VERY COSTLY: When integrating the B-coefficients, also do the integration 'manually' on a
 // very fine grid, and report the difference between the optimized line integration and the
-// 'manual' way. This is implemented in NLevel, but is actually a check on the quality of
-// LineProfile::integrateSpectrum.
+// 'manual' way. This is implemented in LevelCoefficients, but is actually a check on the
+// quality of LineProfile::integrateSpectrum.
 const bool levelcoefficients_reportSpecIntegral = false;
 
 // Write out the level matrices of h2 at setup (written to working_directory/h2/einsteinA.dat
