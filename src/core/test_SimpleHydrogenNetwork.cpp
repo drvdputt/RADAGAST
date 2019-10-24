@@ -1,9 +1,8 @@
 #include "doctest.h"
 
-#include "SimpleHydrogenNetwork.hpp"
-
 #include "ChemistrySolver.hpp"
 #include "Ionization.hpp"
+#include "SimpleHydrogenNetwork.hpp"
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 
@@ -21,8 +20,10 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	double kdiss = 0;
 
 	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, specificIntensity, kdiss, kform);
-	std::cout << "Rate coeff: ionization, recombination, dissociation" << std::endl
-	          << kv << std::endl;
+	std::stringstream ss;
+	ss << "Rate coeff: ionization, recombination, dissociation\n" << kv << '\n';
+	std::string ratesMessage = ss.str();
+	CAPTURE(ratesMessage);
 
 	int ie = SpeciesIndex::index("e-");
 	int ip = SpeciesIndex::index("H+");
