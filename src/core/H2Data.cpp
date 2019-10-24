@@ -13,8 +13,7 @@
 using namespace std;
 
 H2Data::H2Data(int maxJ, int maxV)
-                : LevelCoefficients(2 * Constant::HMASS_CGS), _maxJ{maxJ}, _maxV{maxV},
-                  _inH{SpeciesIndex::inH()}, _inH2{SpeciesIndex::inH2()}
+                : LevelCoefficients(2 * Constant::HMASS_CGS), _maxJ{maxJ}, _maxV{maxV}
 {
 	readLevels();
 	readTransProbs();
@@ -407,11 +406,11 @@ EMatrix H2Data::cvv(const GasStruct& gas) const
 	EMatrix the_cvv{EMatrix::Zero(_numL, _numL)};
 
 	// H-H2 collisions
-	double nH = gas._speciesNv(_inH);
+	double nH = gas._speciesNv(SpeciesIndex::inH());
 	addToCvv(the_cvv, T, H0, nH);
 
 	// H2-H2 collisions.
-	double nH2 = gas._speciesNv(_inH2);
+	double nH2 = gas._speciesNv(SpeciesIndex::inH2());
 	addToCvv(the_cvv, T, H2ORTHO, gas._orthoH2 * nH2);
 	addToCvv(the_cvv, T, H2PARA, (1. - gas._orthoH2) * nH2);
 

@@ -18,9 +18,8 @@ class H2Data : public LevelCoefficients
 	// CONSTRUCTION, READ-IN, SETUP //
 	//------------------------------//
 public:
-	/** Creates a new \c H2FromFiles object, reads in all the data. Optional arguments:
-	    upper limits for vibrational and rotational numbers. The data goes to 31 for J, and
-	    to 14 for v. */
+	/** Create a new instance, reading in all the data. Optional arguments: upper limits for
+	    vibrational and rotational numbers. The data goes to 31 for J, and to 14 for v. */
 	H2Data(int maxJ = 99, int maxV = 99);
 
 	/** A clear way to index the electronic states of molecular hydrogen. The files from
@@ -48,7 +47,10 @@ private:
 	    been some corrections, but the original data comes from Dabrowski (1984). */
 	void readLevels();
 
+	/** Loop over the loaded levels, and put all the energies in one vector. */
 	EVector makeEv() const;
+
+	/** Loop over the loaded levels, and put all the degeneracies in one vector. */
 	EVector makeGv() const;
 
 	/** Load the data from Wolniewicz (1998) (electric) and Pachucki and Komasa (2011)
@@ -79,11 +81,12 @@ private:
 	void readDissProbFile(const std::string& repoFile, ElectronicState eState);
 
 	// We don't have helium at this point, so leave it out. Don't forget to set numPartners
-	// if you change this enum.
+	// if you change this enum, as well as _gbarcoll down below.
 	enum CollisionPartner
 	{
 		H0 = 0,
-		/*He,*/ H2ORTHO,
+		// He,
+		H2ORTHO,
 		H2PARA,
 		HPLUS
 	};
@@ -110,13 +113,13 @@ private:
 			bool ortho;
 			bool oddJ = _j % 2;
 
-			/* For these states, odd J -> ortho; even J -> para. */
+			// For these states, odd J -> ortho; even J -> para. */
 			if (_eState == ElectronicState::X ||
 			    _eState == ElectronicState::Cminus ||
 			    _eState == ElectronicState::Dminus)
 				ortho = oddJ;
-			/* For the other states, it's the other way round. This is explained in
-			   the Cloudy H2 paper (Shaw et al. 2005). */
+			// For the other states, it's the other way round. This is explained in
+			// the Cloudy H2 paper (Shaw et al. 2005).
 			else
 				ortho = !oddJ;
 
@@ -140,9 +143,6 @@ public:
 	/** Implement this inherited function to provide collision coefficients for the level
 	    transitions */
 	EMatrix cvv(const GasStruct& gas) const override;
-
-	/** @name Functionality specific for H2. */
-	/**@{*/
 
 	/** Retrieve the index of a level with these quantum numbers. Will throw an out of range
 	    error when no level was read in for these quantum numbers */
@@ -184,27 +184,10 @@ public:
 	    on grain properties. */
 	EVector formationDistribution() const;
 
-	/**@}*/
 private:
 	/** Returns true if the given J and V are within the boundaries specified by the
 	    user. */
 	bool validJV(int J, int v) const;
-
-	/** Collisions between H and H2. Collisions between H2 (separate for ortho and para) and
-	    H2. Collisions between H+ and H2. Indexed according to the CollisionPartner enum. */
-	std::vector<CollisionData> _qdataPerPartner;
-
-	/** Keeps track for which transition we have collisional data, for each collision
-	    partner. */
-	std::vector<EMatrix_bool> _hasQdata;
-
-	/** Coefficients (y0, a, b) to be used on the formula log(k) = y0 + a * max(sigma,
-	    100)^b, for each of the 5 possible collision partners defined in the enum above. */
-	const double _gbarcoll[_numPartners][3] = {{-9.9265, -0.1048, 0.456},
-	                                           // {-8.281  , -0.1303 , 0.4931 },
-	                                           {-10.0357, -0.0243, 0.67},
-	                                           {-8.6213, -0.1004, 0.5291},
-	                                           {-9.2719, -0.0001, 1.0391}};
 
 	/** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i,
 	    f) and the_cvv(f, i) respectively. For each transition in the CollisionData object,
@@ -229,19 +212,19 @@ private:
 	    Cif and the temperature kT. */
 	double otherDirectionC(double Cif, int i, int f, double kT) const;
 
+	// Settings
 	bool _bB, _bCplus, _bCminus;
 	int _maxJ, _maxV;
 
-	/* Contains the quantum numbers and energies of the levels. The output will be indexed
-	   in the same way. */
+	// Contains the quantum numbers and energies of the levels
 	std::vector<H2Level> _levelv;
 
-	/* The total number of levels (equivalent to _levelv.size()) */
+	// The total number of levels (equivalent to _levelv.size())
 	size_t _numL{0};
 	size_t _startOfExcitedIndices{0};
 
-	/* A map to help with converting (eState, j, v) quantum numbers to an index in the level
-	   vector above. Function below shows how adding a level works. */
+	// A map to help with converting (eState, j, v) quantum numbers to an index in the level
+	// vector above. Function below shows how adding a level works.
 	std::map<std::array<int, 3>, int> _ejvToIndexm;
 	inline void addLevel(ElectronicState eState, int j, int v, double e)
 	{
@@ -250,25 +233,37 @@ private:
 		_ejvToIndexm.insert({{static_cast<int>(eState), j, v}, newIndex});
 	}
 
-	/** The transition coefficient matrix, indexed in the same way as _levelv, thanks to our
-	    map approach. */
+	// The transition coefficient matrix, indexed in the same way as _levelv
 	EMatrix _avv;
 
-	/** Dissociation probability for each level. [s-1] */
+	// Dissociation probability for each level. [s-1]
 	EVector _dissProbv;
-	/** Kinetic energy following dissociation. [erg] */
+	// Kinetic energy following dissociation. [erg]
 	EVector _dissKinEv;
 
-	// Caches species index of the collision partners
-	int _inH;
-	int _inH2;
+	// Collision data for different partners, indexed using CollisionPartner enum.
+	std::vector<CollisionData> _qdataPerPartner;
 
-	/** Cross sections for direct radiative dissociation from X. Indexed on (level index,
-	    process). There can be multiple cross sections for a level, because there are
-	    different processes which can occur per level (indicated by different 'nef' (final
-	    electronic level) in the data file. These will be indexed arbitrarily, as the nature
-	    of the process shouldn't matter. */
+	// Keep track for which transition we have collisional data, for each partner
+	// individually. If an entry _hadQdata[parter][i, f] is false, then this rate will be
+	// approximated using gbar
+	std::vector<EMatrix_bool> _hasQdata;
+
+	// Coefficients (y0, a, b) to be used in the formula log(k) = y0 + a * max(sigma,
+	// 100)^b, for each of the 5 possible collision partners defined in the enum above.
+	// (from Shaw et al. 2005)
+	const double _gbarcoll[_numPartners][3] = {{-9.9265, -0.1048, 0.456},
+	                                           // {-8.281  , -0.1303 , 0.4931 },
+	                                           {-10.0357, -0.0243, 0.67},
+	                                           {-8.6213, -0.1004, 0.5291},
+	                                           {-9.2719, -0.0001, 1.0391}};
+
+	// Cross sections for direct radiative dissociation from X. There can be multiple cross
+	// sections for a level (first index), because there are different processes which can
+	// occur per level (second index) (indicated by different 'nef' in the data file). */
 	std::vector<std::vector<Spectrum>> _dissociationCrossSectionv;
+
+	// Keep track of which levels have such cross sections, for easy looping
 	std::vector<size_t> _levelsWithCrossSectionv;
 };
 
