@@ -1,5 +1,6 @@
 #include "Chemistry.hpp"
 #include "DebugMacros.hpp"
+#include "Error.hpp"
 #include "SpeciesIndex.hpp"
 
 #include <gsl/gsl_errno.h>
@@ -70,6 +71,8 @@ int Chemistry::reactionIndex(const std::string& reactionName) const
 
 EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
 {
+	Error::equalCheck<int>("chemistry coefficients", _numReactions, _reactionv.size());
+	Error::equalCheck<int>("chemistry coefficients", _numSpecies, _netStoichvv.rows());
 	return solveTimeDep(rateCoeffv, n0v);
 }
 

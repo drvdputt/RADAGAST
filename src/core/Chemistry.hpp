@@ -18,8 +18,6 @@ public:
 	                 const Array& reactantStoichv,
 	                 const std::vector<std::string>& productNamev,
 	                 const Array& productStoichv);
-	void addConserved(const std::vector<std::string>& speciesNamev,
-	                  const Array& coefficientv);
 
 	/** This should be called after reactions have been added */
 	void prepareCoefficients();
