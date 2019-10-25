@@ -5,6 +5,9 @@
 
 class Chemistry
 {
+public:
+	virtual ~Chemistry() = default;
+
 	EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v) const;
 	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv) const;
 	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const;
