@@ -6,10 +6,10 @@ SimpleHChemistry::SimpleHChemistry()
 {
 	// CONSERVATION EQUATIONS
 	// Protons
-	addConserved({"H+", "H", "H2"}, {1, 1, 2});
+	// addConserved({"H+", "H", "H2"}, {1, 1, 2});
 
 	// Electrons
-	addConserved({"e-", "H", "H2"}, {1, 1, 2});
+	// addConserved({"e-", "H", "H2"}, {1, 1, 2});
 
 	// REACTIONS
 	// Photoionization
@@ -33,6 +33,8 @@ SimpleHChemistry::SimpleHChemistry()
 	   then using twice (not the word 'half' in the label) the reaction rate, we end up with
 	   an equal tempo of H2 formation, but one that scales only linearly with nH. */
 	addReaction("half H2 formation", {"H"}, {1}, {"H2"}, {.5});
+
+	prepareCoefficients();
 }
 
 EVector SimpleHChemistry::rateCoeffv(double T, const Spectrum& specificIntensity,

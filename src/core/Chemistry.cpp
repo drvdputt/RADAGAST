@@ -55,11 +55,12 @@ void Chemistry::addReaction(const std::string& reactionName,
 	                SpeciesIndex::makeFullCoefficientv(productNamev, productStoichv));
 }
 
-void Chemistry::addConserved(const std::vector<std::string>& speciesNamev,
-                             const Array& coefficientv)
+void Chemistry::prepareCoefficients()
 {
-	_conservationv.emplace_back(
-	                SpeciesIndex::makeFullCoefficientv(speciesNamev, coefficientv));
+	_rStoichvv = makeReactantStoichvv();
+	_netStoichvv = makeProductStoichvv() - _rStoichvv;
+	_numSpecies = _rStoichvv.rows();
+	_numReactions = _rStoichvv.cols();
 }
 
 int Chemistry::reactionIndex(const std::string& reactionName) const
@@ -135,17 +136,6 @@ EMatrix Chemistry::makeProductStoichvv() const
 		p.col(j) = _reactionv[j]._pv;
 	}
 	return p;
-}
-
-EMatrix Chemistry::makeConservationCoeffvv() const
-{
-	EMatrix c(numConserved(), numSpecies());
-	for (size_t q = 0; q < _conservationv.size(); q++)
-	{
-		// Each row represents a conserved quantity
-		c.row(q) = _conservationv[q];
-	}
-	return c;
 }
 
 EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) const
