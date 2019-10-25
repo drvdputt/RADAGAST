@@ -58,9 +58,10 @@ void Chemistry::addReaction(const std::string& reactionName,
 
 void Chemistry::prepareCoefficients()
 {
+	// TODO: numSpecies needs to be more flexible
+	_numSpecies = SpeciesIndex::size();
 	_rStoichvv = makeReactantStoichvv();
 	_netStoichvv = makeProductStoichvv() - _rStoichvv;
-	_numSpecies = _rStoichvv.rows();
 	_numReactions = _rStoichvv.cols();
 }
 
