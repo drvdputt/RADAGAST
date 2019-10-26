@@ -155,15 +155,29 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) c
 	gsl_odeiv2_driver* d = gsl_odeiv2_driver_alloc_y_new(&s, gsl_odeiv2_step_bsimp,
 	                                                     ini_step, epsabs, epsrel);
 
-	// 2^59 seconds > 13.7 Gyr
-	int max_steps = 60;
+	int max_steps = 32;
 	double t = 0;
 	EVector nv = n0v;
 	for (int i = 1; i <= max_steps; i++)
 	{
-		EVector previousNv = nv;
+		// We need to advance time by enough to see a significant difference in the
+		// slowest changing densities. If the chosen time scale is too short, then we
+		// would wrongly conclude that some densities have reached equilibrium, while in
+		// fact they just wouldn't have had enough time to change. Time scale =
+		// max(density / rate of change). Don't forget abs because rate of change can be
+		// negative of course.
 
-		double goalTime = std::pow(2., i);
+		EArray fv = evaluateFv(nv, rateCoeffv);
+		double timeScale = (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
+
+		// Limit the time scale to roughly the age of the universe
+		timeScale = std::min(timeScale, 5.5e17);
+
+		// I found that using twice the value works slightly better, but there's a lot
+		// of wiggle room of course
+		double goalTime = t + 2 * timeScale;
+
+		EVector previousNv = nv;
 		int status = gsl_odeiv2_driver_apply(d, &t, goalTime, &nv[0]);
 		if (status != GSL_SUCCESS)
 		{
@@ -176,7 +190,8 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) c
 		EArray delta = (nv - previousNv).array().abs();
 		EArray avg = (nv + previousNv) / 2;
 		bool absEquil = (delta < epsabs).all();
-		bool relEquil = ((delta / avg).abs() < epsrel).all();
+		// Ignore relative change when denominator is zero
+		bool relEquil = ((delta / avg).abs() < epsrel || avg == 0).all();
 		if (absEquil && relEquil)
 		{
 			DEBUG("Reached chemical equilibrium after " << i << " iterations\n");
