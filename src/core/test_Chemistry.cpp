@@ -81,7 +81,7 @@ TEST_CASE("Combine and dissociate")
 
 	// For each of these subcases, we do the following tests
 	double Ntotal = nH0 + 2 * nH20;
-	EVector n0v(SpeciesIndex::size());
+	EVector n0v = EVector::Zero(SpeciesIndex::size());
 	n0v(SpeciesIndex::inH()) = nH0;
 	n0v(SpeciesIndex::inH2()) = nH20;
 
