@@ -238,13 +238,13 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 
 	int counter = 0;
 	bool stopCriterion = false;
-	EVector previousAbundancev = s.speciesNv();
+	EVector previousAbundancev = s.speciesVector().speciesNv();
 	double previousHeating = 0;
 	double previousCooling = 0;
 	while (!stopCriterion)
 	{
 		// CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
-		s.solveLevels(kFormH2 * s.speciesNv()(_inH));
+		s.solveLevels(kFormH2 * s.speciesVector().nH());
 
 		if (previousAbundancev.array().isNaN().any())
 			Error::runtime("Nan in chemistry solution!");
@@ -262,8 +262,10 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 			Error::runtime("negative dissociation rate!");
 
 		// CHEM RATES -> CHEMISTRY SOLUTION
-		EVector reactionRates = _chemistry.rateCoeffv(T, specificIntensity, kDissH2Levels, kFormH2);
-		EVector newSpeciesNv = _chemistry.solveBalance(reactionRates, s.speciesNv());
+		EVector reactionRates = _chemistry.rateCoeffv(T, specificIntensity,
+		                                              kDissH2Levels, kFormH2);
+		EVector newSpeciesNv = _chemistry.solveBalance(reactionRates,
+		                                               s.speciesVector().speciesNv());
 		s.setSpeciesNv(newSpeciesNv);
 
 		/* TODO: Add effect of grain charging to chemical network. I think it
@@ -280,11 +282,11 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 
 		// CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%,
 		// or if the total amount is negligible compared to the norm.
-		EArray changev = s.speciesNv() - previousAbundancev;
-		double norm = s.speciesNv().norm();
+		EArray changev = newSpeciesNv - previousAbundancev;
+		double norm = newSpeciesNv.norm();
 		Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
-		                s.speciesNv().array() < 1.e-99 * norm;
+		                newSpeciesNv.array() < 1.e-99 * norm;
 
 		// Changing the grain temperature influences the following:
 		// h2 formation rate
