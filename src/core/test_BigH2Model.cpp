@@ -21,19 +21,12 @@ TEST_CASE("H2-specific algorithm")
 
 	double epsFrac = 1e-2;
 
-	int ie = spindex.index("e-");
-	int ip = spindex.index("H+");
-	int iH = spindex.index("H");
-	int iH2 = spindex.index("H2");
 	SpeciesVector sv(spindex);
-
 	auto makeGas = [&](double ne, double np, double nH, double nH2) {
-		EVector speciesNv = EVector::Zero(spindex.size());
-		speciesNv(ie) = ne;
-		speciesNv(ip) = np;
-		speciesNv(iH) = nH;
-		speciesNv(iH2) = nH2;
-		sv.setDensities(speciesNv);
+		sv.setNe(ne);
+		sv.setNp(np);
+		sv.setNH(nH);
+		sv.setNH2(nH2);
 		return GasStruct(T, sv);
 	};
 
