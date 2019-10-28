@@ -47,6 +47,11 @@
 // 	                                    const Array& coefficientv);
 // };
 
+namespace SpeciesIndex
+{
+const std::vector<std::string> common4{"e-", "H+", "H", "H2"};
+}
+
 class NewSpeciesIndex
 {
 public:
