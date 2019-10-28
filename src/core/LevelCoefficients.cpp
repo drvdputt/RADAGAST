@@ -57,7 +57,7 @@ EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntens
 	EMatrix the_cvv = cvv(gas);
 	if (cvv_p)
 		*cvv_p = the_cvv;
-	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._T, the_cvv);
+	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._t, the_cvv);
 	if (Options::levelcoefficients_printLevelMatrices)
 	{
 		DEBUG("Aij" << endl << _avv << endl << endl);

@@ -7,7 +7,7 @@
 
 void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity)
 {
-	_levelSolution.setT(gas._T);
+	_levelSolution.setT(gas._t);
 
 	if (n <= 0)
 	{
@@ -87,9 +87,9 @@ Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
 
 EVector HModel::sourcev(const GasStruct& gas) const
 {
-	EVector result = _hData->recombinationRatev(gas._T);
-	double ne = gas._speciesNv(SpeciesIndex::ine());
-	double np = gas._speciesNv(SpeciesIndex::inp());
+	EVector result = _hData->recombinationRatev(gas._t);
+	double ne = gas._sv.ne();
+	double np = gas._sv.np();
 	return result * ne * np;
 }
 
@@ -103,10 +103,10 @@ EVector HModel::sinkv(const GasStruct& gas) const
 	   doesn't really matter. Therefore, we choose the sink to be the same for each
 	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 	   => sink = totalsource / n because n0/n + n1/n = 1. */
-	double ne = gas._speciesNv(SpeciesIndex::ine());
-	double np = gas._speciesNv(SpeciesIndex::inp());
-	double nH = gas._speciesNv(SpeciesIndex::inH());
-	double totalSource = ne * np * Ionization::recombinationRateCoeff(gas._T);
+	double ne = gas._sv.ne();
+	double np = gas._sv.np();
+	double nH = gas._sv.nH();
+	double totalSource = ne * np * Ionization::recombinationRateCoeff(gas._t);
 	double sink = totalSource / nH; // Sink rate per (atom per cm3)
 	return EVector::Constant(_hData->numLv(), sink);
 }

@@ -28,7 +28,7 @@ TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS_
 EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const
 {
 	EMatrix Cvv = EMatrix::Zero(2, 2);
-	double ne = gas._speciesNv(SpeciesIndex::ine());
+	double ne = gas._sv.ne();
 	if (ne > 0)
 	{
 		/* Need separate contributions for number of protons and electrons. Toy
@@ -38,7 +38,7 @@ EMatrix TwoLevelHardcoded::cvv(const GasStruct& gas) const
 
 		/* Also take some values from the bottom of page 4. Gamma = 2.15 at 10000 K and
 		   1.58 at 1000 K. Do a linear interpolation. */
-		double T = gas._T;
+		double T = gas._t;
 		double bigUpsilon10 = (T - 1000) / 9000 * 2.15 + (10000 - T) / 9000 * 1.58;
 
 		Cvv(1, 0) += beta / sqrt(T) * bigUpsilon10 / gv()(1) * ne;
