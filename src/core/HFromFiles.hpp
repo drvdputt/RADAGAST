@@ -223,9 +223,6 @@ private:
 	/* Another map, this time one that inverts _levelOrdering above. This way, one can easily
 	   find the index of a level with a specific {n, l}. */
 	std::map<std::array<int, 2>, size_t> _nlToOutputIndexm;
-
-	/* Some often used species indices. */
-	int _ine, _inp;
 };
 
 #endif // CORE_HYDROGENFROMFILES_HPP

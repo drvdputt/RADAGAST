@@ -22,9 +22,7 @@ inline vector<int> twoJplus1range(int l)
 }
 } /* namespace */
 
-HFromFiles::HFromFiles(int resolvedUpTo)
-                : _resolvedUpTo(resolvedUpTo), _ine{SpeciesIndex::ine()},
-                  _inp{SpeciesIndex::inp()}
+HFromFiles::HFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
 {
 	if (_resolvedUpTo > cNMAX)
 		Error::rangeCheck<int>("Number of resolved levels", _resolvedUpTo, 2, cNMAX);
@@ -457,8 +455,7 @@ double HFromFiles::einsteinA(int ni, int nf) const
 	return Asum;
 }
 
-double HFromFiles::einsteinA(const HydrogenLevel& initial,
-                                    const HydrogenLevel& final) const
+double HFromFiles::einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const
 {
 	// No output for upward transitions
 	if (initial.e() < final.e())
@@ -534,8 +531,8 @@ double HFromFiles::eCollisionStrength(int ni, int nf, double T_eV) const
 	return Upsilonsum;
 }
 
-double HFromFiles::eCollisionStrength(const HydrogenLevel& initial,
-                                             const HydrogenLevel& final, double T_eV) const
+double HFromFiles::eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
+                                      double T_eV) const
 {
 	// No output for upward transitions
 	if (initial.e() < final.e())
