@@ -23,20 +23,16 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 	std::string ratesMessage = ss.str();
 	CAPTURE(ratesMessage);
 
-	SpeciesIndex spindex(SpeciesIndex::common4);
-	int ie = spindex.index("e-");
-	int ip = spindex.index("H+");
-	int iH = spindex.index("H");
-	int iH2 = spindex.index("H2");
-
-	EVector n0v(spindex.size());
-	n0v(ie) = 50;
-	n0v(ip) = 50;
-	n0v(iH) = 50;
-	n0v(iH2) = 0;
-	EVector nv = chemistry.solveBalance(kv, n0v);
-	double f_network = nv(ip) / (nv(ip) + nv(iH));
-	double f_exact = Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
+	SpeciesVector sv0(chemistry.speciesIndex());
+	sv0.setNe(50);
+	sv0.setNp(50);
+	sv0.setNH(50);
+	sv0.setNH2(0);
+	EVector nv = chemistry.solveBalance(kv, sv0.speciesNv());
+	SpeciesVector sv(chemistry.speciesIndex());
+	sv.setDensities(nv);
+	double f_network = sv.np() / (sv.np() + sv.nH());
+	double f_exact = Ionization::solveBalance(sv0.nH() + sv0.np(), T, specificIntensity);
 	CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(f_exact, f_network, 1e-6),
 	              "exact ionization rate = "
 	                              << f_exact << " while the one from chemical network is "
