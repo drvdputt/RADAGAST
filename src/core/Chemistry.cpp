@@ -91,7 +91,8 @@ EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v) c
 {
 	Error::equalCheck<int>("chemistry coefficients", _numReactions, _reactionv.size());
 	Error::equalCheck<int>("chemistry coefficients", _numSpecies, _netStoichvv.rows());
-	return solveTimeDep(rateCoeffv, n0v);
+	EVector result = solveTimeDep(rateCoeffv, n0v);
+	return result;
 }
 
 EVector Chemistry::evaluateFv(const EVector& nv, const EVector& rateCoeffv) const

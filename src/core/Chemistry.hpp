@@ -15,15 +15,17 @@ class Chemistry
 public:
 	virtual ~Chemistry() = default;
 
-protected:
-	/** Do not call after adding reactions! Things WILL break. TODO: change the `Reaction'
-	    struct to store the reaction information in a way that doesn't rely on the size of
-	    the system (just names and stoich should be fine, prepareCoefficients can then
-	    convert everything properly). Do this after the setup and storage and passing around
-	    of the new SpeciesIndex has been implemented. */
+	/** TODO & CAUTION: Do not call after adding reactions! Things WILL break. TODO: change
+	    the `Reaction' struct to store the reaction information in a way that doesn't rely
+	    on the size of the system (just names and stoich should be fine, prepareCoefficients
+	    can then convert everything properly). Do this after the setup and storage and
+	    passing around of the new SpeciesIndex has been implemented. */
 	void registerSpecies(const std::vector<std::string>& namev);
 
-public:
+	/** Read-only acces to a SpeciesIndex object, in case detailed information about the
+	    SpeciesVector is needed. Useful for making initial guesses. */
+	const NewSpeciesIndex& speciesIndex() const { return _speciesIndex; }
+
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Each reaction is given a number, and the reaction is added to the reaction
 	    index using the given name as a key. Subclasses typically implement a constructor
