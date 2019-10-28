@@ -98,6 +98,9 @@ public:
 	double nH() const { return ni(_inH); }
 	double nH2() const { return ni(_inH2); }
 	double nSpecies(const std::string& name) const { return ni(_index->index(name)); }
+
+	/** Useful for converting to other types */
+	const double* data() const { return _nv.data(); }
 	size_t size() const { return _nv.size(); }
 
 private:
