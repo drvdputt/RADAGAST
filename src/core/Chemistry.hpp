@@ -24,7 +24,7 @@ public:
 
 	/** Read-only acces to a SpeciesIndex object, in case detailed information about the
 	    SpeciesVector is needed. Useful for making initial guesses. */
-	const NewSpeciesIndex& speciesIndex() const { return _speciesIndex; }
+	const SpeciesIndex& speciesIndex() const { return _speciesIndex; }
 
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Each reaction is given a number, and the reaction is added to the reaction
@@ -81,7 +81,7 @@ private:
 	double densityProductDerivative(const EVector& nv, int r, int j) const;
 
 	// Keep track of index for each species name.
-	NewSpeciesIndex _speciesIndex;
+	SpeciesIndex _speciesIndex;
 
 	typedef struct Reaction
 	{

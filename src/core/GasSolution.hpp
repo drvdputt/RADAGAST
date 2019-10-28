@@ -26,7 +26,7 @@ public:
 	    the HModel and H2Model, ownership is transferred (using move) to this object, since
 	    their contents change while searching for the solution. */
 	GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
-	            const NewSpeciesIndex& speciesIndex, std::unique_ptr<HModel> hModel,
+	            const SpeciesIndex& speciesIndex, std::unique_ptr<HModel> hModel,
 	            std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound,
 	            const FreeFree& freeFree)
 	                : _grainInterface{gri}, _specificIntensity{specificIntensity},

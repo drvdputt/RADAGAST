@@ -44,7 +44,7 @@ int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], 
 
 void Chemistry::registerSpecies(const std::vector<std::string>& namev)
 {
-	_speciesIndex = NewSpeciesIndex(namev);
+	_speciesIndex = SpeciesIndex(namev);
 }
 
 void Chemistry::addReaction(const std::string& reactionName,

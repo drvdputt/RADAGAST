@@ -702,7 +702,7 @@ void Testing::plotPS64Collisions()
 	HFromFiles hff(5);
 	EMatrix avv = hff.avv();
 
-	NewSpeciesIndex spindex({"e-", "H+"});
+	SpeciesIndex spindex({"e-", "H+"});
 	SpeciesVector sv(spindex);
 	sv.setNe(ne);
 	sv.setNp(np);
@@ -775,7 +775,7 @@ void Testing::runH2(bool write)
 	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
 
 	// Set the densities
-	NewSpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesIndex spindex(SpeciesIndex::common4);
 	SpeciesVector sv(spindex);
 	sv.setNH2(nH2);
 	sv.setNe(ne);

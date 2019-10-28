@@ -12,7 +12,7 @@ TEST_CASE("Test LevelSolver using two-level LTE ")
 	double T = 500;
 	double n = 1000;
 	double ne = n;
-	NewSpeciesIndex spindex({"H", "e-"});
+	SpeciesIndex spindex({"H", "e-"});
 	SpeciesVector sv(spindex);
 	sv.setNe(ne);
 	GasStruct gas(T, sv);

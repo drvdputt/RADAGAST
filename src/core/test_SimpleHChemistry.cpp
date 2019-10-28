@@ -23,7 +23,7 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 	std::string ratesMessage = ss.str();
 	CAPTURE(ratesMessage);
 
-	NewSpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesIndex spindex(SpeciesIndex::common4);
 	int ie = spindex.index("e-");
 	int ip = spindex.index("H+");
 	int iH = spindex.index("H");

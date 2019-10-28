@@ -15,7 +15,7 @@ TEST_CASE("H2-specific algorithm")
 
 	double T = 500;
 
-	NewSpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesIndex spindex(SpeciesIndex::common4);
 	EVector zerov = EVector::Zero(hff.numLv());
 	Array frequencyv = Testing::generateGeometricGridv();
 

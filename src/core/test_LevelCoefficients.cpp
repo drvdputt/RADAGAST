@@ -16,7 +16,7 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
 	EVector gv = twolv.gv();
 	EMatrix avv = twolv.avv();
 
-	NewSpeciesIndex spindex({"e-"});
+	SpeciesIndex spindex({"e-"});
 	SpeciesVector sv(spindex);
 	GasStruct gas(500, sv);
 
