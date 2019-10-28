@@ -1,25 +1,23 @@
-#include "doctest.h"
-
-#include "ChemistrySolver.hpp"
+#include "DoctestUtils.hpp"
 #include "Ionization.hpp"
-#include "SimpleHydrogenNetwork.hpp"
+#include "Spectrum.hpp"
+#include "SimpleHChemistry.hpp"
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 
-TEST_CASE("testing chemistry solver by comparing with exact solution of ionization")
+TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 {
 	const double T = 10000;
 	Array frequencyv = Testing::generateGeometricGridv(200, 1e11, 1e16);
 	Array specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, 25000, 10);
 	Spectrum specificIntensity(frequencyv, specificIntensityv);
 
-	ChemistrySolver cs(std::make_unique<SimpleHydrogenNetwork>());
+	SimpleHChemistry chemistry{};
 
-	// Formation and dissociation rates should come from somewhere else
+	// no h2
 	double kform = 0;
 	double kdiss = 0;
-
-	EVector kv = cs.chemicalNetwork()->rateCoeffv(T, specificIntensity, kdiss, kform);
+	EVector kv = chemistry.rateCoeffv(T, specificIntensity, kdiss, kform);
 	std::stringstream ss;
 	ss << "Rate coeff: ionization, recombination, dissociation\n" << kv << '\n';
 	std::string ratesMessage = ss.str();
@@ -35,7 +33,7 @@ TEST_CASE("testing chemistry solver by comparing with exact solution of ionizati
 	n0v(ip) = 50;
 	n0v(iH) = 50;
 	n0v(iH2) = 0;
-	EVector nv = cs.solveBalance(kv, n0v);
+	EVector nv = chemistry.solveBalance(kv, n0v);
 	double f_network = nv(ip) / (nv(ip) + nv(iH));
 	double f_exact = Ionization::solveBalance(nv(iH) + nv(ip), T, specificIntensity);
 	CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(f_exact, f_network, 1e-6),

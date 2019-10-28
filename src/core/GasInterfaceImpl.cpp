@@ -6,7 +6,6 @@
 #include "GrainType.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
-#include "SimpleHydrogenNetwork.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
