@@ -55,7 +55,7 @@ public:
 	NewSpeciesIndex(const std::vector<std::string>& namev);
 
 	/** Return -1 if not contained */
-	int index(const std::string& name) const { return _indexMap.at(name); }
+	int index(const std::string& name) const;
 
 	/** Return vector, zero everywhere except at the index of the given species name, where
 	    it is 1. */
@@ -75,6 +75,23 @@ private:
 	// int --> string, map gives string --> int
 	std::vector<std::string> _namev;
 	std::map<std::string, int> _indexMap;
+};
+
+class SpeciesVector
+{
+public:
+	SpeciesVector(const NewSpeciesIndex& speciesIndex);
+	double ni(int i) const { return i >= 0 ? _nv(i) : 0; }
+	double ne() const { return ni(_ine); }
+	double np() const { return ni(_inp); }
+	double nH() const { return ni(_inH); }
+	double nH2() const { return ni(_inH2); }
+	double nSpecies(const std::string& name) const { return ni(_index.index(name)); }
+
+private:
+	const NewSpeciesIndex& _index;
+	int _ine{-1}, _inp{-1}, _inH{-1}, _inH2{-1};
+	EVector _nv;
 };
 
 #endif // CORE_SPECIESINDEX_HPP
