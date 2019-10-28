@@ -47,4 +47,34 @@ public:
 	                                    const Array& coefficientv);
 };
 
+class NewSpeciesIndex
+{
+public:
+	/** Create a new species index, assigning an arbitrary in index to each species name in
+	    the given list. */
+	NewSpeciesIndex(const std::vector<std::string>& namev);
+
+	/** Return -1 if not contained */
+	int index(const std::string& name) const { return _indexMap.at(name); }
+
+	/** Return vector, zero everywhere except at the index of the given species name, where
+	    it is 1. */
+	EVector unitVector(const std::string& name);
+
+	/** Return number of species */
+	size_t size() const { return _namev.size(); }
+
+	/** Get species name for certain index */
+	std::string name(int index) const { return _namev[index]; }
+
+	/** Get all species names */
+	std::vector<std::string> namev() const { return _namev; }
+
+private:
+	// Since it might be useful, let's just store both a map and a vector here. Vector gives
+	// int --> string, map gives string --> int
+	std::vector<std::string> _namev;
+	std::map<std::string, int> _indexMap;
+};
+
 #endif // CORE_SPECIESINDEX_HPP

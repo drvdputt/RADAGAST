@@ -41,3 +41,20 @@ EVector SpeciesIndex::makeFullCoefficientv(const std::vector<std::string>& namev
 
 	return fullCoefficientv;
 }
+
+NewSpeciesIndex::NewSpeciesIndex(const std::vector<std::string>& namev) : _namev{namev}
+{
+	int index = 0;
+	for (const std::string& s : namev)
+	{
+		_indexMap.insert({s, index});
+		index++;
+	}
+}
+
+EVector NewSpeciesIndex::unitVector(const std::string& name)
+{
+	EVector v = EVector::Zero(size());
+	v(index(name)) = 1;
+	return v;
+}
