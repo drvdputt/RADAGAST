@@ -8,6 +8,19 @@ class Spectrum;
 class SimpleHChemistry : public Chemistry
 {
 public:
+	/** Sets up a chemical network describing only the most basic reactions between e-, H+,
+	    H and H2.
+
+	    - photoionization of H [s-1]
+
+	    - ionization by collission with electron [cm3 s-1]
+
+	    - radiative recombination [cm3 s-1]
+
+	    - dissociation of H2 after excitation [s-1]
+
+	    - H2 formation (twice the H2 formation rate, as we use 1 H -> 0.5 H2 to make the
+	      reaction scale linearly with nH) [s-1] */
 	SimpleHChemistry();
 
 	/** Calculate the rate coefficients for each reaction. Multiplying with the right
