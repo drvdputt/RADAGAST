@@ -93,9 +93,6 @@ public:
 	/** Initialize with all elements zero */
 	SpeciesVector(const NewSpeciesIndex& speciesIndex);
 
-	/** Initialize and set elements */
-	// SpeciesVector(const NewSpeciesIndex& speciesIndex, const EVector& nv);
-
 	/** Things like the chemical network (which owns the SpeciesIndex) should be able to set
 	    this directly. Note that this will crash if e-, H+, H or H2 are not prosent. */
 	void setDensities(const EVector& nv) { _nv = nv; }
@@ -111,16 +108,13 @@ public:
 	double nH2() const { return ni(_inH2); }
 	double nSpecies(const std::string& name) const { return ni(_index->index(name)); }
 
-	/** Useful for checking convergence etc. */
 	EVector speciesNv() const { return _nv; }
 
-	/** Useful for converting to other types */
 	const double* data() const { return _nv.data(); }
 	size_t size() const { return _nv.size(); }
 
 private:
-	const NewSpeciesIndex* _index; // storing as pointer is definitely more comfortable than
-				       // as reference. Makes things copy-assignable.
+	const NewSpeciesIndex* _index;
 	int _ine{-1}, _inp{-1}, _inH{-1}, _inH2{-1};
 	EVector _nv;
 };
