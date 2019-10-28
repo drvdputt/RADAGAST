@@ -153,7 +153,6 @@ private:
 	std::valarray<double> _oFrequencyv;
 	std::valarray<double> _eFrequencyv;
 
-	int _ine, _inp, _inH, _inH2;
 	SimpleHChemistry _chemistry{};
 	SpeciesModelManager _manager;
 	FreeBound _freeBound{};

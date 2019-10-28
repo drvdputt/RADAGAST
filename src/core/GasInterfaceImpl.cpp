@@ -23,10 +23,6 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequ
                 : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
                   _eFrequencyv{eFrequencyv}, _manager(atomChoice, moleculeChoice)
 {
-	_ine = SpeciesIndex::index("e-");
-	_inp = SpeciesIndex::index("H+");
-	_inH = SpeciesIndex::index("H");
-	_inH2 = SpeciesIndex::index("H2");
 }
 
 void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
