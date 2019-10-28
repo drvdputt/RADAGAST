@@ -15,20 +15,32 @@ TEST_CASE("H2-specific algorithm")
 
 	double T = 500;
 
-	EVector speciesNv = EVector::Zero(SpeciesIndex::size());
+	NewSpeciesIndex spindex(SpeciesIndex::common4);
 	EVector zerov = EVector::Zero(hff.numLv());
 	Array frequencyv = Testing::generateGeometricGridv();
 
 	double epsFrac = 1e-2;
 
+	int ie = spindex.index("e-");
+	int ip = spindex.index("H+");
+	int iH = spindex.index("H");
+	int iH2 = spindex.index("H2");
+	SpeciesVector sv(spindex);
+
+	auto makeGas = [&](double ne, double np, double nH, double nH2) {
+		EVector speciesNv = EVector::Zero(spindex.size());
+		speciesNv(ie) = ne;
+		speciesNv(ip) = np;
+		speciesNv(iH) = nH;
+		speciesNv(iH2) = nH2;
+		sv.setDensities(speciesNv);
+		return GasStruct(T, sv);
+	};
+
 	SUBCASE("no radiation, high density, should go to LTE")
 	{
 		double n = 1e8;
-		speciesNv(SpeciesIndex::ine()) = 100;
-		speciesNv(SpeciesIndex::inp()) = 100;
-		speciesNv(SpeciesIndex::inH()) = 100;
-		speciesNv(SpeciesIndex::inH2()) = n;
-		const GasStruct gas(T, speciesNv);
+		const GasStruct gas = makeGas(100, 100, 100, n);
 
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
@@ -55,11 +67,8 @@ TEST_CASE("H2-specific algorithm")
 		double n = 1e-15;
 		double eps = 1e-2;
 
-		speciesNv(SpeciesIndex::ine()) = 0;
-		speciesNv(SpeciesIndex::inp()) = 0;
-		speciesNv(SpeciesIndex::inH()) = 0;
-		speciesNv(SpeciesIndex::inH2()) = n;
-		const GasStruct gas(T, speciesNv);
+		const GasStruct gas = makeGas(0, 0, 0, n);
+
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
 		bigh2.solve(n, gas, specificIntensity);
@@ -87,11 +96,7 @@ TEST_CASE("H2-specific algorithm")
 	SUBCASE("Blackbody radiation, no collisions, should also go to LTE?")
 	{
 		double n = 1;
-		speciesNv(SpeciesIndex::ine()) = 0;
-		speciesNv(SpeciesIndex::inp()) = 0;
-		speciesNv(SpeciesIndex::inH()) = 0;
-		speciesNv(SpeciesIndex::inH2()) = n;
-		const GasStruct gas(T, speciesNv);
+		const GasStruct gas = makeGas(0, 0, 0, n);
 		Array specificIntensityv(frequencyv.size());
 		for (size_t i = 0; i < frequencyv.size(); i++)
 			specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);

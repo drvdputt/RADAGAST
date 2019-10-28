@@ -9,6 +9,8 @@
 
 int main()
 {
+	NewSpeciesIndex spindex(SpeciesIndex::common4);
+
 	// Radiation field
 	int nPhotoBins = 20;
 	double low_eV = 1;
@@ -52,7 +54,8 @@ int main()
 	outfile << "# T e H H2 H+ heat cool";
 	for (double T = 1000; T < 100000; T *= 1.05)
 	{
-		GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri, kGrainH2);
+		GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri,
+		                                            kGrainH2);
 		// Uncomment this to re-use the previous solution as an initial guess
 		// sp = &s;
 		double heat = s.heating();
@@ -60,8 +63,7 @@ int main()
 		outfile << T;
 		for (const std::string& name : {"e-", "H", "H2", "H+"})
 		{
-			int i = SpeciesIndex::index(name);
-			outfile << " " << s.speciesNv()[i];
+			outfile << " " << s.speciesVector().nSpecies(name);
 		}
 		outfile << " " << heat << " " << cool;
 		outfile << '\n';
@@ -69,15 +71,15 @@ int main()
 	}
 	for (double T = 100000; T > 10; T /= 1.05)
 	{
-		GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri, kGrainH2);
+		GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri,
+		                                            kGrainH2);
 		// sp = &s;
 		double heat = s.heating();
 		double cool = s.cooling();
 		outfile << T;
 		for (const std::string& name : {"e-", "H", "H2", "H+"})
 		{
-			int i = SpeciesIndex::index(name);
-			outfile << " " << s.speciesNv()[i];
+			outfile << " " << s.speciesVector().nSpecies(name);
 		}
 		outfile << " " << heat << " " << cool;
 		outfile << '\n';

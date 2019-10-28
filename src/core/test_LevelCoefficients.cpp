@@ -15,7 +15,11 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
 	EVector ev = twolv.ev();
 	EVector gv = twolv.gv();
 	EMatrix avv = twolv.avv();
-	GasStruct gas;
+
+	NewSpeciesIndex spindex({"e-"});
+	SpeciesVector sv(spindex);
+	GasStruct gas(500, sv);
+
 	Spectrum specificIntensity;
 
 	CHECK(twolv.numLv() == 2);
@@ -39,7 +43,7 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
 		EMatrix Tvv = twolv.totalTransitionRatesvv(specificIntensity, gas);
 		CHECK(Tvv == avv);
 
-		gas._speciesNv[SpeciesIndex::ine()] = 100;
+		gas._sv.setNe(100);
 		EMatrix cvv;
 		Tvv = twolv.totalTransitionRatesvv(specificIntensity, gas, &cvv);
 		CHECK(Tvv == avv + cvv);

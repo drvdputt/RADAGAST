@@ -9,17 +9,16 @@
 
 TEST_CASE("Test LevelSolver using two-level LTE ")
 {
-	TwoLevelHardcoded twolv;
-	LevelSolution s(&twolv);
-
 	double T = 500;
 	double n = 1000;
 	double ne = n;
-	GasStruct gas;
-	gas._T = T;
-	gas._speciesNv = EVector::Zero(SpeciesIndex::size());
-	gas._speciesNv[SpeciesIndex::ine()] = ne;
+	NewSpeciesIndex spindex({"H", "e-"});
+	SpeciesVector sv(spindex);
+	sv.setNe(ne);
+	GasStruct gas(T, sv);
 
+	TwoLevelHardcoded twolv;
+	LevelSolution s(&twolv);
 	s.setT(T);
 	s.setNv(n * twolv.solveBoltzmanEquations(T));
 	s.setCvv(twolv.cvv(gas));

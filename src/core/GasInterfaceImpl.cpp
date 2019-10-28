@@ -307,7 +307,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
 		DEBUG("New cool: " << newCooling << " previous: " << previousCooling << '\n');
 
-		previousAbundancev = s.speciesNv();
+		previousAbundancev = newSpeciesNv;
 		previousHeating = newHeating;
 		previousCooling = newCooling;
 
@@ -407,17 +407,18 @@ GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
 	// C++14. Scott Meyers.
 	std::unique_ptr<HModel> hm = _manager.makeHModel();
 	std::unique_ptr<H2Model> h2m = _manager.makeH2Model();
-	GasSolution s(gri, specificIntensity, move(hm), move(h2m), _freeBound, _freeFree);
+	GasSolution s(gri, specificIntensity, _chemistry.speciesIndex(), move(hm), move(h2m),
+	              _freeBound, _freeFree);
 	return s;
 }
 
 EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac,
                                          double moleculeToNeutralFrac) const
 {
-	EVector speciesNv = EVector::Zero((SpeciesIndex::size()));
-	speciesNv(_ine) = ionToTotalFrac * n;
-	speciesNv(_inp) = speciesNv(_ine);
-	speciesNv(_inH) = (1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n;
-	speciesNv(_inH2) = moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2;
-	return speciesNv;
+	SpeciesVector sv(_chemistry.speciesIndex());
+	sv.setNe(ionToTotalFrac * n);
+	sv.setNp(sv.ne());
+	sv.setNH((1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n);
+	sv.setNH2(moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2);
+	return sv.speciesNv();
 }

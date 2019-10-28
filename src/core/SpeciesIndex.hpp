@@ -94,12 +94,15 @@ public:
 	SpeciesVector(const NewSpeciesIndex& speciesIndex);
 
 	/** Initialize and set elements */
-	SpeciesVector(const NewSpeciesIndex& speciesIndex, const EVector& nv);
+	// SpeciesVector(const NewSpeciesIndex& speciesIndex, const EVector& nv);
 
 	/** Things like the chemical network (which owns the SpeciesIndex) should be able to set
-	    this directly */
+	    this directly. Note that this will crash if e-, H+, H or H2 are not prosent. */
 	void setDensities(const EVector& nv) { _nv = nv; }
 	void setNe(double ne) { _nv(_ine) = ne; }
+	void setNp(double np) { _nv(_inp) = np; }
+	void setNH(double nH) { _nv(_inH) = nH; }
+	void setNH2(double nH2) { _nv(_inH2) = nH2; }
 
 	double ni(int i) const { return i >= 0 ? _nv(i) : 0; }
 	double ne() const { return ni(_ine); }

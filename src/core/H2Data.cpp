@@ -402,22 +402,22 @@ EVector H2Data::makeGv() const
 
 EMatrix H2Data::cvv(const GasStruct& gas) const
 {
-	double T = gas._T;
+	double T = gas._t;
 	EMatrix the_cvv{EMatrix::Zero(_numL, _numL)};
 
 	// H-H2 collisions
-	double nH = gas._speciesNv(SpeciesIndex::inH());
+	double nH = gas._sv.nH();
 	addToCvv(the_cvv, T, H0, nH);
 
 	// H2-H2 collisions.
-	double nH2 = gas._speciesNv(SpeciesIndex::inH2());
+	double nH2 = gas._sv.nH2();
 	addToCvv(the_cvv, T, H2ORTHO, gas._orthoH2 * nH2);
 	addToCvv(the_cvv, T, H2PARA, (1. - gas._orthoH2) * nH2);
 
 	// TODO: test if these are loaded correctly (compare with graph in Lee paper)
 
 	// H+-H2 collisions
-	double np = gas._speciesNv(SpeciesIndex::inp());
+	double np = gas._sv.np();
 	addToCvv(the_cvv, T, HPLUS, np);
 	return the_cvv;
 }

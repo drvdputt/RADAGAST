@@ -76,3 +76,4 @@ SpeciesVector::SpeciesVector(const NewSpeciesIndex& speciesIndex)
                   _inH2{speciesIndex.index("H2")}, _nv{EVector::Zero(speciesIndex.size())}
 {
 }
+

@@ -9,6 +9,7 @@ TEST_CASE("single species with creation and destruction")
 {
 	// one species, two reactions
 	Chemistry chemistry;
+	chemistry.registerSpecies({"e-"});
 	chemistry.addReaction("creation", {}, {}, {"e-"}, {1});
 	chemistry.addReaction("destruction", {"e-"}, {1}, {}, {});
 	chemistry.prepareCoefficients();
@@ -19,10 +20,11 @@ TEST_CASE("single species with creation and destruction")
 		k(chemistry.reactionIndex("destruction")) = destructionCoeff;
 		k << creationRate, destructionCoeff;
 
-		EVector n0 = EVector::Zero(SpeciesIndex::size());
-		n0(SpeciesIndex::ine()) = 100.;
-		EVector n = chemistry.solveBalance(k, n0);
-		return n(SpeciesIndex::ine());
+		SpeciesVector sv0(chemistry.speciesIndex());
+		sv0.setNe(100.);
+		SpeciesVector sv(chemistry.speciesIndex());
+		sv.setDensities(chemistry.solveBalance(k, sv0.speciesNv()));
+		return sv.ne();
 	};
 
 	SUBCASE("two thirds ratio")
@@ -42,52 +44,56 @@ TEST_CASE("single species with creation and destruction")
 
 TEST_CASE("Combine and dissociate")
 {
-	// two species (e.g. H and H2), two reactions
+	// two species (e.g. H and H2), two reactions. Also tests abstraction by calling them A
+	// and B.
 	Chemistry chemistry;
-	chemistry.addReaction("combine", {"H"}, {2}, {"H2"}, {1});
-	chemistry.addReaction("dissociate", {"H2"}, {1}, {"H"}, {2});
+	chemistry.registerSpecies({"A", "B"});
+	chemistry.addReaction("combine", {"A"}, {2}, {"B"}, {1});
+	chemistry.addReaction("dissociate", {"B"}, {1}, {"A"}, {2});
 	chemistry.prepareCoefficients();
 
 	// Try different initial conditions (TEST_CASE is restarted for every subcase)
-	double nH0;
-	double nH20;
-	SUBCASE("start with only H")
+	double nA;
+	double nB;
+	SUBCASE("start with only A")
 	{
-		nH0 = 30;
-		nH20 = 0;
+		nA = 30;
+		nB = 0;
 	}
-	SUBCASE("start with only H2")
+	SUBCASE("start with only B")
 	{
-		nH0 = 0;
-		nH20 = 15;
+		nA = 0;
+		nB = 15;
 	}
-	SUBCASE("start with both H and H2")
+	SUBCASE("start with both A and B")
 	{
-		nH0 = 10;
-		nH20 = 10;
+		nA = 10;
+		nB = 10;
 	}
 	SUBCASE("small large")
 	{
-		nH0 = 1e-10;
-		nH20 = 1000;
+		nA = 1e-10;
+		nB = 1000;
 	}
 	SUBCASE("large small")
 	{
-		nH0 = 1e6;
-		nH20 = 1e-6;
+		nA = 1e6;
+		nB = 1e-6;
 	}
-	CAPTURE(nH0);
-	CAPTURE(nH20);
+	CAPTURE(nA);
+	CAPTURE(nB);
 
 	// For each of these subcases, we do the following tests
-	double Ntotal = nH0 + 2 * nH20;
-	EVector n0v = EVector::Zero(SpeciesIndex::size());
-	n0v(SpeciesIndex::inH()) = nH0;
-	n0v(SpeciesIndex::inH2()) = nH20;
+	double Ntotal = nA + 2 * nB;
+	EVector n0v = EVector::Zero(chemistry.numSpecies());
+	n0v(chemistry.speciesIndex().index("A")) = nA;
+	n0v(chemistry.speciesIndex().index("B")) = nB;
+
+	SpeciesVector sv(chemistry.speciesIndex());
 
 	{ // Both formation and destruction
 		double eps = 1.e-13;
-		CAPTURE("Balance for " << nH0 << " " << nH20);
+		CAPTURE("Balance for " << nA << " " << nB);
 		double kform = 1.;
 		double kdiss = 0.2;
 		EVector kv(2);
@@ -95,17 +101,17 @@ TEST_CASE("Combine and dissociate")
 		kv(chemistry.reactionIndex("dissociate")) = kdiss;
 
 		// Exact solution
-		double nH_exact = (kdiss / 2 -
+		double nA_exact = (kdiss / 2 -
 		                   std::sqrt(kdiss * kdiss / 4 + 2 * kdiss * kform * Ntotal)) /
 		                  (-2 * kform);
-		double nH2_exact = (Ntotal - nH_exact) / 2;
+		double nB_exact = (Ntotal - nA_exact) / 2;
 
 		// General algorithm
-		EVector nv = chemistry.solveBalance(kv, n0v);
-		DoctestUtils::checkTolerance("nH (should be analytic solution)",
-		                             nv(SpeciesIndex::inH()), nH_exact, eps);
-		DoctestUtils::checkTolerance("nH2 and nH2_exact", nv(SpeciesIndex::inH2()),
-		                             nH2_exact, eps);
+		sv.setDensities(chemistry.solveBalance(kv, n0v));
+		DoctestUtils::checkTolerance("nA (should be analytic solution)",
+		                             sv.nSpecies("A"), nA_exact, eps);
+		DoctestUtils::checkTolerance("nB and nB_exact", sv.nSpecies("B"), nB_exact,
+		                             eps);
 	}
 
 	{ // Only formation
@@ -116,11 +122,10 @@ TEST_CASE("Combine and dissociate")
 		kv(chemistry.reactionIndex("combine")) = kform;
 		kv(chemistry.reactionIndex("dissociate")) = kdiss;
 
-		EVector nv = chemistry.solveBalance(kv, n0v);
+		sv.setDensities(chemistry.solveBalance(kv, n0v));
 		// All H should disappear, and be transformed into H2
-		DoctestUtils::checkRange("nH (should disappear)", nv(SpeciesIndex::inH()), 0.,
-		                         eps);
-		DoctestUtils::checkTolerance("nH2", nv(SpeciesIndex::inH2()), Ntotal / 2., eps);
+		DoctestUtils::checkRange("nA (should disappear)", sv.nSpecies("A"), 0., eps);
+		DoctestUtils::checkTolerance("nB", sv.nSpecies("B"), Ntotal / 2., eps);
 	}
 
 	{ // Only dissociation
@@ -131,11 +136,10 @@ TEST_CASE("Combine and dissociate")
 		kv(chemistry.reactionIndex("combine")) = kform;
 		kv(chemistry.reactionIndex("dissociate")) = kdiss;
 
-		EVector nv = chemistry.solveBalance(kv, n0v);
+		sv.setDensities(chemistry.solveBalance(kv, n0v));
 		// All H2 should disappear, and be transformed into H
-		DoctestUtils::checkRange("nH2 (should disappear)", nv(SpeciesIndex::inH2()), 0.,
-		                         eps);
-		DoctestUtils::checkTolerance("nH2 (should equal total)",
-		                             nv(SpeciesIndex::inH()), Ntotal, eps);
+		DoctestUtils::checkRange("nH2 (should disappear)", sv.nSpecies("B"), 0., eps);
+		DoctestUtils::checkTolerance("nH2 (should equal total)", sv.nSpecies("A"),
+		                             Ntotal, eps);
 	}
 }

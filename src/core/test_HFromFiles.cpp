@@ -61,17 +61,4 @@ TEST_CASE("Compare HHardcoded and HFromFiles.")
 	EMatrix eavvff = hff.extraAvv();
 	// hc_vs_ff(eavvhc, eavvff);
 	DoctestUtils::compareMatrices(eavvhc, eavvff, 0.01);
-
-	double T = 1e4;
-	double ne = 1e4;
-	double np = 1e4;
-	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
-	speciesNv(SpeciesIndex::inp()) = np;
-	speciesNv(SpeciesIndex::ine()) = ne;
-	GasStruct gas(T, speciesNv);
-
-	// cout << "Collisions:" << endl;
-	EMatrix cvvhc = hhc.cvv(gas);
-	EMatrix cvvff = hff.cvv(gas);
-	// hc_vs_ff(cvvhc, cvvff);
 }

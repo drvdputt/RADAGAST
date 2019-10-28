@@ -607,10 +607,11 @@ void Testing::plotHeatingCurve(const GasModule::GasInterface& gi, const std::str
 
 		densFileLine[0] = t;
 		double totalH = 0;
+		const EVector& nv = s.speciesVector().speciesNv();
 		for (int i = 0; i < numSpecies; i++)
 		{
-			densFileLine[1 + i] = s.speciesNv()(i);
-			totalH += h_conservation[i] * s.speciesNv()(i);
+			densFileLine[1 + i] = nv(i);
+			totalH += h_conservation[i] * nv(i);
 		}
 		densFileLine[1 + numSpecies] = totalH;
 		densFile.writeLine(densFileLine);
@@ -700,10 +701,12 @@ void Testing::plotPS64Collisions()
 
 	HFromFiles hff(5);
 	EMatrix avv = hff.avv();
-	EVector speciesNv = EVector::Zero(SpeciesIndex::size());
-	speciesNv(SpeciesIndex::ine()) = ne;
-	speciesNv(SpeciesIndex::inp()) = np;
-	GasStruct gas(T, speciesNv);
+
+	NewSpeciesIndex spindex({"e-", "H+"});
+	SpeciesVector sv(spindex);
+	sv.setNe(ne);
+	sv.setNp(np);
+	GasStruct gas(T, sv);
 	EMatrix cvv = hff.cvv(gas);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total
@@ -772,13 +775,14 @@ void Testing::runH2(bool write)
 	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
 
 	// Set the densities
-	EVector speciesNv{EVector::Zero(SpeciesIndex::size())};
-	speciesNv(SpeciesIndex::inH2()) = nH2;
-	speciesNv(SpeciesIndex::ine()) = ne;
-	speciesNv(SpeciesIndex::inp()) = np;
-	speciesNv(SpeciesIndex::inH()) = nH;
+	NewSpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesVector sv(spindex);
+	sv.setNH2(nH2);
+	sv.setNe(ne);
+	sv.setNp(np);
+	sv.setNH(nH);
+	GasStruct gas(T, sv);
 
-	GasStruct gas(T, speciesNv);
 	BigH2Model h2m(&h2l);
 	h2m.solve(nH2, gas, specificIntensity);
 	if (write)

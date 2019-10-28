@@ -1,8 +1,8 @@
 #include "DoctestUtils.hpp"
 #include "Ionization.hpp"
-#include "Spectrum.hpp"
 #include "SimpleHChemistry.hpp"
 #include "SpeciesIndex.hpp"
+#include "Spectrum.hpp"
 #include "Testing.hpp"
 
 TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
@@ -23,12 +23,13 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 	std::string ratesMessage = ss.str();
 	CAPTURE(ratesMessage);
 
-	int ie = SpeciesIndex::index("e-");
-	int ip = SpeciesIndex::index("H+");
-	int iH = SpeciesIndex::index("H");
-	int iH2 = SpeciesIndex::index("H2");
+	NewSpeciesIndex spindex(SpeciesIndex::common4);
+	int ie = spindex.index("e-");
+	int ip = spindex.index("H+");
+	int iH = spindex.index("H");
+	int iH2 = spindex.index("H2");
 
-	EVector n0v(SpeciesIndex::size());
+	EVector n0v(spindex.size());
 	n0v(ie) = 50;
 	n0v(ip) = 50;
 	n0v(iH) = 50;
