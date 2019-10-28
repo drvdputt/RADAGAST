@@ -4,6 +4,8 @@
 
 SimpleHChemistry::SimpleHChemistry()
 {
+	registerSpecies({"e-", "H+", "H", "H2"});
+
 	// CONSERVATION EQUATIONS
 	// Protons
 	// addConserved({"H+", "H", "H2"}, {1, 1, 2});

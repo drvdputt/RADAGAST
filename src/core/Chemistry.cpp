@@ -1,7 +1,6 @@
 #include "Chemistry.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
-#include "SpeciesIndex.hpp"
 
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_odeiv2.h>
@@ -43,6 +42,11 @@ int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], 
 }
 } // namespace
 
+void Chemistry::registerSpecies(const std::vector<std::string>& namev)
+{
+	_speciesIndex = NewSpeciesIndex(namev);
+}
+
 void Chemistry::addReaction(const std::string& reactionName,
                             const std::vector<std::string>& reactantNamev,
                             const Array& reactantStoichv,
@@ -51,15 +55,28 @@ void Chemistry::addReaction(const std::string& reactionName,
 {
 	// Give the reaction a number, and put its name in the map
 	_reactionIndexm.emplace(reactionName, _reactionIndexm.size());
-	_reactionv.emplace_back(
-	                SpeciesIndex::makeFullCoefficientv(reactantNamev, reactantStoichv),
-	                SpeciesIndex::makeFullCoefficientv(productNamev, productStoichv));
+
+	Error::equalCheck("Lengths of list of species names and vector of coefficients",
+	                  reactantNamev.size(), reactantStoichv.size());
+	Error::equalCheck("Lengths of list of species names and vector of coefficients",
+	                  productNamev.size(), productStoichv.size());
+
+	EVector rv = EVector::Zero(_speciesIndex.size());
+	EVector pv = EVector::Zero(_speciesIndex.size());
+
+	for (size_t r = 0; r < reactantNamev.size(); r++)
+		rv += reactantStoichv[r] * _speciesIndex.unitVector(reactantNamev[r]);
+
+	for (size_t p = 0; p < productNamev.size(); p++)
+		pv += productStoichv[p] * _speciesIndex.unitVector(productNamev[p]);
+
+	_reactionv.emplace_back(rv, pv);
 }
 
 void Chemistry::prepareCoefficients()
 {
 	// TODO: numSpecies needs to be more flexible
-	_numSpecies = SpeciesIndex::size();
+	_numSpecies = _speciesIndex.size();
 	_rStoichvv = makeReactantStoichvv();
 	_netStoichvv = makeProductStoichvv() - _rStoichvv;
 	_numReactions = _rStoichvv.cols();

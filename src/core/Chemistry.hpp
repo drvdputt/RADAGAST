@@ -3,6 +3,7 @@
 
 #include "Array.hpp"
 #include "EigenAliases.hpp"
+#include "SpeciesIndex.hpp"
 
 #include <map>
 #include <vector>
@@ -14,11 +15,22 @@ class Chemistry
 public:
 	virtual ~Chemistry() = default;
 
+protected:
+	/** Do not call after adding reactions! Things WILL break. TODO: change the `Reaction'
+	    struct to store the reaction information in a way that doesn't rely on the size of
+	    the system (just names and stoich should be fine, prepareCoefficients can then
+	    convert everything properly). Do this after the setup and storage and passing around
+	    of the new SpeciesIndex has been implemented. */
+	void registerSpecies(const std::vector<std::string>& namev);
+
+public:
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Each reaction is given a number, and the reaction is added to the reaction
 	    index using the given name as a key. Subclasses typically implement a constructor
 	    which calls addReaction and prepareCoefficients. Manually adding an extra reaction
-	    is still possible afterwards, but make sure to call prepareCoefficients again. */
+	    is still possible afterwards, but make sure to call prepareCoefficients again. On
+	    the other hand, I disallowed adding extra species, because that will break the way
+	    the current reactions are stored (as vectors in the species space)..*/
 	void addReaction(const std::string& reactionName,
 	                 const std::vector<std::string>& reactantNamev,
 	                 const Array& reactantStoichv,
@@ -66,6 +78,9 @@ private:
 	    density j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
 	double densityProductDerivative(const EVector& nv, int r, int j) const;
 
+	// Keep track of index for each species name.
+	NewSpeciesIndex _speciesIndex;
+
 	typedef struct Reaction
 	{
 		Reaction(const EVector& rv, const EVector& pv) : _rv(rv), _pv(pv) {}
@@ -74,6 +89,7 @@ private:
 	std::vector<Reaction> _reactionv;
 	std::map<std::string, int> _reactionIndexm;
 
+	// Filled in by prepareCoefficients()
 	EMatrix _rStoichvv, _netStoichvv;
 	size_t _numSpecies;
 	int _numReactions;

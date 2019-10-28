@@ -1,55 +1,57 @@
 #include "SpeciesIndex.hpp"
 #include "Error.hpp"
 
-const std::map<std::string, int> SpeciesIndex::_indexMap =
-                createSpeciesIndexm({"e-", "H+", "H", "H2"});
+// const std::map<std::string, int> SpeciesIndex::_indexMap =
+//                 createSpeciesIndexm({"e-", "H+", "H", "H2"});
 
-std::map<std::string, int>
-SpeciesIndex::createSpeciesIndexm(const std::vector<std::string>& namev)
-{
-	std::map<std::string, int> speciesIndex;
-	int index{0};
-	for (const auto& name : namev)
-	{
-		speciesIndex.insert({name, index});
-		index++;
-	}
-	return speciesIndex;
-}
+// std::map<std::string, int>
+// SpeciesIndex::createSpeciesIndexm(const std::vector<std::string>& namev)
+// {
+// 	std::map<std::string, int> speciesIndex;
+// 	int index{0};
+// 	for (const auto& name : namev)
+// 	{
+// 		speciesIndex.insert({name, index});
+// 		index++;
+// 	}
+// 	return speciesIndex;
+// }
 
-int SpeciesIndex::index(const std::string& s) { return _indexMap.at(s); }
+// int SpeciesIndex::index(const std::string& s) { return _indexMap.at(s); }
 
-int SpeciesIndex::ine() { return _indexMap.at("e-"); }
+// int SpeciesIndex::ine() { return _indexMap.at("e-"); }
 
-int SpeciesIndex::inp() { return _indexMap.at("H+"); }
+// int SpeciesIndex::inp() { return _indexMap.at("H+"); }
 
-int SpeciesIndex::inH() { return _indexMap.at("H"); }
+// int SpeciesIndex::inH() { return _indexMap.at("H"); }
 
-int SpeciesIndex::inH2() { return _indexMap.at("H2"); }
+// int SpeciesIndex::inH2() { return _indexMap.at("H2"); }
 
-size_t SpeciesIndex::size() { return _indexMap.size(); }
+// size_t SpeciesIndex::size() { return _indexMap.size(); }
 
-EVector SpeciesIndex::makeFullCoefficientv(const std::vector<std::string>& namev,
-                                           const Array& coefficientv)
-{
-	Error::equalCheck("Lengths of list of species names and vector of coefficients",
-	                  namev.size(), coefficientv.size());
+// EVector SpeciesIndex::makeFullCoefficientv(const std::vector<std::string>& namev,
+//                                            const Array& coefficientv)
+// {
+// 	Error::equalCheck("Lengths of list of species names and vector of coefficients",
+// 	                  namev.size(), coefficientv.size());
 
-	EVector fullCoefficientv = EVector::Zero(size());
-	for (size_t r = 0; r < namev.size(); r++)
-		fullCoefficientv(index(namev[r])) += coefficientv[r];
+// 	EVector fullCoefficientv = EVector::Zero(size());
+// 	for (size_t r = 0; r < namev.size(); r++)
+// 		fullCoefficientv(index(namev[r])) += coefficientv[r];
 
-	return fullCoefficientv;
-}
+// 	return fullCoefficientv;
+// }
 
 NewSpeciesIndex::NewSpeciesIndex(const std::vector<std::string>& namev) : _namev{namev}
 {
-	int index = 0;
 	for (const std::string& s : namev)
-	{
-		_indexMap.insert({s, index});
-		index++;
-	}
+		_indexMap.insert({s, _indexMap.size()});
+}
+
+void NewSpeciesIndex::addSpecies(const std::string& name)
+{
+	_namev.emplace_back(name);
+	_indexMap.insert({name, _indexMap.size()});
 }
 
 int NewSpeciesIndex::index(const std::string& name) const
