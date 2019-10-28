@@ -86,15 +86,23 @@ class SpeciesVector
 {
 public:
 	SpeciesVector(const NewSpeciesIndex& speciesIndex);
+	SpeciesVector(const SpeciesVector&) = default;
+
+	/** Things like the chemical network (which owns the SpeciesIndex) should be able to set
+	    this directly */
+	void setDensities(const EVector& nv) { _nv = nv; }
+
 	double ni(int i) const { return i >= 0 ? _nv(i) : 0; }
 	double ne() const { return ni(_ine); }
 	double np() const { return ni(_inp); }
 	double nH() const { return ni(_inH); }
 	double nH2() const { return ni(_inH2); }
-	double nSpecies(const std::string& name) const { return ni(_index.index(name)); }
+	double nSpecies(const std::string& name) const { return ni(_index->index(name)); }
+	size_t size() const { return _nv.size(); }
 
 private:
-	const NewSpeciesIndex& _index;
+	const NewSpeciesIndex* _index; // storing as pointer is definitely more comfortable than
+				       // as reference. Makes things copy-assignable.
 	int _ine{-1}, _inp{-1}, _inH{-1}, _inH2{-1};
 	EVector _nv;
 };

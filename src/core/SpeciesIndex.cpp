@@ -71,7 +71,7 @@ EVector NewSpeciesIndex::unitVector(const std::string& name)
 }
 
 SpeciesVector::SpeciesVector(const NewSpeciesIndex& speciesIndex)
-                : _index{speciesIndex}, _ine{speciesIndex.index("e-")},
+                : _index{&speciesIndex}, _ine{speciesIndex.index("e-")},
                   _inp{speciesIndex.index("H+")}, _inH{speciesIndex.index("H")},
                   _inH2{speciesIndex.index("H2")}, _nv{EVector::Zero(speciesIndex.size())}
 {
