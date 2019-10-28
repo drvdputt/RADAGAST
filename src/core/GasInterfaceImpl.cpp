@@ -22,8 +22,7 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequ
                                    const Array& eFrequencyv, const string& atomChoice,
                                    const string& moleculeChoice)
                 : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv},
-                  _eFrequencyv{eFrequencyv}, _chemSolver(make_unique<SimpleHydrogenNetwork>()),
-                  _manager(atomChoice, moleculeChoice)
+                  _eFrequencyv{eFrequencyv}, _manager(atomChoice, moleculeChoice)
 {
 	_ine = SpeciesIndex::index("e-");
 	_inp = SpeciesIndex::index("H+");
@@ -268,9 +267,8 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 			Error::runtime("negative dissociation rate!");
 
 		// CHEM RATES -> CHEMISTRY SOLUTION
-		EVector reactionRates = _chemSolver.chemicalNetwork()->rateCoeffv(
-		                T, specificIntensity, kDissH2Levels, kFormH2);
-		EVector newSpeciesNv = _chemSolver.solveBalance(reactionRates, s.speciesNv());
+		EVector reactionRates = _chemistry.rateCoeffv(T, specificIntensity, kDissH2Levels, kFormH2);
+		EVector newSpeciesNv = _chemistry.solveBalance(reactionRates, s.speciesNv());
 		s.setSpeciesNv(newSpeciesNv);
 
 		/* TODO: Add effect of grain charging to chemical network. I think it

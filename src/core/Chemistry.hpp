@@ -7,8 +7,6 @@
 #include <map>
 #include <vector>
 
-
-
 class Chemistry
 {
 public:

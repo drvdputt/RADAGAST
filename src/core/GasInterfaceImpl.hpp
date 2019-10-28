@@ -2,16 +2,16 @@
 #define CORE_GASINTERFACEIMPL_HPP
 
 #include "Array.hpp"
-#include "ChemistrySolver.hpp"
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasSolution.hpp"
 #include "GasState.hpp"
 #include "GrainInterface.hpp"
+#include "SimpleHChemistry.hpp"
 #include "SpeciesModelManager.hpp"
 #include "Spectrum.hpp"
 
-class ChemistrySolver;
+class Chemistry;
 
 /** This class is the backbone of the whole code. It calculates the abundances, level
     populations and net heating rate of hydrogen repeatedly, until the equilibrium temperature
@@ -154,7 +154,7 @@ private:
 	std::valarray<double> _eFrequencyv;
 
 	int _ine, _inp, _inH, _inH2;
-	ChemistrySolver _chemSolver;
+	SimpleHChemistry _chemistry{};
 	SpeciesModelManager _manager;
 	FreeBound _freeBound{};
 	FreeFree _freeFree{};
