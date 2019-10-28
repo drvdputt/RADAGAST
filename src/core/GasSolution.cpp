@@ -11,13 +11,13 @@
 
 void GasSolution::makeZero()
 {
-	_speciesNv = EVector::Zero(SpeciesIndex::size());
+	_sv.setDensities(EVector::Zero(_sv.size()));
 	solveLevels();
 }
 
 void GasSolution::solveLevels(double formH2)
 {
-	GasStruct gas = {_t, _speciesNv};
+	GasStruct gas = {_t, _sv};
 	_hSolution->solve(nH(), gas, _specificIntensity);
 	_h2Solution->solve(nH2(), gas, _specificIntensity, formH2);
 }
@@ -183,7 +183,7 @@ GasModule::GasState GasSolution::makeGasState(const Array& oFrequencyv,
 	{
 		opv = opacityv(oFrequencyv);
 	}
-	Array densityv(_speciesNv.data(), _speciesNv.size());
+	Array densityv(_sv.data(), _sv.size());
 	return {emv, opv, _t, densityv};
 }
 

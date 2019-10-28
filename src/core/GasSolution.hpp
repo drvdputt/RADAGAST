@@ -26,10 +26,12 @@ public:
 	    the HModel and H2Model, ownership is transferred (using move) to this object, since
 	    their contents change while searching for the solution. */
 	GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
-	            std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
-	            const FreeBound& freeBound, const FreeFree& freeFree)
+	            const NewSpeciesIndex& speciesIndex, std::unique_ptr<HModel> hModel,
+	            std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound,
+	            const FreeFree& freeFree)
 	                : _grainInterface{gri}, _specificIntensity{specificIntensity},
-	                  _hSolution(std::move(hModel)), _h2Solution(std::move(h2Model)),
+	                  _sv(speciesIndex), _hSolution(std::move(hModel)),
+	                  _h2Solution(std::move(h2Model)),
 	                  _freeBound{freeBound}, _freeFree{freeFree}
 	{
 	}
@@ -50,12 +52,14 @@ public:
 	void setT(double t) { _t = t; }
 
 	/** The chemistry solution */
-	EVector speciesNv() const { return _speciesNv; }
-	void setSpeciesNv(const EVector& nv) { _speciesNv = nv; }
-	double nH() const { return _speciesNv(SpeciesIndex::inH()); }
-	double nH2() const { return _speciesNv(SpeciesIndex::inH2()); }
-	double np() const { return _speciesNv(SpeciesIndex::inp()); }
-	double ne() const { return _speciesNv(SpeciesIndex::ine()); }
+	SpeciesVector speciesVector() const { return _sv; }
+
+	/** Set a new density vector, useful for making initial guesses. */
+	void setSpeciesNv(const EVector& nv) { _sv.setDensities(nv); }
+	double nH() const { return _sv.nH(); }
+	double nH2() const { return _sv.nH2(); }
+	double np() const { return _sv.np(); }
+	double ne() const { return _sv.ne(); }
 
 	/** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
 	Array emissivityv(const Array& eFrequencyv) const;
@@ -90,7 +94,7 @@ private:
 	const GasModule::GrainInterface& _grainInterface;
 	const Spectrum& _specificIntensity;
 	double _t;
-	EVector _speciesNv;
+	SpeciesVector _sv;
 	std::shared_ptr<HModel> _hSolution;
 	std::shared_ptr<H2Model> _h2Solution;
 	const FreeBound& _freeBound;
