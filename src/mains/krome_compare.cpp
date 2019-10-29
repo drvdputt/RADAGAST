@@ -9,7 +9,7 @@
 
 int main()
 {
-	SpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesIndex spindex(SpeciesIndex::e_p_H_H2);
 
 	// Radiation field
 	int nPhotoBins = 20;

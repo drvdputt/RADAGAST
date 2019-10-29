@@ -24,10 +24,8 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 	CAPTURE(ratesMessage);
 
 	SpeciesVector sv0(chemistry.speciesIndex());
-	sv0.setNe(50);
-	sv0.setNp(50);
-	sv0.setNH(50);
-	sv0.setNH2(0);
+	sv0.setDensities(chemistry.speciesIndex().linearCombination(SpeciesIndex::e_p_H_H2,
+	                                                            {50, 50, 50, 0}));
 	EVector nv = chemistry.solveBalance(kv, sv0.speciesNv());
 	SpeciesVector sv(chemistry.speciesIndex());
 	sv.setDensities(nv);

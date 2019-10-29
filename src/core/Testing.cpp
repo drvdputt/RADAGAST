@@ -702,10 +702,10 @@ void Testing::plotPS64Collisions()
 	HFromFiles hff(5);
 	EMatrix avv = hff.avv();
 
-	SpeciesIndex spindex({"e-", "H+"});
+	std::vector<std::string> namev{"e-", "H+"};
+	SpeciesIndex spindex(namev);
 	SpeciesVector sv(spindex);
-	sv.setNe(ne);
-	sv.setNp(np);
+	sv.setDensities(spindex.linearCombination(namev, {ne, np}));
 	GasStruct gas(T, sv);
 	EMatrix cvv = hff.cvv(gas);
 
@@ -775,12 +775,9 @@ void Testing::runH2(bool write)
 	Array frequencyv = improveFrequencyGrid(h2l, unrefinedv);
 
 	// Set the densities
-	SpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesIndex spindex(SpeciesIndex::e_p_H_H2);
 	SpeciesVector sv(spindex);
-	sv.setNH2(nH2);
-	sv.setNe(ne);
-	sv.setNp(np);
-	sv.setNH(nH);
+	sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2, {ne, np, nH, nH2}));
 	GasStruct gas(T, sv);
 
 	BigH2Model h2m(&h2l);

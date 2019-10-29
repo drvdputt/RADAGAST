@@ -15,7 +15,7 @@ TEST_CASE("H2-specific algorithm")
 
 	double T = 500;
 
-	SpeciesIndex spindex(SpeciesIndex::common4);
+	SpeciesIndex spindex(SpeciesIndex::e_p_H_H2);
 	EVector zerov = EVector::Zero(hff.numLv());
 	Array frequencyv = Testing::generateGeometricGridv();
 
@@ -23,10 +23,8 @@ TEST_CASE("H2-specific algorithm")
 
 	SpeciesVector sv(spindex);
 	auto makeGas = [&](double ne, double np, double nH, double nH2) {
-		sv.setNe(ne);
-		sv.setNp(np);
-		sv.setNH(nH);
-		sv.setNH2(nH2);
+		sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2,
+		                                          {ne, np, nH, nH2}));
 		return GasStruct(T, sv);
 	};
 

@@ -44,7 +44,7 @@ private:
 	std::map<std::string, int> _indexMap;
 
 public:
-	static const std::vector<std::string> common4;
+	static const std::vector<std::string> e_p_H_H2;
 };
 
 class SpeciesVector
