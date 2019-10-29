@@ -415,10 +415,9 @@ GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
 EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac,
                                          double moleculeToNeutralFrac) const
 {
-	SpeciesVector sv(_chemistry.speciesIndex());
-	sv.setNe(ionToTotalFrac * n);
-	sv.setNp(sv.ne());
-	sv.setNH((1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n);
-	sv.setNH2(moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2);
-	return sv.speciesNv();
+	return _chemistry.speciesIndex().linearCombination(
+	                SpeciesIndex::e_p_H_H2,
+	                {ionToTotalFrac * n, ionToTotalFrac * n,
+	                 (1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n,
+	                 moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2});
 }
