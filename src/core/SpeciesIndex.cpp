@@ -23,10 +23,12 @@ int SpeciesIndex::index(const std::string& name) const
 		return -1;
 }
 
-EVector SpeciesIndex::unitVector(const std::string& name)
+EVector SpeciesIndex::linearCombination(const std::vector<std::string>& namev,
+                                        const Array& weightv) const
 {
 	EVector v = EVector::Zero(size());
-	v(index(name)) = 1;
+	for (size_t i = 0; i < namev.size(); i++)
+		v(index(namev[i])) += weightv[i];
 	return v;
 }
 
@@ -36,4 +38,3 @@ SpeciesVector::SpeciesVector(const SpeciesIndex& speciesIndex)
                   _inH2{speciesIndex.index("H2")}, _nv{EVector::Zero(speciesIndex.size())}
 {
 }
-

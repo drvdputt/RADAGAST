@@ -23,9 +23,10 @@ public:
 	/** Return -1 if not contained */
 	int index(const std::string& name) const;
 
-	/** Return vector, zero everywhere except at the index of the given species name, where
-	    it is 1. */
-	EVector unitVector(const std::string& name);
+	/** Sum of unit vectors for the given names, with the given weights. Useful to set
+	    multiple densities, or to represent a reaction. */
+	EVector linearCombination(const std::vector<std::string>& namev,
+	                          const Array& weightv) const;
 
 	/** Return number of species */
 	size_t size() const { return _namev.size(); }
@@ -52,7 +53,7 @@ public:
 	/** Initialize with all elements zero */
 	SpeciesVector(const SpeciesIndex& speciesIndex);
 
-	/** Things like the chemical network (which owns the SpeciesIndex) should be able to set
+	/** Things like the chemical network (which owns a SpeciesIndex) should be able to set
 	    this directly. Note that this will crash if e-, H+, H or H2 are not prosent. */
 	void setDensities(const EVector& nv) { _nv = nv; }
 	void setNe(double ne) { _nv(_ine) = ne; }

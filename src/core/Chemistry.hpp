@@ -15,24 +15,23 @@ class Chemistry
 public:
 	virtual ~Chemistry() = default;
 
-	/** TODO & CAUTION: Do not call after adding reactions! Things WILL break. TODO: change
-	    the `Reaction' struct to store the reaction information in a way that doesn't rely
-	    on the size of the system (just names and stoich should be fine, prepareCoefficients
-	    can then convert everything properly). Do this after the setup and storage and
-	    passing around of the new SpeciesIndex has been implemented. */
+	/** Set up the internal SpeciesIndex. If one was already present, it is reset. */
 	void registerSpecies(const std::vector<std::string>& namev);
 
-	/** Read-only acces to a SpeciesIndex object, in case detailed information about the
-	    SpeciesVector is needed. Useful for making initial guesses. */
+	/** Add another species. Be sure to call prepareCoefficients when done adding
+	    species and/or reactions. */
+	void addSpecies(const std::string& name);
+
+	/** Read-only acces to the SpeciesIndex object, so the result vector can be interpreted,
+	    and optionally a SpeciesVector can be made. */
 	const SpeciesIndex& speciesIndex() const { return _speciesIndex; }
 
 	/** Function to provide a clear syntax for adding reactions in the setup of the chemical
 	    network. Each reaction is given a number, and the reaction is added to the reaction
 	    index using the given name as a key. Subclasses typically implement a constructor
-	    which calls addReaction and prepareCoefficients. Manually adding an extra reaction
-	    is still possible afterwards, but make sure to call prepareCoefficients again. On
-	    the other hand, I disallowed adding extra species, because that will break the way
-	    the current reactions are stored (as vectors in the species space)..*/
+	    which calls addReaction and prepareCoefficients.
+
+	    Be sure to call prepareCoefficients when done adding species and/or reactions .*/
 	void addReaction(const std::string& reactionName,
 	                 const std::vector<std::string>& reactantNamev,
 	                 const Array& reactantStoichv,
@@ -85,8 +84,14 @@ private:
 
 	typedef struct Reaction
 	{
-		Reaction(const EVector& rv, const EVector& pv) : _rv(rv), _pv(pv) {}
-		EVector _rv, _pv;
+		Reaction(const std::vector<std::string>& rNamev, const Array& rCoeffv,
+		         const std::vector<std::string>& pNamev, const Array& pCoeffv)
+		                : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv},
+		                  _pCoeffv{pCoeffv}
+		{
+		}
+		std::vector<std::string> _rNamev, _pNamev;
+		Array _rCoeffv, _pCoeffv;
 	} Reaction;
 	std::vector<Reaction> _reactionv;
 	std::map<std::string, int> _reactionIndexm;

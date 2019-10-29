@@ -2,9 +2,6 @@
 #include "DoctestUtils.hpp"
 #include "SpeciesIndex.hpp"
 
-// Note that the species in this test are purely fictional. I'm just using existing
-// names/indices from the SpeciesIndex until the latter is reworked.
-
 TEST_CASE("single species with creation and destruction")
 {
 	// one species, two reactions

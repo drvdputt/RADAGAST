@@ -47,35 +47,29 @@ void Chemistry::registerSpecies(const std::vector<std::string>& namev)
 	_speciesIndex = SpeciesIndex(namev);
 }
 
+void Chemistry::addSpecies(const std::string& name) { _speciesIndex.addSpecies(name); }
+
 void Chemistry::addReaction(const std::string& reactionName,
                             const std::vector<std::string>& reactantNamev,
                             const Array& reactantStoichv,
                             const std::vector<std::string>& productNamev,
                             const Array& productStoichv)
 {
-	// Give the reaction a number, and put its name in the map
-	_reactionIndexm.emplace(reactionName, _reactionIndexm.size());
-
 	Error::equalCheck("Lengths of list of species names and vector of coefficients",
 	                  reactantNamev.size(), reactantStoichv.size());
 	Error::equalCheck("Lengths of list of species names and vector of coefficients",
 	                  productNamev.size(), productStoichv.size());
 
-	EVector rv = EVector::Zero(_speciesIndex.size());
-	EVector pv = EVector::Zero(_speciesIndex.size());
+	// Give the reaction a number, and put its name in the map.
+	_reactionIndexm.emplace(reactionName, _reactionIndexm.size());
 
-	for (size_t r = 0; r < reactantNamev.size(); r++)
-		rv += reactantStoichv[r] * _speciesIndex.unitVector(reactantNamev[r]);
-
-	for (size_t p = 0; p < productNamev.size(); p++)
-		pv += productStoichv[p] * _speciesIndex.unitVector(productNamev[p]);
-
-	_reactionv.emplace_back(rv, pv);
+	// Register the names and ratios of the species involved. Vectors with coefficients of
+	// the right size will be created later.
+	_reactionv.emplace_back(reactantNamev, reactantStoichv, productNamev, productStoichv);
 }
 
 void Chemistry::prepareCoefficients()
 {
-	// TODO: numSpecies needs to be more flexible
 	_numSpecies = _speciesIndex.size();
 	_rStoichvv = makeReactantStoichvv();
 	_netStoichvv = makeProductStoichvv() - _rStoichvv;
@@ -142,10 +136,8 @@ EMatrix Chemistry::makeReactantStoichvv() const
 {
 	EMatrix r(_numSpecies, _reactionv.size());
 	for (size_t j = 0; j < _reactionv.size(); j++)
-	{
-		// Each column represents a reaction
-		r.col(j) = _reactionv[j]._rv;
-	}
+		r.col(j) = _speciesIndex.linearCombination(_reactionv[j]._rNamev,
+		                                           _reactionv[j]._rCoeffv);
 	return r;
 }
 
@@ -153,10 +145,8 @@ EMatrix Chemistry::makeProductStoichvv() const
 {
 	EMatrix p(_numSpecies, _reactionv.size());
 	for (size_t j = 0; j < _reactionv.size(); j++)
-	{
-		// Each column represents a reaction
-		p.col(j) = _reactionv[j]._pv;
-	}
+		p.col(j) = _speciesIndex.linearCombination(_reactionv[j]._pNamev,
+		                                           _reactionv[j]._pCoeffv);
 	return p;
 }
 
