@@ -53,7 +53,8 @@ public:
 	/** Solves the chemical network given a certain rate coefficient vector (indexed on the
 	    reactions). An initial value n0v can be given. A vector containing updated densities
 	    is returned. */
-	EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v) const;
+	EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v,
+	                     double maxTime = -1) const;
 
 	/** Evaluate the rate of change for each species [cm-3 s-1]. */
 	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv) const;
@@ -68,7 +69,7 @@ private:
 	EMatrix makeProductStoichvv() const;
 
 	/** Solve the chemistry by evolving the system until equilibrium. */
-	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) const;
+	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const;
 
 	/** Calculate the density factor needed to calculate the speed of reaction r. Formula:
 	    Product_i n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i,

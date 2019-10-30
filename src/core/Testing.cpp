@@ -693,6 +693,37 @@ void Testing::plotInterpolationTests()
 	out.close();
 }
 
+void Testing::plotChemistryTest()
+{
+	// Example problem from Braun, Herron & Kahaner (1988)
+	Chemistry chem{};
+	chem.registerSpecies({"a", "b", "c", "d"});
+	chem.addReaction("a -> b", {"a"}, {1}, {"b"}, {1});
+	chem.addReaction("b -> c", {"b"}, {1}, {"c"}, {1});
+	chem.addReaction("c -> d", {"c"}, {1}, {"d"}, {1});
+	chem.prepareCoefficients();
+	EVector kv(3);
+	kv << 2.e-1, 1.e-1, 1.2e-1;
+	EVector n0v(4);
+	n0v << 1., 0, 0, 0;
+
+	EVector nv = n0v;
+	auto out = IOTools::ofstreamFile("abcd.dat");
+	out << 0;
+	for (int j = 0; j < nv.size(); j++)
+		out << '\t' << nv(j);
+	out << '\n';
+	for (int i = 1; i < 20; i++)
+	{
+		// Start over every time, but intergrate farther
+		nv = chem.solveBalance(kv, n0v, i);
+		out << i;
+		for (int j = 0; j < nv.size(); j++)
+			out << '\t' << nv(j);
+		out << '\n';
+	}
+}
+
 void Testing::plotPS64Collisions()
 {
 	const double T = 10000;

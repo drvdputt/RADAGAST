@@ -81,11 +81,12 @@ int Chemistry::reactionIndex(const std::string& reactionName) const
 	return _reactionIndexm.at(reactionName);
 }
 
-EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v) const
+EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v,
+                                double maxTime) const
 {
 	Error::equalCheck<int>("chemistry coefficients", _numReactions, _reactionv.size());
 	Error::equalCheck<int>("chemistry coefficients", _numSpecies, _netStoichvv.rows());
-	EVector result = solveTimeDep(rateCoeffv, n0v);
+	EVector result = solveTimeDep(rateCoeffv, n0v, maxTime);
 	return result;
 }
 
@@ -150,8 +151,14 @@ EMatrix Chemistry::makeProductStoichvv() const
 	return p;
 }
 
-EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) const
+EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
+                                double maxTime) const
 {
+	if (maxTime == 0)
+		return n0v;
+
+	bool toEquilibrium = maxTime < 0;
+
 	struct ode_params params = {_numSpecies, &rateCoeffv, this};
 
 	gsl_odeiv2_system s{ode_f, ode_j, _numSpecies, &params};
@@ -163,27 +170,33 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v) c
 	gsl_odeiv2_driver* d = gsl_odeiv2_driver_alloc_y_new(&s, gsl_odeiv2_step_bsimp,
 	                                                     ini_step, epsabs, epsrel);
 
-	int max_steps = 32;
+	int max_steps = toEquilibrium ? 32 : 1;
 	double t = 0;
 	EVector nv = n0v;
 	for (int i = 1; i <= max_steps; i++)
 	{
-		// We need to advance time by enough to see a significant difference in the
-		// slowest changing densities. If the chosen time scale is too short, then we
-		// would wrongly conclude that some densities have reached equilibrium, while in
-		// fact they just wouldn't have had enough time to change. Time scale =
-		// max(density / rate of change). Don't forget abs because rate of change can be
-		// negative of course.
+		// If not going to equilibrium, we will take only one step, and the maxTime
+		// argument will be used.
+		double goalTime = maxTime;
+		if (toEquilibrium)
+		{
+			// We need to advance time by enough to see a significant difference in the
+			// slowest changing densities. If the chosen time scale is too short, then we
+			// would wrongly conclude that some densities have reached equilibrium, while in
+			// fact they just wouldn't have had enough time to change. Time scale =
+			// max(density / rate of change). Don't forget abs because rate of change can be
+			// negative of course.
+			EArray fv = evaluateFv(nv, rateCoeffv);
+			double timeScale =
+			                (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
 
-		EArray fv = evaluateFv(nv, rateCoeffv);
-		double timeScale = (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
+			// Limit the time scale to roughly the age of the universe
+			timeScale = std::min(timeScale, 5.5e17);
 
-		// Limit the time scale to roughly the age of the universe
-		timeScale = std::min(timeScale, 5.5e17);
-
-		// I found that using twice the value works slightly better, but there's a lot
-		// of wiggle room of course
-		double goalTime = t + 2 * timeScale;
+			// I found that using twice the value works slightly better, but there's a lot
+			// of wiggle room of course
+			goalTime = t + 2 * timeScale;
+		}
 
 		EVector previousNv = nv;
 		// TODO: deal with possible "singular matrix" error from GSL. Usually appears

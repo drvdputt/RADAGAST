@@ -87,6 +87,8 @@ void plotPhotoelectricHeating();
     several interpolation routines. */
 void plotInterpolationTests();
 
+void plotChemistryTest();
+
 /** Test the H2 implementation. */
 void runH2(bool write);
 
