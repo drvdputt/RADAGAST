@@ -44,10 +44,9 @@ private:
 };
 
 /** Factory which can create one of the builtins, given a valid value for the enum. I used to
-    have a method for custom grain types too, but have removed this code because it was getting
-    too complicated to be used by anyone. The machinery to do something similar will stay in
-    place, but I recommend writing more ad-hoc code like the CarbonaceousGrain subclass instead
-    of trying anything fully general. */
+    have a method for custom grain types too, but it was getting too complicated to do such a
+    thing in a general way. I recommend writing more ad-hoc code like the CarbonaceousGrain
+    subclass. */
 class GrainTypeFactory
 {
 public:

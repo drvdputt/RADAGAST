@@ -28,22 +28,6 @@ typedef struct SfcInteractionPar
 	const double _eH2{0}, _es{0}, _eHp{0}, _eHc{0}, _aSqrt{0}, _nuH2{0}, _nuHc{0}, _f{0};
 } SfcInteractionPar;
 
-/** Function signature for custom ionization potential. */
-typedef std::function<double(double a, int Z)> IonizationPotentialf;
-
-/** Function signature for custom photoelectric yield. hnuDiff is the energy of the photon minus
-    the potoelectric threshold. Emin is the minimum energy that electron will have, given that
-    was able to escape (intuitively, if it needs to go uphill to escape, the electron escaping
-    to infinity will end up with an energy equal to the potential difference from the top of the
-    hill to infinity. See also figure with potential sketches in WD01. */
-typedef std::function<double(double a, int Z, double hnuDiff, double Emin)> PhotoelectricYieldf;
-
-/** Function signature for custom autionization threshold. */
-typedef std::function<double(double a)> AutoIonizationThresholdf;
-
-/** Function signature for custom sticking coefficient. */
-typedef std::function<double(double a, int Z, double z_i)> StickingCoefficientf;
-
 /** List of grain types which have built-in values for these properties. For anything else, a
     separate graintype subclass will have to be written */
 enum class GrainTypeLabel
