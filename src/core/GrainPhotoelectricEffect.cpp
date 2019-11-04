@@ -172,8 +172,11 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 		double Y = _grainType.photoelectricYield(a, Z, hnuDiff, Emin);
 
 		double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
-		// The integral over the electron energy distribution (integral E f(E) dE), over the relevant range
+		// The integral over the electron energy distribution (integral E f(E) dE), over
+		// the energy range for which electrons can escape
 		double IntE = WD01::energyIntegral(Elow, Ehigh, Emin);
+		// Divide by (integral f(E) dE) over the same range, which normalizes the above
+		// value --> IntE / y2 gives an average energy
 		double y2 = WD01::escapingFraction(Z, Elow, Ehigh);
 
 		return Y * IntE / y2;
@@ -235,8 +238,8 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& freq
 	                                                     specificIntensityv, pet, &yieldf);
 	double emissionRatePD = 0;
 	if (Z < 0)
-		emissionRatePD = photodetachmentIntegrationLoop(Z, frequencyv,
-		                                                specificIntensityv, pdt);
+		emissionRatePD = photodetachmentIntegrationLoop(
+		                Z, frequencyv, specificIntensityv, pdt, nullptr);
 
 	return emissionRatePE + emissionRatePD;
 }
@@ -399,12 +402,11 @@ void testSpectrum(double G0, Array& frequencyv, Array& specificIntensityv)
 	const double minWav{0.0912 * Constant::UM_CM}; // cutoff at 13.6 eV
 	const double maxWav{1000 * Constant::UM_CM};
 	const double Tc{3.e4};
-	frequencyv = Testing::generateGeometricGridv(
-		200, Constant::LIGHT / maxWav, Constant::LIGHT / minWav);
-	specificIntensityv =
-	                Testing::generateSpecificIntensityv(frequencyv, Tc, G0);
+	frequencyv = Testing::generateGeometricGridv(200, Constant::LIGHT / maxWav,
+	                                             Constant::LIGHT / minWav);
+	specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, Tc, G0);
 }
-}
+} // namespace
 
 void GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
 {
@@ -482,7 +484,7 @@ void GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne
 }
 
 void GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
-                                                   double np) const
+                                                 double np) const
 {
 	Array frequencyv, specificIntensityv;
 	testSpectrum(G0, frequencyv, specificIntensityv);
