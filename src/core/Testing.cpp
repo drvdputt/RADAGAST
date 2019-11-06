@@ -6,7 +6,6 @@
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricEffect.hpp"
-#include "GrainType.hpp"
 #include "HFromFiles.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"
@@ -635,6 +634,9 @@ void Testing::plotHeatingCurve(const GasModule::GasInterface& gi, const std::str
 
 void Testing::plotPhotoelectricHeating()
 {
+	bool car = true;
+	GrainPhotoelectricData gpd(car);
+
 	double n = 2.5e1;
 	double f = 3.e-4;
 	double ne = n * f;
@@ -646,15 +648,29 @@ void Testing::plotPhotoelectricHeating()
 		G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
 	vector<int> pickValues{0, 1, 2, 3, 4};
 
-	unique_ptr<GrainType> grainType{
-	                GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLabel::CAR)};
-	GrainPhotoelectricCalculator phr(*grainType);
-	phr.yieldFunctionTest();
+	{ // yield function test needs specific set of sizes
+		vector<double> av = {4e-8, 10e-8, 30e-8, 100e-8, 300e-8};
+		auto gpc = gpd.makeCalculator(av);
+		gpc.yieldFunctionTest();
+	}
 
-	for (int i : pickValues)
-	{
-		phr.chargeBalanceTest(G0values[i], gasT, ne, ne);
-		phr.heatingRateTest(G0values[i], gasT, ne);
+	{ // Grain sizes for heating rate test
+		double aMin = 3 * Constant::ANG_CM;
+		double aMax = 10000 * Constant::ANG_CM;
+		const size_t Na = 90;
+		Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
+		auto gpc = gpd.makeCalculator(sizev);
+
+		for (int i : pickValues)
+			gpc.heatingRateTest(G0values[i], gasT, ne);
+
+	}
+
+	{ // Single grain size for charge balance test
+		Array sizev(200. * Constant::ANG_CM, 1);
+		auto gpc = gpd.makeCalculator(sizev);
+		for (int i : pickValues)
+			gpc.chargeBalanceTest(G0values[i], gasT, ne, ne);
 	}
 }
 
