@@ -7,7 +7,10 @@
 class ChargeDistribution
 {
 public:
-	ChargeDistribution() : _fz({0.}), _zmin{0} {}
+	/** Default constructor for a Chargedistribution object. By default, a charge
+	    distribution with one entry is constructed, with charge 0 and density 1. This simply
+	    describes a population where all charges are 0. */
+	ChargeDistribution() : _fz({1.}), _zmin{0} {}
 
 	/** This function will calculate the detailed balance solution for the charge
 	    distribution, given two functions that produce the upward and downward charging
