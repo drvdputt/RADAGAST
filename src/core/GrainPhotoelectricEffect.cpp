@@ -12,11 +12,6 @@
 
 using namespace std;
 
-GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const GrainType& grainType)
-                : _grainType{grainType}
-{
-}
-
 int GrainPhotoelectricCalculator::minimumCharge(int i) const
 {
 	double Uait = autoIonizationThreshold(_sizev[i]);
@@ -196,6 +191,7 @@ double GrainPhotoelectricCalculator::heatingRateA(int i, const Environment& env,
                                                   const Array& Qabsv,
                                                   const ChargeDistribution& cd) const
 {
+	double a = _sizev[i];
 	double totalHeatingForGrainSize = 0;
 
 	for (int Z = cd.zmin(); Z <= cd.zmax(); Z++)
@@ -203,8 +199,8 @@ double GrainPhotoelectricCalculator::heatingRateA(int i, const Environment& env,
 		double fZz = cd.value(Z);
 		if (!isfinite(fZz))
 			Error::runtime("nan in charge distribution");
-		double heatAZ = heatingRateAZ(_sizev[i], Z, env._specificIntensity.frequencyv(),
-		                              Qabsv, env._specificIntensity.valuev());
+		double heatAZ = heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabsv,
+		                              env._specificIntensity.valuev());
 
 		/* Fraction of grains in this charge state * heating by a single particle of
 		   charge Z. */
@@ -280,26 +276,26 @@ GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Environment&
                                                        const ChargeDistribution& cd) const
 {
 	double a = _sizev[i];
-	
+
 	// Calculates WD01 equation 42
 	double kT = Constant::BOLTZMAN * env._T;
 	double eightkT3DivPi = 8 * kT * kT * kT / Constant::PI;
 
 	// For every collision partner, add the contibutions for each possible grain charge.
 	double particleSum = 0;
-	for (size_t i = 0; i < env._chargev.size(); i++)
+	for (size_t j = 0; j < env._chargev.size(); j++)
 	{
 		// tau = akT / q^2 (WD01 eq 26)
-		int z_i = env._chargev[i];
-		double tau = a * kT / z_i / z_i / Constant::ESQUARE;
+		int z_j = env._chargev[j];
+		double tau = a * kT / z_j / z_j / Constant::ESQUARE;
 
 		double Zsum = cd.sumOverCharge([&](int zGrain) {
-			double ksi = zGrain / static_cast<double>(z_i);
-			return _grainType.stickingCoefficient(a, zGrain, z_i) *
+			double ksi = zGrain / static_cast<double>(z_j);
+			return stickingCoefficient(a, zGrain, z_j) *
 			       WD01::lambdaTilde(tau, ksi);
 		});
 
-		particleSum += env._densityv[i] * sqrt(eightkT3DivPi / env._massv[i]) * Zsum;
+		particleSum += env._densityv[j] * sqrt(eightkT3DivPi / env._massv[j]) * Zsum;
 	}
 
 	/* The second term of equation 42: autoionization of grains with the most negative
@@ -314,7 +310,7 @@ GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Environment&
 		secondTerm = cd.value(zmin) *
 		             collisionalChargingRate(a, env._T, zmin, -1,
 		                                     Constant::ELECTRONMASS, env._ne) *
-		             _grainType.ionizationPotential(a, zmin - 1);
+		             ionizationPotential(a, zmin - 1);
 
 	return Constant::PI * a * a * particleSum * kT + secondTerm;
 }
@@ -338,7 +334,7 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
 			double psi = ZVg / kT;
 			double eta = psi <= 0 ? 1 - psi : exp(-psi);
 			double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
-			double S = _grainType.stickingCoefficient(a, zGrain, env._chargev[i]);
+			double S = stickingCoefficient(a, zGrain, env._chargev[i]);
 			// cm s-1
 			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
 			// cm-3 * cm s-1 * erg = cm-2 s-1 erg
@@ -362,8 +358,6 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
 {
 	// Parameters
 	const int Z = 10;
-	vector<double> av = {4e-8, 10e-8, 30e-8, 100e-8, 300e-8};
-	GrainPhotoelectricCalculator gpe(
 
 	// Plot range
 	const double hnuMin = 5 / Constant::ERG_EV;
@@ -371,8 +365,9 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
 	const size_t N = 500;
 
 	ofstream out = IOTools::ofstreamFile("photoelectric/yieldTest.dat");
-	for (double a : av)
+	for (int i = 0; i < _sizev.size(); i++)
 	{
+		double a = _sizev[i];
 		out << "# a = " << a << '\n';
 
 		// Quantities independent of nu
@@ -390,8 +385,7 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
 			double hnuDiff = hnu - hnu_pet;
 			if (hnuDiff > 0)
 				out << hnu * Constant::ERG_EV << '\t'
-				    << _grainType.photoelectricYield(a, Z, hnuDiff, Emin)
-				    << '\n';
+				    << photoelectricYield(a, Z, hnuDiff, Emin) << '\n';
 			hnu += step;
 		}
 		out << '\n';
@@ -428,12 +422,6 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
 	   field as weights. */
 	ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
 
-	// Grain sizes for test
-	double aMin = 3 * Constant::ANG_CM;
-	double aMax = 10000 * Constant::ANG_CM;
-	const size_t Na = 90;
-	Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
-
 	// Output file will contain one line for every grain size
 	stringstream efficiencyFnSs;
 	efficiencyFnSs << "photoelectric/efficiencyG" << setprecision(4) << scientific << G0
@@ -441,13 +429,13 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
 	ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
 
 	bool car = true;
-	const std::vector<Array> qAbsvv = Testing::qAbsvvForTesting(car, sizev, frequencyv);
+	const std::vector<Array> qAbsvv = Testing::qAbsvvForTesting(car, _sizev, frequencyv);
 
 	// For every grain size
-	for (size_t m = 0; m < Na; m++)
+	for (size_t i = 0; i < _sizev.size(); i++)
 	{
-		double a = sizev[m];
-		const Array& Qabsv = qAbsvv[m];
+		double a = _sizev[i];
+		const Array& Qabsv = qAbsvv[i];
 
 		// Integrate over the radiation field
 		Array intensityTimesQabsv = Qabsv * specificIntensityv;
@@ -498,9 +486,7 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
 	const Environment env(specificIntensity, gasT, ne, np, {-1, 1}, {ne, np},
 	                      {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
-	// Grain size
-	double a = 200. * Constant::ANG_CM;
-
+	double a = _sizev[0];
 	// Qabs for each frequency
 	bool car = true;
 	Array Qabsv = Testing::qAbsvvForTesting(car, {a}, frequencyv)[0];
@@ -521,7 +507,7 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
 // (mainly exponentials). The plan is to store whatever cached values I need in the
 // GrainPhotoelectricCalculator class, and then use them to call optimized versions of the stuff
 // in WD01.
-double GrainPhotoelectricCalculator::ionizationPotential(int i, int Z) const
+double GrainPhotoelectricCalculator::ionizationPotential(int i, int z) const
 {
 	return WD01::ionizationPotential(_sizev[i], z, _carOrSil);
 }
@@ -529,7 +515,7 @@ double GrainPhotoelectricCalculator::ionizationPotential(int i, int Z) const
 double GrainPhotoelectricCalculator::photoelectricYield(int i, int z, double hnuDiff,
                                                         double Emin) const
 {
-	return WD01::yield(_sizev[i], z, hnuDiff, Emin, _carOrSil)
+	return WD01::yield(_sizev[i], z, hnuDiff, Emin, _carOrSil);
 }
 
 double GrainPhotoelectricCalculator::autoIonizationThreshold(int i) const

@@ -137,7 +137,7 @@ private:
 	    members indicated here should become virtual/move to a subclass. Each subclass can
 	    then have their own caching mechanisms. */
 	///@{
-	double ionizationPotential(int i, int Z) const;
+	double ionizationPotential(int i, int z) const;
 
 	double photoelectricYield(int i, int z, double hnuDiff, double Emin) const;
 
