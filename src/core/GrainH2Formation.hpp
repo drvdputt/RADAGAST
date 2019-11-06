@@ -39,18 +39,24 @@ constexpr double grainHeatingPerH2Formed_car = 1.72 / Constant::ERG_EV;
 class GrainH2Formation
 {
 public:
-	GrainH2Formation(const SfcInteractionPar& sfcInteractionPar, double heatPerH2);
+	GrainH2Formation(const SfcInteractionPar& sfcInteractionPar, double heatPerH2)
+	                : _sfcInteractionPar{sfcInteractionPar}, _heatPerH2{heatPerH2}
+	{
+	}
 
 	/** Implementation of the grain surface H2 formation rate recipe decribed by Cazaux &
 	    Tielens (2002, 2004, 2010) and summarized in Rollig et al 2013. This particular
 	    implementation returns the formation rate without multiplying with nH (atomic
 	    hydrogen number density [cm-3]). Since nH * rate = [cm-3 s-1], the unit of the
 	    returned rate is s-1. */
-	double surfaceH2FormationRateCoeff(const Array& sizev, double Tgas);
+	double surfaceH2FormationRateCoeff(const Array& sizev, const Array& temperaturev,
+	                                   const Array& densityv, double Tgas) const;
 
-	Array surfaceH2FormationRateCoeffPerSize(const Array& sizev, double Tgas);
+	Array surfaceH2FormationRateCoeffPerSize(const Array& sizev, const Array& temperaturev,
+	                                         double Tgas) const;
 
-	Array surfaceH2FormationHeatPerSize(const Array& sizev, double Tgas, double nH);
+	Array surfaceH2FormationHeatPerSize(const Array& sizev, const Array& temperaturev,
+	                                    double Tgas, double nH) const;
 
 private:
 	SfcInteractionPar _sfcInteractionPar;
