@@ -29,7 +29,7 @@ public:
             each grain size, and for each point of the frequency grid of the input radiation
             field. */
 	GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv,
-	           const Array& temperaturev, const Array& qAbsvv);
+	                const Array& temperaturev, const std::vector<Array>& qAbsvv);
 
 	/** Undelete the move constructor (needed to be able to put these objects into a vector
 	    std::vector) */

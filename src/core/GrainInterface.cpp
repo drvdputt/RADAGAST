@@ -10,19 +10,6 @@
 namespace GasModule
 {
 
-GrainInterface::Population::Population(Population&&) = default;
-
-GrainInterface::Population::~Population() = default;
-
-void GrainInterface::Population::test() const
-{
-	assert(_sizev.size() == _densityv.size());
-	assert(_densityv.size() == _temperaturev.size());
-	assert(_qAbsvv.size() == _sizev.size());
-	if (TemplatedUtils::contains(0., _sizev))
-		Error::runtime("Grain of size 0 not allowed!");
-}
-
 void GrainInterface::Population::recalculateTemperature(
                 std::valarray<double> frequencyv, std::valarray<double> specificIntensityv,
                 std::valarray<double> otherGrainHeat)
