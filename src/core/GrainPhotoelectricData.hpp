@@ -1,7 +1,7 @@
 #ifndef CORE_GRAINPHOTOELECTRICDATA_HPP
 #define CORE_GRAINPHOTOELECTRICDATA_HPP
 
-#include "GrainPhotoelectricCalculator.hpp"
+#include "GrainPhotoelectricEffect.hpp"
 
 class GrainPhotoelectricData
 {

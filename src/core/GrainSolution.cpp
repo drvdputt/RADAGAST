@@ -1,6 +1,7 @@
 #include "GrainSolution.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "GrainPhotoelectricEffect.hpp"
 #include "GrainPopulation.hpp"
 #include "SpecialFunctions.hpp"
 #include "Spectrum.hpp"

@@ -1,6 +1,7 @@
 #include "GrainPopulation.hpp"
 #include "Error.hpp"
 #include "GrainH2Formation.hpp"
+#include "GrainPhotoelectricData.hpp"
 
 GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv,
                                  const Array& temperaturev, const std::vector<Array>& qAbsvv)

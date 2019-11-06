@@ -2,10 +2,8 @@
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
-#include "GasGrainInteraction.hpp"
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricEffect.hpp"
-#include "GrainType.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
 
