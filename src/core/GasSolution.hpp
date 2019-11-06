@@ -5,6 +5,7 @@
 #include "EigenAliases.hpp"
 #include "GasState.hpp"
 #include "GrainInterface.hpp"
+#include "GrainSolution.hpp"
 #include "H2Model.hpp"
 #include "HModel.hpp"
 #include "SpeciesIndex.hpp"
@@ -92,6 +93,8 @@ public:
 
 private:
 	const GasModule::GrainInterface& _grainInterface;
+	std::vector<GrainSolution> _grainSolutionv;
+
 	const Spectrum& _specificIntensity;
 	double _t;
 	SpeciesVector _sv;
