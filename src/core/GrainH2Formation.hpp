@@ -20,6 +20,7 @@ typedef struct SfcInteractionPar
 	const double _eH2{0}, _es{0}, _eHp{0}, _eHc{0}, _aSqrt{0}, _nuH2{0}, _nuHc{0}, _f{0};
 } SfcInteractionPar;
 
+
 /** Builtin values for this set of parameters for carbonaceous grains */
 const SfcInteractionPar carSurface(520, 260, 800, 30000, 14, 3e12, 1.3e13, 1e-10);
 

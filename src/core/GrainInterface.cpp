@@ -18,18 +18,6 @@ SfcInteractionPar::SfcInteractionPar(double EH2, double Es, double EHp, double E
 {
 }
 
-GrainInterface::Population::Population(GrainTypeLabel type, const Array& sizev,
-                                       const Array& densityv, const Array& temperaturev,
-                                       const std::vector<Array>& qAbsvv)
-                : _sizev{sizev}, _densityv{densityv},
-                  _temperaturev{temperaturev}, _qAbsvv{qAbsvv},
-                  _type(GrainTypeFactory::makeBuiltin(type))
-{
-	Error::equalCheck("sizev.size() and densityv.size()", sizev.size(), densityv.size());
-	Error::equalCheck("sizev.size() and temperaturev.size()", sizev.size(),
-	                  temperaturev.size());
-	Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
-}
 
 GrainInterface::Population::Population(Population&&) = default;
 

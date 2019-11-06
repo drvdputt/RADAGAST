@@ -65,7 +65,7 @@ private:
 	Array _densityv;
 	Array _temperaturev;
 	std::vector<Array> _qAbsvv;
-	std::unique_ptr<GrainH2FormationData> _h2formationData{nullptr};
+	std::unique_ptr<GrainH2Formation> _h2formation{nullptr};
 	std::unique_ptr<GrainPhotoelectricData> _photoelectricData{nullptr};
 };
 
