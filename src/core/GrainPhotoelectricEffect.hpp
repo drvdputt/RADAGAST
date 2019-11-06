@@ -130,17 +130,19 @@ private:
 	                               const double* calcEnergyWithThisEmin = nullptr) const;
 
 	/** Things specific for WD01. If another recipe is ever implemented, then
-	    GrainPhotoelectricCalculator should become abstract, and these functions should
-	    become virtual. Each subclass should then have their own caching mechanisms. */
+	    GrainPhotoelectricCalculator should become abstract, and the function and data
+	    members indicated here should become virtual/move to a subclass. Each subclass can
+	    then have their own caching mechanisms. */
 	///@{
-	virtual double ionizationPotential(int i, int Z) const = 0;
+	double ionizationPotential(int i, int Z) const;
 
-	virtual double photoelectricYield(int i, int z, double hnuDiff,
-	                                  double Emin) const = 0;
+	double photoelectricYield(int i, int z, double hnuDiff, double Emin) const;
 
-	virtual double autoIonizationThreshold(int i) const = 0;
+	double autoIonizationThreshold(int i) const;
 
-	virtual double stickingCoefficient(int i, int z, int z_i) const = 0;
+	double stickingCoefficient(int i, int z, int z_i) const;
+
+	bool _carOrSil;
 	///@}
 
 	// Some things will be cached based on the size

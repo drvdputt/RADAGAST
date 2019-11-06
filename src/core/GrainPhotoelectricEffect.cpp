@@ -26,7 +26,7 @@ int GrainPhotoelectricCalculator::minimumCharge(double a) const
 
 ChargeDistribution
 GrainPhotoelectricCalculator::calculateChargeDistribution(double a, const Environment& env,
-                                                      const Array& Qabsv) const
+                                                          const Array& Qabsv) const
 {
 	const Array& frequencyv = env._specificIntensity.frequencyv();
 	const Array& specificIntensityv = env._specificIntensity.valuev();
@@ -92,7 +92,7 @@ GrainPhotoelectricCalculator::calculateChargeDistribution(double a, const Enviro
 }
 
 void GrainPhotoelectricCalculator::getPET_PDT_Emin(double a, double Z, double& pet, double& pdt,
-                                               double& Emin) const
+                                                   double& Emin) const
 {
 	Emin = WD01::eMin(a, Z);
 	double ip_v = _grainType.ionizationPotential(a, Z);
@@ -153,8 +153,8 @@ double GrainPhotoelectricCalculator::photodetachmentIntegrationLoop(
 }
 
 double GrainPhotoelectricCalculator::heatingRateAZ(double a, int Z, const Array& frequencyv,
-                                               const Array& Qabsv,
-                                               const Array& specificIntensityv) const
+                                                   const Array& Qabsv,
+                                                   const Array& specificIntensityv) const
 {
 	const double e2_a = Constant::ESQUARE / a;
 
@@ -192,8 +192,8 @@ double GrainPhotoelectricCalculator::heatingRateAZ(double a, int Z, const Array&
 }
 
 double GrainPhotoelectricCalculator::heatingRateA(double a, const Environment& env,
-                                              const Array& Qabsv,
-                                              const ChargeDistribution& cd) const
+                                                  const Array& Qabsv,
+                                                  const ChargeDistribution& cd) const
 {
 	double totalHeatingForGrainSize = 0;
 
@@ -220,8 +220,8 @@ double GrainPhotoelectricCalculator::heatingRateA(double a, const Environment& e
 }
 
 double GrainPhotoelectricCalculator::emissionRate(double a, int Z, const Array& frequencyv,
-                                              const Array& Qabsv,
-                                              const Array& specificIntensityv) const
+                                                  const Array& Qabsv,
+                                                  const Array& specificIntensityv) const
 {
 	// Notice that there is quite some duplication compared to heatingRateAZ, but i didn't
 	// find it worth the effort to make more abstractions.
@@ -243,9 +243,9 @@ double GrainPhotoelectricCalculator::emissionRate(double a, int Z, const Array& 
 }
 
 double GrainPhotoelectricCalculator::collisionalChargingRate(double a, double gasT, int Z,
-                                                         int particleCharge,
-                                                         double particleMass,
-                                                         double particleDensity) const
+                                                             int particleCharge,
+                                                             double particleMass,
+                                                             double particleDensity) const
 {
 	double kT = Constant::BOLTZMAN * gasT;
 
@@ -272,8 +272,9 @@ double GrainPhotoelectricCalculator::collisionalChargingRate(double a, double ga
 	       sqrt(8. * kT * Constant::PI / particleMass) * a * a * Jtilde;
 }
 
-double GrainPhotoelectricCalculator::recombinationCoolingRate(double a, const Environment& env,
-                                                          const ChargeDistribution& cd) const
+double
+GrainPhotoelectricCalculator::recombinationCoolingRate(double a, const Environment& env,
+                                                       const ChargeDistribution& cd) const
 {
 	// Calculates WD01 equation 42
 	double kT = Constant::BOLTZMAN * env._T;
@@ -314,9 +315,9 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(double a, const En
 }
 
 double GrainPhotoelectricCalculator::gasGrainCollisionCooling(double a, const Environment& env,
-                                                          const ChargeDistribution& cd,
-                                                          double Tgrain,
-                                                          bool addGrainPotential) const
+                                                              const ChargeDistribution& cd,
+                                                              double Tgrain,
+                                                              bool addGrainPotential) const
 {
 	double kT = env._T * Constant::BOLTZMAN;
 	double kTgrain = Tgrain * Constant::BOLTZMAN;
@@ -482,7 +483,7 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
 }
 
 void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, double ne,
-                                                 double np) const
+                                                     double np) const
 {
 	Array frequencyv, specificIntensityv;
 	testSpectrum(G0, frequencyv, specificIntensityv);
@@ -507,4 +508,29 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
 	header << "# ne = " << ne << endl;
 	header << "# Tgas = " << gasT << endl;
 	cd.plot("photoelectric/fZ.txt", header.str());
+}
+
+// TODO: optimize the following things by precalculating a number of frequently used values
+// (mainly exponentials). The plan is to store whatever cached values I need in the
+// GrainPhotoelectricCalculator class, and then use them to call optimized versions of the stuff
+// in WD01.
+double GrainPhotoelectricCalculator::ionizationPotential(int i, int Z) const
+{
+	return WD01::ionizationPotential(sizev[i], z, _carOrSil);
+}
+
+double GrainPhotoelectricCalculator::photoelectricYield(int i, int z, double hnuDiff,
+                                                        double Emin) const
+{
+	return WD01::yield(sizev[i], z, hnuDiff, Emin, _carOrSil)
+}
+
+double GrainPhotoelectricCalculator::autoIonizationThreshold(int i) const
+{
+	return WD01::autoIonizationThreshold(sizev[i], _carOrSil);
+}
+
+double GrainPhotoelectricCalculator::stickingCoefficient(int i, int z, int z_i) const
+{
+	return WD01::stickingCoefficient(sizev[i], z, z_i, _carOrSil);
 }
