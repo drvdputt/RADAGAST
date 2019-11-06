@@ -5,7 +5,7 @@
 GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv,
                                  const Array& temperaturev, const std::vector<Array>& qAbsvv)
                 : _sizev{sizev}, _densityv{densityv},
-                  _temperaturev{temperaturev}, _qAbsvv{qAbsvv},
+                  _temperaturev{temperaturev}, _qAbsvv{qAbsvv}
 {
 	Error::equalCheck("sizev.size() and densityv.size()", sizev.size(), densityv.size());
 	Error::equalCheck("sizev.size() and temperaturev.size()", sizev.size(),

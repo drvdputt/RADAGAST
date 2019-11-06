@@ -3,21 +3,12 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
-#include "GrainType.hpp"
 #include "SpecialFunctions.hpp"
 
 #include <cassert>
 
 namespace GasModule
 {
-
-SfcInteractionPar::SfcInteractionPar(double EH2, double Es, double EHp, double EHc,
-                                     double aSqrt, double nuH2, double nuHc, double F)
-                : _valid{true}, _eH2{EH2}, _es{Es}, _eHp{EHp}, _eHc{EHc}, _aSqrt{aSqrt},
-                  _nuH2{nuH2}, _nuHc{nuHc}, _f{F}
-{
-}
-
 
 GrainInterface::Population::Population(Population&&) = default;
 

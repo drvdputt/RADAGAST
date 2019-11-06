@@ -10,13 +10,11 @@ typedef struct SfcInteractionPar
 {
 	SfcInteractionPar() = default;
 	SfcInteractionPar(double EH2, double Es, double EHp, double EHc, double aSqrt,
-	                  double nuH2, double nuHc, double F);
-	/* This boolean is set to false when the default constructor is called, signifiying that
-	   the created object does not contain any useful information (meaning that the
-	   graintype for which it was contructed is not supported, and that the graintype given
-	   in the corresponding static function should be skipped for the H2 formation rate
-	   calculation. */
-	bool _valid{false};
+	                  double nuH2, double nuHc, double F)
+	                : _eH2{EH2}, _es{Es}, _eHp{EHp}, _eHc{EHc}, _aSqrt{aSqrt}, _nuH2{nuH2},
+	                  _nuHc{nuHc}, _f{F}
+	{
+	}
 	const double _eH2{0}, _es{0}, _eHp{0}, _eHc{0}, _aSqrt{0}, _nuH2{0}, _nuHc{0}, _f{0};
 } SfcInteractionPar;
 
