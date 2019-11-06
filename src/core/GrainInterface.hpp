@@ -1,12 +1,12 @@
 #ifndef CORE_GRAININTERFACE_HPP
 #define CORE_GRAININTERFACE_HPP
 
+#include "GrainPopulation.hpp"
+
 #include <functional>
 #include <memory>
 #include <valarray>
 #include <vector>
-
-class GrainType;
 
 namespace GasModule
 {
@@ -46,77 +46,12 @@ enum class GrainTypeLabel
 class GrainInterface
 {
 public:
-	/** The properties that need to be given per grain model that needs to be included. The
-	    grain type can be one of the types listed in the enum above. Then, an array of
-	    sizes, number densities, and one of temperatures needs to be specified (consider
-	    even using grain temperature distributions (for each grain size!) in the future).
-	    The temperatures are important for the H2 formation rate on the surfaces of the
-	    grains. The absorption efficiency also needs to be given (need to review its exact
-	    definition). It represents the number of photons absorbed from an ambient radiation
-	    field at a certain wavelength. It needs to be given for each grain size, and for
-	    each point of the frequency grid of the input radiation field. */
-	class Population
-	{
-	public:
-		/** For CAR or SIL grain type. The built-in values for some of the quantities
-		    for h2 formation and the photoelectric effect will be used. Remember to use
-		    move construction, because of the unique_ptr member. */
-		Population(GrainTypeLabel type, const std::valarray<double>& sizev,
-		           const std::valarray<double>& densityv,
-		           const std::valarray<double>& temperaturev,
-		           const std::vector<std::valarray<double>>& qAbsvv);
-
-		/** Undelete the move constructor (needed to be able to put these objects into a
-		    vector std::vector) */
-		Population(Population&&);
-		~Population();
-
-		/** @name Trivial getters. */
-		/**@{*/
-		std::vector<std::valarray<double>> qAbsvv() const { return _qAbsvv; }
-		std::valarray<double> temperaturev() const { return _temperaturev; }
-		std::valarray<double> densityv() const { return _densityv; }
-		std::valarray<double> sizev() const { return _sizev; }
-		const GrainType* type() const { return _type.get(); }
-		/**@}*/
-
-		size_t numSizes() const { return _sizev.size(); }
-
-		std::valarray<double> qAbsv(int m) const { return _qAbsvv[m]; }
-		double temperature(int m) const { return _temperaturev[m]; }
-		double density(int m) const { return _densityv[m]; }
-		double size(int m) const { return _sizev[m]; }
-
-		void test() const;
-
-		/** Recalculate the temperature for each size, by finding the temperature for
-		    which < blackbody * kappa > = < radiation field * kappa > + extra heat (such
-		    as collisional, needs to be given for each size). Some things can probably
-		    be cached should this be slow. No idea how to handle this if stochastic
-		    heating still needs to work. */
-		void recalculateTemperature(std::valarray<double> frequencyv,
-		                            std::valarray<double> specificIntensityv,
-		                            std::valarray<double> otherGrainHeat);
-
-	private:
-		std::valarray<double> _sizev;
-		std::valarray<double> _densityv;
-		std::valarray<double> _temperaturev;
-		std::vector<std::valarray<double>> _qAbsvv;
-
-		/** Properties which should be provided either by calling the big constructor,
-		    or by functions of the builtin grain types. In the latter case, the
-		    following pointer will be initialized, and the correct functions will be
-		    called using polymorphism. A builtin grain type instance will be assigned to
-		    this pointer based on the "type" argument in the top constructor. */
-		std::unique_ptr<GrainType> _type;
-	};
 
 	/** Constructor which takes a vector of predefined populations. Please pass the vector
 	    using a unique pointer and std::move. Ownership over the vector of populations will
 	    then be transferred to this class, preventing unnecessary copying (I'm not sure what
 	    the performance impact of copying would be in the future). */
-	GrainInterface(std::unique_ptr<std::vector<Population>> populationvToMove);
+	GrainInterface(std::unique_ptr<std::vector<GrainPopulation>> populationvToMove);
 
 	/** Default constructor, equivalent to no grains at all. */
 	GrainInterface();
@@ -131,17 +66,17 @@ public:
 	size_t numPopulations() const;
 
 	/** Get a pointer to the @i 'th population. Throws an error when out of range. */
-	const Population* population(size_t i) const;
+	const GrainPopulation* population(size_t i) const;
 
 	/** Get a pointer to the whole population vector. */
-	std::vector<Population>* populationv() const;
+	std::vector<GrainPopulation>* populationv() const;
 
 	/** A quick test to see if all population objects in the vector have reasonable
 	    contents. */
 	void test() const;
 
 private:
-	std::unique_ptr<std::vector<Population>> _populationv;
+	std::unique_ptr<std::vector<GrainPopulation>> _populationv;
 };
 } /* namespace GasModule */
 
