@@ -16,8 +16,6 @@ using namespace std;
 GrainPhotoelectricEffect::GrainPhotoelectricEffect(const GrainType& grainType)
                 : _grainType{grainType}
 {
-	// TODO: Possible optimization: precalculate everyting that only depends on a /
-	// graintype, then do the charge balance for this grain size only.
 }
 
 int GrainPhotoelectricEffect::minimumCharge(double a) const
