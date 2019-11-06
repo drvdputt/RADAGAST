@@ -516,21 +516,21 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
 // in WD01.
 double GrainPhotoelectricCalculator::ionizationPotential(int i, int Z) const
 {
-	return WD01::ionizationPotential(sizev[i], z, _carOrSil);
+	return WD01::ionizationPotential(_sizev[i], z, _carOrSil);
 }
 
 double GrainPhotoelectricCalculator::photoelectricYield(int i, int z, double hnuDiff,
                                                         double Emin) const
 {
-	return WD01::yield(sizev[i], z, hnuDiff, Emin, _carOrSil)
+	return WD01::yield(_sizev[i], z, hnuDiff, Emin, _carOrSil)
 }
 
 double GrainPhotoelectricCalculator::autoIonizationThreshold(int i) const
 {
-	return WD01::autoIonizationThreshold(sizev[i], _carOrSil);
+	return WD01::autoIonizationThreshold(_sizev[i], _carOrSil);
 }
 
 double GrainPhotoelectricCalculator::stickingCoefficient(int i, int z, int z_i) const
 {
-	return WD01::stickingCoefficient(sizev[i], z, z_i, _carOrSil);
+	return WD01::stickingCoefficient(_sizev[i], z, z_i, _carOrSil);
 }

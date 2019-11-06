@@ -25,7 +25,10 @@ public:
 	to this recipe, i.e. their implementations are also based on formulae from WD01. With
 	some optimism, it should be possible to use this recipe for other types of grains, if
 	the right functions and properties (yield, ionization potentials, etc.) are provided. */
-	GrainPhotoelectricCalculator(const Array& sizev);
+	GrainPhotoelectricCalculator(const Array& sizev, double workFunction)
+	                : _sizev{sizev}, _workFunction{workFunction}
+	{
+	}
 
 	double yieldFunctionTest() const;
 
@@ -146,7 +149,11 @@ private:
 	///@}
 
 	// Some things will be cached based on the size
-	const Array& sizev;
+	const Array& _sizev;
+
+	// This constant depends on the grain properties. Is copied from the GrainPhotoelectricData
+	// object at construction.
+	double _workFunction;
 };
 
 #endif // CORE_PHOTOELECTRICHEATING_HPP
