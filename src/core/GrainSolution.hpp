@@ -31,8 +31,11 @@ public:
 private:
 	const GrainPopulation* _population;
 
-	// Charge distribution for every size
+	// Charge distribution for each size
 	std::vector<ChargeDistribution> _chargeDistributionv;
+
+	// Adjusted tempererature for each size
+	Array _newTemperaturev;
 
 	// Calculator instance which contains caching mechanisms based on the list of sizes of
 	// the population.
