@@ -47,7 +47,7 @@ public:
 	size_t numSizes() const { return _sizev.size(); }
 
 	/** If not a nullptr, then the object can be used to calculate the h2 formation rate. */
-	const GrainH2FormationData* h2formationData() { return _h2formationData.get(); }
+	const GrainH2Formation* h2formationData() { return _h2formation.get(); }
 
 	/** If not a nullptr, then the object can be used to calculate the photoelectric effect
 	    (charge distribution and heating rate). */

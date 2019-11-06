@@ -20,7 +20,8 @@ typedef struct SfcInteractionPar
 	const double _eH2{0}, _es{0}, _eHp{0}, _eHc{0}, _aSqrt{0}, _nuH2{0}, _nuHc{0}, _f{0};
 } SfcInteractionPar;
 
-
+namespace GrainH2FormationData
+{
 /** Builtin values for this set of parameters for carbonaceous grains */
 const SfcInteractionPar carSurface(520, 260, 800, 30000, 14, 3e12, 1.3e13, 1e-10);
 
@@ -33,6 +34,7 @@ const SfcInteractionPar silSurface(320, 110, 450, 30000, 14.4, 3e12, 1.3e13, 1e-
 constexpr double grainHeatingPerH2Formed_sil = 0.4 / Constant::ERG_EV;
 constexpr double grainHeatingPerH2Formed_car = 1.72 / Constant::ERG_EV;
 ///@}
+} // namespace GrainH2FormationData
 
 class GrainH2Formation
 {
