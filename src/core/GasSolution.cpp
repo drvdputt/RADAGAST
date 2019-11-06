@@ -7,6 +7,19 @@
 #include "Ionization.hpp"
 #include "Options.hpp"
 
+GasSolution::GasSolution(const GasModule::GrainInterface& gri,
+                         const Spectrum& specificIntensity, const SpeciesIndex& speciesIndex,
+                         std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
+                         const FreeBound& freeBound, const FreeFree& freeFree)
+                : _grainInterface{gri}, _specificIntensity{specificIntensity},
+                  _sv(speciesIndex), _hSolution(std::move(hModel)),
+                  _h2Solution(std::move(h2Model)), _freeBound{freeBound}, _freeFree{freeFree}
+{
+	_grainSolutionv.reserve(gri.numPopulations());
+	for (const auto& p : *gri.populationv())
+		_grainSolutionv.emplace_back(p);
+}
+
 void GasSolution::makeZero()
 {
 	_sv.setDensities(EVector::Zero(_sv.size()));
