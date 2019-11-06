@@ -33,6 +33,21 @@ void GasSolution::solveLevels(double formH2)
 	_h2Solution->solve(nH2(), gas, _specificIntensity, formH2);
 }
 
+void GasSolution::solveGrains()
+{
+	GrainPhotoelectricCalculator::Environment env(
+	                _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0},
+	                {ne(), np(), nH(), nH2()},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
+	                 2 * Constant::HMASS_CGS});
+
+	for (int i = 0; i < _grainSolutionv.size(); i++)
+	{
+		_grainSolutionv[i].recalculateChargeDistributions(env);
+		// TODO: update grain temperatures
+	}
+}
+
 Array GasSolution::emissivityv(const Array& eFrequencyv) const
 {
 	Array lineEmv(eFrequencyv.size());
@@ -92,46 +107,25 @@ double GasSolution::grainHeating(double* photoHeat, double* collCool) const
 	double gasGrainCooling = 0;
 
 	// Specify the environment parameters
-	GrainPhotoelectricCalculator::Environment env(_specificIntensity, _t, ne(), np(),
-	                                          {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
-	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS,
-	                                           Constant::HMASS_CGS,
-	                                           2 * Constant::HMASS_CGS});
+	GrainPhotoelectricCalculator::Environment env(
+	                _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0},
+	                {ne(), np(), nH(), nH2()},
+	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
+	                 2 * Constant::HMASS_CGS});
 
-	size_t numPop = _grainInterface.numPopulations();
-	for (size_t i = 0; i < numPop; i++)
+	for (size_t i = 0; i < _grainSolutionv.size(); i++)
 	{
-		const GasModule::GrainInterface::Population* pop =
-		                _grainInterface.population(i);
-		const GrainType* type = pop->type();
-		if (type->heatingAvailable())
-		{
-			/* Choose the correct parameters for the photoelectric effect based on
-			   the type (a.k.a. composition) of the Population. */
-			GrainPhotoelectricCalculator gpe(*type);
-
-			size_t numSizes = pop->numSizes();
-			for (int m = 0; m < numSizes; m++)
-			{
-				double a = pop->size(m);
-				const Array& qAbsv = pop->qAbsv(m);
-				double nd = pop->density(m);
-				auto cd = gpe.calculateChargeDistribution(a, env, qAbsv);
-				grainPhotoelectricHeating +=
-				                nd * gpe.heatingRateA(a, env, qAbsv, cd);
-				if (Options::cooling_gasGrainCollisions)
-					gasGrainCooling += nd *
-					                   gpe.gasGrainCollisionCooling(
-					                                   a, env, cd,
-					                                   pop->temperature(m),
-					                                   false);
-			}
-		}
+		// This assumes that solveGrains was already called
+		grainPhotoelectricHeating += _grainSolutionv[i].photoelectricGasHeating(env);
+		if (Options::cooling_gasGrainCollisions)
+			gasGrainCooling += _grainSolutionv[i].collisionalGasCooling(env);
 	}
+
 	if (photoHeat != nullptr)
 		*photoHeat = grainPhotoelectricHeating;
 	if (collCool != nullptr)
 		*collCool = gasGrainCooling;
+
 	return grainPhotoelectricHeating - gasGrainCooling;
 }
 

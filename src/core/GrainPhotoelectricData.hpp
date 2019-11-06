@@ -26,7 +26,7 @@ public:
 	    But for now, everything is kept concrete until we implement something else than the
 	    WD01 carbonaceous / silicate recipes.*/
 	GrainPhotoelectricData(bool carOrSil);
-	GrainPhotoelectricCalculator makeCalculator(const Array& av);
+	std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
 private:
 	bool _carOrSil;
 	double _workFunction;

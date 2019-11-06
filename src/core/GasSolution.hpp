@@ -29,13 +29,7 @@ public:
 	GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
 	            const SpeciesIndex& speciesIndex, std::unique_ptr<HModel> hModel,
 	            std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound,
-	            const FreeFree& freeFree)
-	                : _grainInterface{gri}, _specificIntensity{specificIntensity},
-	                  _sv(speciesIndex), _hSolution(std::move(hModel)),
-	                  _h2Solution(std::move(h2Model)),
-	                  _freeBound{freeBound}, _freeFree{freeFree}
-	{
-	}
+	            const FreeFree& freeFree);
 
 	GasSolution(GasSolution&&) = default;
 
@@ -44,6 +38,10 @@ public:
 	/** Solve the level populations for each level model contained here. The formation rate
 	    of H2 needs to be passed, because it pumps the H2 level populations. */
 	void solveLevels(double formH2 = 0);
+
+	/** Update the charge distribution and temperature of the grains based on the current
+	    speciesVector */
+	void solveGrains();
 
 	/** The radiation field */
 	const Spectrum& specificIntensity() const { return _specificIntensity; }
@@ -94,7 +92,6 @@ public:
 private:
 	const GasModule::GrainInterface& _grainInterface;
 	std::vector<GrainSolution> _grainSolutionv;
-
 	const Spectrum& _specificIntensity;
 	double _t;
 	SpeciesVector _sv;

@@ -47,11 +47,14 @@ public:
 	size_t numSizes() const { return _sizev.size(); }
 
 	/** If not a nullptr, then the object can be used to calculate the h2 formation rate. */
-	const GrainH2Formation* h2formationData() { return _h2formation.get(); }
+	const GrainH2Formation* h2formationData() const { return _h2formation.get(); }
 
 	/** If not a nullptr, then the object can be used to calculate the photoelectric effect
 	    (charge distribution and heating rate). */
-	const GrainPhotoelectricData* photoelectricData() { return _photoelectricData.get(); }
+	const GrainPhotoelectricData* photoelectricData() const
+	{
+		return _photoelectricData.get();
+	}
 
 	Array qAbsv(int m) const { return _qAbsvv[m]; }
 	double temperature(int m) const { return _temperaturev[m]; }

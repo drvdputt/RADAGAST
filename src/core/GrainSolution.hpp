@@ -3,10 +3,10 @@
 
 #include "Array.hpp"
 #include "ChargeDistribution.hpp"
+#include "GrainPhotoelectricEffect.hpp"
 
 #include <vector>
 
-class GrainPhotoelectricCalculator;
 class GrainPopulation;
 class SpeciesVector;
 class Spectrum;
@@ -22,11 +22,9 @@ public:
 	    slow. No idea how to handle this if stochastic heating still needs to work. */
 	void recalculateTemperatures(const Spectrum& specificIntensity, Array otherGrainHeat);
 
-	void recalculateChargeDistributions(const Spectrum& specificIntensity,
-	                                    const SpeciesVector& speciesNv);
-	double photoelectricGasHeating(const SpeciesVector& speciesNv);
-	double collisionalGasCooling(const SpeciesVector& speciesNv);
-	double collisionalGrainHeating(const SpeciesVector& speciesNv);
+	void recalculateChargeDistributions(const GrainPhotoelectricCalculator::Environment& env);
+	double photoelectricGasHeating(const GrainPhotoelectricCalculator::Environment& env) const;
+	double collisionalGasCooling(const GrainPhotoelectricCalculator::Environment& env) const;
 
 private:
 	const GrainPopulation* _population;
