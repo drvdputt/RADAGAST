@@ -6,7 +6,10 @@
 
 #include <vector>
 
+class GrainPhotoelectricCalculator;
 class GrainPopulation;
+class SpeciesVector;
+class Spectrum;
 
 class GrainSolution
 {
@@ -17,9 +20,13 @@ public:
 	    blackbody * kappa > = < radiation field * kappa > + extra heat (such as collisional,
 	    needs to be given for each size). Some things can probably be cached should this be
 	    slow. No idea how to handle this if stochastic heating still needs to work. */
-	void recalculateTemperature(Array frequencyv,
-	                            Array specificIntensityv,
-	                            Array otherGrainHeat);
+	void recalculateTemperatures(const Spectrum& specificIntensity, Array otherGrainHeat);
+
+	void recalculateChargeDistributions(const Spectrum& specificIntensity,
+	                                    const SpeciesVector& speciesNv);
+	double photoelectricGasHeating(const SpeciesVector& speciesNv);
+	double collisionalGasCooling(const SpeciesVector& speciesNv);
+	double collisionalGrainHeating(const SpeciesVector& speciesNv);
 
 private:
 	const GrainPopulation* _population;
