@@ -15,7 +15,7 @@ enum class GrainTypeLabel
 	OTHER
 };
 
-class GrainH2FormationData;
+class GrainH2Formation;
 class GrainPhotoelectricData;
 
 class GrainPopulation
