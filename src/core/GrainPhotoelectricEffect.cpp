@@ -13,19 +13,19 @@
 
 using namespace std;
 
-GrainPhotoelectricEffect::GrainPhotoelectricEffect(const GrainType& grainType)
+GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const GrainType& grainType)
                 : _grainType{grainType}
 {
 }
 
-int GrainPhotoelectricEffect::minimumCharge(double a) const
+int GrainPhotoelectricCalculator::minimumCharge(double a) const
 {
 	double Uait = _grainType.autoIonizationThreshold(a);
 	return WD01::minimumCharge(a, Uait);
 }
 
 ChargeDistribution
-GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environment& env,
+GrainPhotoelectricCalculator::calculateChargeDistribution(double a, const Environment& env,
                                                       const Array& Qabsv) const
 {
 	const Array& frequencyv = env._specificIntensity.frequencyv();
@@ -91,7 +91,7 @@ GrainPhotoelectricEffect::calculateChargeDistribution(double a, const Environmen
 	return chargeDistribution;
 }
 
-void GrainPhotoelectricEffect::getPET_PDT_Emin(double a, double Z, double& pet, double& pdt,
+void GrainPhotoelectricCalculator::getPET_PDT_Emin(double a, double Z, double& pet, double& pdt,
                                                double& Emin) const
 {
 	Emin = WD01::eMin(a, Z);
@@ -102,7 +102,7 @@ void GrainPhotoelectricEffect::getPET_PDT_Emin(double a, double Z, double& pet, 
 	pdt = ip_v + Emin;
 }
 
-double GrainPhotoelectricEffect::photoelectricIntegrationLoop(
+double GrainPhotoelectricCalculator::photoelectricIntegrationLoop(
                 const Array& frequencyv, const Array& Qabsv, const Array& specificIntensityv,
                 double pet, const function<double(double hnuDiff)>* f_hnuDiff) const
 {
@@ -126,7 +126,7 @@ double GrainPhotoelectricEffect::photoelectricIntegrationLoop(
 	return Constant::FPI * integral;
 }
 
-double GrainPhotoelectricEffect::photodetachmentIntegrationLoop(
+double GrainPhotoelectricCalculator::photodetachmentIntegrationLoop(
                 int Z, const Array& frequencyv, const Array& specificIntensityv, double pdt,
                 const double* calcEnergyWithThisEmin) const
 {
@@ -152,7 +152,7 @@ double GrainPhotoelectricEffect::photodetachmentIntegrationLoop(
 	return Constant::FPI * integral;
 }
 
-double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& frequencyv,
+double GrainPhotoelectricCalculator::heatingRateAZ(double a, int Z, const Array& frequencyv,
                                                const Array& Qabsv,
                                                const Array& specificIntensityv) const
 {
@@ -191,7 +191,7 @@ double GrainPhotoelectricEffect::heatingRateAZ(double a, int Z, const Array& fre
 	return heatingRatePE + heatingRatePD;
 }
 
-double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
+double GrainPhotoelectricCalculator::heatingRateA(double a, const Environment& env,
                                               const Array& Qabsv,
                                               const ChargeDistribution& cd) const
 {
@@ -219,7 +219,7 @@ double GrainPhotoelectricEffect::heatingRateA(double a, const Environment& env,
 	return netHeatingForGrainSize;
 }
 
-double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& frequencyv,
+double GrainPhotoelectricCalculator::emissionRate(double a, int Z, const Array& frequencyv,
                                               const Array& Qabsv,
                                               const Array& specificIntensityv) const
 {
@@ -242,7 +242,7 @@ double GrainPhotoelectricEffect::emissionRate(double a, int Z, const Array& freq
 	return emissionRatePE + emissionRatePD;
 }
 
-double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, int Z,
+double GrainPhotoelectricCalculator::collisionalChargingRate(double a, double gasT, int Z,
                                                          int particleCharge,
                                                          double particleMass,
                                                          double particleDensity) const
@@ -272,7 +272,7 @@ double GrainPhotoelectricEffect::collisionalChargingRate(double a, double gasT, 
 	       sqrt(8. * kT * Constant::PI / particleMass) * a * a * Jtilde;
 }
 
-double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Environment& env,
+double GrainPhotoelectricCalculator::recombinationCoolingRate(double a, const Environment& env,
                                                           const ChargeDistribution& cd) const
 {
 	// Calculates WD01 equation 42
@@ -313,7 +313,7 @@ double GrainPhotoelectricEffect::recombinationCoolingRate(double a, const Enviro
 	return Constant::PI * a * a * particleSum * kT + secondTerm;
 }
 
-double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Environment& env,
+double GrainPhotoelectricCalculator::gasGrainCollisionCooling(double a, const Environment& env,
                                                           const ChargeDistribution& cd,
                                                           double Tgrain,
                                                           bool addGrainPotential) const
@@ -351,7 +351,7 @@ double GrainPhotoelectricEffect::gasGrainCollisionCooling(double a, const Enviro
 	return Constant::PI * a * a * lambdaG;
 }
 
-double GrainPhotoelectricEffect::yieldFunctionTest() const
+double GrainPhotoelectricCalculator::yieldFunctionTest() const
 {
 	// Parameters
 	const int Z = 10;
@@ -406,7 +406,7 @@ void testSpectrum(double G0, Array& frequencyv, Array& specificIntensityv)
 }
 } // namespace
 
-void GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne) const
+void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, double ne) const
 {
 	Array frequencyv, specificIntensityv;
 	testSpectrum(G0, frequencyv, specificIntensityv);
@@ -457,7 +457,7 @@ void GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne
 		header << "# Tgas = " << env._T << '\n';
 		cd.plot(filename.str(), header.str());
 
-		double heating = GrainPhotoelectricEffect::heatingRateA(a, env, Qabsv, cd);
+		double heating = GrainPhotoelectricCalculator::heatingRateA(a, env, Qabsv, cd);
 
 		double totalAbsorbed =
 		                Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
@@ -481,7 +481,7 @@ void GrainPhotoelectricEffect::heatingRateTest(double G0, double gasT, double ne
 	cout << "Charging parameter = " << G0 * sqrt(gasT) / ne << endl;
 }
 
-void GrainPhotoelectricEffect::chargeBalanceTest(double G0, double gasT, double ne,
+void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, double ne,
                                                  double np) const
 {
 	Array frequencyv, specificIntensityv;

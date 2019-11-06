@@ -9,12 +9,15 @@
 #include <functional>
 #include <vector>
 
+// REMINDER: int i is the size index. These functions used to take double a, but now i should
+// refer to an element of sizev, given at construction.
+
 // TODO: Try to fix weird charge balance for some sizes (see code-notes section bugs) when using
 // van Hoof's correction (see GasPhysics.pdf)
 
 /** This class provides an implementation of the photoelectric heating recipe described in
     Weingartner \& Draine (2001), hereafter WD01. */
-class GrainPhotoelectricEffect
+class GrainPhotoelectricCalculator
 {
 public:
 	/** Create a photoelectric effect object. Requires an instance of one of the \c
@@ -22,9 +25,8 @@ public:
 	to this recipe, i.e. their implementations are also based on formulae from WD01. With
 	some optimism, it should be possible to use this recipe for other types of grains, if
 	the right functions and properties (yield, ionization potentials, etc.) are provided. */
-	GrainPhotoelectricEffect(const GrainType& grainType);
+	GrainPhotoelectricCalculator(const Array& sizev);
 
-public:
 	double yieldFunctionTest() const;
 
 	/* Makes a plot of the heating efficiency in function of the grain size. Saved as a
@@ -33,23 +35,6 @@ public:
 
 	void chargeBalanceTest(double G0, double gasT, double ne, double np) const;
 
-private:
-	/** Calculates the integral of the partial emission rate (per wavelength interval)
-	    multiplied with a certain function of the wavelength f(lambda) of choice. To get the
-	    total emission rate (number of electrons per second), one can invoke this function
-	    with a lambda function that returns 1. To get the heating rate, f needs to be equal
-	    to the average energy of an emitted electron. Since this functions calculates an
-	    integral for both photoelectric effect and photodetachtment, two separate functions
-	    need to be given. peFunction is the function which will be integrated with the
-	    photoelectric yield, while pdFunction will be integrated with the photodissociation
-	    cross section. The given functions should take the parameters hnuDiff, Emin and Elow
-	    as defined in the body of rateIntegral. */
-	double rateIntegral(double a, int Z, double Emin, const Array& frequencyv,
-	                    const Array& Qabsv, const Array& specificIntensityv,
-	                    std::function<double(double hnuDiffpet, double Elow)> peFunction,
-	                    std::function<double(double hnuDiffpdt)> pdFunction) const;
-
-public:
 	/** Gathers the parameters of the gas environment needed to run the photoelectric
 	    heating recipe. */
 	typedef struct Environment
@@ -79,13 +64,13 @@ public:
 
 	/** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
 	    obtain a charge distribution, and then RateAZ for every charge Z. */
-	double heatingRateA(double a, const Environment& env, const Array& Qabsv,
+	double heatingRateA(int i, const Environment& env, const Array& Qabsv,
 	                    const ChargeDistribution& cd) const;
 
 	/** Uses detailed balance to calculate the charge distribution of a grain a, in and
 	    environment env, given the absorption efficiency of that grain in function of the
 	    wavelength. */
-	ChargeDistribution calculateChargeDistribution(double a, const Environment& env,
+	ChargeDistribution calculateChargeDistribution(int i, const Environment& env,
 	                                               const Array& Qabsv) const;
 
 	/** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface
@@ -93,39 +78,39 @@ public:
 	    (n_grain * sigma_grain). The last argument (bool) indicates whether we want to know
 	    the cooling of the gas (false), or the heating of the grain (true). In the latter
 	    case, it adds a term that takes into account the potential of the grain. */
-	double gasGrainCollisionCooling(double a, const Environment& env,
+	double gasGrainCollisionCooling(int i, const Environment& env,
 	                                const ChargeDistribution& cd, double Tgrain,
 	                                bool addGrainPotential) const;
 
 private:
 	/** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
 	    immediately autoionize when an electron is captured. */
-	int minimumCharge(double a) const;
+	int minimumCharge(int i) const;
 
 	/** Calculates the heating rate by a grain of size a and charge Z, given a
 	    wavelength-resolved radiation field and absorption efficiency. */
-	double heatingRateAZ(double a, int Z, const Array& frequencyv, const Array& Qabsv,
+	double heatingRateAZ(int i, int Z, const Array& frequencyv, const Array& Qabsv,
 	                     const Array& specificIntensityv) const;
 
 	/** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
 	    according to equation 25 of WD01. */
-	double emissionRate(double a, int Z, const Array& frequencyv, const Array& Qabsv,
+	double emissionRate(int i, int Z, const Array& frequencyv, const Array& Qabsv,
 	                    const Array& specificIntensityv) const;
 
 	/** The rate [s-1] at which a grain is charged by colliding with other particles. Taken
 	    from Draine & Sutin (1987) equations 3.1-3.5. */
-	double collisionalChargingRate(double a, double gasT, int Z, int particleCharge,
+	double collisionalChargingRate(int i, double gasT, int Z, int particleCharge,
 	                               double particleMass, double particleDensity) const;
 
 	/** The energy removed from the gas by particle sticking to a grain, WD01 equation 42.
 	    TODO: figure out how this fits in with the gas-grain collisional energy exchange.
 	    I've disabled this for now in Options.hpp. */
-	double recombinationCoolingRate(double a, const Environment& env,
+	double recombinationCoolingRate(int i, const Environment& env,
 	                                const ChargeDistribution& cd) const;
 
 	/** Get the photoelectric and photodetachment thresholds. (Used by both the heating rate
 	    integral and number rate integral). */
-	void getPET_PDT_Emin(double a, double Z, double& pet, double& pdt, double& Emin) const;
+	void getPET_PDT_Emin(int i, double Z, double& pet, double& pdt, double& Emin) const;
 
 	/** Integrates over the radiation field, counting the number of absorptions per second,
 	    per projected grain area. f_hnuDiff can be any function of hnuDiff = (hnu - pet).
@@ -144,9 +129,22 @@ private:
 	                               const Array& specificIntensityv, double pdt,
 	                               const double* calcEnergyWithThisEmin = nullptr) const;
 
-private:
-	/* Graintype-specific properties are provided by this object. */
-	const GrainType& _grainType;
+	/** Things specific for WD01. If another recipe is ever implemented, then
+	    GrainPhotoelectricCalculator should become abstract, and these functions should
+	    become virtual. Each subclass should then have their own caching mechanisms. */
+	///@{
+	virtual double ionizationPotential(int i, int Z) const = 0;
+
+	virtual double photoelectricYield(int i, int z, double hnuDiff,
+	                                  double Emin) const = 0;
+
+	virtual double autoIonizationThreshold(int i) const = 0;
+
+	virtual double stickingCoefficient(int i, int z, int z_i) const = 0;
+	///@}
+
+	// Some things will be cached based on the size
+	const Array& sizev;
 };
 
 #endif // CORE_PHOTOELECTRICHEATING_HPP

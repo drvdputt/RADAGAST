@@ -648,7 +648,7 @@ void Testing::plotPhotoelectricHeating()
 
 	unique_ptr<GrainType> grainType{
 	                GrainTypeFactory::makeBuiltin(GasModule::GrainTypeLabel::CAR)};
-	GrainPhotoelectricEffect phr(*grainType);
+	GrainPhotoelectricCalculator phr(*grainType);
 	phr.yieldFunctionTest();
 
 	for (int i : pickValues)

@@ -81,7 +81,7 @@ double GasSolution::grainHeating(double* photoHeat, double* collCool) const
 	double gasGrainCooling = 0;
 
 	// Specify the environment parameters
-	GrainPhotoelectricEffect::Environment env(_specificIntensity, _t, ne(), np(),
+	GrainPhotoelectricCalculator::Environment env(_specificIntensity, _t, ne(), np(),
 	                                          {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
 	                                          {Constant::ELECTRONMASS, Constant::PROTONMASS,
 	                                           Constant::HMASS_CGS,
@@ -97,7 +97,7 @@ double GasSolution::grainHeating(double* photoHeat, double* collCool) const
 		{
 			/* Choose the correct parameters for the photoelectric effect based on
 			   the type (a.k.a. composition) of the Population. */
-			GrainPhotoelectricEffect gpe(*type);
+			GrainPhotoelectricCalculator gpe(*type);
 
 			size_t numSizes = pop->numSizes();
 			for (int m = 0; m < numSizes; m++)

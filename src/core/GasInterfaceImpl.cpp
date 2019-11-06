@@ -343,7 +343,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
                                         GasModule::GrainInterface& g) const
 {
-	GrainPhotoelectricEffect::Environment env(
+	GrainPhotoelectricCalculator::Environment env(
 	                s.specificIntensity(), s.t(), s.ne(), s.np(), {-1, 1, 0, 0},
 	                {s.ne(), s.np(), s.nH(), s.nH2()},
 	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
@@ -359,7 +359,7 @@ void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
 
 		if (type->heatingAvailable() && Options::cooling_gasGrainCollisions)
 		{
-			GrainPhotoelectricEffect gpe(*type);
+			GrainPhotoelectricCalculator gpe(*type);
 
 			for (int m = 0; m < numSizes; m++)
 			{
