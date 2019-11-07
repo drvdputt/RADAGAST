@@ -32,9 +32,10 @@ public:
 	                const Array& temperaturev, const std::vector<Array>& qAbsvv);
 
 	/** Undelete the move constructor (needed to be able to put these objects into a vector
-	    std::vector) */
+	    std::vector). Due to the unique_ptr members, it's better to have '= default' in the
+	    cpp file (so we can just forward declare GrainH2Formation and GrainPhotoelectricData
+	    here). */
 	GrainPopulation(GrainPopulation&&);
-	~GrainPopulation();
 
 	/** @name Trivial getters. */
 	/**@{*/

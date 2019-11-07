@@ -30,6 +30,8 @@ GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const 
 	// else, no data is available and these will be nullptr
 }
 
+GrainPopulation::GrainPopulation(GrainPopulation&&) = default;
+
 void GrainPopulation::test() const
 {
 	assert(_sizev.size() == _densityv.size());
