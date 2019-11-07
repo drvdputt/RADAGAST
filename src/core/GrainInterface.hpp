@@ -49,7 +49,7 @@ public:
 	void test() const;
 
 private:
-	std::unique_ptr<std::vector<GrainPopulation>> _populationv;
+	std::unique_ptr<std::vector<GrainPopulation>> _populationv{nullptr};
 };
 } /* namespace GasModule */
 

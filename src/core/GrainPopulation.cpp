@@ -3,6 +3,10 @@
 #include "GrainH2Formation.hpp"
 #include "GrainPhotoelectricData.hpp"
 
+GrainPopulation::GrainPopulation() = default;
+
+GrainPopulation::~GrainPopulation() = default;
+
 GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv,
                                  const Array& temperaturev, const std::vector<Array>& qAbsvv)
                 : _sizev{sizev}, _densityv{densityv},

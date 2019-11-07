@@ -21,6 +21,11 @@ class GrainPhotoelectricData;
 class GrainPopulation
 {
 public:
+	/** Default constructor and destructor, implemented as default in the cpp file (deals
+	    with forward declaration to unique_ptr types). */
+	GrainPopulation();
+	~GrainPopulation();
+
 	/** The grain type can be one of the types listed in the enum above. Then, an array of
             sizes, number densities, and one of temperatures needs to be specified (consider
             even using grain temperature distributions (for each grain size!) in the future).

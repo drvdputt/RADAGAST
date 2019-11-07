@@ -10,10 +10,7 @@
 namespace GasModule
 {
 
-GrainInterface::GrainInterface()
-                : _populationv(std::make_unique<std::vector<GrainPopulation>>())
-{
-}
+GrainInterface::GrainInterface() = default;
 
 GrainInterface::~GrainInterface() = default;
 
