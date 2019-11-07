@@ -116,26 +116,13 @@ public:
 	    Otherwise, an initial guess is made for the chemistry, where the ionized fraction is
 	    based on the radiation field, and the initial molecular fraction is 0.1. */
 	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
-	                    GasModule::GrainInterface&, bool startFromCurrent = false,
+	                    bool startFromCurrent = false,
 	                    double h2FormationOverride = -1) const;
 
 	/** NOT IMPLEMENTED. Solve for a fixed temperature, forcing H2 to zero. Useful for
 	    ionization-only tests. */
 	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
 	                               GasModule::GrainInterface&) const;
-
-	/** Calculate several extra contributions to the heating of the grains (collisions
-	    (Draine and Bertoldi 1996) and heat of H2 formation on the surface (Takahashi
-	    2001)).
- 
-	    Leaving this here for now, instead of moving it to GasSolution. GasSolution is not
-	    the owner of the GrainInterface object, and it would be weird to modify it from
-	    there.
-
-	    If this takes up too much time, there is still much room for optimization (such as
-	    storing intermediate results of the photoelectric heating calculation inside the
-	    GasSolution, or implementing caching mechanisms for the former). */
-	void updateGrainTemps(const GasSolution& s, GasModule::GrainInterface& g) const;
 
 private:
 	/** Construct a new GasSolution model, passing all the necessary (references to)

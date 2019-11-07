@@ -5,6 +5,7 @@
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
+#include "GrainPhotoelectricData.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "HFromFiles.hpp"
 #include "IOTools.hpp"
@@ -595,7 +596,7 @@ void Testing::plotHeatingCurve(const GasModule::GasInterface& gi, const std::str
 	const GasSolution* previous = nullptr;
 	auto outputCooling = [&](double t) {
 		std::cout << "T = " << t << '\n';
-		gi.solveDensities(s, n, t, specificIntensity, gri, previous);
+		gi.solveDensities(s, n, t, specificIntensity, previous);
 		s.fillDiagnostics(&gd);
 
 		double heat = s.heating();
@@ -650,8 +651,8 @@ void Testing::plotPhotoelectricHeating()
 
 	{ // yield function test needs specific set of sizes
 		vector<double> av = {4e-8, 10e-8, 30e-8, 100e-8, 300e-8};
-		auto gpc = gpd.makeCalculator(av);
-		gpc.yieldFunctionTest();
+		auto gpc = gpd.makeCalculator(Array(av.data(), av.size()));
+		gpc->yieldFunctionTest();
 	}
 
 	{ // Grain sizes for heating rate test
@@ -662,15 +663,14 @@ void Testing::plotPhotoelectricHeating()
 		auto gpc = gpd.makeCalculator(sizev);
 
 		for (int i : pickValues)
-			gpc.heatingRateTest(G0values[i], gasT, ne);
-
+			gpc->heatingRateTest(G0values[i], gasT, ne);
 	}
 
 	{ // Single grain size for charge balance test
 		Array sizev(200. * Constant::ANG_CM, 1);
 		auto gpc = gpd.makeCalculator(sizev);
 		for (int i : pickValues)
-			gpc.chargeBalanceTest(G0values[i], gasT, ne, ne);
+			gpc->chargeBalanceTest(G0values[i], gasT, ne, ne);
 	}
 }
 
@@ -914,7 +914,7 @@ void Testing::runFullModel()
 
 GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& specificIntensity)
 {
-	auto grainPopv{make_unique<vector<GasModule::GrainInterface::Population>>()};
+	auto grainPopv{make_unique<vector<GrainPopulation>>()};
 
 	// need grains from .005 to .25 micron
 	double amin = 50 * Constant::ANG_CM;
@@ -949,8 +949,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 			sizev[i] = average_power_of_size(1.);
 			areav[i] = average_power_of_size(2.);
 		}
-		auto label = car ? GasModule::GrainTypeLabel::CAR
-		                 : GasModule::GrainTypeLabel::SIL;
+		auto label = car ? GrainTypeLabel::CAR : GrainTypeLabel::SIL;
 		const auto& qabsvv =
 		                qAbsvvForTesting(car, sizev, specificIntensity.frequencyv());
 

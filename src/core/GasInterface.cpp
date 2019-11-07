@@ -66,11 +66,10 @@ GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& spe
 }
 
 void GasInterface::solveDensities(GasSolution& s, double n, double T,
-                                  const Spectrum& specificIntensity,
-                                  GasModule::GrainInterface& gri, bool startFromCurrent,
+                                  const Spectrum& specificIntensity, bool startFromCurrent,
                                   double h2FormationOverride) const
 {
-	_pimpl->solveDensities(s, n, T, specificIntensity, gri, startFromCurrent,
+	_pimpl->solveDensities(s, n, T, specificIntensity, startFromCurrent,
 	                       h2FormationOverride);
 }
 

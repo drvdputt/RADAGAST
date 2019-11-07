@@ -1,9 +1,11 @@
 #include "GrainSolution.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "GrainH2Formation.hpp"
 #include "GrainPhotoelectricData.hpp"
 #include "GrainPhotoelectricEffect.hpp"
 #include "GrainPopulation.hpp"
+#include "Options.hpp"
 #include "SpecialFunctions.hpp"
 #include "Spectrum.hpp"
 #include "TemplatedUtils.hpp"
@@ -17,19 +19,47 @@ GrainSolution::GrainSolution(const GrainPopulation& population)
 		                population.sizev());
 }
 
-void GrainSolution::recalculateTemperatures(const Spectrum& specificIntensity,
-                                            Array otherGrainHeat)
+void GrainSolution::recalculateTemperatures(
+                const GrainPhotoelectricCalculator::Environment& env)
 {
-	const Array& frequencyv = specificIntensity.frequencyv();
+	Array extraGrainHeatPerSize(_population->numSizes());
+
+	if (_photoelectricCalculator && Options::cooling_gasGrainCollisions)
+	{
+		for (int i = 0; i < _population->numSizes(); i++)
+		{
+			extraGrainHeatPerSize[i] +=
+			                _photoelectricCalculator->gasGrainCollisionCooling(
+			                                _population->size(i), env,
+			                                _chargeDistributionv[i],
+			                                _newTemperaturev[i], true);
+			// cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
+
+			// grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
+			// cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
+		}
+	}
+
+	if (_population->h2formationData())
+	{
+		// TODO use SpeciesVector here instead of hardcoded index
+		extraGrainHeatPerSize +=
+		                _population->h2formationData()->surfaceH2FormationHeatPerSize(
+		                                _population->sizev(), _newTemperaturev, env._T,
+		                                env._densityv[2]);
+	}
+
+	const Array& frequencyv = env._specificIntensity.frequencyv();
 	const auto& qAbsvv = _population->qAbsvv();
 
 	for (size_t i = 0; i < _population->numSizes(); i++)
 	{
 		double cross = Constant::PI * _population->size(i) * _population->size(i);
 		double absorption =
-		                cross * TemplatedUtils::integrate<double, Array, Array>(
-		                                        frequencyv,
-		                                        qAbsvv[i] * specificIntensity.valuev());
+		                cross *
+		                TemplatedUtils::integrate<double, Array, Array>(
+		                                frequencyv,
+		                                qAbsvv[i] * env._specificIntensity.valuev());
 
 		auto heating = [&](double T) -> int {
 			Array blackbodyIntegrandv(frequencyv.size());
@@ -43,9 +73,9 @@ void GrainSolution::recalculateTemperatures(const Spectrum& specificIntensity,
 				bbEmission = cross *
 				             TemplatedUtils::integrate<double, Array, Array>(
 				                             frequencyv, blackbodyIntegrandv);
-			if (bbEmission < absorption + otherGrainHeat[i])
+			if (bbEmission < absorption + extraGrainHeatPerSize[i])
 				return 1;
-			if (bbEmission > absorption + otherGrainHeat[i])
+			if (bbEmission > absorption + extraGrainHeatPerSize[i])
 				return -1;
 			else
 				return 0;
@@ -100,4 +130,13 @@ GrainSolution::collisionalGasCooling(const GrainPhotoelectricCalculator::Environ
 		                              _population->temperature(i), false);
 	}
 	return total;
+}
+
+double GrainSolution::surfaceH2FormationRateCoeff(double Tgas) const
+{
+	if (!_population->h2formationData())
+		return 0;
+
+	return _population->h2formationData()->surfaceH2FormationRateCoeff(
+	                _population->sizev(), _newTemperaturev, _population->densityv(), Tgas);
 }

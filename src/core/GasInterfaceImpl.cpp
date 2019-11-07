@@ -73,7 +73,6 @@ struct heating_f_params
 	const GasInterfaceImpl* gasInterfacePimpl;
 	double n;
 	const Spectrum* specificIntensity;
-	GasModule::GrainInterface* grainInterface;
 	GasSolution* solution_storage;
 	bool use_previous_solution;
 };
@@ -89,7 +88,7 @@ double heating_f(double logT, void* params)
 	// solution
 	GasSolution& s = *p->solution_storage;
 	p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity,
-	                                     *p->grainInterface, p->use_previous_solution);
+	                                     p->use_previous_solution);
 	double heat = s.heating();
 	double cool = s.cooling();
 	return heat - cool;
@@ -101,7 +100,7 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
 {
 	GasSolution s = makeGasSolution(specificIntensity, gri);
 	if (n <= 0)
-		solveDensities(s, 0, 0, specificIntensity, gri);
+		solveDensities(s, 0, 0, specificIntensity);
 	else
 	{
 		const double Tmax = 100000.;
@@ -114,7 +113,7 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
 		gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
 
 		gsl_function F;
-		struct heating_f_params p = {this, n, &specificIntensity, &gri, &s, false};
+		struct heating_f_params p = {this, n, &specificIntensity, &s, false};
 		F.function = &heating_f;
 		F.params = &p;
 
@@ -162,13 +161,12 @@ GasSolution GasInterfaceImpl::solveDensities(double n, double T,
                                              double h2FormationOverride) const
 {
 	GasSolution s = makeGasSolution(specificIntensity, gri);
-	solveDensities(s, n, T, specificIntensity, gri, false, h2FormationOverride);
+	solveDensities(s, n, T, specificIntensity, false, h2FormationOverride);
 	return s;
 }
 
 void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
-                                      const Spectrum& specificIntensity,
-                                      GasModule::GrainInterface& gri, bool startFromCurrent,
+                                      const Spectrum& specificIntensity, bool startFromCurrent,
                                       double h2FormationOverride) const
 {
 	if (n <= 0)
@@ -221,7 +219,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 	if (h2FormationOverride >= 0)
 		kFormH2 = h2FormationOverride;
 	else
-		kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
+		kFormH2 = s.kGrainH2FormationRateCoeff();
 
 	/* The main loop:
 	 v---------------------------------------------------<
@@ -252,7 +250,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		{
 			// update h2 formation rate if not overriden by a constant (need to
 			// update every iteration because grain temperature can change)
-			kFormH2 = GasGrain::surfaceH2FormationRateCoeff(gri, T);
+			kFormH2 = s.kGrainH2FormationRateCoeff();
 		}
 
 		double kDissH2Levels = s.kDissH2Levels();
@@ -286,11 +284,13 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		                changev.abs() <= 1e-3 * previousAbundancev.array() ||
 		                newSpeciesNv.array() < 1.e-99 * norm;
 
-		// Changing the grain temperature influences the following:
-		// h2 formation rate
+		// Recalculate the grain charge distributions and temperatures, which will
+		// affect the grain photoelectric heating, the h2 formation rate, and the
 		// gas-dust energy exchange (gas cooling)
-		updateGrainTemps(s, gri);
+		s.solveGrains();
 
+		// TODO: these should be returned somehow, so that we don't have to calculate
+		// them again.
 		double newHeating = s.heating();
 		double newCooling = s.cooling();
 		bool heatingConverged = TemplatedUtils::equalWithinTolerance(
@@ -337,49 +337,6 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 // s.speciesNv[_ine] = s.speciesNv[_inp];
 // s.speciesNv[_inH2] = 0;
 // }
-
-void GasInterfaceImpl::updateGrainTemps(const GasSolution& s,
-                                        GasModule::GrainInterface& g) const
-{
-	GrainPhotoelectricCalculator::Environment env(
-	                s.specificIntensity(), s.t(), s.ne(), s.np(), {-1, 1, 0, 0},
-	                {s.ne(), s.np(), s.nH(), s.nH2()},
-	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
-	                 2 * Constant::HMASS_CGS});
-
-	for (auto& pop : *g.populationv())
-	{
-		const GrainType* type = pop.type();
-
-		size_t numSizes = pop.numSizes();
-		Array grainHeatPerSizev(numSizes);
-		// Array grainPhotoPerSizev(numSizes);
-
-		if (type->heatingAvailable() && Options::cooling_gasGrainCollisions)
-		{
-			GrainPhotoelectricCalculator gpe(*type);
-
-			for (int m = 0; m < numSizes; m++)
-			{
-				auto cd = gpe.calculateChargeDistribution(pop.size(m), env,
-				                                          pop.qAbsv(m));
-				grainHeatPerSizev[m] = gpe.gasGrainCollisionCooling(
-				                pop.size(m), env, cd, pop.temperature(m), true);
-				// cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
-
-				// grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
-				// cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
-			}
-		}
-
-		const Array& h2FormationHeatv =
-		                GasGrain::surfaceH2FormationHeatPerSize(pop, s.t(), s.nH());
-
-		pop.recalculateTemperature(s.specificIntensity().frequencyv(),
-		                           s.specificIntensity().valuev(),
-		                           grainHeatPerSizev + h2FormationHeatv);
-	}
-}
 
 GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
                                               const GasModule::GrainInterface& gri) const

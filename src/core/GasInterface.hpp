@@ -55,7 +55,7 @@ public:
 	                           GasModule::GrainInterface&,
 	                           double h2FormationOverride = -1) const;
 	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
-	                    GasModule::GrainInterface&, bool startFromCurrent = false,
+	                    bool startFromCurrent = false,
 	                    double h2FormationOverride = -1) const;
 	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
 	                               GasModule::GrainInterface&) const;

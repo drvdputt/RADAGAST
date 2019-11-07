@@ -11,8 +11,8 @@ GasSolution::GasSolution(const GasModule::GrainInterface& gri,
                          const Spectrum& specificIntensity, const SpeciesIndex& speciesIndex,
                          std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
                          const FreeBound& freeBound, const FreeFree& freeFree)
-                : _grainInterface{gri}, _specificIntensity{specificIntensity},
-                  _sv(speciesIndex), _hSolution(std::move(hModel)),
+                : _specificIntensity{specificIntensity}, _sv(speciesIndex),
+                  _hSolution(std::move(hModel)),
                   _h2Solution(std::move(h2Model)), _freeBound{freeBound}, _freeFree{freeFree}
 {
 	_grainSolutionv.reserve(gri.numPopulations());
@@ -41,10 +41,12 @@ void GasSolution::solveGrains()
 	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
 	                 2 * Constant::HMASS_CGS});
 
-	for (int i = 0; i < _grainSolutionv.size(); i++)
+	for (auto& g : _grainSolutionv)
 	{
-		_grainSolutionv[i].recalculateChargeDistributions(env);
-		// TODO: update grain temperatures
+		// I think charge distributions are best recalculated before the new
+		// temperatures (they affect the collisional processes)
+		g.recalculateChargeDistributions(env);
+		g.recalculateTemperatures(env);
 	}
 }
 
@@ -113,12 +115,12 @@ double GasSolution::grainHeating(double* photoHeat, double* collCool) const
 	                {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS,
 	                 2 * Constant::HMASS_CGS});
 
-	for (size_t i = 0; i < _grainSolutionv.size(); i++)
+	for (const auto& g : _grainSolutionv)
 	{
 		// This assumes that solveGrains was already called
-		grainPhotoelectricHeating += _grainSolutionv[i].photoelectricGasHeating(env);
+		grainPhotoelectricHeating += g.photoelectricGasHeating(env);
 		if (Options::cooling_gasGrainCollisions)
-			gasGrainCooling += _grainSolutionv[i].collisionalGasCooling(env);
+			gasGrainCooling += g.collisionalGasCooling(env);
 	}
 
 	if (photoHeat != nullptr)
@@ -135,7 +137,7 @@ void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
 	if (!gd)
 		Error::runtime("GasDiagnostics is nullptr!");
 
-	double h2form = GasGrain::surfaceH2FormationRateCoeff(_grainInterface, _t);
+	double h2form = kGrainH2FormationRateCoeff();
 	double h2dissoc = _h2Solution->dissociationRate(_specificIntensity);
 
 	double hphotoion = Ionization::photoRateCoeff(_specificIntensity);
@@ -195,4 +197,12 @@ GasModule::GasState GasSolution::makeGasState(const Array& oFrequencyv,
 double GasSolution::kDissH2Levels() const
 {
 	return _h2Solution->dissociationRate(_specificIntensity);
+}
+
+double GasSolution::kGrainH2FormationRateCoeff() const
+{
+	double total = 0;
+	for (const auto& g : _grainSolutionv)
+		total += g.surfaceH2FormationRateCoeff(_t);
+	return total;
 }

@@ -19,12 +19,26 @@ public:
 	/** Recalculate the temperature for each size, by finding the temperature for which <
 	    blackbody * kappa > = < radiation field * kappa > + extra heat (such as collisional,
 	    needs to be given for each size). Some things can probably be cached should this be
-	    slow. No idea how to handle this if stochastic heating still needs to work. */
-	void recalculateTemperatures(const Spectrum& specificIntensity, Array otherGrainHeat);
+	    slow. No idea how to handle this if stochastic heating still needs to work.
 
-	void recalculateChargeDistributions(const GrainPhotoelectricCalculator::Environment& env);
-	double photoelectricGasHeating(const GrainPhotoelectricCalculator::Environment& env) const;
-	double collisionalGasCooling(const GrainPhotoelectricCalculator::Environment& env) const;
+	    Calculates several extra contributions to the heating of the grains (collisions
+	    (Draine and Bertoldi 1996) and heat of H2 formation on the surface (Takahashi
+	    2001)).
+
+	    If this takes up too much time, there is still much room for optimization (e.g.
+	    reuse some of the values calculated here later, to calculate the heating/cooling of
+	    the gas. */
+	void recalculateTemperatures(const GrainPhotoelectricCalculator::Environment& env);
+
+	void
+	recalculateChargeDistributions(const GrainPhotoelectricCalculator::Environment& env);
+	double
+	photoelectricGasHeating(const GrainPhotoelectricCalculator::Environment& env) const;
+	double
+	collisionalGasCooling(const GrainPhotoelectricCalculator::Environment& env) const;
+
+	/** H2 formation rate which depends on the grain temperature solution */
+	double surfaceH2FormationRateCoeff(double Tgas) const;
 
 private:
 	const GrainPopulation* _population;

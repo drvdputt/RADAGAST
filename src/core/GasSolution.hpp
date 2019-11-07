@@ -88,9 +88,9 @@ public:
 	                                 const Array& eFrequencyv) const;
 
 	double kDissH2Levels() const;
+	double kGrainH2FormationRateCoeff() const;
 
 private:
-	const GasModule::GrainInterface& _grainInterface;
 	std::vector<GrainSolution> _grainSolutionv;
 	const Spectrum& _specificIntensity;
 	double _t;
