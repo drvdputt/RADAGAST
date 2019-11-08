@@ -51,7 +51,7 @@ private:
 
 	// Calculator instance which contains caching mechanisms based on the list of sizes of
 	// the population.
-	std::unique_ptr<GrainPhotoelectricCalculator> _photoelectricCalculator{nullptr};
+	std::unique_ptr<GrainPhotoelectricCalculator> _photoelectricCalculator;
 };
 
 #endif // CORE_GRAINSOLUTION_HPP

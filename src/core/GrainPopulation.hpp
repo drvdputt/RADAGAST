@@ -75,8 +75,8 @@ private:
 	Array _densityv;
 	Array _temperaturev;
 	std::vector<Array> _qAbsvv;
-	std::unique_ptr<GrainH2Formation> _h2formation{nullptr};
-	std::unique_ptr<GrainPhotoelectricData> _photoelectricData{nullptr};
+	std::unique_ptr<GrainH2Formation> _h2formation;
+	std::unique_ptr<GrainPhotoelectricData> _photoelectricData;
 };
 
 #endif // CORE_GRAINPOPULATION_HPP

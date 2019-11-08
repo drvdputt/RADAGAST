@@ -7,7 +7,7 @@ TEST_CASE("Gas interface")
 {
 	// Test if options don't make it crash
 	Array frequencyv = Testing::defaultFrequencyv(100);
-	std::unique_ptr<GasModule::GasInterface> gip{nullptr};
+	std::unique_ptr<GasModule::GasInterface> gip;
 
 	SUBCASE("Full model blackbody test")
 	{
