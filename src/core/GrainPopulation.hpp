@@ -3,6 +3,7 @@
 
 #include "Array.hpp"
 
+#include <memory>
 #include <vector>
 
 /** List of grain types which have built-in values for H2 formation and the photoelectric
