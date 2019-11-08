@@ -16,8 +16,11 @@ GasSolution::GasSolution(const GasModule::GrainInterface& gri,
                   _h2Solution(std::move(h2Model)), _freeBound{freeBound}, _freeFree{freeFree}
 {
 	_grainSolutionv.reserve(gri.numPopulations());
-	for (const auto& p : *gri.populationv())
-		_grainSolutionv.emplace_back(p);
+	if (gri.populationv())
+	{
+		for (const auto& p : *gri.populationv())
+			_grainSolutionv.emplace_back(p);
+	}
 }
 
 void GasSolution::makeZero()
