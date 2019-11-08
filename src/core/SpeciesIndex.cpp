@@ -38,3 +38,12 @@ SpeciesVector::SpeciesVector(const SpeciesIndex& speciesIndex)
                   _inH2{speciesIndex.index("H2")}, _nv{EVector::Zero(speciesIndex.size())}
 {
 }
+
+std::ostream& operator<<(std::ostream& os, const SpeciesVector& sv)
+{
+	const std::vector<std::string>& namev = sv._index->namev();
+	for (int i = 0; i < namev.size(); i++)
+		os << namev[i] << ' ' << sv._nv[i] << '\n';
+	return os;
+}
+

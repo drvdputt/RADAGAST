@@ -73,6 +73,8 @@ public:
 	const double* data() const { return _nv.data(); }
 	size_t size() const { return _nv.size(); }
 
+	friend std::ostream& operator<<(std::ostream& os, const SpeciesVector& sv);
+
 private:
 	const SpeciesIndex* _index;
 	int _ine{-1}, _inp{-1}, _inH{-1}, _inH2{-1};

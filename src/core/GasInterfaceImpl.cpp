@@ -200,7 +200,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
 	}
 
-	DEBUG("Set initial guess for speciesNv to\n" << s.speciesNv() << '\n');
+	DEBUG("Set initial guess for speciesNv to\n" << s.speciesVector() << '\n');
 
 	// else
 	// {
@@ -299,7 +299,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T,
 		                newCooling, previousCooling, 1e-2);
 		counter++;
 		DEBUG("Chemistry: " << counter << '\n'
-		                    << s.speciesNv() << '\n'
+		                    << s.speciesVector() << '\n'
 		                    << "convergence: \n"
 		                    << convergedv << '\n');
 		DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
