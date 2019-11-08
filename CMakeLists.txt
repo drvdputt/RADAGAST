@@ -13,6 +13,8 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_definitions(-DSILENT)
 endif()
 
+add_definitions(-march=native)
+
 SET(EIGEN_POSSIBLE_LOCATIONS /usr/local/include/eigen3 /usr/include/eigen3 $ENV{HOME}/.local/eigen3)
 message(STATUS "Looking for Eigen in the list ${EIGEN_POSSIBLE_LOCATIONS}")
 foreach(EIGEN_DIR IN LISTS EIGEN_POSSIBLE_LOCATIONS)
