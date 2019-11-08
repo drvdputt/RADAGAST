@@ -9,9 +9,6 @@
 #include <functional>
 #include <vector>
 
-// REMINDER: int i is the size index. These functions used to take double a, but now i should
-// refer to an element of sizev, given at construction.
-
 // TODO: Try to fix weird charge balance for some sizes (see code-notes section bugs) when using
 // van Hoof's correction (see GasPhysics.pdf)
 
@@ -25,8 +22,8 @@ public:
 	to this recipe, i.e. their implementations are also based on formulae from WD01. With
 	some optimism, it should be possible to use this recipe for other types of grains, if
 	the right functions and properties (yield, ionization potentials, etc.) are provided. */
-	GrainPhotoelectricCalculator(const Array& sizev, double workFunction)
-	                : _sizev{sizev}, _workFunction{workFunction}
+	GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil)
+	                : _workFunction{workFunction}, _carOrSil{carOrSil}, _sizev{sizev}
 	{
 	}
 
@@ -145,15 +142,12 @@ private:
 
 	double stickingCoefficient(int i, int z, int z_i) const;
 
+	double _workFunction;
 	bool _carOrSil;
 	///@}
 
 	// Some things will be cached based on the size
-	const Array& _sizev;
-
-	// This constant depends on the grain properties. Is copied from the GrainPhotoelectricData
-	// object at construction.
-	double _workFunction;
+	Array _sizev;
 };
 
 #endif // CORE_PHOTOELECTRICHEATING_HPP
