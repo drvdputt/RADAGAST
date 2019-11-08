@@ -59,11 +59,11 @@ GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Environme
 		   particles are treated as if they can only change the charge by 1. This is
 		   technically incorrect, but the charging rate due to positive ions is very
 		   small anyway. */
-		for (size_t i = 0; i < env._chargev.size(); i++)
-			if (env._chargev[i] > 0)
-				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[i],
-				                                  env._massv[i],
-				                                  env._densityv[i]);
+		for (size_t j = 0; i < env._chargev.size(); j++)
+			if (env._chargev[j] > 0)
+				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[j],
+				                                  env._massv[j],
+				                                  env._densityv[j]);
 		return Jtotal;
 	};
 
@@ -71,11 +71,11 @@ GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Environme
 	auto chargeDownRate = [&](int Z) -> double {
 		double Jtotal{0};
 		// Collisions with negative particles
-		for (size_t i = 0; i < env._chargev.size(); i++)
-			if (env._chargev[i] < 0)
-				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[i],
-				                                  env._massv[i],
-				                                  env._densityv[i]);
+		for (size_t j = 0; j < env._chargev.size(); j++)
+			if (env._chargev[j] < 0)
+				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[j],
+				                                  env._massv[j],
+				                                  env._densityv[j]);
 		return Jtotal;
 	};
 
@@ -327,16 +327,16 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
 		double lambdaG_for_this_z = 0;
 		double Ug = ionizationPotential(a, zGrain);
 		double Vg = sqrt(Constant::ESQUARE) * Ug;
-		for (size_t i = 0; i < env._massv.size(); i++)
+		for (size_t j = 0; j < env._massv.size(); j++)
 		{
 			// Dimensionless
-			double ZVg = env._chargev[i] * Vg;
+			double ZVg = env._chargev[j] * Vg;
 			double psi = ZVg / kT;
 			double eta = psi <= 0 ? 1 - psi : exp(-psi);
 			double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
-			double S = stickingCoefficient(a, zGrain, env._chargev[i]);
+			double S = stickingCoefficient(a, zGrain, env._chargev[j]);
 			// cm s-1
-			double vbar = sqrt(8 * kT / Constant::PI / env._massv[i]);
+			double vbar = sqrt(8 * kT / Constant::PI / env._massv[j]);
 			// cm-3 * cm s-1 * erg = cm-2 s-1 erg
 			double collisionEnergy = 2 * kT * ksi - 2 * kTgrain * eta;
 			if (addGrainPotential)
@@ -346,7 +346,7 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
 				// the grain
 				collisionEnergy -= ZVg * eta;
 			}
-			lambdaG_for_this_z += env._densityv[i] * vbar * S * collisionEnergy;
+			lambdaG_for_this_z += env._densityv[j] * vbar * S * collisionEnergy;
 		}
 		return lambdaG_for_this_z;
 	});
