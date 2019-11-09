@@ -213,7 +213,7 @@ private:
 	double otherDirectionC(double Cif, int i, int f, double kT) const;
 
 	// Settings
-	bool _bB, _bCplus, _bCminus;
+	bool _bB{false}, _bCplus{false}, _bCminus{false};
 	int _maxJ, _maxV;
 
 	// Contains the quantum numbers and energies of the levels

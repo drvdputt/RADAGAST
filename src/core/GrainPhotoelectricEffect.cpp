@@ -51,29 +51,29 @@ GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Environme
 	// These two functions determine the up and down rates for the detailed balance
 
 	// The rate at which the grain moves out of charge Z, in the positive direction.
-	auto chargeUpRate = [&](int Z) -> double {
+	auto chargeUpRate = [&](int z) -> double {
 		double Jtotal{0};
 		// Photoelectric effect rate
-		Jtotal += emissionRate(a, Z, frequencyv, Qabsv, specificIntensityv);
+		Jtotal += emissionRate(a, z, frequencyv, Qabsv, specificIntensityv);
 		/* Collisions with positive particles. Collisions with multiply charged
 		   particles are treated as if they can only change the charge by 1. This is
 		   technically incorrect, but the charging rate due to positive ions is very
 		   small anyway. */
-		for (size_t j = 0; i < env._chargev.size(); j++)
+		for (size_t j = 0; j < env._chargev.size(); j++)
 			if (env._chargev[j] > 0)
-				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[j],
+				Jtotal += collisionalChargingRate(a, env._T, z, env._chargev[j],
 				                                  env._massv[j],
 				                                  env._densityv[j]);
 		return Jtotal;
 	};
 
 	// The rate at which the grain moves out of charge Z, in the negative direction.
-	auto chargeDownRate = [&](int Z) -> double {
+	auto chargeDownRate = [&](int z) -> double {
 		double Jtotal{0};
 		// Collisions with negative particles
 		for (size_t j = 0; j < env._chargev.size(); j++)
 			if (env._chargev[j] < 0)
-				Jtotal += collisionalChargingRate(a, env._T, Z, env._chargev[j],
+				Jtotal += collisionalChargingRate(a, env._T, z, env._chargev[j],
 				                                  env._massv[j],
 				                                  env._densityv[j]);
 		return Jtotal;
