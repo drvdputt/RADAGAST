@@ -1,7 +1,7 @@
 #ifndef CORE_GRAINPHOTOELECTRICDATA_HPP
 #define CORE_GRAINPHOTOELECTRICDATA_HPP
 
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 
 /** This class stores data related to the photoelectric effect, which is static (i.e. does not
     depend on grain sizes, no caching). It also acts as a factory for

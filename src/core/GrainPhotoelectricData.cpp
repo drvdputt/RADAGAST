@@ -1,5 +1,5 @@
 #include "GrainPhotoelectricData.hpp"
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 #include "WeingartnerDraine2001.hpp"
 
 GrainPhotoelectricData::GrainPhotoelectricData(bool carOrSil)

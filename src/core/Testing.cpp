@@ -6,7 +6,7 @@
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricData.hpp"
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 #include "HFromFiles.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"

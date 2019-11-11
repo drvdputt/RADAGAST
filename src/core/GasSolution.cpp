@@ -3,7 +3,7 @@
 #include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
 #include "GasStruct.hpp"
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
 

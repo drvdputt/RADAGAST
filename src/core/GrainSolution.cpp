@@ -3,7 +3,7 @@
 #include "DebugMacros.hpp"
 #include "GrainH2Formation.hpp"
 #include "GrainPhotoelectricData.hpp"
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPopulation.hpp"
 #include "Options.hpp"
 #include "SpecialFunctions.hpp"

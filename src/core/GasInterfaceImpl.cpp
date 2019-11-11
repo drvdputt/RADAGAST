@@ -1,7 +1,7 @@
 #include "GasInterfaceImpl.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
 #include "SpecialFunctions.hpp"

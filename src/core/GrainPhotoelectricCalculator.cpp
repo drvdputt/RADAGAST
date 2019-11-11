@@ -1,4 +1,4 @@
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
 #include "IOTools.hpp"

@@ -3,7 +3,7 @@
 
 #include "Array.hpp"
 #include "ChargeDistribution.hpp"
-#include "GrainPhotoelectricEffect.hpp"
+#include "GrainPhotoelectricCalculator.hpp"
 
 #include <vector>
 
