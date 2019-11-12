@@ -30,14 +30,13 @@ double LevelSolution::netHeating() const
 {
 	double total = 0;
 	const EVector& ev = _levelCoefficients->ev();
-	for (size_t up = 0; up < _levelCoefficients->numLv(); up++)
+	for (size_t j = 0; j < _levelCoefficients->numLv(); j++)
 	{
-		for (size_t lo = 0; lo < up; lo++)
+		for (size_t i = 0; i < _levelCoefficients->numLv(); i++)
 		{
-			double cul = _cvv(up, lo);
-			double clu = _cvv(lo, up);
-			if (cul > 0 || clu > 0)
-				total += (ev(up) - ev(lo)) * (cul * _nv(up) - clu * _nv(lo));
+			double Cij = _cvv(i, j);
+			if (Cij > 0)
+				total += (ev(i) - ev(j)) * Cij * _nv(i);
 		}
 	}
 	return total;
