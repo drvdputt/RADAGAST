@@ -173,7 +173,7 @@ public:
 	/** Get all the cross sections as a vector of Spectrum objects. This is handy if you
 	    want to integrate over these cross sections efficiently, since the Spectrum object
 	    contains the minimum and maximum frequency. */
-	std::vector<Spectrum> directDissociationCrossSections(size_t index) const;
+	const std::vector<Spectrum>& directDissociationCrossSections(size_t index) const;
 
 	/** Return a list of all the levels for which a direct dissociation cross section is
 	    available */
