@@ -151,6 +151,11 @@ EVector BigH2Model::dissociationSinkv(const Spectrum& specificIntensity) const
 EVector BigH2Model::directDissociationIntegralv(const Spectrum& specificIntensity,
                                                 bool heatRate) const
 {
+	// TODO: this can take up quite some time. If we assume that the specific intensity is
+	// always constant during the lifetime of a BigH2Model, the we can just calculate this
+	// once, at creation. In practice, one run of the gas module will then only require one
+	// call of this function.
+
 	EVector result{EVector::Zero(_h2Data->numLv())};
 
 	// For each level that has cross section data
