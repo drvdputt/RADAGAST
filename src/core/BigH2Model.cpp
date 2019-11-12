@@ -204,7 +204,7 @@ EVector BigH2Model::directDissociationIntegralv(const Spectrum& specificIntensit
 	return result;
 }
 
-EVector BigH2Model::spontaneousDissociationSinkv() const
+const EVector& BigH2Model::spontaneousDissociationSinkv() const
 {
 	return _h2Data->dissociationProbabilityv();
 }

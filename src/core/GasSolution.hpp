@@ -57,7 +57,7 @@ public:
 	void setT(double t) { _t = t; }
 
 	/** The chemistry solution */
-	SpeciesVector speciesVector() const { return _sv; }
+	const SpeciesVector& speciesVector() const { return _sv; }
 	void setSpeciesNv(const EVector& nv) { _sv.setDensities(nv); }
 	double nH() const { return _sv.nH(); }
 	double nH2() const { return _sv.nH2(); }

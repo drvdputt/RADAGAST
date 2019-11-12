@@ -18,11 +18,11 @@ GasInterface::~GasInterface() = default;
 
 GasInterface::GasInterface(GasInterface&&) = default;
 
-std::valarray<double> GasInterface::iFrequencyv() const { return _pimpl->iFrequencyv(); }
+const std::valarray<double>& GasInterface::iFrequencyv() const { return _pimpl->iFrequencyv(); }
 
-std::valarray<double> GasInterface::oFrequencyv() const { return _pimpl->oFrequencyv(); }
+const std::valarray<double>& GasInterface::oFrequencyv() const { return _pimpl->oFrequencyv(); }
 
-std::valarray<double> GasInterface::eFrequencyv() const { return _pimpl->eFrequencyv(); }
+const std::valarray<double>& GasInterface::eFrequencyv() const { return _pimpl->eFrequencyv(); }
 
 void GasInterface::updateGasState(GasState& gs, double n,
                                   const std::valarray<double>& specificIntensityv,

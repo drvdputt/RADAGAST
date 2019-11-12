@@ -21,7 +21,7 @@ private:
 	              std::vector<std::vector<double>>& fileGammaDaggervv) const;
 
 public:
-	Array thresholdv() const { return _thresholdv; }
+	const Array& thresholdv() const { return _thresholdv; }
 
 	/* Calculate the emission coefficient for the optical recombination continuum for
 	   allfrequencies. The data is intepolated ad-hoc in the temperature direction; in the

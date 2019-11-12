@@ -49,15 +49,15 @@ public:
 	                 const std::string& moleculeChoice = "");
 
 	/** The grid used to discretize the input radiation field */
-	std::valarray<double> iFrequencyv() const { return _iFrequencyv; }
+	const std::valarray<double>& iFrequencyv() const { return _iFrequencyv; }
 
 	/** The grid that will be used to discretize the output opacity. This is typically
 	    coarser because a radiative transfer algorithm usually needs the opacity in each
 	    grid cell. */
-	std::valarray<double> oFrequencyv() const { return _oFrequencyv; }
+	const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }
 
 	/** The grid on which the emissivity is calculated. */
-	std::valarray<double> eFrequencyv() const { return _eFrequencyv; }
+	const std::valarray<double>& eFrequencyv() const { return _eFrequencyv; }
 
 	/** The most convenient way to run the code for a cell. A minimal set of results is
 	    stored in the given GasState object. The exact contents of the GasState are not

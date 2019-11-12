@@ -47,10 +47,10 @@ public:
 	   map thing going on. Having this generalized might be handy in the future. */
 
 	/** Get the temperature vector */
-	Array temperaturev() const { return _temperaturev; }
+	const Array& temperaturev() const { return _temperaturev; }
 
 	/** Get a list of all the transitions (initial, final) that were inserted. */
-	std::vector<std::array<int, 2>> transitionv() const { return _transitionv; }
+	const std::vector<std::array<int, 2>>& transitionv() const { return _transitionv; }
 
 	/** Get the data entry for the transition i -> f, for the temperature at index iT. */
 	double q(int iT, int i, int f) const;

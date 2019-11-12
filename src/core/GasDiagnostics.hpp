@@ -17,21 +17,21 @@ public:
 	bool saveLevelPopulations() const { return _saveLevelPopulations; }
 
 	/** The photoelectric heating contribution by each grain population */
-	Array photoelectricHeating() const { return _photoelectricHeating; }
+	const Array& photoelectricHeating() const { return _photoelectricHeating; }
 
 	/** Other heating rates, stored as a map with keys */
-	const std::map<std::string, double> otherHeating() const { return _heatingm; }
-	const std::map<std::string, double> cooling() const { return _coolingm; }
+	const std::map<std::string, double>& otherHeating() const { return _heatingm; }
+	const std::map<std::string, double>& cooling() const { return _coolingm; }
 
 	/** Names of the reactions in the chemical network used */
-	std::vector<std::string> reactionNames() const { return _reactionNamev; }
+	const std::vector<std::string>& reactionNames() const { return _reactionNamev; }
 	/** Rates of the reactions in the chemical network used */
-	Array reactionRates() const { return _reactionRatev; }
+	const Array& reactionRates() const { return _reactionRatev; }
 
 	/** Population density of the included H levels */
-	Array hPopulations() const { return _hPopulationv; }
+	const Array& hPopulations() const { return _hPopulationv; }
 	/** Population density of the included H2 levels */
-	Array h2Populations() const { return _h2Populationv; }
+	const Array& h2Populations() const { return _h2Populationv; }
 
 	/** Get the value of a diagnostic that was added using putUserValue */
 	double userValue(const std::string& key) { return _userValuem.at(key); }

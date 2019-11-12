@@ -26,7 +26,7 @@ public:
 
 	/** Update the level populations */
 	void setNv(const EVector& nv) { _nv = nv; }
-	EVector nv() const { return _nv; }
+	const EVector& nv() const { return _nv; }
 
 	/** The spectrum emitted by the line transitions, expressed as the emission coefficient
 	    j_nu f * (erg/cm3/s/Hz). */

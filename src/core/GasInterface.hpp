@@ -36,9 +36,9 @@ public:
 	    return a GasInterface object. Again, necessary because of the unique_ptr. */
 	GasInterface(GasInterface&&);
 
-	std::valarray<double> iFrequencyv() const;
-	std::valarray<double> oFrequencyv() const;
-	std::valarray<double> eFrequencyv() const;
+	const std::valarray<double>& iFrequencyv() const;
+	const std::valarray<double>& oFrequencyv() const;
+	const std::valarray<double>& eFrequencyv() const;
 
 	void updateGasState(GasState&, double n,
 	                    const std::valarray<double>& specificIntensityv,

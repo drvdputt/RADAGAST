@@ -36,7 +36,7 @@ private:
 	                                    bool heatRate = false) const;
 
 	/** Sink term due to the spontaneous dissociation rate. [s-1] */
-	EVector spontaneousDissociationSinkv() const;
+	const EVector& spontaneousDissociationSinkv() const;
 
 	const H2Data* _h2Data;
 	LevelSolution _levelSolution;

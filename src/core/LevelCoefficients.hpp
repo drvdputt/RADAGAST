@@ -36,20 +36,20 @@ protected:
 
 public:
 	/** Energy of the levels */
-	EVector ev() const { return _ev; }
+	const EVector& ev() const { return _ev; }
 
 	/** Multiplicity of the levels */
-	EVector gv() const { return _gv; }
+	const EVector& gv() const { return _gv; }
 
 	/** Spontaneous radiative transition rates between the levels */
-	EMatrix avv() const { return _avv; }
+	const EMatrix& avv() const { return _avv; }
 
 	/** Collisional transition rates, calculated by a subclass */
 	virtual EMatrix cvv(const GasStruct& gas) const = 0;
 
 	/** Spontaneous transition rates which do not produce line emission (really only used
 	    for two-photon continuum). */
-	EMatrix extraAvv() const { return _extraAvv; }
+	const EMatrix& extraAvv() const { return _extraAvv; }
 
 	/** Ouputs some properties about the different line transitions. The results for the
 	    number of lines, their frequencies [s-1] and their natural widths (decay rate [s-1]

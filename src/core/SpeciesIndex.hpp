@@ -32,10 +32,10 @@ public:
 	size_t size() const { return _namev.size(); }
 
 	/** Get species name for certain index */
-	std::string name(int index) const { return _namev[index]; }
+	const std::string& name(int index) const { return _namev[index]; }
 
 	/** Get all species names */
-	std::vector<std::string> namev() const { return _namev; }
+	const std::vector<std::string>& namev() const { return _namev; }
 
 private:
 	// Since it might be useful, let's just store both a map and a vector here. Vector gives
@@ -68,7 +68,7 @@ public:
 	double nH2() const { return ni(_inH2); }
 	double nSpecies(const std::string& name) const { return ni(_index->index(name)); }
 
-	EVector speciesNv() const { return _nv; }
+	const EVector& speciesNv() const { return _nv; }
 
 	const double* data() const { return _nv.data(); }
 	size_t size() const { return _nv.size(); }

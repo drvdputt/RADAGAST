@@ -47,8 +47,8 @@ public:
 	double valMax() const;
 	double valMin() const;
 
-	Array frequencyv() const { return _frequencyv; }
-	Array valuev() const { return _valuev; }
+	const Array& frequencyv() const { return _frequencyv; }
+	const Array& valuev() const { return _valuev; }
 
 private:
 	bool _hasData;

@@ -45,11 +45,11 @@ public:
 
 	/** @name Trivial getters. */
 	/**@{*/
-	std::vector<Array> qAbsvv() const { return _qAbsvv; }
-	std::valarray<double> temperaturev() const { return _temperaturev; }
-	std::valarray<double> densityv() const { return _densityv; }
-	std::valarray<double> sizev() const { return _sizev; }
-	Array qAbsv(int m) const { return _qAbsvv[m]; }
+	const std::vector<Array>& qAbsvv() const { return _qAbsvv; }
+	const std::valarray<double>& temperaturev() const { return _temperaturev; }
+	const std::valarray<double>& densityv() const { return _densityv; }
+	const std::valarray<double>& sizev() const { return _sizev; }
+	const Array& qAbsv(int m) const { return _qAbsvv[m]; }
 	double temperature(int m) const { return _temperaturev[m]; }
 	double density(int m) const { return _densityv[m]; }
 	double size(int m) const { return _sizev[m]; }

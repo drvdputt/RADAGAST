@@ -177,7 +177,10 @@ public:
 
 	/** Return a list of all the levels for which a direct dissociation cross section is
 	    available */
-	std::vector<size_t> levelsWithCrossSectionv() const { return _levelsWithCrossSectionv; }
+	const std::vector<size_t>& levelsWithCrossSectionv() const
+	{
+		return _levelsWithCrossSectionv;
+	}
 
 	/** return the distribution of newly formed hydrogen over the electronic ground state.
 	    For now, we use equation 19 from Draine and Bertoldi (1996), which does not depend
