@@ -22,10 +22,7 @@ public:
 	to this recipe, i.e. their implementations are also based on formulae from WD01. With
 	some optimism, it should be possible to use this recipe for other types of grains, if
 	the right functions and properties (yield, ionization potentials, etc.) are provided. */
-	GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil)
-	                : _workFunction{workFunction}, _carOrSil{carOrSil}, _sizev{sizev}
-	{
-	}
+	GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil);
 
 	double yieldFunctionTest() const;
 
@@ -148,6 +145,14 @@ private:
 
 	// Some things will be cached based on the size
 	Array _sizev;
+
+	// Cache the output of WD01::y1 (contains expm1)
+	Array _y1Cache;
+
+	// Cache the sticking coefficient for electrons colliding with positive and negative
+	// grains (both contain expm1).
+	Array _eStickPositiveCache;
+	Array _eStickNegativeCache;
 };
 
 #endif // CORE_GRAINPHOTOELECTRICCALCULATOR_HPP

@@ -97,6 +97,13 @@ double WD01::escapingFraction(int Z, double Elow, double Ehigh)
 
 double WD01::yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceous)
 {
+	double the_y1 = y1(a);
+	return yield_cached(a, Z, hnuDiff, Emin, carbonaceous, the_y1);
+}
+
+double WD01::yield_cached(double a, int Z, double hnuDiff, double Emin, bool carbonaceous,
+                          double y1_cached)
+{
 	// Below photoelectric threshold
 	if (hnuDiff < 0)
 		return 0;
@@ -118,7 +125,28 @@ double WD01::yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceo
 	}
 
 	double y2 = escapingFraction(Z, Elow, Ehigh);
+	double y1 = y1_cached;
 
+	// Calculate y0 from eq 9, 16, 17
+	double thetaOverW = hnuDiff;
+	if (Z >= 0)
+		thetaOverW += (Z + 1) * Constant::ESQUARE / a;
+	thetaOverW /= workFunction(carbonaceous);
+	double thetaOverWtothe5th = thetaOverW * thetaOverW;
+	thetaOverWtothe5th *= thetaOverWtothe5th * thetaOverW;
+
+	double y0;
+	// Different formulae for carbonaceous and silicate
+	if (carbonaceous)
+		y0 = 9e-3 * thetaOverWtothe5th / (1 + 3.7e-2 * thetaOverWtothe5th);
+	else
+		y0 = 0.5 * thetaOverW / (1. + 5. * thetaOverW);
+
+	return y2 * min(y0 * y1, 1.);
+}
+
+double WD01::y1(double a)
+{
 	// Calculate y1 from grain properties and eq 13, 14
 	// double imaginaryRefIndex = 1; // should be wavelength-dependent
 	// double la = Constant::LIGHT / nu / 4 / Constant::PI / imaginaryRefIndex;
@@ -137,25 +165,9 @@ double WD01::yield(double a, int Z, double hnuDiff, double Emin, bool carbonaceo
 	   cache these per grain size. However, As stated above, la might depend on the
 	   frequency in the future, so this might become harder than it seems. Of course,
 	   caching for each frequency and size should also be possible. */
-	double y1 = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
-	            (beta2 - 2. * beta - 2. * expm1(-beta));
-
-	// Calculate y0 from eq 9, 16, 17
-	double thetaOverW = hnuDiff;
-	if (Z >= 0)
-		thetaOverW += (Z + 1) * Constant::ESQUARE / a;
-	thetaOverW /= workFunction(carbonaceous);
-	double thetaOverWtothe5th = thetaOverW * thetaOverW;
-	thetaOverWtothe5th *= thetaOverWtothe5th * thetaOverW;
-
-	double y0;
-	// Different formulae for carbonaceous and silicate
-	if (carbonaceous)
-		y0 = 9e-3 * thetaOverWtothe5th / (1 + 3.7e-2 * thetaOverWtothe5th);
-	else
-		y0 = 0.5 * thetaOverW / (1. + 5. * thetaOverW);
-
-	return y2 * min(y0 * y1, 1.);
+	double result = beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) /
+	                (beta2 - 2. * beta - 2. * expm1(-beta));
+	return result;
 }
 
 double WD01::autoIonizationThreshold(double a, bool carbonaceous)
@@ -176,7 +188,25 @@ int WD01::minimumCharge(double a, bool carbonaceous)
 	return minimumCharge(a, autoIonizationThreshold(a, carbonaceous));
 }
 
-double WD01::stickingCoefficient(double a, int Z, int z_i, bool carbonaceous)
+double WD01::estick_positive(double a)
+{
+	double le = 10. * Constant::ANG_CM;
+	double pElasticScatter = .5;
+	return (1 - pElasticScatter) * (-expm1(-a / le));
+}
+
+double WD01::estick_negative(double a)
+{
+	// electron mean free path length in grain
+	double le = 10. * Constant::ANG_CM;
+	// number of carbon atoms
+	double NC = 468 * a * a * a / 1.e-21;
+	return 0.5 * (-expm1(-a / le)) / (1 + exp(20 - NC));
+}
+
+double WD01::stickingCoefficient_cached(double a, int z, int z_i, bool carbonaceous,
+                                        double estick_cached_positive,
+                                        double estick_cached_negative)
 {
 	// ions
 	if (z_i >= 0)
@@ -184,28 +214,29 @@ double WD01::stickingCoefficient(double a, int Z, int z_i, bool carbonaceous)
 	// electrons
 	else if (z_i == -1)
 	{
-		// electron mean free path length in grain
-		double le = 10. * Constant::ANG_CM;
-		double pElasticScatter = .5;
 		// negative and neutral grains
-		if (Z <= 0)
+		if (z <= 0)
 		{
-			if (Z > minimumCharge(a, carbonaceous))
-			{
-				// number of carbon atoms
-				double NC = 468 * a * a * a / 1.e-21;
-				return 0.5 * (-expm1(-a / le)) / (1 + exp(20 - NC));
-			}
+			if (z > minimumCharge(a, carbonaceous))
+				return estick_cached_negative;
 			else
 				return 0;
 		}
 		// positive grains
 		else
-			return (1 - pElasticScatter) * (-expm1(-a / le));
+			return estick_cached_positive;
 	}
 	// more negative
 	else
 		return 0;
+}
+
+double WD01::stickingCoefficient(double a, int z, int z_i, bool carbonaceous)
+{
+	double the_estick_positive = estick_positive(a);
+	double the_estick_negative = estick_negative(a);
+	return stickingCoefficient_cached(a, z, z_i, carbonaceous, the_estick_positive,
+	                                  the_estick_negative);
 }
 
 double WD01::lambdaTilde(double tau, double ksi)

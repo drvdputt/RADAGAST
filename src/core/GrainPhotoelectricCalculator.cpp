@@ -12,6 +12,21 @@
 
 using namespace std;
 
+GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array& sizev,
+                                                           double workFunction, bool carOrSil)
+                : _workFunction{workFunction}, _carOrSil{carOrSil}, _sizev{sizev}
+{
+	_y1Cache.resize(_sizev.size());
+	_eStickPositiveCache.resize(_sizev.size());
+	_eStickNegativeCache.resize(_sizev.size());
+	for (size_t i = 0; i < _sizev.size(); i++)
+	{
+		_y1Cache[i] = WD01::y1(_sizev[i]);
+		_eStickPositiveCache = WD01::estick_positive(_sizev[i]);
+		_eStickNegativeCache = WD01::estick_negative(_sizev[i]);
+	}
+}
+
 int GrainPhotoelectricCalculator::minimumCharge(int i) const
 {
 	double Uait = autoIonizationThreshold(_sizev[i]);
@@ -515,7 +530,7 @@ double GrainPhotoelectricCalculator::ionizationPotential(int i, int z) const
 double GrainPhotoelectricCalculator::photoelectricYield(int i, int z, double hnuDiff,
                                                         double Emin) const
 {
-	return WD01::yield(_sizev[i], z, hnuDiff, Emin, _carOrSil);
+	return WD01::yield_cached(_sizev[i], z, hnuDiff, Emin, _carOrSil, _y1Cache[i]);
 }
 
 double GrainPhotoelectricCalculator::autoIonizationThreshold(int i) const
@@ -525,5 +540,7 @@ double GrainPhotoelectricCalculator::autoIonizationThreshold(int i) const
 
 double GrainPhotoelectricCalculator::stickingCoefficient(int i, int z, int z_i) const
 {
-	return WD01::stickingCoefficient(_sizev[i], z, z_i, _carOrSil);
+	return WD01::stickingCoefficient_cached(_sizev[i], z, z_i, _carOrSil,
+	                                        _eStickPositiveCache[i],
+	                                        _eStickNegativeCache[i]);
 }
