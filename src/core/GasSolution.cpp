@@ -4,6 +4,7 @@
 #include "GasDiagnostics.hpp"
 #include "GasStruct.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
+#include "GrainPopulation.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
 

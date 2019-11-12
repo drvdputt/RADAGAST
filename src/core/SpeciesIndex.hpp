@@ -73,6 +73,7 @@ public:
 	const double* data() const { return _nv.data(); }
 	size_t size() const { return _nv.size(); }
 
+	/** Overload the output stream operator, for easy printing and debugging. */
 	friend std::ostream& operator<<(std::ostream& os, const SpeciesVector& sv);
 
 private:

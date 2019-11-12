@@ -5,8 +5,9 @@
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
 #include "GasStruct.hpp"
-#include "GrainPhotoelectricData.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
+#include "GrainPhotoelectricData.hpp"
+#include "GrainPopulation.hpp"
 #include "HFromFiles.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"
@@ -536,19 +537,20 @@ void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainI
 		bulkDen = 3.0;
 
 	// write out grain size distribution, preferable in g cm-3
+	const auto* grainPopulationv = gr.populationv();
 	for (size_t i = 0; i < gr.numPopulations(); i++)
 	{
 		ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
 		             {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
 
-		auto pop = gr.population(i);
-		for (size_t m = 0; m < pop->numSizes(); m++)
+		const auto& pop = grainPopulationv->at(i);
+		for (size_t m = 0; m < pop.numSizes(); m++)
 		{
-			double a = pop->size(m);
-			double numberDen = pop->density(m);
+			double a = pop.size(m);
+			double numberDen = pop.density(m);
 			double mass = 4. / 3. * Constant::PI * a * a * a * bulkDen;
 			f.writeLine<Array>(
-			                {a, numberDen, numberDen * mass, pop->temperature(m)});
+			                {a, numberDen, numberDen * mass, pop.temperature(m)});
 		}
 	}
 }

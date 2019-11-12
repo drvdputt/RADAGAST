@@ -42,12 +42,15 @@ int minimumCharge(double a, double Uait);
 /** Combines eq 23 and 24 */
 int minimumCharge(double a, bool carbonaceous);
 
-/** The sticking coefficient based on equations 1 and 27-30 */
+/** The sticking coefficient based on equations 1 and 27-30. z_i is the charge of the particle
+    colliding with the grain. */
+///@{
 double estick_positive(double a);
 double estick_negative(double a);
 double stickingCoefficient_cached(double a, int z, int z_i, bool carbonaceous,
                                   double estick_cached_positive, double estick_cached_negative);
 double stickingCoefficient(double a, int z, int z_i, bool carbonaceous);
+///@}
 
 /** Draine & Sutin (1987) equations 3.6-3.10. */
 double lambdaTilde(double tau, double ksi);

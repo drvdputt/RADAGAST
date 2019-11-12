@@ -5,9 +5,7 @@
 
 /** This class stores data related to the photoelectric effect, which is static (i.e. does not
     depend on grain sizes, no caching). It also acts as a factory for
-    GrainPhotoelectricCalculator objects, for a given list of sizes. When such an object is
-    constructed, it will serve as a workspace for the photoelectric heating, allowing the
-    storage of intermediate results and caching. If a different photoelectric data + calculation
+    GrainPhotoelectricCalculator objects. If a different photoelectric data + calculation
     recipe would be implemented, then the abstraction could be made as follows:
 
     - Make both GrainPhotoelectricData and GrainPhotoelectricCalculator abstract.
@@ -29,7 +27,12 @@ public:
 	    Weingartner and Draine (2001). When the calculator is created, it will cache bunch
 	    of things based on the given list of sizes, see its documentation. */
 	GrainPhotoelectricData(bool carOrSil);
+
+	/** Create a photoelectric calculator, for a given array of grain sizes. This object
+	    will serve as a workspace for the photoelectric heating, allowing the storage of
+	    intermediate results and caching. */
 	std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
+
 private:
 	bool _carOrSil;
 	double _workFunction;

@@ -49,9 +49,12 @@ public:
 	std::valarray<double> temperaturev() const { return _temperaturev; }
 	std::valarray<double> densityv() const { return _densityv; }
 	std::valarray<double> sizev() const { return _sizev; }
-	/**@}*/
-
+	Array qAbsv(int m) const { return _qAbsvv[m]; }
+	double temperature(int m) const { return _temperaturev[m]; }
+	double density(int m) const { return _densityv[m]; }
+	double size(int m) const { return _sizev[m]; }
 	size_t numSizes() const { return _sizev.size(); }
+	/**@}*/
 
 	/** If not a nullptr, then the object can be used to calculate the h2 formation rate. */
 	const GrainH2Formation* h2formationData() const { return _h2formation.get(); }
@@ -63,11 +66,7 @@ public:
 		return _photoelectricData.get();
 	}
 
-	Array qAbsv(int m) const { return _qAbsvv[m]; }
-	double temperature(int m) const { return _temperaturev[m]; }
-	double density(int m) const { return _densityv[m]; }
-	double size(int m) const { return _sizev[m]; }
-
+	/** Some checks for inconsitencies. Program will abort if this fails. */
 	void test() const;
 
 private:

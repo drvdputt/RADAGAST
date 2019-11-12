@@ -13,15 +13,17 @@
 // van Hoof's correction (see GasPhysics.pdf)
 
 /** This class provides an implementation of the photoelectric heating recipe described in
-    Weingartner \& Draine (2001), hereafter WD01. */
+    Weingartner \& Draine (2001), hereafter WD01. With some optimism, it should be possible to
+    use this recipe for other types of grains, if the right functions and properties (yield,
+    ionization potentials, etc.) are made abstract, and implemented in specific subclasses per
+    grain type. There is some caching of grain properties specific for the WD01 grain types.
+    This caching can also move to a subclass if necessary. */
 class GrainPhotoelectricCalculator
 {
 public:
-	/** Create a photoelectric effect object. Requires an instance of one of the \c
-	GrainType subclasses. The \c SilicateGrain and \c CarbonaceousGrain types are 'native'
-	to this recipe, i.e. their implementations are also based on formulae from WD01. With
-	some optimism, it should be possible to use this recipe for other types of grains, if
-	the right functions and properties (yield, ionization potentials, etc.) are provided. */
+	/** Currently, this constructor also takes arguments related to the WD01 grain types.
+	This should change if the GrainPhotoelectricData and GrainPhotoelectricCalculator
+	classes are ever made abstract, to acommodate for other grain types. */
 	GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil);
 
 	double yieldFunctionTest() const;

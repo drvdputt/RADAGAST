@@ -3,6 +3,7 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
+#include "GrainPopulation.hpp"
 #include "SpecialFunctions.hpp"
 
 #include <cassert>
@@ -26,22 +27,16 @@ size_t GrainInterface::numPopulations() const
 	return _populationv ? _populationv->size() : 0;
 }
 
-const GrainPopulation* GrainInterface::population(size_t i) const
+const std::vector<GrainPopulation>* GrainInterface::populationv() const
 {
-	if (!_populationv)
-		Error::runtime("No populations in this object!");
-	if (i > _populationv->size())
-		Error::runtime("Population index out of bounds.");
-	return _populationv->data() + i;
+	return _populationv.get();
 }
-
-std::vector<GrainPopulation>* GrainInterface::populationv() const { return _populationv.get(); }
 
 void GrainInterface::test() const
 {
 	if (!_populationv)
 		return;
-	for (auto& population : *_populationv)
+	for (const auto& population : *_populationv)
 		population.test();
 }
 
