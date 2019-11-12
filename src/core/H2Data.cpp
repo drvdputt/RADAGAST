@@ -515,6 +515,8 @@ void H2Data::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
 			double b = _gbarcoll[iPartner][2];
 			double logk = y0 + a * pow(max(sigma, 100.), b);
 
+			// TODO: possible optimization: precalculate k (only depends on level
+			// energies)
 			double Cul = nPartner * pow(10., logk);
 			the_cvv(u, l) += Cul;
 			the_cvv(l, u) += otherDirectionC(Cul, u, l, kT);
