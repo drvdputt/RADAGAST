@@ -55,10 +55,10 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 	int numLv = initialGuessv.size();
 	// Tij is the transition rate from i to j. Mij = Tji means the arrival in state i from
 	// j. This form is handy because then you can do a left-multiplication with the nv
-	// column vector to arrive at the total increase rate for each level. Storing Mvv row
-	// major gives some extra speed, because the rows are then contiguous in memory, which
-	// helps when multiplying with nv.
-	EMatrixRM Mvv = totalTransitionRatesvv.transpose();
+	// column vector to arrive at the total increase rate for each level. Using auto here
+	// give a speed boost; the actual type is an expression object representing the
+	// transposed matrix.
+	const auto Mvv = totalTransitionRatesvv.transpose();
 
 	// Fractional destruction rate (in s-1) stays constant when populations are adjusted
 	// (sum over the row indices by doing a colwise reduction. Need to transpose because
@@ -85,7 +85,7 @@ EVector LevelSolver::statisticalEquilibrium_iterative(double totalDensity,
 
 	bool converged = false;
 	size_t counter{0};
-	const int max_iterations = 2001;
+	const int max_iterations = 100;
 	while (!converged && counter < max_iterations)
 	{
 		counter++;

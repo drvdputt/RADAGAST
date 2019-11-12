@@ -95,8 +95,8 @@ double BigH2Model::dissociationHeating(const Spectrum& specificIntensity) const
 {
 	// Fraction that dissociates per second * kinetic energy per dissociation * density of
 	// level population = heating power density
-	EArray p = _h2Data->dissociationProbabilityv().array();
-	EArray k = _h2Data->dissociationKineticEnergyv().array();
+	auto p = _h2Data->dissociationProbabilityv().array();
+	auto k = _h2Data->dissociationKineticEnergyv().array();
 	double solomonHeat = _levelSolution.nv().dot(EVector{p * k});
 
 	EVector directHeatv = directDissociationIntegralv(specificIntensity, true);

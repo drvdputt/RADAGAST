@@ -158,11 +158,11 @@ public:
 	size_t startOfExcitedIndices() const { return _startOfExcitedIndices; }
 
 	/** The spontaneous dissociation probability per unit time from each level. [s-1] */
-	EVector dissociationProbabilityv() const { return _dissProbv; }
+	const EVector& dissociationProbabilityv() const { return _dissProbv; }
 
 	/** The average kinetic energy resulting from a spontaneous dissociation from each
 	    level. [erg] */
-	EVector dissociationKineticEnergyv() const { return _dissKinEv; }
+	const EVector& dissociationKineticEnergyv() const { return _dissKinEv; }
 
 	/** Cross section for direct dissociation from @f$ X(J,v) @f$. */
 	double directDissociationCrossSection(double nu, int j, int v) const;
