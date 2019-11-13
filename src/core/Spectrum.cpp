@@ -91,6 +91,10 @@ Array Spectrum::binned(Array frequencyv) const
 		                               ? frequencyv[frequencyv.size() - 1]
 		                               : (frequencyv[i + 1] + frequencyv[i]) / 2.;
 
+		// Outside of the data range, this average will be 0 of course
+		if (nuMax < _freqMin || nuMin > _freqMax)
+			continue;
+
 		// Take the average over this part of the spectrum
 		binnedValuev[i] = average(nuMin, nuMax);
 	}
