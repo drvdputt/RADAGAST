@@ -23,7 +23,7 @@ LevelCoefficients::LevelCoefficients(double mass) : _mass(mass)
 }
 
 void LevelCoefficients::setConstants(const EVector& ev, const EVector& gv, const EMatrix& avv,
-                                    const EMatrix& extraAvv)
+                                     const EMatrix& extraAvv)
 {
 	_numLv = ev.size();
 	_ev = ev;
@@ -52,19 +52,37 @@ void LevelCoefficients::lineInfo(int& numLines, Array& lineFreqv,
 }
 
 EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntensity,
-                                                  const GasStruct& gas, EMatrix* cvv_p) const
+                                                  const GasStruct& gas, EMatrix* cvv_p,
+                                                  EMatrix* bpvv_p) const
 {
-	EMatrix the_cvv = cvv(gas);
+	// If no pointer was given, store cvv in newly allocated space. (I change value of
+	// cvv_p, for convenience in the rest of this function.).
+	EMatrix new_cvv;
 	if (cvv_p)
-		*cvv_p = the_cvv;
-	EMatrix bpvv = prepareAbsorptionMatrix(specificIntensity, gas._t, the_cvv);
+		*cvv_p = cvv(gas);
+	else
+	{
+		new_cvv = cvv(gas);
+		cvv_p = &new_cvv;
+	}
+
+	// Idem
+	EMatrix new_bpvv;
+	if (bpvv_p)
+		*bpvv_p = prepareAbsorptionMatrix(specificIntensity, gas._t, *cvv_p);
+	else
+	{
+		new_bpvv = prepareAbsorptionMatrix(specificIntensity, gas._t, *cvv_p);
+		bpvv_p = &new_bpvv;
+	}
+
 	if (Options::levelcoefficients_printLevelMatrices)
 	{
 		DEBUG("Aij" << endl << _avv << endl << endl);
-		DEBUG("BPij" << endl << bpvv << endl << endl);
-		DEBUG("Cij" << endl << the_cvv << endl << endl);
+		DEBUG("BPij" << endl << *bpvv_p << endl << endl);
+		DEBUG("Cij" << endl << *cvv_p << endl << endl);
 	}
-	return _avv + _extraAvv + bpvv + the_cvv;
+	return _avv + _extraAvv + *bpvv_p + *cvv_p;
 }
 
 EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,

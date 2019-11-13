@@ -18,9 +18,8 @@ void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificI
 		return;
 	}
 
-	EMatrix Cvv;
-	EMatrix Tvv = _h2Data->totalTransitionRatesvv(specificIntensity, gas, &Cvv);
-	_levelSolution.setCvv(Cvv);
+	_tvv = _h2Data->totalTransitionRatesvv(specificIntensity, gas, &_cvv, &_bpvv);
+	_levelSolution.setCvv(_cvv);
 
 	// TODO: Use better formation pumping recipe
 	EVector sourcev = EVector::Zero(_h2Data->numLv());
@@ -44,7 +43,7 @@ void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificI
 
 	int fullyConnectedCutoff = _h2Data->startOfExcitedIndices();
 	EVector newNv = LevelSolver::statisticalEquilibrium_iterative(
-	                n, Tvv, sourcev, sinkv, _levelSolution.nv(), fullyConnectedCutoff);
+	                n, _tvv, sourcev, sinkv, _levelSolution.nv(), fullyConnectedCutoff);
 	_levelSolution.setNv(newNv);
 }
 

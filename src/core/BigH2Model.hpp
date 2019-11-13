@@ -41,6 +41,11 @@ private:
 	const H2Data* _h2Data;
 	LevelSolution _levelSolution;
 	double _n{0.};
+
+	// Keep this allocated, instead of freeing it at the end of solve()
+	EMatrix _cvv;
+	EMatrix _bpvv;
+	EMatrix _tvv;
 };
 
 #endif // CORE_BIGH2MODEL_HPP

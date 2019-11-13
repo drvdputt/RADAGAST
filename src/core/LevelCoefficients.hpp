@@ -62,9 +62,12 @@ public:
 	    from the given specific intensity. Optionally, the collision coefficients can be
 	    returned separately by pointer, so they don't have to be calculated again later (the
 	    result is exactly the same as calling cvv() but it is more efficient to calculate
-	    the total matrix and cvv at the same time). [s-1] */
+	    the total matrix and cvv at the same time). Same for the induced radiative
+	    transition matrix. By passing these pointers, you can also avoid having to free the
+	    memory for these matrices. [s-1] */
 	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas,
-	                               EMatrix* cvv_p = nullptr) const;
+	                               EMatrix* cvv_p = nullptr,
+	                               EMatrix* bpvv_p = nullptr) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. Also serves
 	    as an example of how to properly set up a LevelSolution object. */
@@ -88,6 +91,7 @@ private:
 	    radiation field), but their product should always have units [s-1]. */
 	EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
 	                                const EMatrix& Cvv) const;
+
 public:
 	/** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
 	    upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all
