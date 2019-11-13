@@ -49,6 +49,12 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints) const
 	double yMin = (*this)(_center + xMax);
 	double linearStep = (yMax - yMin) / (iCenter + 1); // +1 to avoid stepping below 0
 
+	// Since yMax, and hence (y - linearStep) can be higher than the maximum of a gauss,
+	// inverse_gauss can run into trouble. Scale y down (equivalent to scaling the gauss up)
+	// using this factor.
+	double yMaxGauss = 1. / Constant::SQRT2PI / _sigma_gauss;
+	double scaleGauss = yMaxGauss / yMax;
+
 	// Fill in the values
 	Array freqv(numPoints);
 	freqv[iCenter] = _center;
@@ -70,7 +76,7 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints) const
 		previousx = x;
 
 		// Assume a gaussian. We want to go down a fixed step in the vertical direction.
-		x = SpecialFunctions::inverse_gauss(y - linearStep, _sigma_gauss);
+		x = SpecialFunctions::inverse_gauss((y - linearStep) * scaleGauss, _sigma_gauss);
 
 		// If drop was too big, scale down
 		double nexty = (*this)(_center + x);
