@@ -15,6 +15,8 @@ namespace SpecialFunctions
     significant digits. */
 double voigt(double a, double u);
 
+double pseudoVoigt(double x, double sigma_gauss, double gamma_lorentz);
+
 /** This function returns the Maxwell-Boltzman velocity distribution, evaluated at a velocity v,
     for a gas of temperature T and particles of mass m. Since this is a probability density per
     velocity unit, the unit of the result is s / cm. */

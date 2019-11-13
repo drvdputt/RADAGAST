@@ -194,6 +194,48 @@ double SpecialFunctions::voigt(double a, double u)
 	return k;
 }
 
+namespace
+{
+// calculate powers 1 to n and store them in the given array
+template <unsigned int N> void nPowers(double base, std::array<double, N>& output)
+{
+	double baseToTheNth = base;
+	for (int i = 0; i < N; i++)
+	{
+		output[i] = baseToTheNth;
+		baseToTheNth *= base;
+	}
+}
+} // namespace
+
+double SpecialFunctions::pseudoVoigt(double x, double sigma_gauss, double gamma_lorentz)
+{
+	// from Ida et al. (2000), citing Thompson et al. (!987)
+	constexpr double twoSqrt2ln2 = 2.3548200450309493;
+
+	double GammaG = twoSqrt2ln2 * sigma_gauss;
+	std::array<double, 5> GammaGN;
+	nPowers<5>(GammaG, GammaGN);
+
+	double GammaL = 2 * gamma_lorentz;
+	std::array<double, 5> GammaLN;
+	nPowers<5>(GammaL, GammaLN);
+
+	double Gamma = std::pow(GammaGN[4] + 2.69269 * GammaGN[3] * GammaLN[0] +
+	                                        2.42843 * GammaGN[2] * GammaLN[1] +
+	                                        4.47163 * GammaGN[1] * GammaLN[2] +
+	                                        0.07842 * GammaGN[0] * GammaLN[3] + GammaLN[4],
+	                        0.2);
+
+	double ratioL = GammaL / Gamma;
+	std::array<double, 3> ratioLN;
+	nPowers<3>(ratioL, ratioLN);
+
+	double eta = 1.36603 * ratioLN[0] - 0.47719 * ratioLN[1] + 0.11116 * ratioLN[2];
+
+	return (1 - eta) * gauss(x, sigma_gauss) + eta * lorentz(x, gamma_lorentz);
+}
+
 double SpecialFunctions::maxwellBoltzman(double v, double T, double m)
 {
 	double twokT = 2 * Constant::BOLTZMAN * T;
@@ -220,7 +262,7 @@ double SpecialFunctions::inverse_lorentz(double l, double gamma)
 	return std::sqrt(gamma / Constant::PI / l - gamma * gamma);
 }
 
-double SpecialFunctions::lorentz_percentile(double p , double gamma)
+double SpecialFunctions::lorentz_percentile(double p, double gamma)
 {
 	return gamma * std::tan(Constant::PI * (p - .5));
 }
