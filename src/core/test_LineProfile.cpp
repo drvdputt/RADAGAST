@@ -38,27 +38,6 @@ Spectrum testSpectrum(double base)
 }
 } // namespace
 
-TEST_CASE("Test line profile addition to spectrum")
-{
-	auto lp = testLine();
-
-	double base = 1.;
-	auto s = testSpectrum(base);
-	Array frequencyv = s.frequencyv();
-	Array spectrumv = s.valuev();
-
-	double factor = 3.;
-	lp.addToSpectrum(frequencyv, spectrumv, factor);
-
-	double e = 1.e-11;
-	for (size_t i = 0; i < frequencyv.size(); i++)
-	{
-		double linevalue = factor * lp(frequencyv[i]);
-		double manual = base + linevalue;
-		DoctestUtils::checkTolerance("test value", spectrumv[i], manual, e);
-	}
-}
-
 TEST_CASE("Test line profile integration over spectrum")
 {
 	// Generate a flat spectrum of value base
