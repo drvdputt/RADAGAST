@@ -46,7 +46,7 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints) const
 
 	double yMax = (*this)(_center);
 	// With 2.33 sigma, we get about 0.99 of the gaussian
-	double xMax = std::max(2.6 * _sigma_gauss,
+	double xMax = std::max(2.8 * _sigma_gauss,
 	                       SpecialFunctions::lorentz_percentile(0.995, _halfWidth_lorentz));
 	double yMin = (*this)(_center + xMax);
 	double linearStep = (yMax - yMin) / (iCenter + 1); // +1 to avoid stepping below 0
@@ -78,7 +78,8 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints) const
 		previousx = x;
 
 		// Assume a gaussian. We want to go down a fixed step in the vertical direction.
-		x = SpecialFunctions::inverse_gauss((y - linearStep) * scaleGauss, _sigma_gauss);
+		x = SpecialFunctions::inverse_gauss((y - linearStep) * scaleGauss,
+		                                    _sigma_gauss);
 
 		// If drop was too big, scale down
 		double nexty = (*this)(_center + x);
@@ -305,21 +306,13 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 		return spectrum.evaluate(_center);
 
 	// Else, do this very complicated integration with automated cutoff
-	const Array& spectrumGrid = spectrum.frequencyv();
-	const Array& lineGrid = recommendedFrequencyGrid(15);
-	Array frequencyv(spectrumGrid.size() + lineGrid.size());
-
-	// Merges the two grids, and writes the result to the last argument
-	merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
-	      begin(frequencyv));
-
-	// TODO: Temporary override
-	frequencyv = lineGrid;
+	constexpr size_t numPoints = 20;
+	const Array lineGrid = recommendedFrequencyGrid(numPoints);
 
 	if (!debug.empty())
 	{
 		auto f = IOTools::ofstreamFile(debug);
-		for (double nu : frequencyv)
+		for (double nu : lineGrid)
 			f << std::setprecision(17) << nu << ' '
 			  << SpecialFunctions::lorentz(nu - _center, _halfWidth_lorentz) << ' '
 			  << SpecialFunctions::gauss(nu - _center, _sigma_gauss) << ' '
@@ -329,7 +322,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 
 	if (Options::lineprofile_optimizedLineIntegration)
 	{
-		const size_t iCenter = TemplatedUtils::index(_center, frequencyv);
+		const size_t iCenter = numPoints / 2;
 		// We also have the maximum of the spectrum to our disposal. As long as a
 		// frequency interval * maxSpectrum is small, we can keep skipping points. Once
 		// a frequency interval * maxSpectrum > than the threshold appears, re-evaluate
@@ -339,16 +332,16 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 		// shown me that 1e-5 to 1e-6 is good for H2, while the H lines need a much
 		// smaller value of 1e-9 to 1e-10.
 		const double CUTOFFCONTRIBUTIONFRAC = 1e-9;
-
 		double integral = 0;
 
+		// We will use v1 and v2 outside of this function too
 		double x2, v2, y2, x1, v1, y1;
 		auto evaluateIntegralInterval = [&](size_t iRight) -> double {
-			x2 = frequencyv[iRight];
+			x2 = lineGrid[iRight];
 			v2 = (*this)(x2);
 			y2 = spectrum.evaluate(x2) * v2;
 
-			x1 = frequencyv[iRight - 1];
+			x1 = lineGrid[iRight - 1];
 			v1 = (*this)(x1);
 			y1 = spectrum.evaluate(x1) * v1;
 
@@ -361,7 +354,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 
 		// Integral over right wing (starting with [iCenter, iCenter + 1], or iRight =
 		// iCenter + 1)
-		for (size_t iRight = iCenter + 1; iRight < frequencyv.size(); iRight++)
+		for (size_t iRight = iCenter + 1; iRight < lineGrid.size(); iRight++)
 		{
 			double contribution = evaluateIntegralInterval(iRight);
 			// cout << "interval " << iRight - 1 << ", " << iRight << endl;
@@ -394,9 +387,8 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 					   remaining contribution, so if even this value is
 					   insignificant we are safe to say that the rest of the
 					   integral does not matter) */
-					double deltaNuToEnd =
-					                frequencyv[frequencyv.size() - 1] -
-					                frequencyv[iRight];
+					double deltaNuToEnd = lineGrid[lineGrid.size() - 1] -
+					                      lineGrid[iRight];
 					// Default value of spectrummax is 0 (this means don't
 					// use it)
 					if (spectrumMax &&
@@ -409,16 +401,15 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 
 					// The order of these statements is pretty important. I
 					// hope this works for all cases.
-					if (iRight >= frequencyv.size() - 1)
+					if (iRight >= lineGrid.size() - 1)
 						break;
 					// The increment needs to happen right away, otherwise,
 					// when the loop is first entered, we make an estimate
 					// for a point that already has a value.
 					iRight++;
-					double deltaX = frequencyv[iRight] -
-					                frequencyv[iRight - 1];
-					double sumY = spectrum.evaluate(frequencyv[iRight]) +
-					              spectrum.evaluate(frequencyv[iRight - 1]);
+					double deltaX = lineGrid[iRight] - lineGrid[iRight - 1];
+					double sumY = spectrum.evaluate(lineGrid[iRight]) +
+					              spectrum.evaluate(lineGrid[iRight - 1]);
 					double contributionGuess =
 					                last_voigt * deltaX * sumY * 0.5;
 					if (abs(contributionGuess) >= significanceThres)
@@ -452,7 +443,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 			{
 				double last_voigt = max(v1, v2);
 
-				double deltaNuToBegin = frequencyv[iRight] - frequencyv[0];
+				double deltaNuToBegin = lineGrid[iRight] - lineGrid[0];
 				if (spectrumMax && last_voigt * spectrumMax * deltaNuToBegin <
 				                                   significanceThres)
 				{
@@ -465,10 +456,9 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 					if (iRight <= 1)
 						break;
 					iRight--;
-					double deltaX = frequencyv[iRight] -
-					                frequencyv[iRight - 1];
-					double sumY = spectrum.evaluate(frequencyv[iRight]) +
-					              spectrum.evaluate(frequencyv[iRight - 1]);
+					double deltaX = lineGrid[iRight] - lineGrid[iRight - 1];
+					double sumY = spectrum.evaluate(lineGrid[iRight]) +
+					              spectrum.evaluate(lineGrid[iRight - 1]);
 					double contributionGuess =
 					                last_voigt * deltaX * sumY * 0.5;
 					if (abs(contributionGuess) >= significanceThres)
@@ -485,7 +475,14 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
 	} // Options::lineprofile_optimizedLineIntegration
 	else
 	{
-		// Dumb integration over the whole wavelength range
+		const Array& spectrumGrid = spectrum.frequencyv();
+		Array frequencyv(spectrumGrid.size() + lineGrid.size());
+
+		// Integration over the whole wavelength range. Merges the two grids, and
+		// writes the result to the last argument
+		merge(begin(spectrumGrid), end(spectrumGrid), begin(lineGrid), end(lineGrid),
+		      begin(frequencyv));
+
 		Array integrandv(frequencyv.size());
 		for (size_t i = 0; i < frequencyv.size(); i++)
 		{

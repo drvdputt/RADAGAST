@@ -50,7 +50,7 @@ TEST_CASE("Test line profile addition to spectrum")
 	double factor = 3.;
 	lp.addToSpectrum(frequencyv, spectrumv, factor);
 
-	double e = 1.e-15;
+	double e = 1.e-11;
 	for (size_t i = 0; i < frequencyv.size(); i++)
 	{
 		double linevalue = factor * lp(frequencyv[i]);
