@@ -202,6 +202,9 @@ private:
 	void addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner,
 	              double nPartner) const;
 
+	/** Fill in a member containing the g-bar downward collision rates */
+	void precalcGBarKvv();
+
 	/** Uses the g-bar approximation (same as Cloudy, see Shaw et al. 2005, eq. 1 and Table
 	    2) for the collision coefficients within X. This is a very rough approximation, but
 	    much better than just using 0 (personal communication with Peter van Hoof). The
@@ -260,6 +263,9 @@ private:
 	                                           {-10.0357, -0.0243, 0.67},
 	                                           {-8.6213, -0.1004, 0.5291},
 	                                           {-9.2719, -0.0001, 1.0391}};
+
+	// Precalculate the downward g-bar rates. Indexed on [collision partner](upper, lower)
+	std::vector<EMatrix> _gBarKvvPerPartner;
 
 	// Cross sections for direct radiative dissociation from X. There can be multiple cross
 	// sections for a level (first index), because there are different processes which can

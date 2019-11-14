@@ -25,6 +25,9 @@ H2Data::H2Data(int maxJ, int maxV)
 	readDissProbs();
 	readDirectDissociation();
 
+	// Now that all the leves are in order, precalculate the g-bar rates
+	precalcGBarKvv();
+
 	if (Options::h2data_plotLevelMatrices)
 	{
 		ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
@@ -482,20 +485,51 @@ void H2Data::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner,
 	addGBarCvv(the_cvv, kT, iPartner, nPartner);
 }
 
+void H2Data::precalcGBarKvv()
+{
+	_gBarKvvPerPartner.resize(_numPartners, EMatrix::Zero(_startOfExcitedIndices,
+	                                                      _startOfExcitedIndices));
+	for (int p = 0; p < _numPartners; p++)
+	{
+		for (int i = 0; i < _startOfExcitedIndices; i++)
+		{
+			for (int j = i + 1; j < _startOfExcitedIndices; j++)
+			{
+				// apply eq 1 from Shaw et al. 2005. sigma is transition energy
+				// in cm-1
+				double sigma = (_levelv[i].e() - _levelv[j].e()) /
+				               Constant::PLANCKLIGHT;
+				double y0 = _gbarcoll[p][0];
+				double a = _gbarcoll[p][1];
+				double b = _gbarcoll[p][2];
+				double logk = y0 + a * pow(max(abs(sigma), 100.), b);
+				double kDown = pow(10., logk);
+
+				// Only fill in downward rates. Upward rates will depend on
+				// temperature using otherDirectionC.
+				if (sigma > 0) // e_i > e_j
+					_gBarKvvPerPartner[p](i, j) = kDown;
+				else if (sigma < 0) // e_j > e_i
+					_gBarKvvPerPartner[p](j, i) = kDown;
+			}
+		}
+	}
+}
+
 void H2Data::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
                         double nPartner) const
 {
-	// We only do this for the electronic ground state, and only if the current collision
-	// coefficient is still zero at this point.
+	// TODO: try vectorizing this if still too slow.
 	for (int i = 0; i < _startOfExcitedIndices; i++)
 	{
 		for (int j = i + 1; j < _startOfExcitedIndices; j++)
 		{
-			// If we already have data for this collision partner, skip
+			// If we already have data for this collision partner and level, skip
 			if (_hasQdata[iPartner](i, j))
 				continue;
 
-			// Determine which is upper and which is lower
+			// Determine which is upper and which is lower (I don't know of j > i
+			// guarantees that e_j > e_i)
 			int u, l;
 			if (_levelv[i].e() > _levelv[j].e())
 			{
@@ -507,17 +541,7 @@ void H2Data::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
 				u = j;
 				l = i;
 			}
-			// apply eq 1 from Shaw et al. 2005. sigma is transition energy in cm-1
-			double sigma = (_levelv[u].e() - _levelv[l].e()) /
-			               Constant::PLANCKLIGHT;
-			double y0 = _gbarcoll[iPartner][0];
-			double a = _gbarcoll[iPartner][1];
-			double b = _gbarcoll[iPartner][2];
-			double logk = y0 + a * pow(max(sigma, 100.), b);
-
-			// TODO: possible optimization: precalculate k (only depends on level
-			// energies)
-			double Cul = nPartner * pow(10., logk);
+			double Cul = nPartner * _gBarKvvPerPartner[iPartner](u, l);
 			the_cvv(u, l) += Cul;
 			the_cvv(l, u) += otherDirectionC(Cul, u, l, kT);
 		}
