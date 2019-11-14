@@ -28,13 +28,8 @@ public:
 	    network. [s-1] */
 	virtual double dissociationRate(const Spectrum& specificIntensity) const = 0;
 
-	/** TODO: There are several processes which have leftover kinetic energy after the
-	    dissociation. In a nutshell, these processes convert radiation into kinetic energy.
-	    Solomon process dissociation (electronic excitation followed by transition into
-	    ground state continuum). Direct radiative dissociation (effect similar to H
-	    ionization). I think it should be possible to calculate this from the radiation
-	    field, the level populations, and the threshold energy for each level: (photon
-	    energy - threshold energy) times the rate. */
+	/** Currently takes into account the leftover kinetic energy after direct dissociation
+	    (effect similar to H ionization), and after Solomon dissociation. */
 	virtual double dissociationHeating(const Spectrum& specificIntensity) const = 0;
 
 	/** Calculate the net heating-cooling balance by (de-)excitation */
