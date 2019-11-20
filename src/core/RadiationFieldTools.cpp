@@ -1,5 +1,4 @@
 #include "RadiationFieldTools.hpp"
-#include "Constants.hpp"
 #include "SpecialFunctions.hpp"
 
 #include <vector>
@@ -14,12 +13,10 @@ Array RadiationFieldTools::generateSpecificIntensityv(const Array& frequencyv, d
 	// Cut out the UV part
 	size_t i = 0;
 	size_t startUV, endUV;
-	while (frequencyv[i] < Constant::LIGHT / (2400 * Constant::ANG_CM) &&
-	       i < frequencyv.size())
+	while (frequencyv[i] < nuMinHabing && i < frequencyv.size())
 		i++;
 	startUV = i > 0 ? i - 1 : 0;
-	while (frequencyv[i] < Constant::LIGHT / (912 * Constant::ANG_CM) &&
-	       i < frequencyv.size())
+	while (frequencyv[i] < nuMaxHabing && i < frequencyv.size())
 		i++;
 	endUV = i + 1;
 	std::vector<double> frequenciesUV(begin(frequencyv) + startUV,
@@ -56,4 +53,11 @@ Array RadiationFieldTools::freqToWavSpecificIntensity(const Array& frequencyv,
 		                                        frequencyv[iFreq] * frequencyv[iFreq] /
 		                                        Constant::LIGHT;
 	return I_lambda;
+}
+
+double RadiationFieldTools::gHabing(const Spectrum& specificIntensity)
+{
+	double intensity = specificIntensity.average(nuMinHabing, nuMaxHabing) *
+	                   (nuMaxHabing - nuMinHabing);
+	return Constant::FPI * intensity / Constant::HABING_FLUX;
 }

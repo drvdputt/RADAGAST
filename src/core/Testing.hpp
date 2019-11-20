@@ -27,7 +27,6 @@ constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);
 constexpr double defaultMaxFreq = Constant::LIGHT / (0.005 * Constant::UM_CM);
 
 // UTILITY FUNCTIONS //
-
 Array generateGeometricGridv(size_t nPoints = 200, double min = 1e11, double max = 1e16);
 
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
