@@ -32,19 +32,12 @@ Array generateGeometricGridv(size_t nPoints = 200, double min = 1e11, double max
 
 std::vector<double> freqToWavGrid(const std::vector<double>& frequencyv);
 
-// Frequency to wavelength (and the other way around). nu = c / lambda, lambda = c / nu
-Array freqToWavGrid(const Array& frequencyv);
-
 Array defaultFrequencyv(size_t numPoints = 100);
 
 /** Inserts frequency points into a vector of frequencies, given a number of points per line, a
     power for the subgrid per line, and a center and characteristic with per line. */
 void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower,
                          Array lineFreqv, Array freqWidthv);
-
-Array generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0);
-
-Array freqToWavSpecificIntensity(const Array& frequencyv, const Array& specificIntensity_nu);
 
 /** This clumsy thing should give us a grid with some extra points in the correct locations. */
 Array improveFrequencyGrid(const LevelCoefficients& boundBound, const Array& oldpoints);
@@ -68,8 +61,8 @@ void writeGrains(const std::string& outputPath, const GasModule::GrainInterface&
                  bool bulkCar = true);
 
 void plotHeatingCurve_main();
-void plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
-                      const Spectrum& specificIntensity, GasModule::GrainInterface&);
+void plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath,
+                      double n, const Spectrum& specificIntensity, GasModule::GrainInterface&);
 
 void plotIonizationStuff();
 

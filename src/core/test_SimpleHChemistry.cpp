@@ -1,5 +1,6 @@
 #include "DoctestUtils.hpp"
 #include "Ionization.hpp"
+#include "RadiationFieldTools.hpp"
 #include "SimpleHChemistry.hpp"
 #include "SpeciesIndex.hpp"
 #include "Spectrum.hpp"
@@ -9,7 +10,8 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 {
 	const double T = 10000;
 	Array frequencyv = Testing::generateGeometricGridv(200, 1e11, 1e16);
-	Array specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, 25000, 10);
+	Array specificIntensityv =
+	                RadiationFieldTools::generateSpecificIntensityv(frequencyv, 25000, 10);
 	Spectrum specificIntensity(frequencyv, specificIntensityv);
 
 	SimpleHChemistry chemistry{};

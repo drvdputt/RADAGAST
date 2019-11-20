@@ -11,6 +11,7 @@
 #include "HFromFiles.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"
+#include "RadiationFieldTools.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
@@ -122,7 +123,7 @@ Array generateQabsv(const QabsDataSet& qds, double a, const Array& frequencyv)
 	size_t aIndex = TemplatedUtils::index(a, qds.FILEAV);
 	assert(aIndex > 0);
 
-	Array wavelengthv = Testing::freqToWavGrid(frequencyv);
+	Array wavelengthv = RadiationFieldTools::freqToWavGrid(frequencyv);
 	vector<double> QabsWav(wavelengthv.size());
 	for (size_t w = 0; w < wavelengthv.size(); w++)
 	{
@@ -270,15 +271,6 @@ Array Testing::defaultFrequencyv(size_t numPoints)
 	return coarsev;
 }
 
-Array Testing::freqToWavGrid(const Array& frequencyv)
-{
-	size_t numWav = frequencyv.size();
-	Array wavelengthv(numWav);
-	for (size_t iWav = 0; iWav < numWav; iWav++)
-		wavelengthv[iWav] = Constant::LIGHT / frequencyv[numWav - 1 - iWav];
-	return wavelengthv;
-}
-
 void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double spacingPower,
                                   Array lineFreqv, Array freqWidthv)
 {
@@ -340,66 +332,6 @@ void Testing::refineFrequencyGrid(vector<double>& grid, size_t nPerLine, double 
 	}
 }
 
-Array Testing::generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0)
-{
-	Array I_nu(frequencyv.size());
-	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
-		I_nu[iFreq] = SpecialFunctions::planck(frequencyv[iFreq], Tc);
-
-	// Cut out the UV part
-	size_t i = 0;
-	size_t startUV, endUV;
-	while (frequencyv[i] < Constant::LIGHT / (2400 * Constant::ANG_CM) &&
-	       i < frequencyv.size())
-		i++;
-	startUV = i > 0 ? i - 1 : 0;
-	while (frequencyv[i] < Constant::LIGHT / (912 * Constant::ANG_CM) &&
-	       i < frequencyv.size())
-		i++;
-	endUV = i + 1;
-	cout << "UV goes from " << startUV << " to " << endUV << endl;
-	vector<double> frequenciesUV(begin(frequencyv) + startUV, begin(frequencyv) + endUV);
-	vector<double> isrfUV(begin(I_nu) + startUV, begin(I_nu) + endUV);
-
-	// Integrate over the UV only
-	double UVdensity = Constant::FPI / Constant::LIGHT *
-	                   TemplatedUtils::integrate<double>(frequenciesUV, isrfUV);
-	double currentG0 = UVdensity / Constant::HABING;
-
-	// Rescale to _G0
-	I_nu *= G0 / currentG0;
-
-	vector<double> isrfUVbis(begin(I_nu) + startUV, begin(I_nu) + endUV);
-
-	// Integrate over the UV only
-	double UVdensitybis = Constant::FPI / Constant::LIGHT *
-	                      TemplatedUtils::integrate<double>(frequenciesUV, isrfUVbis);
-	cout << "Normalized spectrum uv = " << UVdensitybis << " ("
-	     << UVdensitybis / Constant::HABING << " habing)" << endl;
-
-	// Write out the ISRF
-	// ofstream out = IOTools::ofstreamFile("testing/isrf.txt");
-	// for (size_t b = 0; b < I_nu.size(); b++)
-	//	out << frequencyv[b] << '\t' << I_nu[b] << '\n';
-	// out.close();
-	// out = IOTools::ofstreamFile("testing/isrfUV.txt");
-	// for (size_t b = 0; b < isrfUV.size(); b++)
-	//	out << frequenciesUV[b] << '\t' << isrfUVbis[b] << '\n';
-	// out.close();
-	return I_nu;
-}
-
-Array Testing::freqToWavSpecificIntensity(const Array& frequencyv,
-                                          const Array& specificIntensity_nu)
-{
-	Array I_lambda(frequencyv.size());
-	for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
-		I_lambda[I_lambda.size() - iFreq - 1] = specificIntensity_nu[iFreq] *
-		                                        frequencyv[iFreq] * frequencyv[iFreq] /
-		                                        Constant::LIGHT;
-	return I_lambda;
-}
-
 void Testing::plotIonizationStuff()
 {
 	ofstream out;
@@ -442,7 +374,8 @@ void Testing::plotIonizationStuff()
 void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi,
                                   const std::string& outputPath, double Tc, double G0, double n)
 {
-	Array specificIntensityv = generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
+	Array specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(
+	                gi.iFrequencyv(), Tc, G0);
 
 	GasModule::GasState gs;
 	GasModule::GrainInterface gri{};
@@ -563,7 +496,8 @@ void Testing::plotHeatingCurve_main()
 	double Tc = 30000;
 	double g0 = 1e0;
 	double n = 1000;
-	Spectrum specificIntensity{frequencyv, generateSpecificIntensityv(frequencyv, Tc, g0)};
+	Spectrum specificIntensity{frequencyv, RadiationFieldTools::generateSpecificIntensityv(
+	                                                       frequencyv, Tc, g0)};
 	GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv, "", "none"};
 	GasModule::GrainInterface gri{};
 	string outputPath = "heatingcurve/";
@@ -816,7 +750,8 @@ void Testing::runH2(bool write)
 	                generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
 	                                       Constant::LIGHT / (0.005 * Constant::UM_CM));
 
-	Array specificIntensityv = generateSpecificIntensityv(unrefinedv, Tc, G0);
+	Array specificIntensityv =
+	                RadiationFieldTools::generateSpecificIntensityv(unrefinedv, Tc, G0);
 	Spectrum specificIntensity(unrefinedv, specificIntensityv);
 
 	// Add points for H2 lines

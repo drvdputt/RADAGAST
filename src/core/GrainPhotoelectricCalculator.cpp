@@ -6,6 +6,7 @@
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include "WeingartnerDraine2001.hpp"
+#include "RadiationFieldTools.hpp"
 
 #include <cmath>
 #include <iomanip>
@@ -419,7 +420,8 @@ void testSpectrum(double G0, Array& frequencyv, Array& specificIntensityv)
 	const double Tc{3.e4};
 	frequencyv = Testing::generateGeometricGridv(200, Constant::LIGHT / maxWav,
 	                                             Constant::LIGHT / minWav);
-	specificIntensityv = Testing::generateSpecificIntensityv(frequencyv, Tc, G0);
+	specificIntensityv =
+	                RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0);
 }
 } // namespace
 
