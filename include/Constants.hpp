@@ -38,7 +38,8 @@ constexpr double ERG_EV = 6.24150974e11;             // Ergs -> electron volts
 
 // New constants
 // 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
-constexpr double HABING = 5.33e-14;
+constexpr double HABING_FLUX = 1.6e-3;             // erg s-1 cm-2
+constexpr double HABING_DENS = 5.33e-14;           // erg s-1 cm-3, divide the above by c
 constexpr double ELECTRONMASS = 9.1094e-28;        // electron mass in grams
 constexpr double PROTONMASS = 1.6726219e-24;       // proton mass in grams
 constexpr double FINESTRUCTURE = .0072973525664;   // Fine structure constant
