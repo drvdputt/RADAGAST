@@ -3,7 +3,7 @@
 
 #include "H2Model.hpp"
 
-class SimpleH2 : H2Model
+class SimpleH2 : public H2Model
 {
 public:
 	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
