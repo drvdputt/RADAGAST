@@ -16,12 +16,11 @@ public:
 	Array opacityv(const Array& oFrequencyv) const override;
 
 private:
-	// Try using Burton (1990) appendix A. It has some differences from the Tielens (1985)
-	// model, mainly for the H2 line emission and H2 vibrational heating models. I assume
-	// the dissociation was still the same as a in Tielens (1985).
+	// This implements the H2 model of Tielens and Hollenback (1985).
 
-	// There are four (v = 0, 1, 2, 3) vibrational levels, and v = 6 is treated as a
-	// pseudolevel. The density of the latter is denoted as n^*_{H2}
+	// Question: are we going to have H2 and H2* separately in the chemical network? In that
+	// case, the big H2 model also needs a way to convert the level populations in to H2 and
+	// H2* densities (shouldn't be hard, just use an energy threshold somewhere).
 	double _nH2{0};
 	// H2 in pseudo ground state
 	double _nH2g{0};

@@ -2,6 +2,7 @@
 #include "BigH2Model.hpp"
 #include "HFromFiles.hpp"
 #include "HHardCoded.hpp"
+#include "SimpleH2.hpp"
 
 #include <sstream>
 
@@ -38,7 +39,10 @@ std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const
 	return std::make_unique<HModel>(_hData.get());
 }
 
-std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
+std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model(bool simple) const
 {
-	return std::make_unique<BigH2Model>(_h2Data.get());
+	if (simple)
+		return std::make_unique<SimpleH2>();
+	else
+		return std::make_unique<BigH2Model>(_h2Data.get());
 }
