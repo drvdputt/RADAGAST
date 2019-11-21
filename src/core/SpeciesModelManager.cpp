@@ -20,17 +20,20 @@ SpeciesModelManager::SpeciesModelManager(const std::string& hOption,
 		_hData = std::make_unique<HFromFiles>();
 
 	// H2 data
-	if (h2Option.empty())
-		_h2Data = std::make_unique<H2Data>();
-	else
+	if (_enableBigH2)
 	{
-		int maxJ, maxV;
-		std::istringstream(h2Option) >> maxJ >> maxV;
-		if (maxJ < 0 || maxV < 0)
-			Error::runtime("moleculeChoice is not of a correct format. It "
-			               "should be "
-			               "\"maxJ maxV\"");
-		_h2Data = std::make_unique<H2Data>(maxJ, maxV);
+		if (h2Option.empty())
+			_h2Data = std::make_unique<H2Data>();
+		else
+		{
+			int maxJ, maxV;
+			std::istringstream(h2Option) >> maxJ >> maxV;
+			if (maxJ < 0 || maxV < 0)
+				Error::runtime("moleculeChoice is not of a correct format. It "
+				               "should be "
+				               "\"maxJ maxV\"");
+			_h2Data = std::make_unique<H2Data>(maxJ, maxV);
+		}
 	}
 }
 
