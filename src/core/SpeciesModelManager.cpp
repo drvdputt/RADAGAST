@@ -39,10 +39,10 @@ std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const
 	return std::make_unique<HModel>(_hData.get());
 }
 
-std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model(bool simple) const
+std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
 {
-	if (simple)
-		return std::make_unique<SimpleH2>();
-	else
+	if (_enableBigH2)
 		return std::make_unique<BigH2Model>(_h2Data.get());
+	else
+		return std::make_unique<SimpleH2>();
 }

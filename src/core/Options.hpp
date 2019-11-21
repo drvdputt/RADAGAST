@@ -7,6 +7,8 @@ namespace Options
 // PHYSICS //
 /////////////
 
+constexpr bool speciesmodelmanager_enableBigH2 = false;
+
 // Take into account cooling of the gas by collisions with the grains. Also activates the
 // corresponding heating term for the grains.
 const bool cooling_gasGrainCollisions = true;

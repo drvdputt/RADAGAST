@@ -4,6 +4,7 @@
 #include "H2Data.hpp"
 #include "H2Model.hpp"
 #include "HModel.hpp"
+#include "Options.hpp"
 
 class HData;
 class H2Data;
@@ -26,11 +27,12 @@ public:
 	/** Create a new H2Model polymorphically. Depending on the heuristics given, either a
 	    BigH2Model or a SmallH2Model might be created. A BigH2Model will get access to the
 	    H2 data stored here, while a SmallH2Model ideally does not need it. */
-	std::unique_ptr<H2Model> makeH2Model(bool simple) const;
+	std::unique_ptr<H2Model> makeH2Model() const;
 
 private:
 	std::unique_ptr<HData> _hData;
 	std::unique_ptr<H2Data> _h2Data;
+	bool _enableBigH2{Options::speciesmodelmanager_enableBigH2};
 };
 
 #endif // CORE_SPECIESMODELMANAGER_HPP
