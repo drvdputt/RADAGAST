@@ -22,9 +22,22 @@ private:
 
 	// There are four (v = 0, 1, 2, 3) vibrational levels, and v = 6 is treated as a
 	// pseudolevel. The density of the latter is denoted as n^*_{H2}
-	double _nH2Star;
-	const simpleH2Data* _simpleH2Data;
-	LevelSolution _levelSolution;
+	double _nH2{0};
+	// H2 in pseudo ground state
+	double _nH2g{0};
+	// H2 in vib-rot excited pseudo level
+	double _nH2s{0};
+	// Radiation field in habing units
+	double _g{0};
+
+	// eq. A8
+	double _solomonDissoc{0};
+	// eq. A12
+	double _directDissoc{0};
+	// Heating due to solomon dissociation, eq. A9
+	double _gamma3;
+	// Collisional de-excitation heating, eq. A13
+	double _gamma4;
 };
 
 #endif // CORE_SIMPLEH2_HPP
