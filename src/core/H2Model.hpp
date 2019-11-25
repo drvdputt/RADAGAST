@@ -32,7 +32,9 @@ public:
 	    (effect similar to H ionization), and after Solomon dissociation. */
 	virtual double dissociationHeating(const Spectrum& specificIntensity) const = 0;
 
-	/** Calculate the net heating-cooling balance by (de-)excitation */
+	/** Calculate the net heating-cooling balance by (de-)excitation. Typically, the gas is
+	    heated by UV pumping of H2 (X + UV photon -> B or C -> X' -> X + heat), but cooled
+	    by the upward collisions (X + heat -> X') */
 	virtual double netHeating() const = 0;
 
 	/** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this
