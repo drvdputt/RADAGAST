@@ -16,8 +16,10 @@ public:
 	/** Overwrite the file on storage using the columns stored in this object */
 	// void write() const;
 
-	/** Overwrite the columns stored in this object by reading the file from storage */
-	void read() const;
+	/** Overwrite the columns stored in this object by reading the file from storage. The
+	    data from the first numCols columns will be stored. For speed, a guess for the number
+	    of lines can be given. */
+	void read(int numCols, int reserveLines = 0);
 
 	/** Remove any column stored in this object */
         // void clear() const;
