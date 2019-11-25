@@ -55,7 +55,12 @@ double SimpleH2::dissociationRate(const Spectrum&) const
 
 double SimpleH2::dissociationHeating(const Spectrum&) const { return _gamma3; }
 
-double SimpleH2::netHeating() const { return _gamma4; }
+double SimpleH2::netHeating() const
+{
+	// TODO: H2 line cooling per H2 molecule (mostly J-changing collisions). Suggestion:
+	// Glover & Abel 2008, MNRAS, 388, 1627; Sections 2.3.1-2.3.6; this is used in cloudy.
+	return _gamma4;
+}
 
 double SimpleH2::orthoPara() const { return .75; }
 
