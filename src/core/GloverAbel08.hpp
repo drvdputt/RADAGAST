@@ -57,6 +57,6 @@ double coolOrthoOrtho(double T);
     para). The second argument should be one of the four H2 collision coefficient sets. */
 double coolH2H2Polynomial(double T, const std::vector<double>& coefficients);
 
-}; // namespace GloverAbel08
+} // namespace GloverAbel08
 
 #endif // CORE_GLOVERABEL08_HPP

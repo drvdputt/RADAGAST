@@ -1,6 +1,7 @@
 #ifndef CORE_LOOKUPTABLE_HPP
 #define CORE_LOOKUPTABLE_HPP
 
+#include <string>
 #include <vector>
 
 class LookupTable
