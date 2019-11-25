@@ -9,7 +9,7 @@ void SimpleColumnFile::read(int numCols, int reserveLines)
 	for (auto& v : _columnv)
 		v.reserve(reserveLines);
 
-	std::ifstream ifs = IOTools::ifstreamFile(_fname);
+	std::ifstream ifs = IOTools::ifstreamRepoFile(_fname);
 	std::string line;
 	while (getline(ifs, line))
 	{
@@ -27,4 +27,8 @@ void SimpleColumnFile::read(int numCols, int reserveLines)
 			_columnv[i].emplace_back(temp);
 		}
 	}
+
+	// In case the given reservation was too large
+	for (auto& v : _columnv)
+		v.shrink_to_fit();
 }

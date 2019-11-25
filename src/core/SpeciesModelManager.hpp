@@ -4,7 +4,9 @@
 #include "H2Data.hpp"
 #include "H2Model.hpp"
 #include "HModel.hpp"
+#include "LookupTable.hpp"
 #include "Options.hpp"
+#include "SimpleColumnFile.hpp"
 
 class HData;
 class H2Data;
@@ -32,6 +34,7 @@ public:
 private:
 	std::unique_ptr<HData> _hData;
 	std::unique_ptr<H2Data> _h2Data;
+	LookupTable _h2LTECool{"dat/h2/lte_cooling.dat", 382}; // TODO: pass this data to the simple H2 model;
 	bool _enableBigH2{Options::speciesmodelmanager_enableBigH2};
 };
 
