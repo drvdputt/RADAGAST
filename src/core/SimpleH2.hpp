@@ -3,9 +3,12 @@
 
 #include "H2Model.hpp"
 
+class LookupTable;
+
 class SimpleH2 : public H2Model
 {
 public:
+	SimpleH2(const LookupTable* lteCool);
 	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
 	           double h2form = 0) override;
 	double dissociationRate(const Spectrum& specificIntensity) const override;
@@ -46,6 +49,8 @@ private:
 	double _gamma4{0};
 	// Cooling due to upward excitation by H, H2, e-, p+.
 	double _collisionalExcitationCooling{0};
+	// Cooling in the high density limit (LTE, precalculated).
+	const LookupTable* _lteCool;
 };
 
 #endif // CORE_SIMPLEH2_HPP

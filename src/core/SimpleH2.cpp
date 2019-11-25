@@ -1,7 +1,10 @@
 #include "SimpleH2.hpp"
 #include "GasStruct.hpp"
 #include "GloverAbel08.hpp"
+#include "LookupTable.hpp"
 #include "RadiationFieldTools.hpp"
+
+SimpleH2::SimpleH2(const LookupTable* lteCool) : _lteCool{lteCool} {}
 
 void SimpleH2::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
                      double h2form)
@@ -58,10 +61,7 @@ double SimpleH2::dissociationRate(const Spectrum&) const
 
 double SimpleH2::dissociationHeating(const Spectrum&) const { return _gamma3; }
 
-double SimpleH2::netHeating() const
-{
-	return _gamma4 - _collisionalExcitationCooling;
-}
+double SimpleH2::netHeating() const { return _gamma4 - _collisionalExcitationCooling; }
 
 double SimpleH2::orthoPara() const { return _ortho; }
 
@@ -83,5 +83,14 @@ double SimpleH2::gloverAbel08Cooling(const GasStruct& gas) const
 	                _para * _ortho * GloverAbel08::coolParaOrtho(T) +
 	                _ortho * _para * GloverAbel08::coolOrthoPara(T) +
 	                _para * _para * GloverAbel08::coolParaPara(T);
-	return gas._sv.nH() * coolH + _nH2 * coolH2;
+	// erg cm3 s-1
+
+	double coolPerH2LowDensity = gas._sv.nH() * coolH + _nH2 * coolH2;
+	double coolPerH2LTE = _lteCool->evaluate(T);
+	// erg s-1
+
+	// equation 39
+	double coolPerH2 = coolPerH2LTE / (1 + coolPerH2LTE / coolPerH2LowDensity);
+	return _nH2 * coolPerH2;
+	// erg s-1 cm-3
 }

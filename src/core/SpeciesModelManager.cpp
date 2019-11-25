@@ -47,5 +47,5 @@ std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
 	if (_enableBigH2)
 		return std::make_unique<BigH2Model>(_h2Data.get());
 	else
-		return std::make_unique<SimpleH2>();
+		return std::make_unique<SimpleH2>(&_h2LTECool);
 }
