@@ -21,7 +21,7 @@ TEST_CASE("Gas interface")
 			CAPTURE(Tc);
 			CAPTURE(T);
 			DoctestUtils::checkTolerance("equilibrium temp vs color temp", T, Tc, 0.5);
-			WARN_MESSAGE(s.nH2() == 0, "without collisional dissociation, H2 won't go to "
+			WARN_MESSAGE(s.nH2() == 0., "without collisional dissociation, H2 won't go to "
 				     "zero (both formation and dissociation likely 0)");
 		}
 	}
