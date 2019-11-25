@@ -21,6 +21,9 @@ public:
 	    of lines can be given. */
 	void read(int numCols, int reserveLines = 0);
 
+	/** Get the data from one of the columns */
+	const std::vector<double>& column(int i) { return _columnv[i]; }
+
 	/** Remove any column stored in this object */
         // void clear() const;
 

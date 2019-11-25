@@ -21,6 +21,9 @@ void SimpleColumnFile::read(int numCols, int reserveLines)
 		{
 			double temp;
 			iss >> temp;
+			if (iss.fail())
+				Error::runtime("Problem reading column file");
+
 			_columnv[i].emplace_back(temp);
 		}
 	}
