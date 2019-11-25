@@ -16,6 +16,8 @@ public:
 	Array opacityv(const Array& oFrequencyv) const override;
 
 private:
+	double gloverAbel08Cooling(const GasStruct& gas) const;
+
 	// This implements the H2 model of Tielens and Hollenback (1985).
 
 	// Question: are we going to have H2 and H2* separately in the chemical network? In that
@@ -38,9 +40,12 @@ private:
 	// eq. A12
 	double _directDissoc{0};
 	// Heating due to solomon dissociation, eq. A9
-	double _gamma3;
-	// Collisional de-excitation heating, eq. A13
-	double _gamma4;
+	double _gamma3{0};
+	// Collisional de-excitation heating, eq. A13, due to UV pumping (first to another E
+	// level, then back to X, with higher J or v)
+	double _gamma4{0};
+	// Cooling due to upward excitation by H, H2, e-, p+.
+	double _collisionalExcitationCooling{0};
 };
 
 #endif // CORE_SIMPLEH2_HPP

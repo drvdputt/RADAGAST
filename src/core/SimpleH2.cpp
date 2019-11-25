@@ -1,5 +1,6 @@
 #include "SimpleH2.hpp"
 #include "GasStruct.hpp"
+#include "GloverAbel08.hpp"
 #include "RadiationFieldTools.hpp"
 
 void SimpleH2::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
@@ -45,6 +46,8 @@ void SimpleH2::solve(double n, const GasStruct& gas, const Spectrum& specificInt
 	// Energy of the psuedo level. See text below eq. A11 in TH85
 	constexpr double Es = 2.6 / Constant::ERG_EV;
 	_gamma4 = (colH + colH2) * _nH2s * Es;
+
+	_collisionalExcitationCooling = gloverAbel08Cooling(gas);
 }
 
 double SimpleH2::dissociationRate(const Spectrum&) const
@@ -57,9 +60,7 @@ double SimpleH2::dissociationHeating(const Spectrum&) const { return _gamma3; }
 
 double SimpleH2::netHeating() const
 {
-	// TODO: H2 line cooling per H2 molecule (mostly J-changing collisions). Suggestion:
-	// Glover & Abel 2008, MNRAS, 388, 1627; Sections 2.3.1-2.3.6; this is used in cloudy.
-	return _gamma4;
+	return _gamma4 - _collisionalExcitationCooling;
 }
 
 double SimpleH2::orthoPara() const { return _ortho; }
@@ -70,3 +71,17 @@ Array SimpleH2::emissivityv(const Array& eFrequencyv) const
 }
 
 Array SimpleH2::opacityv(const Array& oFrequencyv) const { return Array(oFrequencyv.size()); }
+
+double SimpleH2::gloverAbel08Cooling(const GasStruct& gas) const
+{
+	double T = gas._t;
+	// equation 30
+	double coolH = _ortho * GloverAbel08::coolOrthoH(T) +
+	               _para * GloverAbel08::coolParaH(T);
+	// equation 32
+	double coolH2 = _ortho * _ortho * GloverAbel08::coolOrthoOrtho(T) +
+	                _para * _ortho * GloverAbel08::coolParaOrtho(T) +
+	                _ortho * _para * GloverAbel08::coolOrthoPara(T) +
+	                _para * _para * GloverAbel08::coolParaPara(T);
+	return gas._sv.nH() * coolH + _nH2 * coolH2;
+}

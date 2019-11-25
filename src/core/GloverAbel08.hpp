@@ -3,7 +3,8 @@
 
 #include <vector>
 
-/** Coefficients and equations from Glover and Abel 2008, MNRAS, 388, 1627 */
+/** Coefficients and equations from Glover and Abel 2008, MNRAS, 388, 1627. Collisions with He
+    are also available, but are not implemented. */
 namespace GloverAbel08
 {
 // Table 1. Fitting coefficients for the cooling rate of ortho-H2 excited by collisions with
@@ -35,20 +36,22 @@ const std::vector<double> ortho_para_av = {-24.126177, 2.3258217,   -1.0082491,
 const std::vector<double> ortho_ortho_av = {-24.020047, 2.2687566,   -1.0200304,
                                             0.83561432, -0.40772247, 0.096025713};
 
-/** Cooling rate due to ortho H2 excited by H collisions. */
+/** Cooling rate due to ortho H2 excited by H collisions. [erg cm3 s-1] */
 double coolOrthoH(double T);
 
-/** Cooling rate due to para H2 excited by H collisions. */
+/** Cooling rate due to para H2 excited by H collisions. [erg cm3 s-1] */
 double coolParaH(double T);
 
-/** Cooling rate due to para H2 excited by para H2 collisions. */
+/** Cooling rate due to para H2 excited by para H2 collisions. [erg cm3 s-1] */
 double coolParaPara(double T);
-/** Cooling rate due to para H2 excited by ortho H2 collisions. */
+/** Cooling rate due to para H2 excited by ortho H2 collisions. [erg cm3 s-1] */
 double coolParaOrtho(double T);
-/** Cooling rate due to ortho H2 excited by para H2 collisions. */
+/** Cooling rate due to ortho H2 excited by para H2 collisions. [erg cm3 s-1] */
 double coolOrthoPara(double T);
-/** Cooling rate due to ortho H2 excited by ortho H2 collisions. */
+/** Cooling rate due to ortho H2 excited by ortho H2 collisions. [erg cm3 s-1] */
 double coolOrthoOrtho(double T);
+
+// TODO: protons and electrons
 
 /** Cooling rate due to H2 (either ortho or para) excited by collisions with H2 (either ortho or
     para). The second argument should be one of the four H2 collision coefficient sets. */
