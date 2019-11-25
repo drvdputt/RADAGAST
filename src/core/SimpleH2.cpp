@@ -62,7 +62,7 @@ double SimpleH2::netHeating() const
 	return _gamma4;
 }
 
-double SimpleH2::orthoPara() const { return .75; }
+double SimpleH2::orthoPara() const { return _ortho; }
 
 Array SimpleH2::emissivityv(const Array& eFrequencyv) const
 {

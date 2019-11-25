@@ -26,6 +26,10 @@ private:
 	double _nH2g{0};
 	// H2 in vib-rot excited pseudo level
 	double _nH2s{0};
+	// ortho fraction
+	double _ortho{.75};
+	// para fraction
+	double _para{1. - _ortho};
 	// Radiation field in habing units
 	double _g{0};
 
