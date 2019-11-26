@@ -83,9 +83,15 @@ double SimpleH2::gloverAbel08Cooling(const GasStruct& gas) const
 	                _para * _ortho * GloverAbel08::coolParaOrtho(T) +
 	                _ortho * _para * GloverAbel08::coolOrthoPara(T) +
 	                _para * _para * GloverAbel08::coolParaPara(T);
+	double coolProton = _ortho * GloverAbel08::coolOrthoProton(T) +
+	                    _para * GloverAbel08::coolParaProton(T);
+	// + GloverAbel08::coolOrthoParaConversionProton(T, _ortho); when out of equilibrium
+	double coolElectron = _ortho * GloverAbel08::coolOrthoElectron(T) +
+	                      _para * GloverAbel08::coolParaElectron(T);
 	// erg cm3 s-1
 
-	double coolPerH2LowDensity = gas._sv.nH() * coolH + _nH2 * coolH2;
+	double coolPerH2LowDensity = gas._sv.nH() * coolH + _nH2 * coolH2 +
+	                             gas._sv.np() * coolProton + gas._sv.ne() * coolElectron;
 	double coolPerH2LTE = _lteCool->evaluate(T);
 	// erg s-1
 
