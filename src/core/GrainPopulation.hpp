@@ -2,6 +2,7 @@
 #define CORE_GRAINPOPULATION_HPP
 
 #include "Array.hpp"
+#include "LookupTable.hpp"
 
 #include <memory>
 #include <vector>
@@ -18,6 +19,7 @@ enum class GrainTypeLabel
 
 class GrainH2Formation;
 class GrainPhotoelectricData;
+class LookupTable;
 
 class GrainPopulation
 {
@@ -35,7 +37,8 @@ public:
             each grain size, and for each point of the frequency grid of the input radiation
             field. */
 	GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv,
-	                const Array& temperaturev, const std::vector<Array>& qAbsvv);
+	                const Array& temperaturev, const Array& frequencyv,
+	                const std::vector<Array>& qAbsvv);
 
 	/** Undelete the move constructor (needed to be able to put these objects into a vector
 	    std::vector). Due to the unique_ptr members, it's better to have '= default' in the
@@ -66,7 +69,11 @@ public:
 		return _photoelectricData.get();
 	}
 
-	/** Some checks for inconsitencies. Program will abort if this fails. */
+	/** The total thermal emission of a single grain of size _sizev[m], for a given
+	    temperature. Uses a lookup table, which is created at construction. [erg s-1] */
+	double totalThermalEmission(int m, double T) const;
+
+	/** Some checks for inconsistencies. Program will abort if this fails. */
 	void test() const;
 
 private:
@@ -76,6 +83,9 @@ private:
 	std::vector<Array> _qAbsvv;
 	std::unique_ptr<GrainH2Formation> _h2formation;
 	std::unique_ptr<GrainPhotoelectricData> _photoelectricData;
+	// Total grey body emission for a set of temperatures (first argument of
+	// LookupTable::evaluate is the size index)
+	LookupTable _blackbodyCoolingCurves;
 };
 
 #endif // CORE_GRAINPOPULATION_HPP

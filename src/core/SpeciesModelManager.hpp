@@ -34,7 +34,7 @@ public:
 private:
 	std::unique_ptr<HData> _hData;
 	std::unique_ptr<H2Data> _h2Data;
-	LookupTable _h2LTECool{"dat/h2/lte_cooling.dat", 382}; // TODO: pass this data to the simple H2 model;
+	LookupTable _h2LTECool{"dat/h2/lte_cooling.dat", 2, 382};
 	bool _enableBigH2{Options::speciesmodelmanager_enableBigH2};
 };
 

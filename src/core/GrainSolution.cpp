@@ -2,8 +2,8 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GrainH2Formation.hpp"
-#include "GrainPhotoelectricData.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
+#include "GrainPhotoelectricData.hpp"
 #include "GrainPopulation.hpp"
 #include "Options.hpp"
 #include "SpecialFunctions.hpp"
@@ -62,17 +62,9 @@ void GrainSolution::recalculateTemperatures(
 		                                qAbsvv[i] * env._specificIntensity.valuev());
 
 		auto heating = [&](double T) -> int {
-			Array blackbodyIntegrandv(frequencyv.size());
-			for (size_t j = 0; j < frequencyv.size(); j++)
-				blackbodyIntegrandv[j] =
-				                qAbsvv[i][j] *
-				                SpecialFunctions::planck(frequencyv[j], T);
-
 			double bbEmission = 0;
 			if (T > 0.)
-				bbEmission = cross *
-				             TemplatedUtils::integrate<double, Array, Array>(
-				                             frequencyv, blackbodyIntegrandv);
+				bbEmission = _population->totalThermalEmission(i, T);
 			if (bbEmission < absorption + extraGrainHeatPerSize[i])
 				return 1;
 			if (bbEmission > absorption + extraGrainHeatPerSize[i])

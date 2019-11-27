@@ -900,7 +900,8 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
 			cout << "grain " << i << ": " << temperaturev[i] << " K\n";
 		}
 
-		grainPopv->emplace_back(label, sizev, densityv, temperaturev, qabsvv);
+		grainPopv->emplace_back(label, sizev, densityv, temperaturev,
+		                        specificIntensity.frequencyv(), qabsvv);
 	};
 
 	// Carbonaceous population:

@@ -92,7 +92,7 @@ double SimpleH2::gloverAbel08Cooling(const GasStruct& gas) const
 
 	double coolPerH2LowDensity = gas._sv.nH() * coolH + _nH2 * coolH2 +
 	                             gas._sv.np() * coolProton + gas._sv.ne() * coolElectron;
-	double coolPerH2LTE = _lteCool->evaluate(T);
+	double coolPerH2LTE = _lteCool->evaluate(0, T);
 	// erg s-1
 
 	// equation 39
