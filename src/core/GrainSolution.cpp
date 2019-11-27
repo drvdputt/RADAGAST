@@ -73,7 +73,8 @@ void GrainSolution::recalculateTemperatures(
 				return 0;
 		};
 		_newTemperaturev[i] = TemplatedUtils::binaryIntervalSearch<double>(
-		                heating, 30., 1.e-3, 300, 1.);
+		                heating, 30., 1.e-3, Options::grainsolution_maxGrainTemp,
+		                Options::grainsolution_minGrainTemp);
 		DEBUG("New temp for grain " << i << " " << _newTemperaturev[i] << " K\n");
 	}
 }

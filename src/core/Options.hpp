@@ -29,6 +29,9 @@ const bool weingartnerdraine2001_vanHoofEmin = false;
 // B, 2 C+, 3 C-.
 const int h2data_numExcitedLevels = 2;
 
+const int grainsolution_minGrainTemp = 1.;
+const int grainsolution_maxGrainTemp = 300.;
+
 //////////////////////////////////////////////
 // NUMERIC / METHOD / ITERATION / PRECISION //
 //////////////////////////////////////////////

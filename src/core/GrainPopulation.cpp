@@ -2,6 +2,7 @@
 #include "Error.hpp"
 #include "GrainH2Formation.hpp"
 #include "GrainPhotoelectricData.hpp"
+#include "Options.hpp"
 #include "SpecialFunctions.hpp"
 #include "Testing.hpp"
 
@@ -37,7 +38,8 @@ GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const 
 	// else, no data is available and these will be nullptr
 
 	// Optimization: pre-calculate the modified blackbody cooling curve here
-	Array Tv = Testing::generateGeometricGridv(100, .5, 600.);
+	Array Tv = Testing::generateGeometricGridv(100, Options::grainsolution_minGrainTemp,
+	                                           Options::grainsolution_maxGrainTemp);
 	Table<2> bbEmission(numSizes(), Tv.size());
 	for (size_t m = 0; m < numSizes(); m++)
 	{
