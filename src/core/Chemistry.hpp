@@ -56,12 +56,17 @@ public:
 	EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v,
 	                     double maxTime = -1) const;
 
-	/** Evaluate the rate of change for each species [cm-3 s-1]. */
-	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv) const;
+	/** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total
+	    reaction speeds is also given (rateCoeffv * density product). It will be used as a
+	    workspace, and can also be used to diagnose the speed of each reaction [s-1]. */
+	void evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv,
+	                EVector& kTotalv) const;
 
 	/** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards
-	    n_j. */
-	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const;
+	    n_j. We use Eigen::Ref here, so that an eigen map expression can be used, see
+	    https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html. */
+	void evaluateJvv(double* JvvOutputRowMajor, const EVector& nv,
+	                 const EVector& rateCoeffv) const;
 
 private:
 	// Turn list of reactions into coefficient matrices
@@ -69,16 +74,21 @@ private:
 	EMatrix makeProductStoichvv() const;
 
 	/** Solve the chemistry by evolving the system until equilibrium. */
-	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const;
+	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
+	                     double maxTime) const;
 
 	/** Calculate the density factor needed to calculate the speed of reaction r. Formula:
 	    Product_i n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i,
 	    r). */
-	double densityProduct(const EVector& nv, size_t r) const;
+	double reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const;
 
 	/** Calculate the derivative of the density product for reaction r with respect to the
 	    density j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
-	double densityProductDerivative(const EVector& nv, int r, int j) const;
+	double reactionSpeedDerivative(const EVector& nv, const EVector& rateCoeffv, int r,
+	                               int j) const;
+
+	void reactionSpeedJacobian(EMatrix& JdensityProduct, const EVector& nv,
+	                           const EVector& rateCoeffv) const;
 
 	// Keep track of index for each species name.
 	SpeciesIndex _speciesIndex;
