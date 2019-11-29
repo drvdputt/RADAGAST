@@ -234,9 +234,9 @@ double Chemistry::reactionSpeed(const EVector& nv, const EVector& rateCoeffv, si
 	{
 		/* If the species in involved in this reaction (stoich on left side > 0),
 		   calculate the density to the power of its stoichiometry in the reaction. */
-		double stoichRs = _rStoichvv(s, r);
-		if (stoichRs)
-			densityProduct *= pow(nv(s), stoichRs);
+		int Rs = _rStoichvv(s, r);
+		if (Rs)
+			densityProduct *= pow(nv(s), Rs);
 	}
 	return densityProduct * rateCoeffv(r);
 }
@@ -253,9 +253,9 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
 		// precalculate these powers
 		for (size_t s = 0; s < _numSpecies; s++)
 		{
-			double R = _rStoichvv(s, r);
-			if (R)
-				densityPowers[s] = pow(nv(s), R);
+			int Rs = _rStoichvv(s, r);
+			if (Rs)
+				densityPowers[s] = pow(nv(s), Rs);
 			else
 				densityPowers[s] = 0;
 		}
@@ -267,7 +267,7 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
 			double& Jrj = Jkvv(r, j);
 
 			// if n_j not involved, just set to 0
-			double Rj = _rStoichvv(j, r);
+			int Rj = _rStoichvv(j, r);
 			if (Rj == 0)
 			{
 				Jrj = 0;
