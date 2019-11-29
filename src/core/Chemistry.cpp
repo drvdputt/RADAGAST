@@ -22,7 +22,6 @@ int ode_f(double /* unused t */, const double y[], double dydt[], void* p)
 	auto* params = static_cast<struct ode_params*>(p);
 	Eigen::Map<const EVector> nv(y, params->size);
 
-	// Use these wrappers to pass the densities and overwrite the contents of dydt
 	params->chemistry->evaluateFv(dydt, nv, *params->rateCoeffv, *params->kv);
 	return GSL_SUCCESS; // maybe check for nan here
 }
@@ -32,12 +31,10 @@ int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], 
 	auto* params = static_cast<struct ode_params*>(p);
 	Eigen::Map<const EVector> nv(y, params->size);
 
-	// The jacobian dfdy needs to be stored row-major for GSL.
 	params->chemistry->evaluateJvv(dfdy, nv, *params->rateCoeffv, *params->Jkvv);
 
 	// no explicit time dependence
 	std::fill(dfdt, dfdt + params->size, 0);
-
 	return GSL_SUCCESS;
 }
 } // namespace
