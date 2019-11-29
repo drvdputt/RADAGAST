@@ -13,7 +13,8 @@ struct ode_params
 	const EVector* rateCoeffv;
 	const Chemistry* chemistry;
 	// Workspace for total rate vector (prevent frequent reallocation)
-	EVector* ratev;
+	EVector* kv;
+	EMatrix* Jkvv;
 };
 
 int ode_f(double /* unused t */, const double y[], double dydt[], void* p)
@@ -22,7 +23,7 @@ int ode_f(double /* unused t */, const double y[], double dydt[], void* p)
 	Eigen::Map<const EVector> nv(y, params->size);
 
 	// Use these wrappers to pass the densities and overwrite the contents of dydt
-	params->chemistry->evaluateFv(dydt, nv, *params->rateCoeffv, *params->ratev);
+	params->chemistry->evaluateFv(dydt, nv, *params->rateCoeffv, *params->kv);
 	return GSL_SUCCESS; // maybe check for nan here
 }
 
@@ -32,7 +33,7 @@ int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], 
 	Eigen::Map<const EVector> nv(y, params->size);
 
 	// The jacobian dfdy needs to be stored row-major for GSL.
-	params->chemistry->evaluateJvv(dfdy, nv, *params->rateCoeffv);
+	params->chemistry->evaluateJvv(dfdy, nv, *params->rateCoeffv, *params->Jkvv);
 
 	// no explicit time dependence
 	std::fill(dfdt, dfdt + params->size, 0);
@@ -90,7 +91,7 @@ EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v,
 }
 
 void Chemistry::evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv,
-                           EVector& kTotalv) const
+                           EVector& kv) const
 
 {
 	// This memory should be already allocated
@@ -99,22 +100,21 @@ void Chemistry::evaluateFv(double* FvOutput, const EVector& nv, const EVector& r
 	// The total rate of each reaction, a.k.a. k(T) multiplied with the correct density
 	// factor n_s ^ R_s,r (see notes).
 	for (int r = 0; r < _numReactions; r++)
-		kTotalv(r) = reactionSpeed(nv, rateCoeffv, r);
+		kv(r) = reactionSpeed(nv, rateCoeffv, r);
 
 	// Matrix multiplication between the net stoichiometry matrix (indexed on species,
 	// reaction) and the rate vector (indexed on reaction).
-	Fv = _netStoichvv * kTotalv;
+	Fv = _netStoichvv * kv;
 }
 
 void Chemistry::evaluateJvv(double* JvvDataRowMajor, const EVector& nv,
-                            const EVector& rateCoeffv) const
+                            const EVector& rateCoeffv, EMatrix& Jkvv) const
 
 {
 	// This memory should be already allocated. The elements are d f_i / d n_j, so the
 	// jacobian should have (dimension of fv, dimension of nv = _numSpecies, _numSpecies).
 	Eigen::Map<EMatrixRM> JFvv(JvvDataRowMajor, _numSpecies, _numSpecies);
 
-	EMatrix Jkvv(_numReactions, _numSpecies);
 	reactionSpeedJacobian(Jkvv, nv, rateCoeffv);
 
 	// (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j)
@@ -149,8 +149,9 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
 
 	// Parameters and workspace for ode_f. The latter will write to kTotalv sometimes, using
 	// the pointer given to the struct below.
-	EVector kTotalv(_numReactions);
-	struct ode_params params = {_numSpecies, &rateCoeffv, this, &kTotalv};
+	EVector kv(_numReactions);
+	EMatrix Jkvv(_numReactions, _numSpecies);
+	struct ode_params params = {_numSpecies, &rateCoeffv, this, &kv, &Jkvv};
 
 	gsl_odeiv2_system s{ode_f, ode_j, _numSpecies, &params};
 
@@ -178,7 +179,7 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
 			// max(density / rate of change). Don't forget abs because rate of change can be
 			// negative of course.
 			EArray fv(_numSpecies, 1);
-			evaluateFv(fv.data(), nv, rateCoeffv, kTotalv);
+			evaluateFv(fv.data(), nv, rateCoeffv, kv);
 			double timeScale =
 			                (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
 
@@ -233,7 +234,7 @@ double Chemistry::reactionSpeed(const EVector& nv, const EVector& rateCoeffv, si
 }
 
 // JdensityProduct is indexed on (reaction r, d / d n_j)
-void Chemistry::reactionSpeedJacobian(EMatrix& JdensityProduct, const EVector& nv,
+void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
                                       const EVector& rateCoeffv) const
 {
 	// Every column j is basically a reaction speed before it is multiplied with the rate
@@ -255,7 +256,7 @@ void Chemistry::reactionSpeedJacobian(EMatrix& JdensityProduct, const EVector& n
 		// divide the product of the densities by n_j, because n_j can be zero.
 		for (size_t j = 0; j < _numSpecies; j++)
 		{
-			double& Jrj = JdensityProduct(r, j);
+			double& Jrj = Jkvv(r, j);
 
 			// if n_j not involved, just set to 0
 			double Rj = _rStoichvv(j, r);

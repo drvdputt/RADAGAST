@@ -58,15 +58,17 @@ public:
 
 	/** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total
 	    reaction speeds is also given (rateCoeffv * density product). It will be used as a
-	    workspace, and can also be used to diagnose the speed of each reaction [s-1]. */
+	    workspace, and can also be used to diagnose the speed of each reaction [s-1]. It
+	    needs to be of size _numReactions. */
 	void evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv,
-	                EVector& kTotalv) const;
+	                EVector& kv) const;
 
 	/** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards
-	    n_j. We use Eigen::Ref here, so that an eigen map expression can be used, see
-	    https://eigen.tuxfamily.org/dox/TopicFunctionTakingEigenTypes.html. */
+	    n_j. For optimization (and for diagnostics), a matrix to put the jacobian of the
+	    reaction speed vector is passed. It needs to be of size (_numReactions,
+	    _numSpecies). */
 	void evaluateJvv(double* JvvOutputRowMajor, const EVector& nv,
-	                 const EVector& rateCoeffv) const;
+	                 const EVector& rateCoeffv, EMatrix& Jkvv) const;
 
 private:
 	// Turn list of reactions into coefficient matrices
@@ -84,7 +86,7 @@ private:
 
 	/** Calculate the derivative of the density product for reaction r with respect to the
 	    density j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
-	void reactionSpeedJacobian(EMatrix& JdensityProduct, const EVector& nv,
+	void reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
 	                           const EVector& rateCoeffv) const;
 
 	// Keep track of index for each species name.
