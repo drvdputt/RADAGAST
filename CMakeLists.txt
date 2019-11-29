@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(gasmodule)
 
 set(CMAKE_CXX_STANDARD 14)
-add_compile_options(-Wshadow -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic)
+add_compile_options(-Wshadow -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic -fno-signed-zeros -fassociative-math -freciprocal-math -march=native -mtune=native)
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
    message(SEND_ERROR "In-source builds are not allowed.")
