@@ -84,9 +84,6 @@ private:
 
 	/** Calculate the derivative of the density product for reaction r with respect to the
 	    density j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
-	double reactionSpeedDerivative(const EVector& nv, const EVector& rateCoeffv, int r,
-	                               int j) const;
-
 	void reactionSpeedJacobian(EMatrix& JdensityProduct, const EVector& nv,
 	                           const EVector& rateCoeffv) const;
 

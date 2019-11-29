@@ -114,24 +114,11 @@ void Chemistry::evaluateJvv(double* JvvDataRowMajor, const EVector& nv,
 	// jacobian should have (dimension of fv, dimension of nv = _numSpecies, _numSpecies).
 	Eigen::Map<EMatrixRM> JFvv(JvvDataRowMajor, _numSpecies, _numSpecies);
 
-	for (size_t jDeriv = 0; jDeriv < _numSpecies; jDeriv++)
-	{
-		// Here we calculate the derivatives of the density products times the reaction
-		// rates and multiply with the net coefficient.
-		EVector kDerivativev(_numReactions);
-		for (int r = 0; r < _numReactions; r++)
-			kDerivativev(r) = reactionSpeedDerivative(nv, rateCoeffv, r, jDeriv);
-		JFvv.col(jDeriv) = _netStoichvv * kDerivativev;
-	}
-
 	EMatrix Jkvv(_numReactions, _numSpecies);
 	reactionSpeedJacobian(Jkvv, nv, rateCoeffv);
 
 	// (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j)
 	JFvv = _netStoichvv * Jkvv;
-
-	// std::cout << "old\n" << JFvv << '\n';
-	// std::cout << "new\n" << JFvv_test << '\n';
 }
 
 EMatrix Chemistry::makeReactantStoichvv() const
@@ -243,34 +230,6 @@ double Chemistry::reactionSpeed(const EVector& nv, const EVector& rateCoeffv, si
 			densityProduct *= pow(nv(s), stoichRs);
 	}
 	return densityProduct * rateCoeffv(r);
-}
-
-// TODO: speed this up by calculating the whole jacobian of kTotalv at once. (Powers nj^Rjr
-// often recurr between different j). Should also be easily testable).
-double Chemistry::reactionSpeedDerivative(const EVector& nv, const EVector& rateCoeffv, int r,
-                                          int j) const
-{
-	// If the reactant j is not present in reaction (remember that _rvv contains the
-	// stoichiometry of the reactants), deriving with respect to it will produce zero. */
-	double stoichRj = _rStoichvv(j, r);
-	if (!stoichRj)
-		return 0;
-	else
-	{
-		// Derivative of the n_j factor
-		double densityProductDerivative = 1;
-		if (stoichRj > 1)
-			densityProductDerivative *= stoichRj * pow(nv(j), stoichRj - 1);
-
-		// The rest of the factors
-		for (size_t s = 0; s < _numSpecies; s++)
-		{
-			double stoichRs = _rStoichvv(s, r);
-			if (stoichRs && s != j)
-				densityProductDerivative *= pow(nv(s), stoichRs);
-		}
-		return densityProductDerivative * rateCoeffv(r);
-	}
 }
 
 // JdensityProduct is indexed on (reaction r, d / d n_j)
