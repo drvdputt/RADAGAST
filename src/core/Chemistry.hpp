@@ -34,9 +34,9 @@ public:
 	    Be sure to call prepareCoefficients when done adding species and/or reactions .*/
 	void addReaction(const std::string& reactionName,
 	                 const std::vector<std::string>& reactantNamev,
-	                 const Array& reactantStoichv,
+	                 const std::vector<int>& reactantStoichv,
 	                 const std::vector<std::string>& productNamev,
-	                 const Array& productStoichv);
+	                 const std::vector<double>& productStoichv);
 
 	/** This should be called after reactions have been added */
 	void prepareCoefficients();
@@ -72,7 +72,7 @@ public:
 
 private:
 	// Turn list of reactions into coefficient matrices
-	EMatrix makeReactantStoichvv() const;
+	EMatrix_int makeReactantStoichvv() const;
 	EMatrix makeProductStoichvv() const;
 
 	/** Solve the chemistry by evolving the system until equilibrium. */
@@ -94,20 +94,24 @@ private:
 
 	typedef struct Reaction
 	{
-		Reaction(const std::vector<std::string>& rNamev, const Array& rCoeffv,
-		         const std::vector<std::string>& pNamev, const Array& pCoeffv)
+		Reaction(const std::vector<std::string>& rNamev,
+		         const std::vector<int>& rCoeffv,
+		         const std::vector<std::string>& pNamev,
+		         const std::vector<double>& pCoeffv)
 		                : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv},
 		                  _pCoeffv{pCoeffv}
 		{
 		}
 		std::vector<std::string> _rNamev, _pNamev;
-		Array _rCoeffv, _pCoeffv;
+		std::vector<int> _rCoeffv;
+		std::vector<double> _pCoeffv;
 	} Reaction;
 	std::vector<Reaction> _reactionv;
 	std::map<std::string, int> _reactionIndexm;
 
 	// Filled in by prepareCoefficients()
-	EMatrix _rStoichvv, _netStoichvv;
+	EMatrix_int _rStoichvv;
+	EMatrix _netStoichvv;
 	size_t _numSpecies;
 	int _numReactions;
 };

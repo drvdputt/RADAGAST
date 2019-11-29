@@ -34,6 +34,8 @@ SimpleHChemistry::SimpleHChemistry()
 	   stoichiometry, because the rate scales with nH instead of nH^2 (see rateCoeffv()). By
 	   then using twice (not the word 'half' in the label) the reaction rate, we end up with
 	   an equal tempo of H2 formation, but one that scales only linearly with nH. */
+
+	// TODO: find a way around the 0.5 coefficient, so that I can use integer coefficients
 	addReaction("half H2 formation", {"H"}, {1}, {"H2"}, {.5});
 
 	prepareCoefficients();

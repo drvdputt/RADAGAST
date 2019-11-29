@@ -48,9 +48,9 @@ void Chemistry::addSpecies(const std::string& name) { _speciesIndex.addSpecies(n
 
 void Chemistry::addReaction(const std::string& reactionName,
                             const std::vector<std::string>& reactantNamev,
-                            const Array& reactantStoichv,
+                            const std::vector<int>& reactantStoichv,
                             const std::vector<std::string>& productNamev,
-                            const Array& productStoichv)
+                            const std::vector<double>& productStoichv)
 {
 	Error::equalCheck("Lengths of list of species names and vector of coefficients",
 	                  reactantNamev.size(), reactantStoichv.size());
@@ -69,7 +69,7 @@ void Chemistry::prepareCoefficients()
 {
 	_numSpecies = _speciesIndex.size();
 	_rStoichvv = makeReactantStoichvv();
-	_netStoichvv = makeProductStoichvv() - _rStoichvv;
+	_netStoichvv = makeProductStoichvv() - _rStoichvv.cast<double>();
 	_numReactions = _rStoichvv.cols();
 }
 
@@ -108,8 +108,9 @@ void Chemistry::evaluateJvv(double* JvvDataRowMajor, const EVector& nv,
                             const EVector& rateCoeffv, EMatrix& Jkvv) const
 
 {
-	// This memory should be already allocated. The elements are d f_i / d n_j, so the
-	// jacobian should have (dimension of fv, dimension of nv = _numSpecies, _numSpecies).
+	// The jacobian dfdy needs to be stored row-major for GSL. This memory should be already
+	// allocated. The elements are d f_i / d n_j, so the jacobian should have (dimension of
+	// fv, dimension of nv = _numSpecies, _numSpecies).
 	Eigen::Map<EMatrixRM> JFvv(JvvDataRowMajor, _numSpecies, _numSpecies);
 
 	reactionSpeedJacobian(Jkvv, nv, rateCoeffv);
@@ -118,22 +119,32 @@ void Chemistry::evaluateJvv(double* JvvDataRowMajor, const EVector& nv,
 	JFvv = _netStoichvv * Jkvv;
 }
 
-EMatrix Chemistry::makeReactantStoichvv() const
+EMatrix_int Chemistry::makeReactantStoichvv() const
 {
-	EMatrix r(_numSpecies, _reactionv.size());
-	for (size_t j = 0; j < _reactionv.size(); j++)
-		r.col(j) = _speciesIndex.linearCombination(_reactionv[j]._rNamev,
-		                                           _reactionv[j]._rCoeffv);
-	return r;
+	EMatrix_int R = EMatrix_int::Zero(_numSpecies, _reactionv.size());
+	for (size_t r = 0; r < _reactionv.size(); r++)
+	{
+		for (size_t i = 0; i < _reactionv[r]._rNamev.size(); i++)
+		{
+			int s = _speciesIndex.index(_reactionv[r]._rNamev[i]);
+			R(s, r) = _reactionv[r]._rCoeffv[i];
+		}
+	}
+	return R;
 }
 
 EMatrix Chemistry::makeProductStoichvv() const
 {
-	EMatrix p(_numSpecies, _reactionv.size());
-	for (size_t j = 0; j < _reactionv.size(); j++)
-		p.col(j) = _speciesIndex.linearCombination(_reactionv[j]._pNamev,
-		                                           _reactionv[j]._pCoeffv);
-	return p;
+	EMatrix P = EMatrix::Zero(_numSpecies, _reactionv.size());
+	for (size_t r = 0; r < _reactionv.size(); r++)
+	{
+		for (size_t i = 0; i < _reactionv[r]._pNamev.size(); i++)
+		{
+			int s = _speciesIndex.index(_reactionv[r]._pNamev[i]);
+			P(s, r) = _reactionv[r]._pCoeffv[i];
+		}
+	}
+	return P;
 }
 
 EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
