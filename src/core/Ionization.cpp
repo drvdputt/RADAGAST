@@ -103,6 +103,8 @@ double Ionization::collisionalRateCoeff(double T)
 
 double Ionization::recombinationRateCoeff(double T)
 {
+	// These coefficients are from Verner and Ferland (1996). Those from Badnell (2006) are
+	// slightly different.
 	double a = 7.982e-11;
 	double b = 0.7480;
 	double T0 = 3.148;

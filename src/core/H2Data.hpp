@@ -61,7 +61,8 @@ private:
 	    each level. */
 	void readDissProbs();
 
-	/** Load data from Lique (2015), Lee (2008). */
+	/** Load data from Lique (2015) for H, Lee (2008) for H2 (ortho and para), Gerlich
+	    (1990) for H+. */
 	void readCollisions();
 
 	/** Load dissociation cross sections from Gay et al. (2012). */
