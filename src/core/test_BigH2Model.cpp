@@ -21,7 +21,7 @@ TEST_CASE("H2-specific algorithm")
 
 	double epsFrac = 1e-2;
 
-	SpeciesVector sv(spindex);
+	SpeciesVector sv(&spindex);
 	auto makeCP = [&](double ne, double np, double nH, double nH2) {
 		sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2,
 		                                          {ne, np, nH, nH2}));

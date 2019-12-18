@@ -51,7 +51,7 @@ class SpeciesVector
 {
 public:
 	/** Initialize with all elements zero */
-	SpeciesVector(const SpeciesIndex& speciesIndex);
+	SpeciesVector(const SpeciesIndex* speciesIndex);
 
 	/** Things like the chemical network (which owns a SpeciesIndex) should be able to set
 	    this directly. Note that this will crash if e-, H+, H or H2 are not prosent. */

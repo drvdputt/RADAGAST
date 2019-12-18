@@ -687,7 +687,7 @@ void Testing::plotPS64Collisions()
 
 	std::vector<std::string> namev{"e-", "H+"};
 	SpeciesIndex spindex(namev);
-	SpeciesVector sv(spindex);
+	SpeciesVector sv(&spindex);
 	sv.setDensities(spindex.linearCombination(namev, {ne, np}));
 	CollisionParameters gas(T, sv);
 	EMatrix cvv = hff.cvv(gas);
@@ -760,12 +760,12 @@ void Testing::runH2(bool write)
 
 	// Set the densities
 	SpeciesIndex spindex(SpeciesIndex::e_p_H_H2);
-	SpeciesVector sv(spindex);
+	SpeciesVector sv(&spindex);
 	sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2, {ne, np, nH, nH2}));
-	CollisionParameters gas(T, sv);
+	CollisionParameters cp(T, sv);
 
 	BigH2Model h2m(&h2l);
-	h2m.solve(nH2, gas, specificIntensity);
+	h2m.solve(nH2, cp, specificIntensity);
 	if (write)
 	{
 		Array emissivityv = h2m.emissivityv(frequencyv);

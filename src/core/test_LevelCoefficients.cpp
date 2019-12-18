@@ -17,7 +17,7 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
 	EMatrix avv = twolv.avv();
 
 	SpeciesIndex spindex({"e-"});
-	SpeciesVector sv(spindex);
+	SpeciesVector sv(&spindex);
 	CollisionParameters gas(500, sv);
 
 	Spectrum specificIntensity;

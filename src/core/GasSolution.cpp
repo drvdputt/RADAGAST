@@ -1,15 +1,15 @@
 #include "GasSolution.hpp"
+#include "CollisionParameters.hpp"
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
-#include "CollisionParameters.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPopulation.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
 
 GasSolution::GasSolution(const GasModule::GrainInterface& gri,
-                         const Spectrum& specificIntensity, const SpeciesIndex& speciesIndex,
+                         const Spectrum& specificIntensity, const SpeciesIndex* speciesIndex,
                          std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
                          const FreeBound& freeBound, const FreeFree& freeFree)
                 : _specificIntensity{specificIntensity}, _sv(speciesIndex),

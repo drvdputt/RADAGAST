@@ -17,9 +17,9 @@ TEST_CASE("single species with creation and destruction")
 		k(chemistry.reactionIndex("destruction")) = destructionCoeff;
 		k << creationRate, destructionCoeff;
 
-		SpeciesVector sv0(chemistry.speciesIndex());
+		SpeciesVector sv0(&chemistry.speciesIndex());
 		sv0.setNe(100.);
-		SpeciesVector sv(chemistry.speciesIndex());
+		SpeciesVector sv(&chemistry.speciesIndex());
 		sv.setDensities(chemistry.solveBalance(k, sv0.speciesNv()));
 		return sv.ne();
 	};
@@ -86,7 +86,7 @@ TEST_CASE("Combine and dissociate")
 	n0v(chemistry.speciesIndex().index("A")) = nA;
 	n0v(chemistry.speciesIndex().index("B")) = nB;
 
-	SpeciesVector sv(chemistry.speciesIndex());
+	SpeciesVector sv(&chemistry.speciesIndex());
 
 	{ // Both formation and destruction
 		double eps = 1.e-13;

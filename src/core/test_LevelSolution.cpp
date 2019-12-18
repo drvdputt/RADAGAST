@@ -13,7 +13,7 @@ TEST_CASE("Test LevelSolver using two-level LTE ")
 	double n = 1000;
 	double ne = n;
 	SpeciesIndex spindex({"H", "e-"});
-	SpeciesVector sv(spindex);
+	SpeciesVector sv(&spindex);
 	sv.setNe(ne);
 	CollisionParameters gas(T, sv);
 

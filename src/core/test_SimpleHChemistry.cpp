@@ -25,11 +25,11 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 	std::string ratesMessage = ss.str();
 	CAPTURE(ratesMessage);
 
-	SpeciesVector sv0(chemistry.speciesIndex());
+	SpeciesVector sv0(&chemistry.speciesIndex());
 	sv0.setDensities(chemistry.speciesIndex().linearCombination(SpeciesIndex::e_p_H_H2,
 	                                                            {50, 50, 50, 0}));
 	EVector nv = chemistry.solveBalance(kv, sv0.speciesNv());
-	SpeciesVector sv(chemistry.speciesIndex());
+	SpeciesVector sv(&chemistry.speciesIndex());
 	sv.setDensities(nv);
 	double f_network = sv.np() / (sv.np() + sv.nH());
 	double f_exact = Ionization::solveBalance(sv0.nH() + sv0.np(), T, specificIntensity);

@@ -31,7 +31,7 @@ public:
 	    GrainInterface object is passed, this class will keep track of a list of
 	    GrainSolution objects. */
 	GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
-	            const SpeciesIndex& speciesIndex, std::unique_ptr<HModel> hModel,
+	            const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
 	            std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound,
 	            const FreeFree& freeFree);
 

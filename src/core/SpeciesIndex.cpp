@@ -32,10 +32,10 @@ EVector SpeciesIndex::linearCombination(const std::vector<std::string>& namev,
 	return v;
 }
 
-SpeciesVector::SpeciesVector(const SpeciesIndex& speciesIndex)
-                : _index{&speciesIndex}, _ine{speciesIndex.index("e-")},
-                  _inp{speciesIndex.index("H+")}, _inH{speciesIndex.index("H")},
-                  _inH2{speciesIndex.index("H2")}, _nv{EVector::Zero(speciesIndex.size())}
+SpeciesVector::SpeciesVector(const SpeciesIndex* speciesIndex)
+                : _index{speciesIndex}, _ine{speciesIndex->index("e-")},
+                  _inp{speciesIndex->index("H+")}, _inH{speciesIndex->index("H")},
+                  _inH2{speciesIndex->index("H2")}, _nv{EVector::Zero(speciesIndex->size())}
 {
 }
 
@@ -46,4 +46,3 @@ std::ostream& operator<<(std::ostream& os, const SpeciesVector& sv)
 		os << namev[i] << ' ' << sv._nv[i] << '\n';
 	return os;
 }
-
