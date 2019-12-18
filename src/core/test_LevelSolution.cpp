@@ -3,7 +3,7 @@
 #include "LevelSolution.hpp"
 
 #include "DoctestUtils.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "Testing.hpp"
 #include "TwoLevelHardcoded.hpp"
 

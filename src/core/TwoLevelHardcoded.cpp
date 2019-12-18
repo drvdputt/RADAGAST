@@ -1,6 +1,6 @@
 #include "TwoLevelHardcoded.hpp"
 #include "Constants.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 
 TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS_CGS)
 {

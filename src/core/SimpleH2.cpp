@@ -1,5 +1,5 @@
 #include "SimpleH2.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "GloverAbel08.hpp"
 #include "LookupTable.hpp"
 #include "RadiationFieldTools.hpp"

@@ -4,7 +4,7 @@
 #include "GasDiagnostics.hpp"
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPhotoelectricData.hpp"
 #include "GrainPopulation.hpp"

@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "IOTools.hpp"
 #include "Options.hpp"
 #include "SpeciesIndex.hpp"

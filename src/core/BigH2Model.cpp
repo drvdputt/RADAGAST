@@ -1,7 +1,7 @@
 #include "BigH2Model.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "LevelSolver.hpp"
 
 void BigH2Model::solve(double n, const CollisionParameters& cp,

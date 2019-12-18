@@ -1,6 +1,6 @@
 #include "HHardCoded.hpp"
 #include "Constants.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 

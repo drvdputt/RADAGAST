@@ -1,7 +1,7 @@
 #include "DoctestUtils.hpp"
 
 #include "EigenAliases.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "HFromFiles.hpp"
 #include "HHardCoded.hpp"
 #include "SpeciesIndex.hpp"

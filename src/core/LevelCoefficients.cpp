@@ -1,7 +1,7 @@
 #include "LevelCoefficients.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "Options.hpp"
 #include "TemplatedUtils.hpp"
 

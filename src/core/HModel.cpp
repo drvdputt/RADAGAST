@@ -1,7 +1,7 @@
 #include "HModel.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "Ionization.hpp"
 #include "LevelSolver.hpp"
 

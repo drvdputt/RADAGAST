@@ -1,6 +1,6 @@
 #include "BigH2Model.hpp"
 #include "DoctestUtils.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "H2Data.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"

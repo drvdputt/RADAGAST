@@ -2,7 +2,7 @@
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPopulation.hpp"
 #include "Ionization.hpp"

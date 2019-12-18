@@ -2,7 +2,7 @@
 
 #include "Constants.hpp"
 #include "DoctestUtils.hpp"
-#include "GasStruct.hpp"
+#include "CollisionParameters.hpp"
 #include "LevelCoefficients.hpp"
 #include "SpeciesIndex.hpp"
 #include "Spectrum.hpp"
