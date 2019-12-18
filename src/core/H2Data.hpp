@@ -104,6 +104,16 @@ private:
 		H2Level(ElectronicState eState, int j, int v, double e)
 		                : _eState(eState), _j(j), _v(v), _e(e)
 		{
+			bool oddJ = _j % 2;
+			// For these states, odd J -> ortho; even J -> para. */
+			if (_eState == ElectronicState::X ||
+			    _eState == ElectronicState::Cminus ||
+			    _eState == ElectronicState::Dminus)
+				_ortho = oddJ;
+			// For the other states, it's the other way round. This is explained in
+			// the Cloudy H2 paper (Shaw et al. 2005).
+			else
+				_ortho = !oddJ;
 		}
 		ElectronicState eState() const { return _eState; }
 		int j() const { return _j; }
@@ -111,35 +121,21 @@ private:
 		double e() const { return _e; }
 		int g() const
 		{
-			bool ortho;
-			bool oddJ = _j % 2;
-
-			// For these states, odd J -> ortho; even J -> para. */
-			if (_eState == ElectronicState::X ||
-			    _eState == ElectronicState::Cminus ||
-			    _eState == ElectronicState::Dminus)
-				ortho = oddJ;
-			// For the other states, it's the other way round. This is explained in
-			// the Cloudy H2 paper (Shaw et al. 2005).
-			else
-				ortho = !oddJ;
-
 			// ortho = nuclear spin triplet / para = nuclear spin singlet. Also,
 			// remember that the states of a harmonic oscillator are not degenerate
 			// in 1D, therefore v doesn't play a role for determining the
 			// degeneracy.
-			return ortho ? 3 * (2 * _j + 1) : 2 * _j + 1;
+			return _ortho ? 3 * (2 * _j + 1) : 2 * _j + 1;
 		}
+		bool ortho() const { return _ortho; }
 
 	private:
 		ElectronicState _eState;
 		int _j, _v;
 		double _e;
+		bool _ortho;
 	};
 
-	//-----------------------------------------------//
-	// PUBLIC FUNCTIONS AKA THE OUTPUT OF THIS CLASS //
-	//-----------------------------------------------//
 public:
 	/** Implement this inherited function to provide collision coefficients for the level
 	    transitions */
@@ -151,6 +147,9 @@ public:
 
 	/** Same as the above, but returns -1 if level is not found. */
 	int indexFind(ElectronicState eState, int j, int v) const;
+
+	/** True if level at given index is ortho, false if para */
+	bool isOrtho(size_t index) const { return _levelv[index].ortho(); }
 
 	/** Get the index pointing to the first (index-wise, not energy-wise) electronically
 	excited level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels

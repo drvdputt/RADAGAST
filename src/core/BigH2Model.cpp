@@ -1,7 +1,7 @@
 #include "BigH2Model.hpp"
+#include "CollisionParameters.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
-#include "CollisionParameters.hpp"
 #include "LevelSolver.hpp"
 
 void BigH2Model::solve(double n, const CollisionParameters& cp,
@@ -28,7 +28,7 @@ void BigH2Model::solve(double n, const CollisionParameters& cp,
 
 	EVector sinkv = dissociationSinkv(specificIntensity);
 
-	if (_levelSolution.nv().size() != _h2Data->numLv())
+	if (!_levelSolution.isNvSet())
 	{
 		EVector initialGuessv = EVector::Zero(_h2Data->numLv());
 
@@ -115,8 +115,20 @@ double BigH2Model::netHeating() const
 
 double BigH2Model::orthoPara() const
 {
-	// TODO
-	return .25;
+	if (!_levelSolution.isNvSet())
+		return 0.75;
+
+	double orthoSum = 0;
+	double paraSum = 0;
+	for (size_t i = 0; i < _h2Data->numLv(); i++)
+	{
+		double n = _levelSolution.nv()(i);
+		if (_h2Data->isOrtho(i))
+			orthoSum += n;
+		else
+			paraSum += n;
+	}
+	return orthoSum / (orthoSum + paraSum);
 }
 
 Array BigH2Model::emissivityv(const Array& eFrequencyv) const

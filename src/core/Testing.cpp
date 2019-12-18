@@ -689,8 +689,8 @@ void Testing::plotPS64Collisions()
 	SpeciesIndex spindex(namev);
 	SpeciesVector sv(&spindex);
 	sv.setDensities(spindex.linearCombination(namev, {ne, np}));
-	CollisionParameters gas(T, sv);
-	EMatrix cvv = hff.cvv(gas);
+	CollisionParameters cp(T, sv);
+	EMatrix cvv = hff.cvv(cp);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total
 	   downwards rate from level nl. */
