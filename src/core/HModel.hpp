@@ -12,7 +12,7 @@ public:
 	HModel(const HData* hData) : _hData{hData}, _levelSolution(_hData) {}
 
 	/** Solve the H levels, and store them in this object. */
-	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity);
+	void solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity);
 
 	/** This function returns the line emission spectrum + the continuum emitted by the
 	    2s-1s two-photon process. */
@@ -38,14 +38,14 @@ private:
 	    interpolated from some formulae found in 2015-Raga (for levels 3-5) , and Draine's book
 	    (for levels 1, 2). The l-resolved recombination rates are just weighed by the degeneracy
 	    of the level, for levels 3, 4 and 5. TODO: Use better data here. [cm-3 s-1] */
-	EVector sourcev(const GasStruct& gas) const;
+	EVector sourcev(const CollisionParameters& cp) const;
 
 	/** Produces the sink term to be used by the equilibrium equations. In this case, hydrogen
 	    disappears from the level populations because it's being ionized. In the current
 	    implementation, all the ionization is assumed to be drawn equally from all levels. TODO:
 	    add the effects of H2 formation in here?. Take care of this using actual ionization
 	    cross sections? [s-1] */
-	EVector sinkv(const GasStruct& gas) const;
+	EVector sinkv(const CollisionParameters& cp) const;
 
 	/** This function calculates the two-photon continuum using Nussbaumer \& Smutz (1984). */
 	Array twoPhotonEmissivityv(const Array& eFrequencyv) const;

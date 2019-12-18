@@ -689,7 +689,7 @@ void Testing::plotPS64Collisions()
 	SpeciesIndex spindex(namev);
 	SpeciesVector sv(spindex);
 	sv.setDensities(spindex.linearCombination(namev, {ne, np}));
-	GasStruct gas(T, sv);
+	CollisionParameters gas(T, sv);
 	EMatrix cvv = hff.cvv(gas);
 
 	/* Calculate and write out (q_n(l-1) + q_n(l+1)) / A_nl, where A_nl is the total
@@ -762,7 +762,7 @@ void Testing::runH2(bool write)
 	SpeciesIndex spindex(SpeciesIndex::e_p_H_H2);
 	SpeciesVector sv(spindex);
 	sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2, {ne, np, nH, nH2}));
-	GasStruct gas(T, sv);
+	CollisionParameters gas(T, sv);
 
 	BigH2Model h2m(&h2l);
 	h2m.solve(nH2, gas, specificIntensity);

@@ -5,9 +5,9 @@
 #include "Ionization.hpp"
 #include "LevelSolver.hpp"
 
-void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity)
+void HModel::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity)
 {
-	_levelSolution.setT(gas._t);
+	_levelSolution.setT(cp._t);
 
 	if (n <= 0)
 	{
@@ -18,11 +18,11 @@ void HModel::solve(double n, const GasStruct& gas, const Spectrum& specificInten
 	}
 
 	EMatrix Cvv;
-	EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, gas, &Cvv);
+	EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, cp, &Cvv);
 	_levelSolution.setCvv(Cvv);
 
-	EVector the_sourcev = sourcev(gas);
-	EVector the_sinkv = sinkv(gas);
+	EVector the_sourcev = sourcev(cp);
+	EVector the_sinkv = sinkv(cp);
 	DEBUG("Solving levels nH = " << n << std::endl);
 	EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
 	_levelSolution.setNv(newNv);
@@ -85,15 +85,15 @@ Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
 	return result;
 }
 
-EVector HModel::sourcev(const GasStruct& gas) const
+EVector HModel::sourcev(const CollisionParameters& cp) const
 {
-	EVector result = _hData->recombinationRatev(gas._t);
-	double ne = gas._sv.ne();
-	double np = gas._sv.np();
+	EVector result = _hData->recombinationRatev(cp._t);
+	double ne = cp._sv.ne();
+	double np = cp._sv.np();
 	return result * ne * np;
 }
 
-EVector HModel::sinkv(const GasStruct& gas) const
+EVector HModel::sinkv(const CollisionParameters& cp) const
 {
 	// TODO: ideally, this calculates the ionization rate from each level, using individual
 	// ionization cross sections.
@@ -103,10 +103,10 @@ EVector HModel::sinkv(const GasStruct& gas) const
 	   doesn't really matter. Therefore, we choose the sink to be the same for each
 	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
 	   => sink = totalsource / n because n0/n + n1/n = 1. */
-	double ne = gas._sv.ne();
-	double np = gas._sv.np();
-	double nH = gas._sv.nH();
-	double totalSource = ne * np * Ionization::recombinationRateCoeff(gas._t);
+	double ne = cp._sv.ne();
+	double np = cp._sv.np();
+	double nH = cp._sv.nH();
+	double totalSource = ne * np * Ionization::recombinationRateCoeff(cp._t);
 	double sink = totalSource / nH; // Sink rate per (atom per cm3)
 	return EVector::Constant(_hData->numLv(), sink);
 }

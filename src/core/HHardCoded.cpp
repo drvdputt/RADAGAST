@@ -95,14 +95,14 @@ HydrogenHardcoded::HydrogenHardcoded()
 
 array<size_t, 2> HydrogenHardcoded::twoPhotonIndices() const { return {1, 0}; }
 
-EMatrix HydrogenHardcoded::cvv(const GasStruct& gas) const
+EMatrix HydrogenHardcoded::cvv(const CollisionParameters& cp) const
 {
-	double T = gas._t;
+	double T = cp._t;
 	const int index2p = 2;
 	const int index2s = 1;
 	EMatrix Cvv = EMatrix::Zero(NLV, NLV);
 
-	double electronDensity = gas._sv.ne();
+	double electronDensity = cp._sv.ne();
 	auto fillInElectronCollisionRate = [&](size_t upper, size_t lower, double bigUpsilon) {
 		double kT = Constant::BOLTZMAN * T;
 		// Equation 6.17 of Hazy II (6.6 Collision strengths)
@@ -167,7 +167,7 @@ EMatrix HydrogenHardcoded::cvv(const GasStruct& gas) const
 	double qUp = constfactor * D2s / sqrt(T) * (11.54 + log10(T / D2s / mu_m) + twoLog10Rc);
 	double qDown_db = qUp / 3.;
 
-	double protonDensity = gas._sv.np();
+	double protonDensity = cp._sv.np();
 	Cvv(index2p, index2s) = protonDensity * (qDown + qDown_db) / 2.;
 	Cvv(index2s, index2p) = protonDensity * (qUp + qUp_db) / 2.;
 

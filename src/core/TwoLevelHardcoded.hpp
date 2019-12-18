@@ -11,7 +11,7 @@ public:
 	    um. The data comes from https://www.astro.umd.edu/~jph/N-level.pdf, bottom of page
 	    4. */
 	TwoLevelHardcoded();
-	EMatrix cvv(const GasStruct& gas) const override;
+	EMatrix cvv(const CollisionParameters& cp) const override;
 };
 
 #endif // CORE_TWOLEVELHARDCODED_HPP

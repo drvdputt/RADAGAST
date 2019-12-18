@@ -4,10 +4,10 @@
 #include "GasStruct.hpp"
 #include "LevelSolver.hpp"
 
-void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
-                       double h2form)
+void BigH2Model::solve(double n, const CollisionParameters& cp,
+                       const Spectrum& specificIntensity, double h2form)
 {
-	_levelSolution.setT(gas._t);
+	_levelSolution.setT(cp._t);
 	_n = n;
 
 	if (n <= 0)
@@ -18,7 +18,7 @@ void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificI
 		return;
 	}
 
-	_tvv = _h2Data->totalTransitionRatesvv(specificIntensity, gas, &_cvv, &_bpvv);
+	_tvv = _h2Data->totalTransitionRatesvv(specificIntensity, cp, &_cvv, &_bpvv);
 	_levelSolution.setCvv(_cvv);
 
 	// TODO: Use better formation pumping recipe
@@ -35,7 +35,7 @@ void BigH2Model::solve(double n, const GasStruct& gas, const Spectrum& specificI
 		// Use LTE for the X levels, and 0 for the rest
 		int endX = _h2Data->startOfExcitedIndices();
 		initialGuessv.head(endX) = LevelSolver::statisticalEquilibrium_boltzman(
-		                n, gas._t, _h2Data->ev().head(endX), _h2Data->gv().head(endX));
+		                n, cp._t, _h2Data->ev().head(endX), _h2Data->gv().head(endX));
 
 		DEBUG("Using LTE as initial guess for H2" << std::endl);
 		_levelSolution.setNv(initialGuessv);

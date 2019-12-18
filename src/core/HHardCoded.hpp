@@ -17,7 +17,7 @@ public:
 
 	std::array<size_t, 2> twoPhotonIndices() const override;
 
-	EMatrix cvv(const GasStruct& gas) const override;
+	EMatrix cvv(const CollisionParameters& cp) const override;
 
 private:
 	EVector the_ev;

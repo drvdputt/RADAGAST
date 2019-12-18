@@ -6,7 +6,7 @@
 
 SimpleH2::SimpleH2(const LookupTable* lteCool) : _lteCool{lteCool} {}
 
-void SimpleH2::solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
+void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity,
                      double h2form)
 {
 	_nH2 = n;
@@ -28,12 +28,12 @@ void SimpleH2::solve(double n, const GasStruct& gas, const Spectrum& specificInt
 	constexpr double Rdecay = 2e-7; // s-1
 
 	// Equation A13 and A14, for downward collisions --> deexcitation heating.
-	double T = gas._t;
+	double T = cp._t;
 	double sqrtT = std::sqrt(T);
 	double colH = 1.e-12 * sqrtT * std::exp(-1000. / T) // cm3 s-1
-	              * gas._sv.nH();
+	              * cp._sv.nH();
 	double colH2 = 1.4e-12 * sqrtT * std::exp(-18100 / (T + 1200)) // cm3 s-1
-	               * gas._sv.nH2();
+	               * cp._sv.nH2();
 
 	// 90% of FUV pumps end up in vib-rot excited states. The latter can decay radiatively
 	// or collisionally (eq. A14 + text immediatly below)
@@ -50,7 +50,7 @@ void SimpleH2::solve(double n, const GasStruct& gas, const Spectrum& specificInt
 	constexpr double Es = 2.6 / Constant::ERG_EV;
 	_gamma4 = (colH + colH2) * _nH2s * Es;
 
-	_collisionalExcitationCooling = gloverAbel08Cooling(gas);
+	_collisionalExcitationCooling = gloverAbel08Cooling(cp);
 }
 
 double SimpleH2::dissociationRate(const Spectrum&) const
@@ -72,9 +72,9 @@ Array SimpleH2::emissivityv(const Array& eFrequencyv) const
 
 Array SimpleH2::opacityv(const Array& oFrequencyv) const { return Array(oFrequencyv.size()); }
 
-double SimpleH2::gloverAbel08Cooling(const GasStruct& gas) const
+double SimpleH2::gloverAbel08Cooling(const CollisionParameters& cp) const
 {
-	double T = gas._t;
+	double T = cp._t;
 	// equation 30
 	double coolH = _ortho * GloverAbel08::coolOrthoH(T) +
 	               _para * GloverAbel08::coolParaH(T);
@@ -90,8 +90,8 @@ double SimpleH2::gloverAbel08Cooling(const GasStruct& gas) const
 	                      _para * GloverAbel08::coolParaElectron(T);
 	// erg cm3 s-1
 
-	double coolPerH2LowDensity = gas._sv.nH() * coolH + _nH2 * coolH2 +
-	                             gas._sv.np() * coolProton + gas._sv.ne() * coolElectron;
+	double coolPerH2LowDensity = cp._sv.nH() * coolH + _nH2 * coolH2 +
+	                             cp._sv.np() * coolProton + cp._sv.ne() * coolElectron;
 	double coolPerH2LTE = _lteCool->evaluate(T);
 	// erg s-1
 

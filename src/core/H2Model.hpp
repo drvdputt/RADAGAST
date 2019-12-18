@@ -4,7 +4,7 @@
 #include "Array.hpp"
 #include "LevelSolution.hpp"
 
-struct GasStruct;
+struct CollisionParameters;
 class Spectrum;
 
 /** Abstract class for the non-constant H2 properties, and the functions that depend on them. We
@@ -20,8 +20,8 @@ public:
 	    on the sublass, the calculation can be trivial, or extremely heavy (solving the
 	    levels). The H2 formation tempo [cm-3 s-1] (from grain surfaces only) is need to
 	    normalize the source term, which describes the formation pumping. */
-	virtual void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
-	                   double h2form = 0) = 0;
+	virtual void solve(double n, const CollisionParameters& cp,
+	                   const Spectrum& specificIntensity, double h2form = 0) = 0;
 
 	/** The dissociation rate, both by direct photodissociation and the indirect Solomon
 	    process. This rate can be used to calculate the H2 abundance using a chemical

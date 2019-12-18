@@ -52,27 +52,27 @@ void LevelCoefficients::lineInfo(int& numLines, Array& lineFreqv,
 }
 
 EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntensity,
-                                                  const GasStruct& gas, EMatrix* cvv_p,
+                                                  const CollisionParameters& cp, EMatrix* cvv_p,
                                                   EMatrix* bpvv_p) const
 {
 	// If no pointer was given, store cvv in newly allocated space. (I change value of
 	// cvv_p, for convenience in the rest of this function.).
 	EMatrix new_cvv;
 	if (cvv_p)
-		*cvv_p = cvv(gas);
+		*cvv_p = cvv(cp);
 	else
 	{
-		new_cvv = cvv(gas);
+		new_cvv = cvv(cp);
 		cvv_p = &new_cvv;
 	}
 
 	// Idem
 	EMatrix new_bpvv;
 	if (bpvv_p)
-		*bpvv_p = prepareAbsorptionMatrix(specificIntensity, gas._t, *cvv_p);
+		*bpvv_p = prepareAbsorptionMatrix(specificIntensity, cp._t, *cvv_p);
 	else
 	{
-		new_bpvv = prepareAbsorptionMatrix(specificIntensity, gas._t, *cvv_p);
+		new_bpvv = prepareAbsorptionMatrix(specificIntensity, cp._t, *cvv_p);
 		bpvv_p = &new_bpvv;
 	}
 

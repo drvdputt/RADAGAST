@@ -267,16 +267,16 @@ array<size_t, 2> HFromFiles::twoPhotonIndices() const
 	return {upper, lower};
 }
 
-EMatrix HFromFiles::cvv(const GasStruct& gas) const
+EMatrix HFromFiles::cvv(const CollisionParameters& cp) const
 {
 	// Calculate the temperature in erg and in electron volt
-	double T = gas._t;
+	double T = cp._t;
 	double kT = Constant::BOLTZMAN * T;
 	double T_eV = kT * Constant::ERG_EV;
 
 	EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
 	// Electron contributions (n-changing)
-	double ne = gas._sv.ne();
+	double ne = cp._sv.ne();
 	if (ne > 0)
 	{
 		for (size_t i = 0; i < _numL; i++)
@@ -304,7 +304,7 @@ EMatrix HFromFiles::cvv(const GasStruct& gas) const
 	}
 
 	// For the l-resolved levels, get l-changing collision rates (through proton collisions)
-	double np = gas._sv.np();
+	double np = cp._sv.np();
 	if (np > 0)
 	{
 		for (int n = 0; n <= _resolvedUpTo; n++)

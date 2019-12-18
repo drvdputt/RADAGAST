@@ -9,7 +9,7 @@ class SimpleH2 : public H2Model
 {
 public:
 	SimpleH2(const LookupTable* lteCool);
-	void solve(double n, const GasStruct& gas, const Spectrum& specificIntensity,
+	void solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity,
 	           double h2form = 0) override;
 	double dissociationRate(const Spectrum& specificIntensity) const override;
 	double dissociationHeating(const Spectrum& specificIntensity) const override;
@@ -19,7 +19,7 @@ public:
 	Array opacityv(const Array& oFrequencyv) const override;
 
 private:
-	double gloverAbel08Cooling(const GasStruct& gas) const;
+	double gloverAbel08Cooling(const CollisionParameters& cp) const;
 
 	// This implements the H2 model of Tielens and Hollenback (1985).
 

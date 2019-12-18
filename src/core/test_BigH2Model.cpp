@@ -22,21 +22,21 @@ TEST_CASE("H2-specific algorithm")
 	double epsFrac = 1e-2;
 
 	SpeciesVector sv(spindex);
-	auto makeGas = [&](double ne, double np, double nH, double nH2) {
+	auto makeCP = [&](double ne, double np, double nH, double nH2) {
 		sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2,
 		                                          {ne, np, nH, nH2}));
-		return GasStruct(T, sv);
+		return CollisionParameters(T, sv);
 	};
 
 	SUBCASE("no radiation, high density, should go to LTE")
 	{
 		double n = 1e8;
-		const GasStruct gas = makeGas(100, 100, 100, n);
+		const CollisionParameters cp = makeCP(100, 100, 100, n);
 
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
 
-		bigh2.solve(n, gas, specificIntensity);
+		bigh2.solve(n, cp, specificIntensity);
 		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
 
 		const EVector& nv_sol = bigh2.levelSolution()->nv();
@@ -58,11 +58,11 @@ TEST_CASE("H2-specific algorithm")
 		double n = 1e-15;
 		double eps = 1e-2;
 
-		const GasStruct gas = makeGas(0, 0, 0, n);
+		const CollisionParameters cp = makeCP(0, 0, 0, n);
 
 		Array specificIntensityv(frequencyv.size());
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		bigh2.solve(n, gas, specificIntensity);
+		bigh2.solve(n, cp, specificIntensity);
 		const EVector& nv = bigh2.levelSolution()->nv();
 
 		// Check if some individual levels are indeed close to 0
@@ -87,12 +87,12 @@ TEST_CASE("H2-specific algorithm")
 	SUBCASE("Blackbody radiation, no collisions, should also go to LTE?")
 	{
 		double n = 1;
-		const GasStruct gas = makeGas(0, 0, 0, n);
+		const CollisionParameters cp = makeCP(0, 0, 0, n);
 		Array specificIntensityv(frequencyv.size());
 		for (size_t i = 0; i < frequencyv.size(); i++)
 			specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
 		Spectrum specificIntensity(frequencyv, specificIntensityv);
-		bigh2.solve(n, gas, specificIntensity);
+		bigh2.solve(n, cp, specificIntensity);
 		EVector nv_lte = n * hff.solveBoltzmanEquations(T);
 		const EVector& nv_sol = bigh2.levelSolution()->nv();
 

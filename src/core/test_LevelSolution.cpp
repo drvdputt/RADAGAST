@@ -15,7 +15,7 @@ TEST_CASE("Test LevelSolver using two-level LTE ")
 	SpeciesIndex spindex({"H", "e-"});
 	SpeciesVector sv(spindex);
 	sv.setNe(ne);
-	GasStruct gas(T, sv);
+	CollisionParameters gas(T, sv);
 
 	TwoLevelHardcoded twolv;
 	LevelSolution s(&twolv);

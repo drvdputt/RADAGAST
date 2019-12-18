@@ -18,7 +18,7 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
 
 	SpeciesIndex spindex({"e-"});
 	SpeciesVector sv(spindex);
-	GasStruct gas(500, sv);
+	CollisionParameters gas(500, sv);
 
 	Spectrum specificIntensity;
 

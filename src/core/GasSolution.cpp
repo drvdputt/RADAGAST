@@ -32,7 +32,7 @@ void GasSolution::makeZero()
 
 void GasSolution::solveLevels(double formH2)
 {
-	GasStruct gas = {_t, _sv};
+	CollisionParameters gas = {_t, _sv};
 	_hSolution->solve(nH(), gas, _specificIntensity);
 	_h2Solution->solve(nH2(), gas, _specificIntensity, formH2);
 }

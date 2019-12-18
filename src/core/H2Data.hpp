@@ -143,7 +143,7 @@ private:
 public:
 	/** Implement this inherited function to provide collision coefficients for the level
 	    transitions */
-	EMatrix cvv(const GasStruct& gas) const override;
+	EMatrix cvv(const CollisionParameters& cp) const override;
 
 	/** Retrieve the index of a level with these quantum numbers. Will throw an out of range
 	    error when no level was read in for these quantum numbers */

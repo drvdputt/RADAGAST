@@ -49,7 +49,7 @@ private:
 		/** Constructor for an nlJ-resolved level. Takes \f$n\f$ and \f$l\f$ as integers,
 		    and \f$2j + 1\f$ instead of \f$j\f$ so an int can be used. */
 		HydrogenLevel(int n, int l, int twoJplus1, double e)
-				: _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
+		                : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
 		{
 		}
 		/** Constructor for an nl-resolved level. Puts -1 at the place of \f$2j+1\f$. */
@@ -89,7 +89,7 @@ private:
 	   called after readData() has finished. These two calls should be made consecutively in
 	   either the constructor or a setup routine. */
 public:
-	EMatrix cvv(const GasStruct& gas) const override;
+	EMatrix cvv(const CollisionParameters& cp) const override;
 
 	int nMax() const override { return 5; }
 
@@ -156,7 +156,7 @@ private:
 	/** Works with LevelInfo objects, determining automatically what version to pick. Again,
 	    this only works for downward transitions. */
 	double eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final,
-				  double T_eV) const;
+	                          double T_eV) const;
 
 	// STORAGE OF THE READ-IN DATA //
 
@@ -187,7 +187,7 @@ private:
 
 	/* A simple map for translating orbital letters into numbers */
 	const std::map<char, int> _lNumberm = {
-			{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
+	                {'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
 
 	/* To quickly find the level index as listed in the CHIANTI elvlc file for a set of quantum
 	   numbers, we use a map with fixed size arrays as keys {n, l, 2j+1}. */

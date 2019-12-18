@@ -9,7 +9,7 @@
 #include <array>
 #include <memory>
 
-struct GasStruct;
+struct CollisionParameters;
 
 /** This class deals with level coefficients. A data class (e.g. H2FromFiles) can inherit from
     this class to re-use the level coefficient infrastructure, if it also wants to read in level
@@ -45,7 +45,7 @@ public:
 	const EMatrix& avv() const { return _avv; }
 
 	/** Collisional transition rates, calculated by a subclass */
-	virtual EMatrix cvv(const GasStruct& gas) const = 0;
+	virtual EMatrix cvv(const CollisionParameters& cp) const = 0;
 
 	/** Spontaneous transition rates which do not produce line emission (really only used
 	    for two-photon continuum). */
@@ -65,13 +65,13 @@ public:
 	    the total matrix and cvv at the same time). Same for the induced radiative
 	    transition matrix. By passing these pointers, you can also avoid having to free the
 	    memory for these matrices. [s-1] */
-	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity, const GasStruct& gas,
-	                               EMatrix* cvv_p = nullptr,
+	EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity,
+	                               const CollisionParameters& cp, EMatrix* cvv_p = nullptr,
 	                               EMatrix* bpvv_p = nullptr) const;
 
 	/** Calculates the level populations using a simple Boltzman LTE equation. Also serves
 	    as an example of how to properly set up a LevelSolution object. */
-	LevelSolution solveLTE(double density, const GasStruct& gas) const;
+	LevelSolution solveLTE(double density, const CollisionParameters& cp) const;
 
 	LevelSolution solveZero(double T) const;
 

@@ -403,24 +403,24 @@ EVector H2Data::makeGv() const
 	return the_gv;
 }
 
-EMatrix H2Data::cvv(const GasStruct& gas) const
+EMatrix H2Data::cvv(const CollisionParameters& cp) const
 {
-	double T = gas._t;
+	double T = cp._t;
 	EMatrix the_cvv{EMatrix::Zero(_numL, _numL)};
 
 	// H-H2 collisions
-	double nH = gas._sv.nH();
+	double nH = cp._sv.nH();
 	addToCvv(the_cvv, T, H0, nH);
 
 	// H2-H2 collisions.
-	double nH2 = gas._sv.nH2();
-	addToCvv(the_cvv, T, H2ORTHO, gas._orthoH2 * nH2);
-	addToCvv(the_cvv, T, H2PARA, (1. - gas._orthoH2) * nH2);
+	double nH2 = cp._sv.nH2();
+	addToCvv(the_cvv, T, H2ORTHO, cp._orthoH2 * nH2);
+	addToCvv(the_cvv, T, H2PARA, (1. - cp._orthoH2) * nH2);
 
 	// TODO: test if these are loaded correctly (compare with graph in Lee paper)
 
 	// H+-H2 collisions
-	double np = gas._sv.np();
+	double np = cp._sv.np();
 	addToCvv(the_cvv, T, HPLUS, np);
 	return the_cvv;
 }

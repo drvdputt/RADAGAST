@@ -4,21 +4,23 @@
 #include "EigenAliases.hpp"
 #include "SpeciesIndex.hpp"
 
-/** A struct containing some things which are often needed together. This makes it possible to
-    make the function signature uniform over some subclasses. This is mostly needed for the
-    level calculations, where the densities, temperature and maybe ortho-to-para ratio are used
-    to calculate collision coefficients. TODO: Rework and at least rename this to somthing less
-    ambiguous. */
-typedef struct GasStruct
+/** A set of parameters commonly needed to calculate collisions coefficients. Not every function
+    that calculates collision coefficients will need all of this information, but using this
+    struct as an argument makes it possible to make those functions virtual. */
+typedef struct CollisionParameters
 {
-	GasStruct(double t, const SpeciesVector& sv) : _t{t}, _sv{sv} {}
+	CollisionParameters(double t, const SpeciesVector& sv) : _t{t}, _sv{sv} {}
+	CollisionParameters(double t, const SpeciesVector& sv, double orthoH2)
+	                : _t{t}, _sv{sv}, _orthoH2{orthoH2}
+	{
+	}
 
 	double _t;
 	SpeciesVector _sv;
 
-	// The fraction of ortho H2 might be important too. Default it here to .25, which
-	// corresponds to a ratio of 3 to 1
+	// The fraction of ortho H2 might be important too. Default it here to .75, which
+	// corresponds to the typical ratio of 3 to 1
 	double _orthoH2{.75};
-} GasStruct;
+} CollisionParameters;
 
 #endif // CORE_GASSTRUCT_HPP
