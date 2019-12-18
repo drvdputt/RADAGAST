@@ -519,7 +519,6 @@ void H2Data::precalcGBarKvv()
 void H2Data::addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner,
                         double nPartner) const
 {
-	// TODO: try vectorizing this if still too slow.
 	for (int i = 0; i < _startOfExcitedIndices; i++)
 	{
 		for (int j = i + 1; j < _startOfExcitedIndices; j++)
