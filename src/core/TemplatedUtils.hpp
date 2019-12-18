@@ -22,6 +22,9 @@ T binaryIntervalSearch(std::function<int(T)> searchDirection, T xInit, T xTolera
 
 template <typename T, typename T1> void inline sortedInsert(T elem, T1& container);
 
+template <typename T, typename T1>
+std::array<size_t, 2> saneIndexPair(T x, const T1& xContainer);
+
 template <typename T, typename T1, typename T2>
 T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer);
 

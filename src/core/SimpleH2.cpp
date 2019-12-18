@@ -92,7 +92,7 @@ double SimpleH2::gloverAbel08Cooling(const CollisionParameters& cp) const
 
 	double coolPerH2LowDensity = cp._sv.nH() * coolH + _nH2 * coolH2 +
 	                             cp._sv.np() * coolProton + cp._sv.ne() * coolElectron;
-	double coolPerH2LTE = _lteCool->evaluate(T);
+	double coolPerH2LTE = _lteCool->evaluate(0, T);
 	// erg s-1
 
 	// equation 39

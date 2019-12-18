@@ -34,9 +34,9 @@ public:
 	    Be sure to call prepareCoefficients when done adding species and/or reactions .*/
 	void addReaction(const std::string& reactionName,
 	                 const std::vector<std::string>& reactantNamev,
-	                 const Array& reactantStoichv,
+	                 const std::vector<int>& reactantStoichv,
 	                 const std::vector<std::string>& productNamev,
-	                 const Array& productStoichv);
+	                 const std::vector<double>& productStoichv);
 
 	/** This should be called after reactions have been added */
 	void prepareCoefficients();
@@ -56,49 +56,62 @@ public:
 	EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v,
 	                     double maxTime = -1) const;
 
-	/** Evaluate the rate of change for each species [cm-3 s-1]. */
-	EVector evaluateFv(const EVector& nv, const EVector& rateCoeffv) const;
+	/** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total
+	    reaction speeds is also given (rateCoeffv * density product). It will be used as a
+	    workspace, and can also be used to diagnose the speed of each reaction [s-1]. It
+	    needs to be of size _numReactions. */
+	void evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv,
+	                EVector& kv) const;
 
 	/** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards
-	    n_j. */
-	EMatrix evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const;
+	    n_j. For optimization (and for diagnostics), a matrix to put the jacobian of the
+	    reaction speed vector is passed. It needs to be of size (_numReactions,
+	    _numSpecies). */
+	void evaluateJvv(double* JvvOutputRowMajor, const EVector& nv,
+	                 const EVector& rateCoeffv, EMatrix& Jkvv) const;
 
 private:
 	// Turn list of reactions into coefficient matrices
-	EMatrix makeReactantStoichvv() const;
+	EMatrix_int makeReactantStoichvv() const;
 	EMatrix makeProductStoichvv() const;
 
 	/** Solve the chemistry by evolving the system until equilibrium. */
-	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const;
+	EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
+	                     double maxTime) const;
 
 	/** Calculate the density factor needed to calculate the speed of reaction r. Formula:
 	    Product_i n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i,
 	    r). */
-	double densityProduct(const EVector& nv, size_t r) const;
+	double reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const;
 
 	/** Calculate the derivative of the density product for reaction r with respect to the
 	    density j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
-	double densityProductDerivative(const EVector& nv, int r, int j) const;
+	void reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
+	                           const EVector& rateCoeffv) const;
 
 	// Keep track of index for each species name.
 	SpeciesIndex _speciesIndex;
 
 	typedef struct Reaction
 	{
-		Reaction(const std::vector<std::string>& rNamev, const Array& rCoeffv,
-		         const std::vector<std::string>& pNamev, const Array& pCoeffv)
+		Reaction(const std::vector<std::string>& rNamev,
+		         const std::vector<int>& rCoeffv,
+		         const std::vector<std::string>& pNamev,
+		         const std::vector<double>& pCoeffv)
 		                : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv},
 		                  _pCoeffv{pCoeffv}
 		{
 		}
 		std::vector<std::string> _rNamev, _pNamev;
-		Array _rCoeffv, _pCoeffv;
+		std::vector<int> _rCoeffv;
+		std::vector<double> _pCoeffv;
 	} Reaction;
 	std::vector<Reaction> _reactionv;
 	std::map<std::string, int> _reactionIndexm;
 
 	// Filled in by prepareCoefficients()
-	EMatrix _rStoichvv, _netStoichvv;
+	EMatrix_int _rStoichvv;
+	EMatrix _netStoichvv;
 	size_t _numSpecies;
 	int _numReactions;
 };

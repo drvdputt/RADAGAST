@@ -12,32 +12,29 @@ struct ode_params
 	size_t size;
 	const EVector* rateCoeffv;
 	const Chemistry* chemistry;
+	// Workspace for total rate vector (prevent frequent reallocation)
+	EVector* kv;
+	EMatrix* Jkvv;
 };
 
 int ode_f(double /* unused t */, const double y[], double dydt[], void* p)
 {
 	auto* params = static_cast<struct ode_params*>(p);
-
 	Eigen::Map<const EVector> nv(y, params->size);
-	Eigen::Map<EVector> Fv(dydt, params->size);
-	Fv = params->chemistry->evaluateFv(
-	                nv, *params->rateCoeffv); // this should overwrite the contents of dydt
+
+	params->chemistry->evaluateFv(dydt, nv, *params->rateCoeffv, *params->kv);
 	return GSL_SUCCESS; // maybe check for nan here
 }
 
 int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], void* p)
 {
 	auto* params = static_cast<struct ode_params*>(p);
-
-	// The jacobian dfdy needs to be stored row-major for GSL. This is also why we needed to
-	// transpose Jvv in the functions for the multiroot-based solution.
 	Eigen::Map<const EVector> nv(y, params->size);
-	Eigen::Map<EMatrixRM> Jvv(dfdy, params->size, params->size);
-	Jvv = params->chemistry->evaluateJvv(nv, *params->rateCoeffv);
+
+	params->chemistry->evaluateJvv(dfdy, nv, *params->rateCoeffv, *params->Jkvv);
 
 	// no explicit time dependence
 	std::fill(dfdt, dfdt + params->size, 0);
-
 	return GSL_SUCCESS;
 }
 } // namespace
@@ -51,9 +48,9 @@ void Chemistry::addSpecies(const std::string& name) { _speciesIndex.addSpecies(n
 
 void Chemistry::addReaction(const std::string& reactionName,
                             const std::vector<std::string>& reactantNamev,
-                            const Array& reactantStoichv,
+                            const std::vector<int>& reactantStoichv,
                             const std::vector<std::string>& productNamev,
-                            const Array& productStoichv)
+                            const std::vector<double>& productStoichv)
 {
 	Error::equalCheck("Lengths of list of species names and vector of coefficients",
 	                  reactantNamev.size(), reactantStoichv.size());
@@ -72,7 +69,7 @@ void Chemistry::prepareCoefficients()
 {
 	_numSpecies = _speciesIndex.size();
 	_rStoichvv = makeReactantStoichvv();
-	_netStoichvv = makeProductStoichvv() - _rStoichvv;
+	_netStoichvv = makeProductStoichvv() - _rStoichvv.cast<double>();
 	_numReactions = _rStoichvv.cols();
 }
 
@@ -90,65 +87,64 @@ EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v,
 	return result;
 }
 
-EVector Chemistry::evaluateFv(const EVector& nv, const EVector& rateCoeffv) const
+void Chemistry::evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv,
+                           EVector& kv) const
 
 {
-	EVector fv(_numSpecies);
-
-	//---------------------------------------------------------//
-	// EQUILIBRIUM EQUATIONS (A.K.A. NET_STOICH * RATE = ZERO) //
-	//---------------------------------------------------------//
+	// This memory should be already allocated
+	Eigen::Map<EVector> Fv(FvOutput, _numSpecies);
 
 	// The total rate of each reaction, a.k.a. k(T) multiplied with the correct density
 	// factor n_s ^ R_s,r (see notes).
-	EVector kTotalv(_numReactions);
 	for (int r = 0; r < _numReactions; r++)
-		kTotalv(r) = rateCoeffv(r) * densityProduct(nv, r);
+		kv(r) = reactionSpeed(nv, rateCoeffv, r);
 
 	// Matrix multiplication between the net stoichiometry matrix (indexed on species,
 	// reaction) and the rate vector (indexed on reaction).
-	fv = _netStoichvv * kTotalv;
-
-	return fv;
+	Fv = _netStoichvv * kv;
 }
 
-EMatrix Chemistry::evaluateJvv(const EVector& nv, const EVector& rateCoeffv) const
+void Chemistry::evaluateJvv(double* JvvDataRowMajor, const EVector& nv,
+                            const EVector& rateCoeffv, EMatrix& Jkvv) const
 
 {
-	// The elements are d f_i / d n_j, so the jacobian should have (dimension of fv,
-	// dimension of nv).
-	EMatrix jvv(_numSpecies, _numSpecies);
+	// The jacobian dfdy needs to be stored row-major for GSL. This memory should be already
+	// allocated. The elements are d f_i / d n_j, so the jacobian should have (dimension of
+	// fv, dimension of nv = _numSpecies, _numSpecies).
+	Eigen::Map<EMatrixRM> JFvv(JvvDataRowMajor, _numSpecies, _numSpecies);
 
-	// For every column (= derivative with respect to a different density)
-	for (size_t jDeriv = 0; jDeriv < _numSpecies; jDeriv++)
+	reactionSpeedJacobian(Jkvv, nv, rateCoeffv);
+
+	// (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j)
+	JFvv = _netStoichvv * Jkvv;
+}
+
+EMatrix_int Chemistry::makeReactantStoichvv() const
+{
+	EMatrix_int R = EMatrix_int::Zero(_numSpecies, _reactionv.size());
+	for (size_t r = 0; r < _reactionv.size(); r++)
 	{
-		// Here we calculate the derivatives of the density products times the reaction
-		// rates and multiply with the net coefficient.
-		EVector kDerivativev(_numReactions);
-		for (int r = 0; r < _numReactions; r++)
-			kDerivativev(r) =
-			                rateCoeffv(r) * densityProductDerivative(nv, r, jDeriv);
-		jvv.col(jDeriv) = _netStoichvv * kDerivativev;
+		for (size_t i = 0; i < _reactionv[r]._rNamev.size(); i++)
+		{
+			int s = _speciesIndex.index(_reactionv[r]._rNamev[i]);
+			R(s, r) = _reactionv[r]._rCoeffv[i];
+		}
 	}
-	return jvv;
-}
-
-EMatrix Chemistry::makeReactantStoichvv() const
-{
-	EMatrix r(_numSpecies, _reactionv.size());
-	for (size_t j = 0; j < _reactionv.size(); j++)
-		r.col(j) = _speciesIndex.linearCombination(_reactionv[j]._rNamev,
-		                                           _reactionv[j]._rCoeffv);
-	return r;
+	return R;
 }
 
 EMatrix Chemistry::makeProductStoichvv() const
 {
-	EMatrix p(_numSpecies, _reactionv.size());
-	for (size_t j = 0; j < _reactionv.size(); j++)
-		p.col(j) = _speciesIndex.linearCombination(_reactionv[j]._pNamev,
-		                                           _reactionv[j]._pCoeffv);
-	return p;
+	EMatrix P = EMatrix::Zero(_numSpecies, _reactionv.size());
+	for (size_t r = 0; r < _reactionv.size(); r++)
+	{
+		for (size_t i = 0; i < _reactionv[r]._pNamev.size(); i++)
+		{
+			int s = _speciesIndex.index(_reactionv[r]._pNamev[i]);
+			P(s, r) = _reactionv[r]._pCoeffv[i];
+		}
+	}
+	return P;
 }
 
 EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
@@ -159,7 +155,11 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
 
 	bool toEquilibrium = maxTime < 0;
 
-	struct ode_params params = {_numSpecies, &rateCoeffv, this};
+	// Parameters and workspace for ode_f. The latter will write to kTotalv sometimes, using
+	// the pointer given to the struct below.
+	EVector kv(_numReactions);
+	EMatrix Jkvv(_numReactions, _numSpecies);
+	struct ode_params params = {_numSpecies, &rateCoeffv, this, &kv, &Jkvv};
 
 	gsl_odeiv2_system s{ode_f, ode_j, _numSpecies, &params};
 
@@ -186,7 +186,8 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
 			// fact they just wouldn't have had enough time to change. Time scale =
 			// max(density / rate of change). Don't forget abs because rate of change can be
 			// negative of course.
-			EArray fv = evaluateFv(nv, rateCoeffv);
+			EArray fv(_numSpecies, 1);
+			evaluateFv(fv.data(), nv, rateCoeffv, kv);
 			double timeScale =
 			                (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
 
@@ -226,43 +227,68 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v,
 	return nv;
 }
 
-double Chemistry::densityProduct(const EVector& nv, size_t r) const
+double Chemistry::reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const
 {
 	double densityProduct = 1;
 	for (size_t s = 0; s < _numSpecies; s++)
 	{
 		/* If the species in involved in this reaction (stoich on left side > 0),
 		   calculate the density to the power of its stoichiometry in the reaction. */
-		double stoichRs = _rStoichvv(s, r);
-		if (stoichRs)
-			densityProduct *= pow(nv(s), stoichRs);
+		int Rs = _rStoichvv(s, r);
+		if (Rs)
+			densityProduct *= pow(nv(s), Rs);
 	}
-	return densityProduct;
+	return densityProduct * rateCoeffv(r);
 }
 
-// TODO: speed this up by calculating the whole jacobian of kTotalv at once. (Powers nj^Rjr
-// often recurr between different j). Should also be easily testable).
-double Chemistry::densityProductDerivative(const EVector& nv, int r, int j) const
+// JdensityProduct is indexed on (reaction r, d / d n_j)
+void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
+                                      const EVector& rateCoeffv) const
 {
-	// If the reactant j is not present in reaction (remember that _rvv contains the
-	// stoichiometry of the reactants), deriving with respect to it will produce zero. */
-	double stoichRj = _rStoichvv(j, r);
-	if (!stoichRj)
-		return 0;
-	else
+	// Every column j is basically a reaction speed before it is multiplied with the rate
+	// coefficient, derived with respect to one of the densities.
+	Array densityPowers(_numSpecies);
+	for (size_t r = 0; r < _numReactions; r++)
 	{
-		// Derivative of the n_j factor
-		double densityProductDerivative = 1;
-		if (stoichRj > 1)
-			densityProductDerivative *= stoichRj * pow(nv(j), stoichRj - 1);
-
-		// The rest of the factors
+		// precalculate these powers
 		for (size_t s = 0; s < _numSpecies; s++)
 		{
-			double stoichRs = _rStoichvv(s, r);
-			if (stoichRs && s != j)
-				densityProductDerivative *= pow(nv(s), stoichRs);
+			int Rs = _rStoichvv(s, r);
+			if (Rs)
+				densityPowers[s] = pow(nv(s), Rs);
+			else
+				densityPowers[s] = 0;
 		}
-		return densityProductDerivative;
+
+		// Now start calculating all the derivatives with respect to n_j. We cannot just
+		// divide the product of the densities by n_j, because n_j can be zero.
+		for (size_t j = 0; j < _numSpecies; j++)
+		{
+			double& Jrj = Jkvv(r, j);
+
+			// if n_j not involved, just set to 0
+			int Rj = _rStoichvv(j, r);
+			if (Rj == 0)
+			{
+				Jrj = 0;
+				continue;
+			}
+			// Otherwise, start with the rate coefficient for this reaction, and
+			// then multiply with all the densities
+			Jrj = rateCoeffv(r);
+
+			// All species involved in the reaction except n_j
+			for (size_t s = 0; s < _numSpecies; s++)
+			{
+				// if species is involved, multiply with n_s^Rs
+				if (_rStoichvv(s, r) && s != j)
+					Jrj *= densityPowers[s];
+			}
+
+			// derivative of the n_j^Rj factor: Rj n_j^(Rj - 1). Do not call pow if
+			// the expornent is trivial (Rj == 1), or if Jrj is already zero.
+			if (Rj != 1 && Jrj)
+				Jrj = Rj * pow(nv(j), Rj - 1);
+		}
 	}
 }
