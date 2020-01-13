@@ -3,6 +3,7 @@
 #include "Error.hpp"
 
 #include <gsl/gsl_errno.h>
+#include <gsl/gsl_math.h>
 #include <gsl/gsl_odeiv2.h>
 
 namespace
@@ -236,7 +237,7 @@ double Chemistry::reactionSpeed(const EVector& nv, const EVector& rateCoeffv, si
 		   calculate the density to the power of its stoichiometry in the reaction. */
 		int Rs = _rStoichvv(s, r);
 		if (Rs)
-			densityProduct *= pow(nv(s), Rs);
+			densityProduct *= gsl_pow_int(nv(s), Rs);
 	}
 	return densityProduct * rateCoeffv(r);
 }
@@ -255,7 +256,7 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
 		{
 			int Rs = _rStoichvv(s, r);
 			if (Rs)
-				densityPowers[s] = pow(nv(s), Rs);
+				densityPowers[s] = gsl_pow_int(nv(s), Rs);
 			else
 				densityPowers[s] = 0;
 		}
@@ -288,7 +289,7 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv,
 			// derivative of the n_j^Rj factor: Rj n_j^(Rj - 1). Do not call pow if
 			// the expornent is trivial (Rj == 1), or if Jrj is already zero.
 			if (Rj != 1 && Jrj)
-				Jrj = Rj * pow(nv(j), Rj - 1);
+				Jrj = Rj * gsl_pow_int(nv(j), Rj - 1);
 		}
 	}
 }

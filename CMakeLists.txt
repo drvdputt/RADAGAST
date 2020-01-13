@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(gasmodule)
 
 set(CMAKE_CXX_STANDARD 14)
-add_compile_options(-Wshadow -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic)
+add_compile_options(-Wshadow -Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic -fno-signed-zeros -fassociative-math -freciprocal-math -march=native -mtune=native)
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
    message(SEND_ERROR "In-source builds are not allowed.")
@@ -12,6 +12,8 @@ add_definitions(-DREPOROOT=\"${PROJECT_SOURCE_DIR}\")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_definitions(-DSILENT)
 endif()
+
+add_definitions(-march=native)
 
 SET(EIGEN_POSSIBLE_LOCATIONS /usr/local/include/eigen3 /usr/include/eigen3 $ENV{HOME}/.local/eigen3)
 message(STATUS "Looking for Eigen in the list ${EIGEN_POSSIBLE_LOCATIONS}")
