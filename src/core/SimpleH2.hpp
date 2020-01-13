@@ -21,7 +21,7 @@ public:
 private:
 	double gloverAbel08Cooling(const CollisionParameters& cp) const;
 
-	// This implements the H2 model of Tielens and Hollenback (1985).
+	// This implements the H2 model of Tielens and Hollenbach (1985).
 
 	// Question: are we going to have H2 and H2* separately in the chemical network? In that
 	// case, the big H2 model also needs a way to convert the level populations in to H2 and

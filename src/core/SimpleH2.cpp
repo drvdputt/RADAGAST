@@ -28,6 +28,7 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
 	constexpr double Rdecay = 2e-7; // s-1
 
 	// Equation A13 and A14, for downward collisions --> deexcitation heating.
+	// TODO: find out if I have to divide by 6 here: see text above equation A14
 	double T = cp._t;
 	double sqrtT = std::sqrt(T);
 	double colH = 1.e-12 * sqrtT * std::exp(-1000. / T) // cm3 s-1
