@@ -40,26 +40,25 @@ class Chemistry;
 class GasInterfaceImpl
 {
 public:
-	/** Creates an instance of the gas module. Multiple frequency grids are used, which need
+    /** Creates an instance of the gas module. Multiple frequency grids are used, which need
 	    to be specified by the user. Some configuration options in the form of strings are
 	    also provided. Currently, they only influence the settings of the H and H2 models,
 	    see SpeciesModelManager.. */
-	GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv,
-	                 const Array& eFrequencyv, const std::string& atomChoice = "",
-	                 const std::string& moleculeChoice = "");
+    GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv,
+                     const std::string& atomChoice = "", const std::string& moleculeChoice = "");
 
-	/** The grid used to discretize the input radiation field */
-	const std::valarray<double>& iFrequencyv() const { return _iFrequencyv; }
+    /** The grid used to discretize the input radiation field */
+    const std::valarray<double>& iFrequencyv() const { return _iFrequencyv; }
 
-	/** The grid that will be used to discretize the output opacity. This is typically
+    /** The grid that will be used to discretize the output opacity. This is typically
 	    coarser because a radiative transfer algorithm usually needs the opacity in each
 	    grid cell. */
-	const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }
+    const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }
 
-	/** The grid on which the emissivity is calculated. */
-	const std::valarray<double>& eFrequencyv() const { return _eFrequencyv; }
+    /** The grid on which the emissivity is calculated. */
+    const std::valarray<double>& eFrequencyv() const { return _eFrequencyv; }
 
-	/** The most convenient way to run the code for a cell. A minimal set of results is
+    /** The most convenient way to run the code for a cell. A minimal set of results is
 	    stored in the given GasState object. The exact contents of the GasState are not
 	    known to the user. Through this interface, the variable information contained in the
 	    gas state can be combined with other constants and functions to retrieve the opacity
@@ -76,74 +75,68 @@ public:
 
 	    Note that the GrainInterface instance can be modified; the temperatures are
 	    recalculated to take into account the effect of gas-grain collisions. */
-	void updateGasState(GasModule::GasState&, double n,
-	                    const std::valarray<double>& specificIntensityv,
-	                    GasModule::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
+    void updateGasState(GasModule::GasState&, double n, const std::valarray<double>& specificIntensityv,
+                        GasModule::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
-	/** Does the same as the above, but without an input radiation field. Instead, a
+    /** Does the same as the above, but without an input radiation field. Instead, a
 	    blackbody of the given temperature is used to calculate the GasState. It is
 	    recommended to apply this function to all gas states before starting a
 	    simulation. */
-	void initializeGasState(GasModule::GasState&, double n, double T,
-	                        GasModule::GrainInterface&, GasDiagnostics* gd = nullptr) const;
+    void initializeGasState(GasModule::GasState&, double n, double T, GasModule::GrainInterface&,
+                            GasDiagnostics* gd = nullptr) const;
 
-	/** The emissivity in SI units, for a given frequency index. (converted using 1 erg cm-3
+    /** The emissivity in SI units, for a given frequency index. (converted using 1 erg cm-3
 	    s-1 Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1 sr-1). [W m-3 Hz-1 sr-1] */
-	double emissivity_SI(const GasModule::GasState& gs, size_t iFreq) const;
+    double emissivity_SI(const GasModule::GasState& gs, size_t iFreq) const;
 
-	/** The total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1] */
-	double opacity_SI(const GasModule::GasState& gs, size_t iFreq) const;
+    /** The total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1] */
+    double opacity_SI(const GasModule::GasState& gs, size_t iFreq) const;
 
-	/** This convenience function runs solveTemperature for a blackbody radiation field. The
+    /** This convenience function runs solveTemperature for a blackbody radiation field. The
 	    final temperature is usually close to the given color temperature T. */
-	GasSolution solveInitialGuess(double n, double T, GasModule::GrainInterface&) const;
+    GasSolution solveInitialGuess(double n, double T, GasModule::GrainInterface&) const;
 
-	/** Find a fully self-consistent solution and temperature, given a total hydrogen
+    /** Find a fully self-consistent solution and temperature, given a total hydrogen
 	    density n and a Spectrum object describing the radiation field in specific intensity
 	    units [erg s-1 sr-1 cm-2]. */
-	GasSolution solveTemperature(double n, const Spectrum& specificIntensity,
-	                             GasModule::GrainInterface&) const;
+    GasSolution solveTemperature(double n, const Spectrum& specificIntensity, GasModule::GrainInterface&) const;
 
-	/** Find a fully self-consistent solution for a fixed temperature (heating/cooling will
+    /** Find a fully self-consistent solution for a fixed temperature (heating/cooling will
 	    be out of equilibrium). */
-	GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity,
-	                           GasModule::GrainInterface&,
-	                           double h2FormationOverride = -1) const;
+    GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity, GasModule::GrainInterface&,
+                               double h2FormationOverride = -1) const;
 
-	/** Recalculate the densities for a GasSolution object. If startFromCurrent is true, the
+    /** Recalculate the densities for a GasSolution object. If startFromCurrent is true, the
 	    current contents of the GasSolution are used as an initial guess if the given
 	    temperature doesn't differ too much (< factor 2) from the previous temperature.
 	    Otherwise, an initial guess is made for the chemistry, where the ionized fraction is
 	    based on the radiation field, and the initial molecular fraction is 0.1. */
-	void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
-	                    bool startFromCurrent = false,
-	                    double h2FormationOverride = -1) const;
+    void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
+                        bool startFromCurrent = false, double h2FormationOverride = -1) const;
 
-	/** NOT IMPLEMENTED. Solve for a fixed temperature, forcing H2 to zero. Useful for
+    /** NOT IMPLEMENTED. Solve for a fixed temperature, forcing H2 to zero. Useful for
 	    ionization-only tests. */
-	GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
-	                               GasModule::GrainInterface&) const;
+    GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
+                                   GasModule::GrainInterface&) const;
 
 private:
-	/** Construct a new GasSolution model, passing all the necessary (references to)
+    /** Construct a new GasSolution model, passing all the necessary (references to)
 	    objects. The SpeciesModelManager is used to create the HModel and H2Model. */
-	GasSolution makeGasSolution(const Spectrum& specificIntensity,
-	                            const GasModule::GrainInterface&) const;
+    GasSolution makeGasSolution(const Spectrum& specificIntensity, const GasModule::GrainInterface&) const;
 
-	/** Create a species vector which is zero everywhere, except for e-, p+, H, and H2.
+    /** Create a species vector which is zero everywhere, except for e-, p+, H, and H2.
 	    Arguments: the total amount of H nuclei n, the ionized to total fraction (np / n),
 	    the molecular to neutral fraction (2 * nH2 / (nH + 2 * nH2)). */
-	EVector guessSpeciesNv(double n, double ionToTotalFrac,
-	                       double moleculeToNeutralFrac) const;
+    EVector guessSpeciesNv(double n, double ionToTotalFrac, double moleculeToNeutralFrac) const;
 
-	std::valarray<double> _iFrequencyv;
-	std::valarray<double> _oFrequencyv;
-	std::valarray<double> _eFrequencyv;
+    std::valarray<double> _iFrequencyv;
+    std::valarray<double> _oFrequencyv;
+    std::valarray<double> _eFrequencyv;
 
-	SimpleHChemistry _chemistry{};
-	SpeciesModelManager _manager;
-	FreeBound _freeBound{};
-	FreeFree _freeFree{};
+    SimpleHChemistry _chemistry{};
+    SpeciesModelManager _manager;
+    FreeBound _freeBound{};
+    FreeFree _freeFree{};
 };
 
-#endif // CORE_GASINTERFACEIMPL_HPP
+#endif  // CORE_GASINTERFACEIMPL_HPP

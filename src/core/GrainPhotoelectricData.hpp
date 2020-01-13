@@ -21,21 +21,21 @@
 class GrainPhotoelectricData
 {
 public:
-	/** Create new grain photoelectric data object. Takes one argument: true if
+    /** Create new grain photoelectric data object. Takes one argument: true if
 	    carbonaceous, false if silicate. The workfunction is set, and a
 	    GrainPhotoelectricCalculator will be provided, which will implement the recipe of
 	    Weingartner and Draine (2001). When the calculator is created, it will cache bunch
 	    of things based on the given list of sizes, see its documentation. */
-	GrainPhotoelectricData(bool carOrSil);
+    GrainPhotoelectricData(bool carOrSil);
 
-	/** Create a photoelectric calculator, for a given array of grain sizes. This object
+    /** Create a photoelectric calculator, for a given array of grain sizes. This object
 	    will serve as a workspace for the photoelectric heating, allowing the storage of
 	    intermediate results and caching. */
-	std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
+    std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
 
 private:
-	bool _carOrSil;
-	double _workFunction;
+    bool _carOrSil;
+    double _workFunction;
 };
 
-#endif // CORE_GRAINPHOTOELECTRICDATA_HPP
+#endif  // CORE_GRAINPHOTOELECTRICDATA_HPP

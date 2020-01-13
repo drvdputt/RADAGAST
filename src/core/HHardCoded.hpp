@@ -9,19 +9,19 @@
 class HydrogenHardcoded : public HData
 {
 public:
-	HydrogenHardcoded();
+    HydrogenHardcoded();
 
-	int nMax() const override { return 5; }
+    int nMax() const override { return 5; }
 
-	size_t index(int n, int l) const override;
+    size_t index(int n, int l) const override;
 
-	std::array<size_t, 2> twoPhotonIndices() const override;
+    std::array<size_t, 2> twoPhotonIndices() const override;
 
-	EMatrix cvv(const CollisionParameters& cp) const override;
+    EMatrix cvv(const CollisionParameters& cp) const override;
 
 private:
-	EVector the_ev;
-	EVector the_gv;
+    EVector the_ev;
+    EVector the_gv;
 };
 
-#endif // CORE_HYDROGENHARDCODED_HPP
+#endif  // CORE_HYDROGENHARDCODED_HPP

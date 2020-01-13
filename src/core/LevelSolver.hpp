@@ -5,7 +5,7 @@
 
 namespace LevelSolver
 {
-/** Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji +
+    /** Following the notation of the gasPhysics document, construct the rate matrix M_ij = A_ji +
     B_ji * P_ji + C_ji. 
     
     @note {External processes can influence the level balance by their contribution to the sink
@@ -22,11 +22,10 @@ namespace LevelSolver
     the coefficients. For the H2 model for example, the calculation can be done faster and more
     precisely by using an iterative approach based on the fact that there is no transition data
     between and within the electronically excited levels. */
-EVector statisticalEquilibrium(double totalDensity, const EMatrix& totalTransitionRatesvv,
-                               const EVector& sourcev, const EVector& sinkv,
-                               int replaceByConvervationEq = 0);
+    EVector statisticalEquilibrium(double totalDensity, const EMatrix& totalTransitionRatesvv, const EVector& sourcev,
+                                   const EVector& sinkv, int replaceByConvervationEq = 0);
 
-/** Solves the statistical equilibrium by looping over the levels one by one, similar to the
+    /** Solves the statistical equilibrium by looping over the levels one by one, similar to the
     cloudy implementation of H2. This method can be faster than a full matrix inversion when
     there is a large set of levels between which no transitions occur. For H2 for example, the
     electronically excited levels only have transition data with respect to the electronic
@@ -44,16 +43,14 @@ EVector statisticalEquilibrium(double totalDensity, const EMatrix& totalTransiti
     are included in the calculation. Conversely, when one of the unconnected levels is updated,
     only the fully connected levels' populations is used, as the levels within this set are
     assumed to have no transitions between them. */
-EVector statisticalEquilibrium_iterative(double totalDensity,
-                                         const EMatrix& totalTransitionRatesvv,
-                                         const EVector& sourcev, const EVector& sinkv,
-                                         const EVector& initialGuessv,
-                                         int fullyConnectedCutoff = -1);
+    EVector statisticalEquilibrium_iterative(double totalDensity, const EMatrix& totalTransitionRatesvv,
+                                             const EVector& sourcev, const EVector& sinkv, const EVector& initialGuessv,
+                                             int fullyConnectedCutoff = -1);
 
-/** Calculate the LTE statistical equilibrium by simply applying the boltzman equations. The
+    /** Calculate the LTE statistical equilibrium by simply applying the boltzman equations. The
     only thing needed is the energies and the degeneracies of the levels, and a temperature. */
-EVector statisticalEquilibrium_boltzman(double totalDensity, double T, const EVector& ev, const EVector& gv);
+    EVector statisticalEquilibrium_boltzman(double totalDensity, double T, const EVector& ev, const EVector& gv);
 
 } /* namespace LevelSolver */
 
-#endif // CORE_LEVELSOLVER_HPP
+#endif  // CORE_LEVELSOLVER_HPP

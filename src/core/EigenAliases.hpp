@@ -11,4 +11,4 @@ using EMatrixRM = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic, Eigen::R
 using EVector = Eigen::Matrix<double, Eigen::Dynamic, 1>;
 using EArray = Eigen::Array<double, Eigen::Dynamic, Eigen::Dynamic>;
 
-#endif // CORE_EIGENALIASES_HPP
+#endif  // CORE_EIGENALIASES_HPP
