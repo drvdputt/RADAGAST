@@ -26,11 +26,14 @@ void GrainSolution::recalculateTemperatures(const GrainPhotoelectricCalculator::
         for (int i = 0; i < _population->numSizes(); i++)
         {
             extraGrainHeatPerSize[i] += _photoelectricCalculator->gasGrainCollisionCooling(
-                _population->size(i), env, _chargeDistributionv[i], _newTemperaturev[i], true);
+                i, env, _chargeDistributionv[i], _newTemperaturev[i], true);
             // cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
 
-            // grainPhotoPerSizev[m] = gpe.heatingRateA(pop.size(m), env, pop.qAbsv(m), cd);
-            // cout << "- photo heat " << m << " " << grainPhotoPerSizev[m] << '\n';
+            // TODO: cache this if slow (is calculated in photoelectricGasHeating too)
+            double grainPhotoPerSize =
+                _photoelectricCalculator->heatingRateA(i, env, _population->qAbsv(i), _chargeDistributionv[i]);
+            extraGrainHeatPerSize[i] -= grainPhotoPerSize;
+            // cout << "- photo heat " << m << " " << grainPhotoPerSize << '\n';
         }
     }
 
@@ -79,12 +82,15 @@ double GrainSolution::photoelectricGasHeating(const GrainPhotoelectricCalculator
     if (!_photoelectricCalculator) return 0;
 
     double total = 0;
-
     for (int i = 0; i < _population->numSizes(); i++)
     {
-        const Array& qAbsv = _population->qAbsv(i);
-        double nd = _population->density(i);
-        total += nd * _photoelectricCalculator->heatingRateA(i, env, qAbsv, _chargeDistributionv[i]);
+        total += _population->density(i)
+                 * _photoelectricCalculator->heatingRateA(i, env, _population->qAbsv(i), _chargeDistributionv[i]);
+
+        // The net heating rate (eq 41 without denominator)
+        if (Options::grainphotoelectriceffect_recombinationCooling)
+            total -= _population->density(i)
+                     * _photoelectricCalculator->recombinationCoolingRate(i, env, _chargeDistributionv[i]);
     }
     return total;
 }

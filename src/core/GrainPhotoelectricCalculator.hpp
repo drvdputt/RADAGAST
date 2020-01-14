@@ -9,7 +9,7 @@
 #include <vector>
 
 // TODO: Try to fix weird charge balance for some sizes (see code-notes section bugs) when using van
-// Hoof's correction (see GasPhysics.pdf)
+// Hoof's correction (see GasPhysics.pdf). While doing this, look at introduction of WD06
 
 /** This class provides an implementation of the photoelectric heating recipe described in
     Weingartner \& Draine (2001), hereafter WD01. With some optimism, it should be possible to use
@@ -72,6 +72,11 @@ public:
     double gasGrainCollisionCooling(int i, const Environment& env, const ChargeDistribution& cd, double Tgrain,
                                     bool addGrainPotential) const;
 
+    /** The energy removed from the gas due to charged particles recombining with a grain, WD01
+        equation 42. This is disabled in Options.hpp, because I think this conflicts (as in, double
+        counts something) with the gas-grain collision recipe. */
+    double recombinationCoolingRate(int i, const Environment& env, const ChargeDistribution& cd) const;
+
 private:
     /** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to
         immediately autoionize when an electron is captured. */
@@ -92,14 +97,9 @@ private:
     double collisionalChargingRate(int i, double gasT, int Z, int particleCharge, double particleMass,
                                    double particleDensity) const;
 
-    /** The energy removed from the gas by particle sticking to a grain, WD01 equation 42. TODO:
-        figure out how this fits in with the gas-grain collisional energy exchange. I've disabled
-        this for now in Options.hpp. */
-    double recombinationCoolingRate(int i, const Environment& env, const ChargeDistribution& cd) const;
-
     /** Get the photoelectric and photodetachment thresholds. (Used by both the heating rate
         integral and number rate integral). */
-    void getPET_PDT_Emin(int i, double Z, double& pet, double& pdt, double& Emin) const;
+    void getPET_PDT_Emin(int i, int Z, double& pet, double& pdt, double& Emin) const;
 
     /** Integrates over the radiation field, counting the number of absorptions per second, per
         projected grain area. f_hnuDiff can be any function of hnuDiff = (hnu - pet). Multiplying

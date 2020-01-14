@@ -2,7 +2,6 @@
 #include "DebugMacros.hpp"
 #include "Error.hpp"
 #include "IOTools.hpp"
-#include "Options.hpp"
 #include "RadiationFieldTools.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
@@ -28,7 +27,7 @@ GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array& sizev, d
 
 int GrainPhotoelectricCalculator::minimumCharge(int i) const
 {
-    double Uait = autoIonizationThreshold(_sizev[i]);
+    double Uait = autoIonizationThreshold(i);
     return WD01::minimumCharge(_sizev[i], Uait);
 }
 
@@ -52,7 +51,7 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
 
     // The minimum charge is the most negative charge for which autoionization does not
     // occur
-    int resultZmin = minimumCharge(a);
+    int resultZmin = minimumCharge(i);
 
     if (resultZmax < resultZmin)
         Error::runtime("Zmax is smaller than Zmin. This can happen when the grains are "
@@ -65,14 +64,14 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
     auto chargeUpRate = [&](int z) -> double {
         double Jtotal{0};
         // Photoelectric effect rate
-        Jtotal += emissionRate(a, z, frequencyv, Qabsv, specificIntensityv);
+        Jtotal += emissionRate(i, z, frequencyv, Qabsv, specificIntensityv);
         /* Collisions with positive particles. Collisions with multiply charged
 		   particles are treated as if they can only change the charge by 1. This is
 		   technically incorrect, but the charging rate due to positive ions is very
 		   small anyway. */
         for (size_t j = 0; j < env._chargev.size(); j++)
             if (env._chargev[j] > 0)
-                Jtotal += collisionalChargingRate(a, env._T, z, env._chargev[j], env._massv[j], env._densityv[j]);
+                Jtotal += collisionalChargingRate(i, env._T, z, env._chargev[j], env._massv[j], env._densityv[j]);
         return Jtotal;
     };
 
@@ -82,7 +81,7 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
         // Collisions with negative particles
         for (size_t j = 0; j < env._chargev.size(); j++)
             if (env._chargev[j] < 0)
-                Jtotal += collisionalChargingRate(a, env._T, z, env._chargev[j], env._massv[j], env._densityv[j]);
+                Jtotal += collisionalChargingRate(i, env._T, z, env._chargev[j], env._massv[j], env._densityv[j]);
         return Jtotal;
     };
 
@@ -92,10 +91,10 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
     return chargeDistribution;
 }
 
-void GrainPhotoelectricCalculator::getPET_PDT_Emin(int i, double Z, double& pet, double& pdt, double& Emin) const
+void GrainPhotoelectricCalculator::getPET_PDT_Emin(int i, int Z, double& pet, double& pdt, double& Emin) const
 {
     Emin = WD01::eMin(_sizev[i], Z);
-    double ip_v = ionizationPotential(_sizev[i], Z);
+    double ip_v = ionizationPotential(i, Z);
     // WD01 eq 6
     pet = Z >= -1 ? ip_v : ip_v + Emin;
     // Photodetachment, WD01 eq 18 (using EA(Z + 1, a) = IP(Z, a) if Z < 0)
@@ -158,13 +157,13 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, const Array& fr
     // It's cheaper to calculate these together (and safer, less code duplication), so I
     // made this funtion, and pass these values as arguments when needed.
     double pet, pdt, Emin;
-    getPET_PDT_Emin(a, Z, pet, pdt, Emin);
+    getPET_PDT_Emin(i, Z, pet, pdt, Emin);
 
     // WD01 text between eq 10 and 11
     double Elow = Z < 0 ? Emin : -(Z + 1) * e2_a;
 
     std::function<double(double)> yieldTimesAverageEnergy = [&](double hnuDiff) -> double {
-        double Y = photoelectricYield(a, Z, hnuDiff, Emin);
+        double Y = photoelectricYield(i, Z, hnuDiff, Emin);
 
         double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
         // The integral over the electron energy distribution (integral E f(E) dE), over
@@ -188,27 +187,19 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, const Array& fr
 double GrainPhotoelectricCalculator::heatingRateA(int i, const Environment& env, const Array& Qabsv,
                                                   const ChargeDistribution& cd) const
 {
-    double a = _sizev[i];
     double totalHeatingForGrainSize = 0;
-
     for (int Z = cd.zmin(); Z <= cd.zmax(); Z++)
     {
         double fZz = cd.value(Z);
         if (!isfinite(fZz)) Error::runtime("nan in charge distribution");
         double heatAZ =
-            heatingRateAZ(a, Z, env._specificIntensity.frequencyv(), Qabsv, env._specificIntensity.valuev());
+            heatingRateAZ(i, Z, env._specificIntensity.frequencyv(), Qabsv, env._specificIntensity.valuev());
 
         /* Fraction of grains in this charge state * heating by a single particle of
 		   charge Z. */
         totalHeatingForGrainSize += fZz * heatAZ;
     }
-
-    // The net heating rate (eq 41 without denominator)
-    double recCool{0};
-    if (Options::grainphotoelectriceffect_recombinationCooling) recCool = recombinationCoolingRate(a, env, cd);
-
-    double netHeatingForGrainSize{totalHeatingForGrainSize - recCool};
-    return netHeatingForGrainSize;
+    return totalHeatingForGrainSize;
 }
 
 double GrainPhotoelectricCalculator::emissionRate(int i, int Z, const Array& frequencyv, const Array& Qabsv,
@@ -218,9 +209,9 @@ double GrainPhotoelectricCalculator::emissionRate(int i, int Z, const Array& fre
     // Notice that there is quite some duplication compared to heatingRateAZ, but i didn't
     // find it worth the effort to make more abstractions.
     double pet, pdt, Emin;
-    getPET_PDT_Emin(a, Z, pet, pdt, Emin);
+    getPET_PDT_Emin(i, Z, pet, pdt, Emin);
 
-    function<double(double)> yieldf = [&](double hnuDiff) { return photoelectricYield(a, Z, hnuDiff, Emin); };
+    function<double(double)> yieldf = [&](double hnuDiff) { return photoelectricYield(i, Z, hnuDiff, Emin); };
     double emissionRatePE =
         Constant::PI * a * a * photoelectricIntegrationLoop(frequencyv, Qabsv, specificIntensityv, pet, &yieldf);
     double emissionRatePD = 0;
@@ -254,7 +245,7 @@ double GrainPhotoelectricCalculator::collisionalChargingRate(int i, double gasT,
     {
         Jtilde = 1. + sqrt(Constant::PI / 2. / tau);
     }
-    return particleDensity * stickingCoefficient(a, Z, particleCharge) * sqrt(8. * kT * Constant::PI / particleMass) * a
+    return particleDensity * stickingCoefficient(i, Z, particleCharge) * sqrt(8. * kT * Constant::PI / particleMass) * a
            * a * Jtilde;
 }
 
@@ -277,7 +268,7 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Envir
 
         double Zsum = cd.sumOverCharge([&](int zGrain) {
             double ksi = zGrain / static_cast<double>(z_j);
-            return stickingCoefficient(a, zGrain, z_j) * WD01::lambdaTilde(tau, ksi);
+            return stickingCoefficient(i, zGrain, z_j) * WD01::lambdaTilde(tau, ksi);
         });
 
         particleSum += env._densityv[j] * sqrt(eightkT3DivPi / env._massv[j]) * Zsum;
@@ -291,9 +282,9 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Envir
 	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
 	   minimumCharge, (and Zmin > minimumCharge). */
     int zmin = cd.zmin();
-    if (zmin == minimumCharge(a))
-        secondTerm = cd.value(zmin) * collisionalChargingRate(a, env._T, zmin, -1, Constant::ELECTRONMASS, env._ne)
-                     * ionizationPotential(a, zmin - 1);
+    if (zmin == minimumCharge(i))
+        secondTerm = cd.value(zmin) * collisionalChargingRate(i, env._T, zmin, -1, Constant::ELECTRONMASS, env._ne)
+                     * ionizationPotential(i, zmin - 1);
 
     return Constant::PI * a * a * particleSum * kT + secondTerm;
 }
@@ -307,7 +298,7 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
     double kTgrain = Tgrain * Constant::BOLTZMAN;
     double lambdaG = cd.sumOverCharge([&](int zGrain) {
         double lambdaG_for_this_z = 0;
-        double Ug = ionizationPotential(a, zGrain);
+        double Ug = ionizationPotential(i, zGrain);
         double Vg = sqrt(Constant::ESQUARE) * Ug;
         for (size_t j = 0; j < env._massv.size(); j++)
         {
@@ -316,7 +307,7 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
             double psi = ZVg / kT;
             double eta = psi <= 0 ? 1 - psi : exp(-psi);
             double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
-            double S = stickingCoefficient(a, zGrain, env._chargev[j]);
+            double S = stickingCoefficient(i, zGrain, env._chargev[j]);
             // cm s-1
             double vbar = sqrt(8 * kT / Constant::PI / env._massv[j]);
             // cm-3 * cm s-1 * erg = cm-2 s-1 erg
@@ -353,7 +344,7 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
         out << "# a = " << a << '\n';
 
         // Quantities independent of nu
-        double ip_v = ionizationPotential(a, Z);
+        double ip_v = ionizationPotential(i, Z);
 
         double Emin{WD01::eMin(a, Z)};
 
@@ -365,7 +356,7 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
         for (size_t n = 0; n < N; n++)
         {
             double hnuDiff = hnu - hnu_pet;
-            if (hnuDiff > 0) out << hnu * Constant::ERG_EV << '\t' << photoelectricYield(a, Z, hnuDiff, Emin) << '\n';
+            if (hnuDiff > 0) out << hnu * Constant::ERG_EV << '\t' << photoelectricYield(i, Z, hnuDiff, Emin) << '\n';
             hnu += step;
         }
         out << '\n';
@@ -420,7 +411,7 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
         double intensityQabsIntegral = TemplatedUtils::integrate<double>(frequencyv, intensityTimesQabsv);
 
         // Calculate and write out the charge distribution and heating efficiency
-        ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
+        ChargeDistribution cd = calculateChargeDistribution(i, env, Qabsv);
         stringstream filename;
         filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2) << fixed
                  << a / Constant::ANG_CM << ".txt";
@@ -430,7 +421,7 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
         header << "# Tgas = " << env._T << '\n';
         cd.plot(filename.str(), header.str());
 
-        double heating = GrainPhotoelectricCalculator::heatingRateA(a, env, Qabsv, cd);
+        double heating = GrainPhotoelectricCalculator::heatingRateA(i, env, Qabsv, cd);
 
         double totalAbsorbed = Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
         double efficiency = heating / totalAbsorbed;
@@ -463,7 +454,7 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
     bool car = true;
     Array Qabsv = Testing::qAbsvvForTesting(car, {a}, frequencyv)[0];
 
-    ChargeDistribution cd = calculateChargeDistribution(a, env, Qabsv);
+    ChargeDistribution cd = calculateChargeDistribution(0, env, Qabsv);
 
     cout << "Zmax = " << cd.zmax() << " Zmin = " << cd.zmin() << '\n';
 
