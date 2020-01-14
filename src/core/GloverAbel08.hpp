@@ -3,8 +3,8 @@
 
 #include <vector>
 
-/** Coefficients and equations from Glover and Abel 2008, MNRAS, 388, 1627. Collisions with He
-    are also available, but are not implemented. */
+/** Coefficients and equations from Glover and Abel 2008, MNRAS, 388, 1627. Collisions with He are
+    also available, but are not implemented. */
 namespace GloverAbel08
 {
     // Table 1. Fitting coefficients for the cooling rate of ortho-H2 excited by collisions with
@@ -57,7 +57,7 @@ namespace GloverAbel08
     /** Cooling rate due to ortho H2 excited by ortho H2 collisions. [erg cm3 s-1] */
     double coolOrthoOrtho(double T);
     /** Cooling rate due to H2 (either ortho or para) excited by collisions with H2 (either ortho or
-    para). The second argument should be one of the four H2 collision coefficient sets. */
+        para). The second argument should be one of the four H2 collision coefficient sets. */
     double coolH2H2Polynomial(double T, const std::vector<double>& coefficients);
 
     /** Cooling rate due to para H2 excited by p+ collisions. [erg cm3 s-1] */
@@ -65,11 +65,11 @@ namespace GloverAbel08
     /** Cooling rate due to ortho H2 excited by p+ collisions. [erg cm3 s-1] */
     double coolOrthoProton(double T);
     /** Cooling rate due to H2 (either ortho or para) excited by collisions with protons. The second
-    argument should be one of the two p+ collision coefficient sets. */
+        argument should be one of the two p+ collision coefficient sets. */
     double coolProtonPolynomial(double T, const std::vector<double>& coefficients);
 
     /** Cooling rate due to ortho-para conversions induced by p+ collisions. Should only matter when
-    out of thermodynamic equilibrium. [erg cm3 s-1] */
+        out of thermodynamic equilibrium. [erg cm3 s-1] */
     double coolOrthoParaConversionProton(double T, double orthoFrac);
 
     /** Cooling rate due to para H2 excited by e- collisions. [erg cm3 s-1] */

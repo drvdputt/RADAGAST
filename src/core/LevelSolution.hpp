@@ -11,11 +11,11 @@ class LevelCoefficients;
 class LevelSolution
 {
 public:
-    /** Pass a pointer to the correct LevelCoefficients object, for access to the constants.
-	    Make sure that the arguments passed to setCvv and setNv are dimensionally compatible
-	    with the given LevelCoefficients. A temperature and density are also needed to
-	    calculate the line width and normalization. Once these have been set externally,
-	    using the setters, the other functions can be called safely. */
+    /** Pass a pointer to the correct LevelCoefficients object, for access to the constants. Make
+        sure that the arguments passed to setCvv and setNv are dimensionally compatible with the
+        given LevelCoefficients. A temperature and density are also needed to calculate the line
+        width and normalization. Once these have been set externally, using the setters, the other
+        functions can be called safely. */
     LevelSolution(const LevelCoefficients* lc) : _levelCoefficients{lc} {};
 
     /** Set new temperature */
@@ -37,8 +37,8 @@ public:
     }
     const EVector& nv() const { return _nv; }
 
-    /** The spectrum emitted by the line transitions, expressed as the emission coefficient
-	    j_nu f * (erg/cm3/s/Hz). */
+    /** The spectrum emitted by the line transitions, expressed as the emission coefficient j_nu f *
+        (erg/cm3/s/Hz). */
     Array emissivityv(const Array& eFrequencyv) const;
 
     /** The line opacity alpha_nu, equivalent to kappaRho for dust [cm-1]. */

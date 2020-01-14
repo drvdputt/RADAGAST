@@ -6,8 +6,8 @@
 #include "doctest.h"
 #include <sstream>
 
-/** Here are some wrappers around some of the doctest assertion macros. Frequently used checks
-    are defined here, with some standardized, readable failure messages. */
+/** Here are some wrappers around some of the doctest assertion macros. Frequently used checks are
+    defined here, with some standardized, readable failure messages. */
 namespace DoctestUtils
 {
 

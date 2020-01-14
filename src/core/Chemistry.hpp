@@ -17,20 +17,20 @@ public:
     /** Set up the internal SpeciesIndex. If one was already present, it is reset. */
     void registerSpecies(const std::vector<std::string>& namev);
 
-    /** Add another species. Be sure to call prepareCoefficients when done adding
-	    species and/or reactions. */
+    /** Add another species. Be sure to call prepareCoefficients when done adding species and/or
+        reactions. */
     void addSpecies(const std::string& name);
 
-    /** Read-only acces to the SpeciesIndex object, so the result vector can be interpreted,
-	    and optionally a SpeciesVector can be made. */
+    /** Read-only acces to the SpeciesIndex object, so the result vector can be interpreted, and
+        optionally a SpeciesVector can be made. */
     const SpeciesIndex& speciesIndex() const { return _speciesIndex; }
 
     /** Function to provide a clear syntax for adding reactions in the setup of the chemical
-	    network. Each reaction is given a number, and the reaction is added to the reaction
-	    index using the given name as a key. Subclasses typically implement a constructor
-	    which calls addReaction and prepareCoefficients.
+        network. Each reaction is given a number, and the reaction is added to the reaction index
+        using the given name as a key. Subclasses typically implement a constructor which calls
+        addReaction and prepareCoefficients.
 
-	    Be sure to call prepareCoefficients when done adding species and/or reactions .*/
+        Be sure to call prepareCoefficients when done adding species and/or reactions .*/
     void addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                      const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
                      const std::vector<double>& productStoichv);
@@ -48,20 +48,19 @@ public:
     int numSpecies() const { return _numSpecies; }
 
     /** Solves the chemical network given a certain rate coefficient vector (indexed on the
-	    reactions). An initial value n0v can be given. A vector containing updated densities
-	    is returned. */
+        reactions). An initial value n0v can be given. A vector containing updated densities is
+        returned. */
     EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v, double maxTime = -1) const;
 
-    /** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total
-	    reaction speeds is also given (rateCoeffv * density product). It will be used as a
-	    workspace, and can also be used to diagnose the speed of each reaction [s-1]. It
-	    needs to be of size _numReactions. */
+    /** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total reaction
+        speeds is also given (rateCoeffv * density product). It will be used as a workspace, and can
+        also be used to diagnose the speed of each reaction [s-1]. It needs to be of size
+        _numReactions. */
     void evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv, EVector& kv) const;
 
-    /** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards
-	    n_j. For optimization (and for diagnostics), a matrix to put the jacobian of the
-	    reaction speed vector is passed. It needs to be of size (_numReactions,
-	    _numSpecies). */
+    /** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards n_j. For
+        optimization (and for diagnostics), a matrix to put the jacobian of the reaction speed
+        vector is passed. It needs to be of size (_numReactions, _numSpecies). */
     void evaluateJvv(double* JvvOutputRowMajor, const EVector& nv, const EVector& rateCoeffv, EMatrix& Jkvv) const;
 
 private:
@@ -72,13 +71,12 @@ private:
     /** Solve the chemistry by evolving the system until equilibrium. */
     EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const;
 
-    /** Calculate the density factor needed to calculate the speed of reaction r. Formula:
-	    Product_i n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i,
-	    r). */
+    /** Calculate the density factor needed to calculate the speed of reaction r. Formula: Product_i
+        q n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i, r). */
     double reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const;
 
-    /** Calculate the derivative of the density product for reaction r with respect to the
-	    density j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
+    /** Calculate the derivative of the density product for reaction r with respect to the density
+        j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
     void reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv, const EVector& rateCoeffv) const;
 
     // Keep track of index for each species name.

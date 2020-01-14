@@ -4,9 +4,9 @@
 #include "GrainPhotoelectricCalculator.hpp"
 
 /** This class stores data related to the photoelectric effect, which is static (i.e. does not
-    depend on grain sizes, no caching). It also acts as a factory for
-    GrainPhotoelectricCalculator objects. If a different photoelectric data + calculation
-    recipe would be implemented, then the abstraction could be made as follows:
+    depend on grain sizes, no caching). It also acts as a factory for GrainPhotoelectricCalculator
+    objects. If a different photoelectric data + calculation recipe would be implemented, then the
+    abstraction could be made as follows:
 
     - Make both GrainPhotoelectricData and GrainPhotoelectricCalculator abstract.
 
@@ -21,16 +21,16 @@
 class GrainPhotoelectricData
 {
 public:
-    /** Create new grain photoelectric data object. Takes one argument: true if
-	    carbonaceous, false if silicate. The workfunction is set, and a
-	    GrainPhotoelectricCalculator will be provided, which will implement the recipe of
-	    Weingartner and Draine (2001). When the calculator is created, it will cache bunch
-	    of things based on the given list of sizes, see its documentation. */
+    /** Create new grain photoelectric data object. Takes one argument: true if carbonaceous, false
+        if silicate. The workfunction is set, and a GrainPhotoelectricCalculator will be provided,
+        which will implement the recipe of Weingartner and Draine (2001). When the calculator is
+        created, it will cache bunch of things based on the given list of sizes, see its
+        documentation. */
     GrainPhotoelectricData(bool carOrSil);
 
-    /** Create a photoelectric calculator, for a given array of grain sizes. This object
-	    will serve as a workspace for the photoelectric heating, allowing the storage of
-	    intermediate results and caching. */
+    /** Create a photoelectric calculator, for a given array of grain sizes. This object will serve
+        as a workspace for the photoelectric heating, allowing the storage of intermediate results
+        and caching. */
     std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
 
 private:

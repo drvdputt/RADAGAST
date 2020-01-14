@@ -14,9 +14,9 @@ class Spectrum;
 namespace GasModule
 {
     /** The interface class that other codes should use. We use the PIMPL pattern here to minimize
-    the amount of includes necessary on the client side, so that the internals of the gas module
-    can be changed without having to recompile the client code. For the documentation, see
-    GasInterfaceImpl. */
+        the amount of includes necessary on the client side, so that the internals of the gas module
+        can be changed without having to recompile the client code. For the documentation, see
+        GasInterfaceImpl. */
     class GasInterface
     {
     public:
@@ -24,13 +24,13 @@ namespace GasModule
                      const std::valarray<double>& eFrequencyv, const std::string& atomChoice = "",
                      const std::string& moleculeChoice = "");
 
-        /** Needed because of the unique_ptr member. Also, putting "= default" here actually
-	    works with GDB if I remember correctly, but not with clang. In the cpp file, it
-	    works for both because there GasInterfaceImpl is a complete type. */
+        /** Needed because of the unique_ptr member. Also, putting "= default" here actually works
+            with GDB if I remember correctly, but not with clang. In the cpp file, it works for both
+            because there GasInterfaceImpl is a complete type. */
         ~GasInterface();
 
-        /** This move constructor enables move semantics when utility functions in Testing
-	    return a GasInterface object. Again, necessary because of the unique_ptr. */
+        /** This move constructor enables move semantics when utility functions in Testing return a
+            GasInterface object. Again, necessary because of the unique_ptr. */
         GasInterface(GasInterface&&);
 
         const std::valarray<double>& iFrequencyv() const;

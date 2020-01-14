@@ -4,10 +4,10 @@
 namespace WD01
 {
     /* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
-   (2001) */
+       (2001) */
 
     /** Return the work function as mentioned in the paper, for carbonaceous/graphitic grains
-    (carbonaceous == true) or silicate grains (carbonaceous == false). */
+        (carbonaceous == true) or silicate grains (carbonaceous == false). */
     double workFunction(bool carbonaceous);
 
     /** Formula for Emin (WD01 eq 7 replaced by van Hoof (2004) eq 1). */
@@ -23,7 +23,7 @@ namespace WD01
     double escapingFraction(int Z, double Elow, double Ehigh);
 
     /** Calculates the photoelectric yield according to WD01 equation 12. y1 is expensive to
-    calculate (needs two expm1 evaluations), and is passed as an argument as an optimization. */
+        calculate (needs two expm1 evaluations), and is passed as an argument as an optimization. */
     double yield_cached(double a, int Z, double hnuDiff, double Emin, bool carbonaceous, double y1_cached);
 
     /** The unoptimized version of the yield function (useful for plotting). */
@@ -42,7 +42,7 @@ namespace WD01
     int minimumCharge(double a, bool carbonaceous);
 
     /** The sticking coefficient based on equations 1 and 27-30. z_i is the charge of the particle
-    colliding with the grain. */
+        colliding with the grain. */
     ///@{
     double estick_positive(double a);
     double estick_negative(double a);

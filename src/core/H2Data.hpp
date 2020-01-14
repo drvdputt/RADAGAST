@@ -9,8 +9,8 @@
 #include <map>
 #include <vector>
 
-/** This class will implement the reading in and processing of all the files for the level model
-    of H2. */
+/** This class will implement the reading in and processing of all the files for the level model of
+    H2. */
 class H2Data : public LevelCoefficients
 {
     //------------------------------//
@@ -18,13 +18,13 @@ class H2Data : public LevelCoefficients
     //------------------------------//
 public:
     /** Create a new instance, reading in all the data. Optional arguments: upper limits for
-	    vibrational and rotational numbers. The data goes to 31 for J, and to 14 for v. */
+        vibrational and rotational numbers. The data goes to 31 for J, and to 14 for v. */
     H2Data(int maxJ = 99, int maxV = 99);
 
-    /** A clear way to index the electronic states of molecular hydrogen. The files from
-	    cloudy index these in the same order, from 0 to 6. To get this numerical index, it
-	    should be safe to simply do a static cast to an int. I also do that to make a map
-	    from the quantum numbers to the index of each level. */
+    /** A clear way to index the electronic states of molecular hydrogen. The files from cloudy
+        index these in the same order, from 0 to 6. To get this numerical index, it should be safe
+        to simply do a static cast to an int. I also do that to make a map from the quantum numbers
+        to the index of each level. */
     enum class ElectronicState {
         // 1s 1Sigma+u
         X = 0,
@@ -41,8 +41,8 @@ public:
     };
 
 private:
-    /** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have
-	    been some corrections, but the original data comes from Dabrowski (1984). */
+    /** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have been some
+        corrections, but the original data comes from Dabrowski (1984). */
     void readLevels();
 
     /** Loop over the loaded levels, and put all the energies in one vector. */
@@ -51,31 +51,31 @@ private:
     /** Loop over the loaded levels, and put all the degeneracies in one vector. */
     EVector makeGv() const;
 
-    /** Load the data from Wolniewicz (1998) (electric) and Pachucki and Komasa (2011)
-	    (magnetic) for X; Abgrall (1994) for excited states. See also MOLAT database. */
+    /** Load the data from Wolniewicz (1998) (electric) and Pachucki and Komasa (2011) (magnetic)
+        for X; Abgrall (1994) for excited states. See also MOLAT database. */
     void readTransProbs();
 
-    /** Load data for the dissociation probabilities and the resulting kinetic energy for
-	    each level. */
+    /** Load data for the dissociation probabilities and the resulting kinetic energy for each
+        level. */
     void readDissProbs();
 
-    /** Load data from Lique (2015) for H, Lee (2008) for H2 (ortho and para), Gerlich
-	    (1990) for H+. */
+    /** Load data from Lique (2015) for H, Lee (2008) for H2 (ortho and para), Gerlich (1990) for
+        H+. */
     void readCollisions();
 
     /** Load dissociation cross sections from Gay et al. (2012). */
     void readDirectDissociation();
 
-    /** Read energy levels and quantum numbers from the given file, registers them in the
-	    index map. */
+    /** Read energy levels and quantum numbers from the given file, registers them in the index
+        map. */
     void readLevelFile(const std::string& repoFile, ElectronicState eState);
 
-    /** Load the radiative transition rates between the levels from the given file. To be
-	    used after al levels have been read in. */
+    /** Load the radiative transition rates between the levels from the given file. To be used after
+        al levels have been read in. */
     void readTransProbFile(const std::string& repoFile, ElectronicState upperE, ElectronicState lowerE);
 
-    /** Load the dissociation probabilities and kinetic energies from the given file. To be
-	    used after al levels have been read in. */
+    /** Load the dissociation probabilities and kinetic energies from the given file. To be used
+        after al levels have been read in. */
     void readDissProbFile(const std::string& repoFile, ElectronicState eState);
 
     // We don't have helium at this point, so leave it out. Don't forget to set numPartners
@@ -89,8 +89,8 @@ private:
     };
     static const int _numPartners{4};
 
-    /** Load collision data and store it in the given CollisionData object. To be used after
-	    al levels have been read in. */
+    /** Load collision data and store it in the given CollisionData object. To be used after al
+        levels have been read in. */
     void readCollisionFile(const std::string& repoFile, CollisionPartner iPartner);
 
 private:
@@ -132,11 +132,11 @@ private:
 
 public:
     /** Implement this inherited function to provide collision coefficients for the level
-	    transitions */
+        transitions */
     EMatrix cvv(const CollisionParameters& cp) const override;
 
-    /** Retrieve the index of a level with these quantum numbers. Will throw an out of range
-	    error when no level was read in for these quantum numbers */
+    /** Retrieve the index of a level with these quantum numbers. Will throw an out of range error
+        when no level was read in for these quantum numbers */
     size_t indexOutput(ElectronicState eState, int j, int v) const;
 
     /** Same as the above, but returns -1 if level is not found. */
@@ -145,17 +145,17 @@ public:
     /** True if level at given index is ortho, false if para */
     bool isOrtho(size_t index) const { return _levelv[index].ortho(); }
 
-    /** Get the index pointing to the first (index-wise, not energy-wise) electronically
-	excited level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels
-	of the ground state X, while @c startOfExcitedIndices() @f$ <= i <= @f$ @c numLv() point
-	to levels of any of the electronically excited states. */
+    /** Get the index pointing to the first (index-wise, not energy-wise) electronically excited
+        level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels of the ground
+        state X, while @c startOfExcitedIndices() @f$ <= i <= @f$ @c numLv() point to levels of any
+        of the electronically excited states. */
     size_t startOfExcitedIndices() const { return _startOfExcitedIndices; }
 
     /** The spontaneous dissociation probability per unit time from each level. [s-1] */
     const EVector& dissociationProbabilityv() const { return _dissProbv; }
 
-    /** The average kinetic energy resulting from a spontaneous dissociation from each
-	    level. [erg] */
+    /** The average kinetic energy resulting from a spontaneous dissociation from each level.
+        [erg] */
     const EVector& dissociationKineticEnergyv() const { return _dissKinEv; }
 
     /** Cross section for direct dissociation from @f$ X(J,v) @f$. */
@@ -164,47 +164,45 @@ public:
     /** Cross section for direct dissociation from level with index @c index. */
     double directDissociationCrossSection(double nu, size_t index) const;
 
-    /** Get all the cross sections as a vector of Spectrum objects. This is handy if you
-	    want to integrate over these cross sections efficiently, since the Spectrum object
-	    contains the minimum and maximum frequency. */
+    /** Get all the cross sections as a vector of Spectrum objects. This is handy if you want to
+        integrate over these cross sections efficiently, since the Spectrum object contains the
+        minimum and maximum frequency. */
     const std::vector<Spectrum>& directDissociationCrossSections(size_t index) const;
 
     /** Return a list of all the levels for which a direct dissociation cross section is
-	    available */
+        available */
     const std::vector<size_t>& levelsWithCrossSectionv() const { return _levelsWithCrossSectionv; }
 
-    /** return the distribution of newly formed hydrogen over the electronic ground state.
-	    For now, we use equation 19 from Draine and Bertoldi (1996), which does not depend
-	    on grain properties. */
+    /** return the distribution of newly formed hydrogen over the electronic ground state. For now,
+        we use equation 19 from Draine and Bertoldi (1996), which does not depend on grain
+        properties. */
     EVector formationDistribution() const;
 
 private:
-    /** Returns true if the given J and V are within the boundaries specified by the
-	    user. */
+    /** Returns true if the given J and V are within the boundaries specified by the user. */
     bool validJV(int J, int v) const;
 
-    /** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i,
-	    f) and the_cvv(f, i) respectively. For each transition in the CollisionData object,
-	    q_if [cm3 s-1] is interpolated for the given temperature, and multiplied by the
-	    given partner density to obtain the Cif [s-1]. Cfi is calculated using @f$ C_{fi} =
-	    C_{if}\frac{g_i}{g_f}\exp(-h \nu_{if} / kT) @f$. Any missing collisional data are
-	    approximated with the g-bar coefficients (which do not depend on temperature by the
-	    way). */
+    /** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i, f) and
+        the_cvv(f, i) respectively. For each transition in the CollisionData object, q_if [cm3 s-1]
+        is interpolated for the given temperature, and multiplied by the given partner density to
+        obtain the Cif [s-1]. Cfi is calculated using @f$ C_{fi} = C_{if}\frac{g_i}{g_f}\exp(-h
+        \nu_{if} / kT) @f$. Any missing collisional data are approximated with the g-bar
+        coefficients (which do not depend on temperature by the way). */
     void addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner, double nPartner) const;
 
     /** Fill in a member containing the g-bar downward collision rates */
     void precalcGBarKvv();
 
-    /** Uses the g-bar approximation (same as Cloudy, see Shaw et al. 2005, eq. 1 and Table
-	    2) for the collision coefficients within X. This is a very rough approximation, but
-	    much better than just using 0 (personal communication with Peter van Hoof). The
-	    iPartner argument indicates which set of coefficients from Table 2 needs to be used,
-	    as a separate fit was made for each collision partner. See enum defined above.
-	    nPartner should be the density of this species. */
+    /** Uses the g-bar approximation (same as Cloudy, see Shaw et al. 2005, eq. 1 and Table 2) for
+        the collision coefficients within X. This is a very rough approximation, but much better
+        than just using 0 (personal communication with Peter van Hoof). The iPartner argument
+        indicates which set of coefficients from Table 2 needs to be used, as a separate fit was
+        made for each collision partner. See enum defined above. nPartner should be the density of
+        this species. */
     void addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner, double nPartner) const;
 
-    /** Returns the low-to-high collision coefficient Cfi, given the high to low coefficient
-	    Cif and the temperature kT. */
+    /** Returns the low-to-high collision coefficient Cfi, given the high to low coefficient Cif and
+        the temperature kT. */
     double otherDirectionC(double Cif, int i, int f, double kT) const;
 
     // Settings

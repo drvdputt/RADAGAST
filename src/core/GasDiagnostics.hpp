@@ -6,8 +6,8 @@
 #include <vector>
 
 /** This class should be used to store any extra information that is not put into the standard
-    GasState, to avoid making it too bloaty. Maybe it will make sense to design it so that not
-    all the members have to be set. The amount of detail can maybe be set using some sort of
+    GasState, to avoid making it too bloaty. Maybe it will make sense to design it so that not all
+    the members have to be set. The amount of detail can maybe be set using some sort of
     configuration file. */
 class GasDiagnostics
 {

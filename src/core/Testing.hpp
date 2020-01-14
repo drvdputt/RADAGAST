@@ -32,7 +32,7 @@ namespace Testing
     Array defaultFrequencyv(size_t numPoints = 100);
 
     /** Inserts frequency points into a vector of frequencies, given a number of points per line, a
-    power for the subgrid per line, and a center and characteristic with per line. */
+        power for the subgrid per line, and a center and characteristic with per line. */
     void refineFrequencyGrid(std::vector<double>& grid, size_t nPerLine, double spacingPower, Array lineFreqv,
                              Array freqWidthv);
 
@@ -42,17 +42,17 @@ namespace Testing
 
     // TEST RUNS //
     /** Calculates an equilibrium GasState using the given GasInterface and writes out some results
-    in the given directory (relative to the working directory). The environment can be specified
-    through the optional arguments. The ambient radiation field has a color temperature of Tc
-    and a mean UV intensity of G0 habing, and the gas density is n. The initial temperature can
-    also be chosen. */
+        in the given directory (relative to the working directory). The environment can be specified
+        through the optional arguments. The ambient radiation field has a color temperature of Tc
+        and a mean UV intensity of G0 habing, and the gas density is n. The initial temperature can
+        also be chosen. */
     void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath, double Tc = 20000,
                              double G0 = 2, double n = 10);
 
     void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi, const GasModule::GasState& gs);
 
     /** bulkCar is a hack to be able to write out the mass density. The same bulk density is assumed
-    for all grain populations. */
+        for all grain populations. */
     void writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr, bool bulkCar = true);
 
     void plotHeatingCurve_main();
@@ -62,17 +62,17 @@ namespace Testing
     void plotIonizationStuff();
 
     /** Write out data files to recreate figure 2 of PS64. Current results: the curve for n=5 looks
-    good, but the last point (l=3) of the n=4 curve was a bit to high. When retrieving the PS64
-    coefficients, a recursive relation is used, and one can choose to start from either l = 0 or
-    l = n - 1. By applying both methods, and taking the average of the two results, the figure
-    is approached quite well. */
+        good, but the last point (l=3) of the n=4 curve was a bit to high. When retrieving the PS64
+        coefficients, a recursive relation is used, and one can choose to start from either l = 0 or
+        l = n - 1. By applying both methods, and taking the average of the two results, the figure
+        is approached quite well. */
     void plotPS64Collisions();
 
     /** Try to recreate the efficiency plot of WD01. Writes output to $(pwd)/photoElectric/ */
     void plotPhotoelectricHeating();
 
     /** Interpolate some simple functions, and plot the results. Used for eyeballing correctness of
-    several interpolation routines. */
+        several interpolation routines. */
     void plotInterpolationTests();
 
     void plotChemistryTest();
@@ -81,11 +81,11 @@ namespace Testing
     void runH2(bool write);
 
     /** Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results will
-    be written out to separate files. */
+        be written out to separate files. */
     void runFromFilesvsHardCoded();
 
     /** Generates a GasInterface object with the maximum number of levels and a suitable frequency
-    grid. */
+        grid. */
     GasModule::GasInterface genFullModel(bool refine = false);
 
     GasModule::GasInterface genHonlyModel();
@@ -93,11 +93,11 @@ namespace Testing
     GasModule::GrainInterface genMRNDust(double nHtotal, const Spectrum& specificIntensityv);
 
     /** Run the model with the maximum number of levels, and iterate until the temperature
-    converges. */
+        converges. */
     void runFullModel();
 
     /** A test with many dust grain sizes, following the MRN distribution (see Weingartner 2001,
-    ApJ, 548, 296). */
+        ApJ, 548, 296). */
     void runMRNDust(bool write = true, double nH = 1.e4, double Tc = 1.e4, double lumSol = 1.e2, bool own_dir = false);
 }  // namespace Testing
 

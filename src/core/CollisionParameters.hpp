@@ -5,8 +5,8 @@
 #include "SpeciesIndex.hpp"
 
 /** A set of parameters commonly needed to calculate collisions coefficients. Not every function
-    that calculates collision coefficients will need all of this information, but using this
-    struct as an argument makes it possible to make those functions virtual. */
+    that calculates collision coefficients will need all of this information, but using this struct
+    as an argument makes it possible to make those functions virtual. */
 typedef struct CollisionParameters
 {
     CollisionParameters(double t, const SpeciesVector& sv) : _t{t}, _sv{sv} {}
