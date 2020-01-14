@@ -10,9 +10,9 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
 {
     _nH2 = n;
 
-    // double Rpump = 3.4e-10 * beta(tau) * G_0 * exp(-2.5 * Av); I assume that G_0 *
-    // exp(-2.5 * Av) is just the attenuated radiation field. We should calculate G here
-    // directly from the given specific intensity.
+    // double Rpump = 3.4e-10 * beta(tau) * G_0 * exp(-2.5 * Av); I assume that G_0 * exp(-2.5 * Av)
+    // is just the attenuated radiation field. We should calculate G here directly from the given
+    // specific intensity.
     _g = RadiationFieldTools::gHabing(specificIntensity);
 
     // We might needs some value for tau / beta to describe self-shielding. For now, use 1.
@@ -26,17 +26,17 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
 
     constexpr double Rdecay = 2e-7;  // s-1
 
-    // Equation A13 and A14, for downward collisions --> deexcitation heating.
-    // TODO: find out if I have to divide by 6 here: see text above equation A14
+    // Equation A13 and A14, for downward collisions --> deexcitation heating. Divide by 6 here: see
+    // text above equation A14
     double T = cp._t;
     double sqrtT = std::sqrt(T);
-    double colH = 1.e-12 * sqrtT * std::exp(-1000. / T)  // cm3 s-1
+    double colH = 1.e-12 / 6. * sqrtT * std::exp(-1000. / T)  // cm3 s-1
                   * cp._sv.nH();
-    double colH2 = 1.4e-12 * sqrtT * std::exp(-18100 / (T + 1200))  // cm3 s-1
+    double colH2 = 1.4e-12 / 6. * sqrtT * std::exp(-18100 / (T + 1200))  // cm3 s-1
                    * cp._sv.nH2();
 
-    // 90% of FUV pumps end up in vib-rot excited states. The latter can decay radiatively
-    // or collisionally (eq. A14 + text immediatly below)
+    // 90% of FUV pumps end up in vib-rot excited states. The latter can decay radiatively or
+    // collisionally (eq. A14 + text immediatly below)
     double ratio_ns_ng = .9 * Rpump / (Rdecay + colH + colH2);
 
     // ns = ratio * ng = ratio * (n - ns) ==> ns = ratio * n / (1 + ratio)
