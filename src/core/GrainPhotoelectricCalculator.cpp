@@ -311,15 +311,29 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
             // cm s-1
             double vbar = sqrt(8 * kT / Constant::PI / env._massv[j]);
             // cm-3 * cm s-1 * erg = cm-2 s-1 erg
-            double collisionEnergy = 2 * kT * ksi - 2 * kTgrain * eta;
+
+            // incoming collision
+            double total = 2 * kT * ksi;
+
+            // energy carried away by evaporation of the neutralized/thermalized version of the
+            // colliding particle (does not count for electrons, see text below eq 29)
+            if (env._chargev[j] >= 0) total -= 2 * kTgrain * eta;
+
             if (addGrainPotential)
             {
-                // A positively charged particle will slow down before it hits a
-                // positively charged grain, and accelerate again when it leaves
-                // the grain
-                collisionEnergy -= ZVg * eta;
+                // A charged particle will slow down or speed up before it hits a
+                // charged grain
+                total -= ZVg * eta;
             }
-            lambdaG_for_this_z += env._densityv[j] * vbar * S * collisionEnergy;
+
+            // when protons charge the grain, this means they recombine on the surface (not included
+            // in chemical network yet though). The recombination energy needs to go somewhere, so
+            // the grain gets extra heat. TODO: don't hardcode these things like this. For now this
+            // is not a problem because the proton is the only particle with charge 1. I'm pretty
+            // sure using 1 rydberg (= 13.6 eV = ionization potential) is fine here.
+            if (env._chargev[j] == 1) total += Constant::RYDBERG * eta;
+
+            lambdaG_for_this_z += env._densityv[j] * vbar * S * total;
         }
         return lambdaG_for_this_z;
     });
