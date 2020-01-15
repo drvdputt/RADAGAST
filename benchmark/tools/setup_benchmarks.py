@@ -1,7 +1,11 @@
 from pathlib import Path
 import itertools
+import argparse
 
-c17_dir = Path.home() / 'Software/c17.01/'
+ap = argparse.ArgumentParser()
+ap.add_argument("--cloudy-path", default=str(Path.home() / 'Software/c17.01/'))
+args = ap.parse_args()
+c17_dir = Path(args.cloudy_path)
 
 gasmodule_git = (Path(__file__).parent / '../..').resolve()
 
