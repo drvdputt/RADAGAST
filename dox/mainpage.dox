@@ -1,9 +1,17 @@
-/*! @mainpage Main
+/*!
 
-\ref build_page Instructions for building the gas module, either as a standalone library or as part
-of your (CMake) project.
+\mainpage Introduction
 
-\ref example_page Examples for the setup, updating gas states, dealing with dust properties, and
-extracting information from gas states.
+This project provides a way to calculate the state of pure hydrogen gas given a certain
+radiation field. It is a 0D model, and the aim is that it can be used in 3D dust radiative
+transfer simulations. While <a href="http://www.skirt.ugent.be">SKIRT</a> is our main target, we
+have made this a standalone module which, ideally, does not depend on SKIRT in any way. It
+should be possible to use this module in any C++ code where the necessary environment parameters
+can be provided.
+
+\ref build_page Instructions for building the gas module as a standalone library, which can then
+be called from your script or simulation.
+
+\ref example_page Explanation of the interface, including examples showing how to use it.
 
 */
