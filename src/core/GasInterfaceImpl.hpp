@@ -41,7 +41,7 @@ public:
     /** Creates an instance of the gas module. Multiple frequency grids are used, which need to be
         specified by the user. Some configuration options in the form of strings are also provided.
         Currently, they only influence the settings of the H and H2 models, see
-        SpeciesModelManager.. */
+        SpeciesModelManager. */
     GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv,
                      const std::string& atomChoice = "", const std::string& moleculeChoice = "");
 
