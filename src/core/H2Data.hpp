@@ -9,8 +9,7 @@
 #include <map>
 #include <vector>
 
-/** This class will implement the reading in and processing of all the files for the level model of
-    H2. */
+/** This class implements the reading in and processing of all the files for the big H2 model. */
 class H2Data : public LevelCoefficients
 {
     //------------------------------//
@@ -41,8 +40,8 @@ public:
     };
 
 private:
-    /** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have been some
-        corrections, but the original data comes from Dabrowski (1984). */
+    /** Load the level energies. Comment in this file says 'by Evelyne Roueff'. There have been
+        some corrections, but the original data comes from Dabrowski (1984). */
     void readLevels();
 
     /** Loop over the loaded levels, and put all the energies in one vector. */
@@ -70,8 +69,8 @@ private:
         map. */
     void readLevelFile(const std::string& repoFile, ElectronicState eState);
 
-    /** Load the radiative transition rates between the levels from the given file. To be used after
-        al levels have been read in. */
+    /** Load the radiative transition rates between the levels from the given file. To be used
+        after al levels have been read in. */
     void readTransProbFile(const std::string& repoFile, ElectronicState upperE, ElectronicState lowerE);
 
     /** Load the dissociation probabilities and kinetic energies from the given file. To be used
@@ -93,7 +92,6 @@ private:
         levels have been read in. */
     void readCollisionFile(const std::string& repoFile, CollisionPartner iPartner);
 
-private:
     class H2Level
     {
     public:
@@ -146,9 +144,9 @@ public:
     bool isOrtho(size_t index) const { return _levelv[index].ortho(); }
 
     /** Get the index pointing to the first (index-wise, not energy-wise) electronically excited
-        level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels of the ground
-        state X, while @c startOfExcitedIndices() @f$ <= i <= @f$ @c numLv() point to levels of any
-        of the electronically excited states. */
+        level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels of the
+        ground state X, while @c startOfExcitedIndices() @f$ <= i <= @f$ @c numLv() point to levels
+        of any of the electronically excited states. */
     size_t startOfExcitedIndices() const { return _startOfExcitedIndices; }
 
     /** The spontaneous dissociation probability per unit time from each level. [s-1] */
@@ -201,8 +199,8 @@ private:
         this species. */
     void addGBarCvv(EMatrix& the_cvv, double kT, CollisionPartner iPartner, double nPartner) const;
 
-    /** Returns the low-to-high collision coefficient Cfi, given the high to low coefficient Cif and
-        the temperature kT. */
+    /** Returns the low-to-high collision coefficient Cfi, given the high to low coefficient Cif
+        and the temperature kT. */
     double otherDirectionC(double Cif, int i, int f, double kT) const;
 
     // Settings

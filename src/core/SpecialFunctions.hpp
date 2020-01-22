@@ -16,9 +16,9 @@ namespace SpecialFunctions
 
     double pseudoVoigt(double x, double sigma_gauss, double gamma_lorentz);
 
-    /** This function returns the Maxwell-Boltzman velocity distribution, evaluated at a velocity v,
-        for a gas of temperature T and particles of mass m. Since this is a probability density per
-        velocity unit, the unit of the result is s / cm. */
+    /** This function returns the Maxwell-Boltzman velocity distribution, evaluated at a velocity
+        v, for a gas of temperature T and particles of mass m. Since this is a probability density
+        per velocity unit, the unit of the result is s / cm. */
     double maxwellBoltzman(double v, double T, double m);
 
     /** This function evaluates Planck's law at a frequency nu, for a photon gas of temperature T.

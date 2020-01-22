@@ -29,8 +29,8 @@ public:
     void prepare(const Array& temperaturev, size_t numTransitions);
 
     /** Use this function to put all the data into the map. Arguments: initial level index, final
-        level index, Array containing q(T) for this transition. Will throw an error if the number of
-        transitions inserted exceeds the size that was reserved at construction. */
+        level index, Array containing q(T) for this transition. Will throw an error if the number
+        of transitions inserted exceeds the size that was reserved at construction. */
     void insertDataForTransition(const Array& qForEachTv, int i, int f);
 
     /** Performs a couple of checks on the data. To be called when the user is done putting in the

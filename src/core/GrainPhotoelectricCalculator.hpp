@@ -87,8 +87,8 @@ private:
     double heatingRateAZ(int i, int Z, const Array& frequencyv, const Array& Qabsv,
                          const Array& specificIntensityv) const;
 
-    /** Calculates the rate at which photoelectrons are emitted from a single grain [s-1], according
-        to equation 25 of WD01. */
+    /** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
+        according to equation 25 of WD01. */
     double emissionRate(int i, int Z, const Array& frequencyv, const Array& Qabsv,
                         const Array& specificIntensityv) const;
 

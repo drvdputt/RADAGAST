@@ -23,7 +23,8 @@ namespace WD01
     double escapingFraction(int Z, double Elow, double Ehigh);
 
     /** Calculates the photoelectric yield according to WD01 equation 12. y1 is expensive to
-        calculate (needs two expm1 evaluations), and is passed as an argument as an optimization. */
+        calculate (needs two expm1 evaluations), and is passed as an argument as an
+        optimization. */
     double yield_cached(double a, int Z, double hnuDiff, double Emin, bool carbonaceous, double y1_cached);
 
     /** The unoptimized version of the yield function (useful for plotting). */

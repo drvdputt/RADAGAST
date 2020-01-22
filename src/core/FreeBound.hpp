@@ -21,16 +21,16 @@ public:
     const Array& thresholdv() const { return _thresholdv; }
 
     /* Calculate the emission coefficient for the optical recombination continuum for
-       allfrequencies. The data is intepolated ad-hoc in the temperature direction; in the frequency
-       direction this data was already interpolated in the constructor. Returned in units
+       allfrequencies. The data is intepolated ad-hoc in the temperature direction; in the
+       frequency direction this data was already interpolated in the constructor. Returned in units
        [density^-1][power]/[frequency interval] cm^3 erg / s / Hz. The emissivity
        ([power][density]/[frequency interval]) can be obtained by multiplying this value with ne_np
        / 4pi. The contribution at each frequency is added to the current contents of gamma_nu */
     void addEmissionCoefficientv(double T, const Array& eFrequencyv, Array& gamma_nuv) const;
 
 private:
-    /* The same emission coefficient as the function above, but for frequencies above the ionization
-       threshold, using a simple formula. */
+    /* The same emission coefficient as the function above, but for frequencies above the
+       ionization threshold, using a simple formula. */
     static double ionizingContinuum(double T, double frequency);
 
     /* Data to be loaded in constructor body. First index is for frequency, second for

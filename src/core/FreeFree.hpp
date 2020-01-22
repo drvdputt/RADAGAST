@@ -6,8 +6,8 @@
 #include <string>
 
 /** This class provides implementations for quantities related to the free-free processes in a
-    hydrogen plasma. It is mainly based on the data for the free-free Gaunt factor that I got from a
-    2014 paper from van Hoof et al. (MNRAS 444 420). */
+    hydrogen plasma. It is mainly based on the data for the free-free Gaunt factor that I got from
+    a 2014 paper from van Hoof et al. (MNRAS 444 420). */
 class FreeFree
 {
 public:
@@ -31,13 +31,13 @@ private:
 public:
     /** Calculate the emission coefficient for the free-free continuum for all frequencies. The
         units are [density^-1][power]/[frequency interval] cm^3 erg / s / cm. The emissivity
-        ([power][density]/[frequency interval]) can be obtained by multiplying this value with ne*np
-        / 4pi. The contributions are added to the current contents of gamma_nu. */
+        ([power][density]/[frequency interval]) can be obtained by multiplying this value with
+        ne*np / 4pi. The contributions are added to the current contents of gamma_nu. */
     void addEmissionCoefficientv(double T, const Array& eFrequencyv, Array& gamma_nuv) const;
 
-    /** Calculate the opacity coefficient for the free-free continuum for all frequencies. The units
-        are [density^-2][length^-1]. Multiplying with ne*np will give the opacity in [length-1]. The
-        contributions are added to the current contents of opCoeffv in [cm-7]. */
+    /** Calculate the opacity coefficient for the free-free continuum for all frequencies. The
+        units are [density^-2][length^-1]. Multiplying with ne*np will give the opacity in
+        [length-1]. The contributions are added to the current contents of opCoeffv in [cm-7]. */
     void addOpacityCoefficientv(double T, const Array& oFrequencyv, Array& opCoeffv) const;
 
     /** Calculate the opacity coefficient for the free-free continuum for a specific frequency and

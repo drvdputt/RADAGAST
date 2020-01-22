@@ -17,14 +17,14 @@ public:
     void addToBinned(const Array& frequencyv, Array& binnedSpectrumv, double factor) const;
 
     /** Adds the contribution of a single line to the given spectrum. This way we can stop
-        evaluating the voigt function for the line once the contribution to the total spectrum drops
-        below a chosen threshold. 'factor' is the factor by which the line profile should be
+        evaluating the voigt function for the line once the contribution to the total spectrum
+        drops below a chosen threshold. 'factor' is the factor by which the line profile should be
         multiplied before its values are added to the spectrum. */
     void addToSpectrum(const Array& frequencyv, Array& spectrumv, double factor) const;
 
     /** Integrate the product of the line profile and the given spectrum in an efficient way. A
-        recommended set of frequency points for the line (determined by this class) is combined with
-        the frequency points that discretize the given spectrum.
+        recommended set of frequency points for the line (determined by this class) is combined
+        with the frequency points that discretize the given spectrum.
 
         The line profile is only evaluated if the expected contribution of a frequency point to the
         total (using a conservative heuristic) exceeds a minimum threshold. Optionally the maximum

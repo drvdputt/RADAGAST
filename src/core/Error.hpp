@@ -20,8 +20,8 @@ namespace Error
         abort();
     }
 
-    /** Checks if the two given values are not equal, and prints a message containing the given name
-        if this is the case. */
+    /** Checks if the two given values are not equal, and prints a message containing the given
+        name if this is the case. */
     template<typename T> void equalCheck(std::string variable_names, T value1, T value2)
     {
         if (value1 != value2)

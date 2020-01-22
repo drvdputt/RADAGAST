@@ -37,8 +37,8 @@ public:
     }
     const EVector& nv() const { return _nv; }
 
-    /** The spectrum emitted by the line transitions, expressed as the emission coefficient j_nu f *
-        (erg/cm3/s/Hz). */
+    /** The spectrum emitted by the line transitions, expressed as the emission coefficient j_nu f
+        * (erg/cm3/s/Hz). */
     Array emissivityv(const Array& eFrequencyv) const;
 
     /** The line opacity alpha_nu, equivalent to kappaRho for dust [cm-1]. */

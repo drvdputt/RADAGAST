@@ -11,7 +11,8 @@ public:
     LookupTable() = default;
 
     /** Create a lookup table for a set of functions y_i(x). First argument: x-values. Second
-        argument: Table containing y_i(xv) on each row (dimension should be (numFunctions, numX). */
+        argument: Table containing y_i(xv) on each row (dimension should be (numFunctions,
+        numX). */
     LookupTable(const Array& xv, const Table<2>& yv) : _xv{xv}, _yv{yv} {}
 
     /** From data file in repo. Needs to be simple column file (see SimpleColumnFile) with the data

@@ -56,8 +56,8 @@ namespace GasModule
         /** Memory-heavy, but simple implementation: just store all the output */
         std::valarray<double> _emissivityv, _opacityv, _scatteringOpacityv;
 
-        /** Some basic diagnostics. For more advanced diagnostics, import and use the GasDiagnostics
-            object. */
+        /** Some basic diagnostics. For more advanced diagnostics, import and use the
+            GasDiagnostics object. */
         double _temperature{0};
         std::valarray<double> _densityv{0};
     };

@@ -101,11 +101,11 @@ public:
     GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity, GasModule::GrainInterface&,
                                double h2FormationOverride = -1) const;
 
-    /** Recalculate the densities for a GasSolution object. If startFromCurrent is true, the current
-        contents of the GasSolution are used as an initial guess if the given temperature doesn't
-        differ too much (< factor 2) from the previous temperature. Otherwise, an initial guess is
-        made for the chemistry, where the ionized fraction is based on the radiation field, and the
-        initial molecular fraction is 0.1. */
+    /** Recalculate the densities for a GasSolution object. If startFromCurrent is true, the
+        current contents of the GasSolution are used as an initial guess if the given temperature
+        doesn't differ too much (< factor 2) from the previous temperature. Otherwise, an initial
+        guess is made for the chemistry, where the ionized fraction is based on the radiation
+        field, and the initial molecular fraction is 0.1. */
     void solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
                         bool startFromCurrent = false, double h2FormationOverride = -1) const;
 

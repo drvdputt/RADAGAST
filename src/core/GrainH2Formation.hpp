@@ -31,8 +31,8 @@ namespace GrainH2FormationData
     ///@}
 }  // namespace GrainH2FormationData
 
-/** Implementation of the grain surface H2 formation rate recipe decribed by Cazaux & Tielens (2002,
-    2004, 2010; check the errata!) and summarized in Rollig et al 2013. */
+/** Implementation of the grain surface H2 formation rate recipe decribed by Cazaux & Tielens
+    (2002, 2004, 2010; check the errata!) and summarized in Rollig et al 2013. */
 class GrainH2Formation
 {
 public:
@@ -44,8 +44,8 @@ public:
 
     /** This particular implementation returns the formation rate without multiplying with nH
         (atomic hydrogen number density [cm-3]). Since nH * rate = [cm-3 s-1], the unit of the
-        returned rate is s-1. Three arrays need to be passed: one with the grain sizes, one with the
-        grain temperatures, and one with the grain densities. */
+        returned rate is s-1. Three arrays need to be passed: one with the grain sizes, one with
+        the grain temperatures, and one with the grain densities. */
     double surfaceH2FormationRateCoeff(const Array& sizev, const Array& temperaturev, const Array& densityv,
                                        double Tgas) const;
 

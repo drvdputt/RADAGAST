@@ -40,8 +40,8 @@ private:
 
     /** Produces the sink term to be used by the equilibrium equations. In this case, hydrogen
         disappears from the level populations because it's being ionized. In the current
-        implementation, all the ionization is assumed to be drawn equally from all levels. TODO: add
-        the effects of H2 formation in here?. Take care of this using actual ionization cross
+        implementation, all the ionization is assumed to be drawn equally from all levels. TODO:
+        add the effects of H2 formation in here?. Take care of this using actual ionization cross
         sections? [s-1] */
     EVector sinkv(const CollisionParameters& cp) const;
 

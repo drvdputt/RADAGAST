@@ -8,9 +8,9 @@ struct CollisionParameters;
 class Spectrum;
 
 /** Abstract class for the non-constant H2 properties, and the functions that depend on them. We
-    envision 2 subclasses: a large model which includes a full calculation of the level populations,
-    and dissociation / heating / etc. derived from these populations; and a smaller model which
-    implements more approximate recipes. */
+    envision 2 subclasses: a large model which includes a full calculation of the level
+    populations, and dissociation / heating / etc. derived from these populations; and a smaller
+    model which implements more approximate recipes. */
 class H2Model
 {
 public:
@@ -36,9 +36,9 @@ public:
         collisions (X + heat -> X') */
     virtual double netHeating() const = 0;
 
-    /** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this depends
-        on the velocity distribution of the colliding particles, and the energy transferred during
-        the collision, I will need data for this. Have found no candidates yet. */
+    /** TODO: Absorption of kinetic energy by collisional dissociation processes. Since this
+        depends on the velocity distribution of the colliding particles, and the energy transferred
+        during the collision, I will need data for this. Have found no candidates yet. */
     // dissociationCooling
 
     /** Ortho-para ratio (ortho / total) */

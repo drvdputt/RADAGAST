@@ -17,8 +17,8 @@ public:
     /** The maximum quantum number n for which data is available */
     virtual int nMax() const = 0;
 
-    /** Get the level index for a given pair of quantum numbers n, l. If the data is not resolved on
-        l, the l argument is ignored. */
+    /** Get the level index for a given pair of quantum numbers n, l. If the data is not resolved
+        on l, the l argument is ignored. */
     virtual size_t index(int n, int l) const = 0;
 
     /** Returns the upper and lower index (in that order) of the two photon transition as an array

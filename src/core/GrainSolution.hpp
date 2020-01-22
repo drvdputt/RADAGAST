@@ -23,9 +23,9 @@ public:
     GrainSolution(const GrainPopulation& population);
 
     /** Recalculate the temperature for each size, by finding the temperature for which < blackbody
-        * kappa > = < radiation field * kappa > + extra heat (such as collisional, needs to be given
-        for each size). Some things can probably be cached should this be slow. No idea how to
-        handle this if stochastically heated grains would be a thing.
+        * kappa > = < radiation field * kappa > + extra heat (such as collisional, needs to be
+        * given for each size). Some things can probably be cached should this be slow. No idea how
+        * to handle this if stochastically heated grains would be a thing.
 
         Calculates several extra contributions to the heating of the grains (collisions
         (Draine and Bertoldi 1996) and heat of H2 formation on the surface (Takahashi
@@ -40,9 +40,9 @@ public:
         recalculateChargeDistributions. */
     void recalculateTemperatures(const GrainPhotoelectricCalculator::Environment& env);
 
-    /** Recalculate the charge distribution for each size using the GrainPhotoelectricCalculator. If
-        no calculator is present (population does not have grain photoelectric data), the default
-        charge distribution is kept (all grain charges are at 0). */
+    /** Recalculate the charge distribution for each size using the GrainPhotoelectricCalculator.
+        If no calculator is present (population does not have grain photoelectric data), the
+        default charge distribution is kept (all grain charges are at 0). */
     void recalculateChargeDistributions(const GrainPhotoelectricCalculator::Environment& env);
 
     /** Calculate the total energy transfer to the gas due to the thermalization of photoelectrons

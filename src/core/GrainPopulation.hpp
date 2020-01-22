@@ -26,15 +26,15 @@ public:
     /** The grain type can be one of the types listed in the enum above. Then, an array of sizes,
         number densities, and one of temperatures needs to be specified (consider even using grain
         temperature distributions (for each grain size!) in the future). The temperatures are
-        important for the H2 formation rate on the surfaces of the grains. The absorption efficiency
-        also needs to be given. It needs to be given for each grain size, and for each point of the
-        frequency grid of the input radiation field. */
+        important for the H2 formation rate on the surfaces of the grains. The absorption
+        efficiency also needs to be given. It needs to be given for each grain size, and for each
+        point of the frequency grid of the input radiation field. */
     GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv, const Array& temperaturev,
                     const Array& frequencyv, const std::vector<Array>& qAbsvv);
 
     /** Undelete the move constructor (needed to be able to put these objects into a vector
-        std::vector). Due to the unique_ptr members, it's better to have '= default' in the cpp file
-        (so we can just forward declare GrainH2Formation and GrainPhotoelectricData here). */
+        std::vector). Due to the unique_ptr members, it's better to have '= default' in the cpp
+        file (so we can just forward declare GrainH2Formation and GrainPhotoelectricData here). */
     GrainPopulation(GrainPopulation&&);
 
     /** @name Trivial getters. */

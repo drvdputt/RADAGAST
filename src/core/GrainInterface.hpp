@@ -15,9 +15,9 @@ namespace GasModule
     class GrainInterface
     {
     public:
-        /** Constructor which takes a vector of predefined populations. Please pass the vector using
-            a unique pointer and std::move. Ownership over the vector of populations will then be
-            transferred to this class. */
+        /** Constructor which takes a vector of predefined populations. Please pass the vector
+            using a unique pointer and std::move. Ownership over the vector of populations will
+            then be transferred to this class. */
         GrainInterface(std::unique_ptr<std::vector<GrainPopulation>> populationvToMove);
 
         /** Default constructor, equivalent to no grains at all. */
@@ -36,7 +36,8 @@ namespace GasModule
             present. */
         const std::vector<GrainPopulation>* populationv() const;
 
-        /** A quick test to see if all population objects in the vector have reasonable contents. */
+        /** A quick test to see if all population objects in the vector have reasonable
+            contents. */
         void test() const;
 
     private:

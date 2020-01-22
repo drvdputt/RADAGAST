@@ -53,8 +53,8 @@ public:
     EVector solveBalance(const EVector& rateCoeffv, const EVector& n0v, double maxTime = -1) const;
 
     /** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total reaction
-        speeds is also given (rateCoeffv * density product). It will be used as a workspace, and can
-        also be used to diagnose the speed of each reaction [s-1]. It needs to be of size
+        speeds is also given (rateCoeffv * density product). It will be used as a workspace, and
+        can also be used to diagnose the speed of each reaction [s-1]. It needs to be of size
         _numReactions. */
     void evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv, EVector& kv) const;
 
@@ -71,8 +71,8 @@ private:
     /** Solve the chemistry by evolving the system until equilibrium. */
     EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const;
 
-    /** Calculate the density factor needed to calculate the speed of reaction r. Formula: Product_i
-        q n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i, r). */
+    /** Calculate the density factor needed to calculate the speed of reaction r. Formula:
+        Product_i q n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i, r). */
     double reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const;
 
     /** Calculate the derivative of the density product for reaction r with respect to the density
