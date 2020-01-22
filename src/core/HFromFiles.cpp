@@ -67,11 +67,10 @@ void HFromFiles::readData()
         // Convert the energy from cm-1 to erg
         double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
 
-        /* The level indices in the data structures will go from 0 to number of levels minus
-		   one. The quantum numbers are also used as keys in a map, so we can quickly
-		   retrieve the index for a given configuration.  The level indices in the file go
-		   from 1 to the number of levels, while those in the map and in all the vectors
-		   will go from 0 to numL - 1. */
+        // The level indices in the data structures will go from 0 to number of levels minus one.
+        // The quantum numbers are also used as keys in a map, so we can quickly retrieve the index
+        // for a given configuration. The level indices in the file go from 1 to the number of
+        // levels, while those in the map and in all the vectors will go from 0 to numL - 1. */
         _chiantiLevelv.emplace_back(n, l, twoJplus1, e);
         _nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
 
@@ -79,12 +78,11 @@ void HFromFiles::readData()
         getline(elvlc, line);
     }
     elvlc.close();
-    _chiantiNumLvl = _chiantiLevelv.size();
 
     //-----------------//
     // READ EINSTEIN A //
     //-----------------//
-    _chiantiAvv = EMatrix::Zero(_chiantiNumLvl, _chiantiNumLvl);
+    _chiantiAvv = EMatrix::Zero(_chiantiLevelv.size(), _chiantiLevelv.size());
     ifstream wgfa = IOTools::ifstreamFile(basename + ".wgfa");
     getline(wgfa, line);
     while (line.compare(1, 2, "-1"))
@@ -93,9 +91,9 @@ void HFromFiles::readData()
         double wavAngstrom, gf, A;
         istringstream(line) >> leftIndex >> rightIndex >> wavAngstrom >> gf >> A;
 
-        /* A comment in the cloudy code recommended to do this, as there are apparently some
-		   files in the CHIANTI database where the left index represents the upper level of
-		   the transition: */
+        /* A comment in the cloudy code recommended to do this, as there are apparently some files
+           in the CHIANTI database where the left index represents the upper level of the
+           transition: */
         int upperIndex = max(leftIndex, rightIndex);
         int lowerIndex = min(leftIndex, rightIndex);
 
@@ -137,9 +135,6 @@ void HFromFiles::readData()
 
 void HFromFiles::prepareForOutput()
 {
-    //-------------------------------------//
-    // SET PARAMETERS FOR HELP WITH OUTPUT //
-    //-------------------------------------//
     _levelOrdering.clear();
     int n = 1;
     while (n <= _resolvedUpTo)
