@@ -16,9 +16,7 @@ GasSolution::GasSolution(const GasModule::GrainInterface& gri, const Spectrum& s
 {
     _grainSolutionv.reserve(gri.numPopulations());
     if (gri.populationv())
-    {
         for (const auto& p : *gri.populationv()) _grainSolutionv.emplace_back(p);
-    }
 }
 
 void GasSolution::makeZero()
@@ -177,10 +175,7 @@ GasModule::GasState GasSolution::makeGasState(const Array& oFrequencyv, const Ar
 {
     Array emv, opv;
     if (eFrequencyv.size() > 2) emv = emissivityv(eFrequencyv);
-    if (oFrequencyv.size() > 2)
-    {
-        opv = opacityv(oFrequencyv);
-    }
+    if (oFrequencyv.size() > 2) opv = opacityv(oFrequencyv);
     Array densityv(_sv.data(), _sv.size());
     return {emv, opv, _t, densityv};
 }
