@@ -20,18 +20,14 @@ namespace
     int ode_f(double /* unused t */, const double y[], double dydt[], void* p)
     {
         auto* params = static_cast<struct ode_params*>(p);
-        Eigen::Map<const EVector> nv(y, params->size);
-
-        params->chemistry->evaluateFv(dydt, nv, *params->rateCoeffv, *params->kv);
+        params->chemistry->evaluateFv(dydt, y, *params->rateCoeffv, *params->kv);
         return GSL_SUCCESS;  // maybe check for nan here
     }
 
     int ode_j(double /* unused t */, const double y[], double* dfdy, double dfdt[], void* p)
     {
         auto* params = static_cast<struct ode_params*>(p);
-        Eigen::Map<const EVector> nv(y, params->size);
-
-        params->chemistry->evaluateJvv(dfdy, nv, *params->rateCoeffv, *params->Jkvv);
+        params->chemistry->evaluateJvv(dfdy, y, *params->rateCoeffv, *params->Jkvv);
 
         // no explicit time dependence
         std::fill(dfdt, dfdt + params->size, 0);
@@ -87,22 +83,19 @@ EVector Chemistry::solveBalance(const EVector& rateCoeffv, const EVector& n0v, d
     return result;
 }
 
-void Chemistry::evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv, EVector& kv) const
+void Chemistry::evaluateFv(double* FvOutput, const double* nv, const EVector& rateCoeffv, EVector& kv) const
 
 {
-    // This memory should be already allocated
-    Eigen::Map<EVector> Fv(FvOutput, _numSpecies);
-
     // The total rate of each reaction, a.k.a. k(T) multiplied with the correct density
     // factor n_s ^ R_s,r (see notes).
     for (int r = 0; r < _numReactions; r++) kv(r) = reactionSpeed(nv, rateCoeffv, r);
 
     // Matrix multiplication between the net stoichiometry matrix (indexed on species,
     // reaction) and the rate vector (indexed on reaction).
-    Fv = _netStoichvv * kv;
+    Eigen::Map<EVector>(FvOutput, _numSpecies) = _netStoichvv * kv;
 }
 
-void Chemistry::evaluateJvv(double* JvvDataRowMajor, const EVector& nv, const EVector& rateCoeffv, EMatrix& Jkvv) const
+void Chemistry::evaluateJvv(double* JvvDataRowMajor, const double* nv, const EVector& rateCoeffv, EMatrix& Jkvv) const
 
 {
     // The jacobian dfdy needs to be stored row-major for GSL. This memory should be already
@@ -181,7 +174,7 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
             // max(density / rate of change). Don't forget abs because rate of change can be
             // negative of course.
             EArray fv(_numSpecies, 1);
-            evaluateFv(fv.data(), nv, rateCoeffv, kv);
+            evaluateFv(fv.data(), nv.data(), rateCoeffv, kv);
             double timeScale = (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
 
             // Limit the time scale to roughly the age of the universe
@@ -220,21 +213,20 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
     return nv;
 }
 
-double Chemistry::reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const
+double Chemistry::reactionSpeed(const double* nv, const EVector& rateCoeffv, size_t r) const
 {
     double densityProduct = 1;
     for (size_t s = 0; s < _numSpecies; s++)
     {
-        /* If the species in involved in this reaction (stoich on left side > 0),
-		   calculate the density to the power of its stoichiometry in the reaction. */
+        // If the species in involved in this reaction (stoich on left side > 0), calculate the
+        // density to the power of its stoichiometry in the reaction.
         int Rs = _rStoichvv(s, r);
-        if (Rs) densityProduct *= gsl_pow_int(nv(s), Rs);
+        if (Rs) densityProduct *= gsl_pow_int(nv[s], Rs);
     }
     return densityProduct * rateCoeffv(r);
 }
 
-// JdensityProduct is indexed on (reaction r, d / d n_j)
-void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv, const EVector& rateCoeffv) const
+void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const double* nv, const EVector& rateCoeffv) const
 {
     // Every column j is basically a reaction speed before it is multiplied with the rate
     // coefficient, derived with respect to one of the densities.
@@ -246,7 +238,7 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv, const EV
         {
             int Rs = _rStoichvv(s, r);
             if (Rs)
-                densityPowers[s] = gsl_pow_int(nv(s), Rs);
+                densityPowers[s] = gsl_pow_int(nv[s], Rs);
             else
                 densityPowers[s] = 0;
         }

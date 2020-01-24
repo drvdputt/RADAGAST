@@ -55,13 +55,16 @@ public:
     /** Evaluate the rate of change for each species [cm-3 s-1]. A vector for the total reaction
         speeds is also given (rateCoeffv * density product). It will be used as a workspace, and
         can also be used to diagnose the speed of each reaction [s-1]. It needs to be of size
-        _numReactions. */
-    void evaluateFv(double* FvOutput, const EVector& nv, const EVector& rateCoeffv, EVector& kv) const;
+        _numReactions. The output for Fv and the current nv are passed by pointer, because their
+        memory is owned by two gsl_vector instances. When needed, an Eigen::Map<EVector> is used in
+        the implementation (such an object can not simply be passed as an argument, as there are
+        lots of weird semantics involved). */
+    void evaluateFv(double* FvOutput, const double* nv, const EVector& rateCoeffv, EVector& kv) const;
 
     /** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards n_j. For
         optimization (and for diagnostics), a matrix to put the jacobian of the reaction speed
         vector is passed. It needs to be of size (_numReactions, _numSpecies). */
-    void evaluateJvv(double* JvvOutputRowMajor, const EVector& nv, const EVector& rateCoeffv, EMatrix& Jkvv) const;
+    void evaluateJvv(double* JvvOutputRowMajor, const double* nv, const EVector& rateCoeffv, EMatrix& Jkvv) const;
 
 private:
     // Turn list of reactions into coefficient matrices
@@ -73,11 +76,11 @@ private:
 
     /** Calculate the density factor needed to calculate the speed of reaction r. Formula:
         Product_i q n_i ^ Rir, where n_i are the elements of nv, and Rir = _rStoichvv(i, r). */
-    double reactionSpeed(const EVector& nv, const EVector& rateCoeffv, size_t r) const;
+    double reactionSpeed(const double* nv, const EVector& rateCoeffv, size_t r) const;
 
     /** Calculate the derivative of the density product for reaction r with respect to the density
         j. Formula: (Rjr - 1) * n_j^{Rjr - 1} * Product_{i != j} n_i ^ Rir */
-    void reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv, const EVector& rateCoeffv) const;
+    void reactionSpeedJacobian(EMatrix& Jkvv, const double* nv, const EVector& rateCoeffv) const;
 
     // Keep track of index for each species name.
     SpeciesIndex _speciesIndex;
