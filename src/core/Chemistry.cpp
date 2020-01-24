@@ -277,7 +277,8 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const EVector& nv, const EV
 
             // derivative of the n_j^Rj factor: Rj n_j^(Rj - 1). Do not call pow if
             // the expornent is trivial (Rj == 1), or if Jrj is already zero.
-            if (Rj != 1 && Jrj) Jrj = Rj * gsl_pow_int(nv(j), Rj - 1);
+            if (Rj != 1 && Jrj) Jrj = Rj * gsl_pow_int(nv[j], Rj - 1);
+            // URGENT TODO: check if = needs to be *= instead
         }
     }
 }
