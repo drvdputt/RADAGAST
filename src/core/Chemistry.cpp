@@ -243,8 +243,8 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const double* nv, const EVe
                 densityPowers[s] = 0;
         }
 
-        // Now start calculating all the derivatives with respect to n_j. We cannot just
-        // divide the product of the densities by n_j, because n_j can be zero.
+        // Now start calculating all the derivatives with respect to n_j. We cannot just divide the
+        // product of the densities by n_j, because n_j can be zero.
         for (size_t j = 0; j < _numSpecies; j++)
         {
             double& Jrj = Jkvv(r, j);
@@ -256,8 +256,8 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const double* nv, const EVe
                 Jrj = 0;
                 continue;
             }
-            // Otherwise, start with the rate coefficient for this reaction, and
-            // then multiply with all the densities
+            // Otherwise, start with the rate coefficient for this reaction, and then multiply with
+            // all the densities
             Jrj = rateCoeffv(r);
 
             // All species involved in the reaction except n_j
@@ -267,10 +267,9 @@ void Chemistry::reactionSpeedJacobian(EMatrix& Jkvv, const double* nv, const EVe
                 if (_rStoichvv(s, r) && s != j) Jrj *= densityPowers[s];
             }
 
-            // derivative of the n_j^Rj factor: Rj n_j^(Rj - 1). Do not call pow if
-            // the expornent is trivial (Rj == 1), or if Jrj is already zero.
-            if (Rj != 1 && Jrj) Jrj = Rj * gsl_pow_int(nv[j], Rj - 1);
-            // URGENT TODO: check if = needs to be *= instead
+            // derivative of the n_j^Rj factor: Rj n_j^(Rj - 1). Do not call pow if the exponent is
+            // trivial (Rj == 1), or if Jrj is already zero.
+            if (Rj != 1 && Jrj) Jrj *= Rj * gsl_pow_int(nv[j], Rj - 1);
         }
     }
 }
