@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 SRC_DIR=$(pwd)
 NJOB=${1:-1} # set to 1 if 1st command line argument is not given
 BT=${2:-Release} # set to Release if argument is not given
