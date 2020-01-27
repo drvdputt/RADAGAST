@@ -98,15 +98,12 @@ void Chemistry::evaluateFv(double* FvOutput, const double* nv, const EVector& ra
 void Chemistry::evaluateJvv(double* JvvDataRowMajor, const double* nv, const EVector& rateCoeffv, EMatrix& Jkvv) const
 
 {
-    // The jacobian dfdy needs to be stored row-major for GSL. This memory should be already
-    // allocated. The elements are d f_i / d n_j, so the jacobian should have (dimension of
-    // fv, dimension of nv = _numSpecies, _numSpecies).
-    Eigen::Map<EMatrixRM> JFvv(JvvDataRowMajor, _numSpecies, _numSpecies);
-
+    // The derivative of the reaction speed vector d k_r / d n_j
     reactionSpeedJacobian(Jkvv, nv, rateCoeffv);
 
-    // (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j)
-    JFvv = _netStoichvv * Jkvv;
+    // (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j). EMatrixRM has to be used because GSL stores
+    // dfdy in row major order.
+    Eigen::Map<EMatrixRM>(JvvDataRowMajor, _numSpecies, _numSpecies) = _netStoichvv * Jkvv;
 }
 
 EMatrix_int Chemistry::makeReactantStoichvv() const
