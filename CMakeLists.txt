@@ -16,15 +16,14 @@ endif()
 
 add_definitions(-march=native)
 
-set(EIGEN_POSSIBLE_LOCATIONS /usr/local/include/eigen3 /usr/include/eigen3 $ENV{HOME}/.local/eigen3)
-message(STATUS "Looking for Eigen in the list ${EIGEN_POSSIBLE_LOCATIONS}")
-foreach(EIGEN_DIR IN LISTS EIGEN_POSSIBLE_LOCATIONS)
-  if (EXISTS ${EIGEN_DIR})
-    set(EIGEN_INCLUDE_DIR ${EIGEN_DIR} CACHE PATH "Eigen include directory")
-    break()
-  endif()
-endforeach()
-message(STATUS "Using eigen headers from ${EIGEN_INCLUDE_DIR}")
+if(EIGEN_DIR)
+  set(EIGEN_INCLUDE_DIR ${EIGEN_DIR})
+else()
+  find_path(EIGEN_INCLUDE_DIR
+    NAMES "Eigen"
+    PATHS "$ENV{HOME}/.local/include/eigen3" "$ENV{HOME}/.local/eigen3" )
+endif()
+message(STATUS "Using Eigen headers at ${EIGEN_INCLUDE_DIR}")
 
 add_subdirectory(src/core)
 add_subdirectory(src/mains)

@@ -9,6 +9,6 @@ endforeach()
 find_package(GSL REQUIRED) # populates GSL_INCLUDED_DIRS
 set(TARGET run_tests)
 add_executable(${TARGET} test.cpp $<TARGET_OBJECTS:gasmodule_objects>)
-			 target_link_libraries(${TARGET} GSL::gsl GSL::gslcblas)
+target_link_libraries(${TARGET} GSL::gsl GSL::gslcblas)
 # the testing framework needs the object files instead of the library used
-# above, so we still need to link to GSL here
+# above, so we still need to link to GSL explicitly here
