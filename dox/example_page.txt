@@ -1,100 +1,153 @@
-/*! @page example_page Usage examples
-@section example_sec Usage examples
+/*! @page example_page Using the library
 
-Below are some examples of how to use the gas module. The way the different parts of the gas module
-are used should be correct code (if nothing has changed meanwhile). The the other code around them
-is fictional, which should make the context a bit clearer.
+Once the build process described in @ref build_page is successful, take note of the install
+directory and take a look at the header files in the generated include/ directory. Point your
+compiler options / development environment / toolchain to the correct locations, and try one of
+these examples.
 
-Some of the class names in these code names are clickable links to the class documentation. Most
-functions, especially those of what I call the `public interface' are documented.
+@section example_sec Code examples
+
+@note Some of the class names in these code snippets are clickable links to the class documentation.
 
 @subsection setup_example_subsec Setup
 
+The idea is that your code manages a single @c GasInterface object. When this object is
+constructed, all of its members will be set up too, reading in all of the necessary data. While
+it is safe for multiple of these objects to exist alongside each other, doing so should only be
+done for experimentation purposes.
+
+The arguments for the @c GasInterface constructor currently consist of three frequency grids.
+They are called @c iFrequencyv, @c oFrequencyv, and @c eFrequencyv. They specify the frequency
+grid for, respectively:
+
+ - the input radiation field
+
+ - the resulting opacity of the gas
+
+ - the resulting emissivity of the gas
+
+In the snippet below, we initialize the gas module using the same frequency grid for all three
+of these physical quantities. What the contents of @c frequencyv are depends on the needs of the
+user, but generally speaking, the frequency range just above the H ionization threshold should
+be relatively well sampled.
+
+In the future, some commonly used runtime options (mostly related to the physical level of
+detail) might be passed here too, but for now most of the settings are baked in at compile time.
+
 @code
 #include "GasInterface.hpp"
+#include <valarray>
 
-// Set up the gas module by creating a GasInterface object.
-GasModule::GasInterface gasInterface(frequencyv);
+// Set up frequency grid
+std::valarray<double> frequencyv;
+// < more code >
+
+// Initialize the gas module by creating a GasInterface object.
+GasModule::GasInterface gasInterface(frequencyv, frequencyv);
 
 // Make some place to store a gas state per cell.
 std::vector<GasModule::GasState> gasStatev(numCells);
 @endcode
 
-@subsection update_example_subsec Update gas states
+The last line of code allocates some space to store the solution for a single computational
+element. This is optional: You can also just use a single, temporary gas state and extract what
+you need before discarding it.
+
+@subsection update_example_subsec Solve for equilibrium in a cell
+
+The main goal of this code is to calculate the equilibrium temperature and abundances for a
+given density, radiation field, and a local set of grain properties.
+
+To pass the grain properties, we need to use another class that I haven't introduced yet: @c
+GrainInterface. Your code should gather all the relevant grain properties (grain effective
+radii, number densities and absorption efficiencies) into such an object. The default
+constructor creates an empty object, representing a medium with zero dust present.
+
+For every cell, the radiation and density are obtained from elsewhere in the code. Then, an
+empty @c GrainInterface is created. This info is passed to the @c updateGasState function of @c
+GrainInterface, along with a writable reference to a @c GasState object, to which the most
+important output will be written. The pseudocode @c parallel_for_loop emphasizes that @c
+updateGasState is thread safe.
 
 @code
-// This is a regular for loop, but the code below should be thread safe, and hence safe for use in a
-// parallel implementation of loops, if you have one.
-for (int cell = 0; cell < numCells; cell++) {
-  // Gather physical quantities in the cell (semi-pseudocode)
-
-  // Get the specific intensity in frequency units (erg s-1 cm-2 sr-1 Hz-1), for the frequencies of
-  // the grid.
+parallel_for_loop(0, numCells, [&] (int cell) {
+  // Specific intensity in frequency units (erg s-1 cm-2 sr-1 Hz-1), and the number density of H nuclei in cm-3
   const std::valarray<double>& specificIntensityv = i_nuv(cell);
-
-  // Get H density in cm-3, temperature guess.
   double nH = hdensity(cell);
-  double Tguess = 8000;
 
-  // Create grain interface object (see example below).
-  const GasModule::GrainInterface& gi = makeGrainInterface(cell);
+  // No grains
+  const GasModule::GrainInterface gi;
 
-  // Call the update function.
+  // Solve for T
   gasInterface.updateGasState(gasStatev[cell], nH, Tguess, gi);
 }
 @endcode
 
-@subsection graininterface_example_subsec Creating a grain interface object
+@subsection graininterface_example_subsec Dealing with grains
 
-This is more complicated when using the custom grain model, as many quantities and functions that
-depend on the grain model are required. Let's keep it to a simple example, using one of the built-in
-grain types.
+Essentially, @c GrainInterface is just a wrapper around a vector of @ GrainInterface::Population
+objects. Each population represents a collection grains of the same type, with a certain grain
+size distribution and absorption efficiency.
+
+The example below illustrates how a population object needs to be constructed, and how a vector
+of population objects can be handed over to a grain interface object. For every grain
+population, a flag specifying silicate or graphite needs to be provided. This influences the
+grain photoelectric heating recipe, and determines some constants related to H2 formation on the
+surface of the grains. The absorption efficiency @f$ Q_\text{abs}(a, \nu) @f$ is used to
+calculate the grain temperatures* and the photoelectric efficiency. It can be freely chosen,
+independent of the carbon or silicate flag (whether that is physical or not).
+
+@note * While the grain temperatures need to be passed, the gas module actually recalculates the
+grain temperatures by itself. This is because the gas and the grains exchange energy through
+collisions and H2 formation. The given temperatures are only used for the first iteration.
 
 @code
 #include "GrainInterface.hpp"
+// Make a list of populations. Use a unique pointer here, so the population vector can be
+// moved into the grain interface object
+auto populationv = std::make_unique<std::vector<GrainPopulation>>();
 
-GasModule::GrainInterface makeGrainInterface(cell) {
-  // First make a list of populations. Use a unique pointer here, so the population vector can be
-  // moved into the grain interface object
-  auto populationv = std::make_unique<std::vector<GasModule::GrainInterface::Population>>();
-  populationv->reserve(numPop(cell));
+for (pop = 0; pop < numPop; pop++) {
+   // Choose one of two supported types
+   GasModule::GrainTypeLabel type = GasModule::GrainTypeLabel::CAR;
 
-  for (pop = 0; pop < numPop(cell); pop++) {
-     // Gather the following properties for each population in the cell (semi-pseudocode)
+   // Gather these physical quantities
+   std::valarray<double> sizev = sizes(pop);
+   std::valarray<double> densityv = number_densities_per_size(pop);
+   std::valarray<double> temperaturev = temperatures_per_size(pop);
+   std::vector<std::valarray<double>> qAbsvv = qabs_per_wavelength_per_size(pop);
 
-     // Choose whether to use the carbonaceous or silicate built-in type
-     GasModule::GrainTypeLabel type = GasModule::GrainTypeLabel::CAR;
-
-     // Gather these physical quantities
-     std::valarray<double> sizev = sizes(pop);
-     std::valarray<double> densityv = number_densities_per_size(pop);
-     std::valarray<double> temperaturev = temperatures_per_size(pop);
-     std::vector<std::valarray<double>> qAbsvv = qabs_per_wavelength_per_size(pop);
-
-     // Add a new population to the list
-     populationv->emplace_back(type, sizev, densityv, temperaturev, qAbsvv);
-  }
-  // These populations will be stored in the new grain interface object
-  return GasModule::GrainInterface(std::move(populationv));
+   // Add a new population to the list
+   populationv->emplace_back(type, sizev, densityv, temperaturev, qAbsvv);
 }
+// Create grain interface
+GasModule::GrainInterface gr(std::move(populationv));
 @endcode
+
+Note that the code was written from the standpoint that the grain properties could be completely
+different for each individual cell of the simulation, which is why no info about the grains was
+given at setup.
+
+@attention This part of the interface needs some work. GrainPopulation especially still exposes
+too much of the implementation, by including some stuff that is not in the "official" set of
+headers.
 
 @subsection retrieve_example_subsec Retrieving gas properties.
 
 The gas properties are all stored in (or can be calculated from) the contents of the @c GasState
-objects. Here a couple of examples for retrieving gas properties of a certain cell. Of course, all
-of these will only work when the gas state object have been properly filled in, i.e. they have been
-processed by @c updateGasStates().
+objects. Here a couple of examples for retrieving gas properties of a certain cell. Of course,
+all of these will only work when the gas state object have been properly filled in, i.e. they
+have been processed by @c updateGasStates(). Depending on what is stored in the gas state, some
+things might have to be recalculated.
 
 @code
-void print_some_properties_forexample(int cell, int freq) {
-  // Choose a gas state (not a freshly created one! Valid contents are crucial here).
-  GasModule::GasState& gs = gasStatev[cell]
-
-  // There will be CGS variants in the future. But SKIRT likes them in SI.
-  std::cout << "Emissivity: " << gasInterface.emissivity_SI(gs, freq) << " W m-2 sr-1 Hz-1\n";
-  std::cout << "Opacity: " << gasInterface.opacity_SI(gs, freq) << " m-1" << std::endl;
-}
+// Choose a gas state (not a freshly created one! Valid contents are crucial here).
+GasModule::GasState& gs = gasStatev[cell]
+std::valarray<double> emv = gasInterface.emissivity_SI(gs, freq);
+std::valarray<double> opv = gasInterface.opacity_SI(gs, freq);
+std::cout << "Opacity: " << gasInterface.opacity_SI(gs, freq) << " m-1" << std::endl;
 @endcode
+
+@attention This part will also be subject to change as I'm coupling the module to SKIRT.
 
 */
