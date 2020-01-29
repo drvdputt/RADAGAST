@@ -16,9 +16,18 @@ namespace GasModule
 
     GrainInterface::GrainInterface(GrainInterface&&) = default;
 
-    GrainInterface::GrainInterface(std::unique_ptr<std::vector<GrainPopulation>> populationvToMove)
-        : _populationv(std::move(populationvToMove))
-    {}
+    void GrainInterface::addPopulation(GasModule::GrainTypeLabel type, const Array& sizev, const Array& densityv,
+                                       const Array& temperaturev, const Array& frequencyv,
+                                       const std::vector<Array>& qAbsvv)
+    {
+        if (!_populationv) _populationv = std::make_unique<std::vector<GrainPopulation>>();
+        _populationv->emplace_back(type, sizev, densityv, temperaturev, frequencyv, qAbsvv);
+    }
+
+    void GrainInterface::changePopulationDensityv(int p, const std::valarray<double>& densityv)
+    {
+        _populationv->at(p).setDensityv(densityv);
+    }
 
     size_t GrainInterface::numPopulations() const { return _populationv ? _populationv->size() : 0; }
 

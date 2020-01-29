@@ -794,7 +794,7 @@ void Testing::runFullModel()
 
 GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& specificIntensity)
 {
-    auto grainPopv{make_unique<vector<GrainPopulation>>()};
+    GasModule::GrainInterface grainInterface;
 
     // need grains from .005 to .25 micron
     double amin = 50 * Constant::ANG_CM;
@@ -826,7 +826,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
             sizev[i] = average_power_of_size(1.);
             areav[i] = average_power_of_size(2.);
         }
-        auto label = car ? GrainTypeLabel::CAR : GrainTypeLabel::SIL;
+        auto label = car ? GasModule::GrainTypeLabel::CAR : GasModule::GrainTypeLabel::SIL;
         const auto& qabsvv = qAbsvvForTesting(car, sizev, specificIntensity.frequencyv());
 
         Array temperaturev(numSizes);
@@ -838,7 +838,7 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
             cout << "grain " << i << ": " << temperaturev[i] << " K\n";
         }
 
-        grainPopv->emplace_back(label, sizev, densityv, temperaturev, specificIntensity.frequencyv(), qabsvv);
+        grainInterface.addPopulation(label, sizev, densityv, temperaturev, specificIntensity.frequencyv(), qabsvv);
     };
 
     // Carbonaceous population:
@@ -847,7 +847,6 @@ GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& sp
     // Silicate population:
     // addMRNCarOrSil(false);
 
-    GasModule::GrainInterface grainInterface(move(grainPopv));
     return grainInterface;
 }
 

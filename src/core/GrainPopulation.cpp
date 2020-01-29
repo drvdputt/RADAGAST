@@ -10,7 +10,7 @@ GrainPopulation::GrainPopulation() = default;
 
 GrainPopulation::~GrainPopulation() = default;
 
-GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv,
+GrainPopulation::GrainPopulation(GasModule::GrainTypeLabel type, const Array& sizev, const Array& densityv,
                                  const Array& temperaturev, const Array& frequencyv, const std::vector<Array>& qAbsvv)
     : _sizev{sizev}, _densityv{densityv}, _temperaturev{temperaturev}, _qAbsvv{qAbsvv}
 {
@@ -18,13 +18,13 @@ GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const 
     Error::equalCheck("sizev.size() and temperaturev.size()", sizev.size(), temperaturev.size());
     Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
 
-    if (type == GrainTypeLabel::CAR)
+    if (type == GasModule::GrainTypeLabel::CAR)
     {
         _h2formation = std::make_unique<GrainH2Formation>(GrainH2FormationData::carSurface,
                                                           GrainH2FormationData::grainHeatingPerH2Formed_car);
         _photoelectricData = std::make_unique<GrainPhotoelectricData>(true);
     }
-    else if (type == GrainTypeLabel::SIL)
+    else if (type == GasModule::GrainTypeLabel::SIL)
     {
         _h2formation = std::make_unique<GrainH2Formation>(GrainH2FormationData::silSurface,
                                                           GrainH2FormationData::grainHeatingPerH2Formed_sil);
@@ -53,6 +53,12 @@ GrainPopulation::GrainPopulation(GrainTypeLabel type, const Array& sizev, const 
 }
 
 GrainPopulation::GrainPopulation(GrainPopulation&&) = default;
+
+void GrainPopulation::setDensityv(const Array& densityv)
+{
+    Error::equalCheck("Size of new and old list of densities", densityv.size(), _densityv.size());
+    _densityv = densityv;
+}
 
 void GrainPopulation::test() const
 {

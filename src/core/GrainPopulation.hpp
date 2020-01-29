@@ -2,18 +2,13 @@
 #define CORE_GRAINPOPULATION_HPP
 
 #include "Array.hpp"
+#include "GrainInterface.hpp"
 #include "LookupTable.hpp"
 #include <memory>
 #include <vector>
 
-/** List of grain types which have built-in values for H2 formation and the photoelectric effect.
-    For anything else, the label 'OTHER' can be used, but then no contribution to the H2 formation
-    or photoelectric heating will be made by this grain population. */
-enum class GrainTypeLabel { CAR, SIL, OTHER };
-
 class GrainH2Formation;
 class GrainPhotoelectricData;
-class LookupTable;
 
 class GrainPopulation
 {
@@ -29,13 +24,15 @@ public:
         important for the H2 formation rate on the surfaces of the grains. The absorption
         efficiency also needs to be given. It needs to be given for each grain size, and for each
         point of the frequency grid of the input radiation field. */
-    GrainPopulation(GrainTypeLabel type, const Array& sizev, const Array& densityv, const Array& temperaturev,
-                    const Array& frequencyv, const std::vector<Array>& qAbsvv);
+    GrainPopulation(GasModule::GrainTypeLabel type, const Array& sizev, const Array& densityv,
+                    const Array& temperaturev, const Array& frequencyv, const std::vector<Array>& qAbsvv);
 
     /** Undelete the move constructor (needed to be able to put these objects into a vector
         std::vector). Due to the unique_ptr members, it's better to have '= default' in the cpp
         file (so we can just forward declare GrainH2Formation and GrainPhotoelectricData here). */
     GrainPopulation(GrainPopulation&&);
+
+    void setDensityv(const Array& densityv);
 
     /** @name Trivial getters. */
     /**@{*/
