@@ -45,18 +45,21 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
     // Shortest wavelength = highest possible energy of a photon
     double hnumax = Constant::PLANCK * *(end(frequencyv) - 1);
 
-    /* The maximum charge is one more than the highest charge which still allows ionization
-	   by photons of hnumax. */
+    // The maximum charge is one more than the highest charge which still allows ionization by
+    // photons of hnumax.
     int resultZmax = floor(((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) / (1 + .3 / aA));
 
-    // The minimum charge is the most negative charge for which autoionization does not
-    // occur
+    // The minimum charge is the most negative charge for which autoionization does not occur
     int resultZmin = minimumCharge(i);
 
+    // The few cases I've seen this happen, Zmin is always 0 and Zmax is always -1. Since Zmax only
+    // depends on the maximum photon energy, it should be fine to increase it up to Zmin in these
+    // edge cases. Warn for now.
     if (resultZmax < resultZmin)
-        Error::runtime("Zmax is smaller than Zmin. This can happen when the grains are "
-                       "too"
-                       "small for the recipe used.");
+    {
+        cout << "Zmin " << resultZmin << " Zmax " << resultZmax << '\n';
+        resultZmax = resultZmin;
+    }
 
     // These two functions determine the up and down rates for the detailed balance
 

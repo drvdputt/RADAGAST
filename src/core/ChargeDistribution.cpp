@@ -25,12 +25,19 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
                                                   std::function<double(int z)> chargeDownRatef, int zminGuess,
                                                   int zmaxGuess)
 {
+    // Take care of this edge case
+    if (zminGuess == zmaxGuess)
+    {
+        _fz.resize(1, 1.);
+        _zmin = zminGuess;
+        return;
+    }
+
     _fz.resize(zmaxGuess - zminGuess + 1, -1);
 
-    /* We will cut off the distribution at some point past the maximum (in either the
-	   positive or the negative direction). For a Gaussian distribution, at half the height
-	   we have already ~80% of the population. So a 10th of the height should definitely be
-	   sufficient.*/
+    // We will cut off the distribution at some point past the maximum (in either the positive or
+    // the negative direction). For a Gaussian distribution, at half the height we have already
+    // ~80% of the population. So a 10th of the height should definitely be sufficient.
     double cutOffFactor = 1.e-1;
     int trimLow = 0;
     int trimHigh = _fz.size() - 1;
@@ -103,11 +110,10 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
         }
     }
 
-    /* Apply the cutoffs (this might be done more elegantly, i.e. while avoiding the
-	   allocation of all the memory for the initial fZ buffer). */
+    // Apply the cutoffs (this might be done more elegantly, i.e. while avoiding the allocation of
+    // all the memory for the initial fZ buffer).
 
     // Trim the top first! Makes things (i.e. dealing with the indices) much easier.
-
     _fz.erase(_fz.begin() + trimHigh + 1, _fz.end());
     _fz.erase(_fz.begin(), _fz.begin() + trimLow);
     _zmin = zminGuess + trimLow;
