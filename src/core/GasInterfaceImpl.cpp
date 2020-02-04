@@ -226,7 +226,11 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
         // CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
         s.solveLevels(kFormH2 * s.speciesVector().nH());
 
-        if (previousAbundancev.array().isNaN().any()) Error::runtime("Nan in chemistry solution!");
+        if (previousAbundancev.array().isNaN().any())
+        {
+            std::cerr << previousAbundancev;
+            Error::runtime("Nan in chemistry solution!");
+        }
 
         // LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
         if (h2FormationOverride < 0)
