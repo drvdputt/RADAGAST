@@ -23,7 +23,7 @@ double ChargeDistribution::sumOverCharge(std::function<double(int z)> functionOf
 
 void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> chargeUpRatef,
                                                   std::function<double(int z)> chargeDownRatef, int zminGuess,
-                                                  int zmaxGuess)
+                                                  int zmaxGuess, int maxCharges)
 {
     // Take care of this edge case
     if (zminGuess == zmaxGuess)
@@ -32,16 +32,6 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
         _zmin = zminGuess;
         return;
     }
-
-    _fz.resize(zmaxGuess - zminGuess + 1, -1);
-
-    // We will cut off the distribution at some point past the maximum (in either the positive or
-    // the negative direction). For a Gaussian distribution, at half the height we have already
-    // ~80% of the population. So a 10th of the height should definitely be sufficient.
-    double cutOffFactor = 1.e-1;
-    int trimLow = 0;
-    int trimHigh = _fz.size() - 1;
-    int centerZ = 0;
 
     // Find the central peak using a binary search
     int lowerbound = zminGuess;
@@ -68,7 +58,15 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
         currentZ = floor((lowerbound + upperbound) / 2.);
     }
     // The result of the binary search
-    centerZ = currentZ;
+    int centerZ = currentZ;
+
+    _fz.resize(zmaxGuess - zminGuess + 1, -1);
+    // We will cut off the distribution at some point past the maximum (in either the positive or
+    // the negative direction). For a Gaussian distribution, at half the height we have already
+    // ~80% of the population. So a 10th of the height should definitely be sufficient.
+    double cutOffFactor = 1.e-1;
+    int trimLow = 0;
+    int trimHigh = _fz.size() - 1;
 
     // Apply detailed balance equation: start at one ... The equation which must be
     // satisfied is f(Z) * upRate(Z) = f(Z+1) * downRate(Z+1)

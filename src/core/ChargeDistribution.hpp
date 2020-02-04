@@ -16,9 +16,12 @@ public:
         given two functions that produce the upward and downward charging rates for a certain z. A
         suggested charge range should also be given. The charge distribution will be cut off when
         the contributions become insignificant. The final zmin and zmax will lie within the given
-        interval. */
+        interval. Optionally, a maximum amount of values for the charge can be given, to limit the
+        computation / allocation time to reasonable levels, should @c zmaxGuess - @c zminGuess be
+        very large */
     void calculateDetailedBalance(std::function<double(int z)> chargeUpRatef,
-                                  std::function<double(int z)> chargeDownRatef, int zminGuess, int zmaxGuess);
+                                  std::function<double(int z)> chargeDownRatef, int zminGuess, int zmaxGuess,
+                                  int maxCharges = 0);
 
     /** Minimum charge for which data is stored */
     int zmin() const { return _zmin; }
