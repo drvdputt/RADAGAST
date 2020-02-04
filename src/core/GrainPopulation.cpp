@@ -35,8 +35,8 @@ GrainPopulation::GrainPopulation(GasModule::GrainTypeLabel type, const Array& si
     // Optimization: pre-calculate the modified blackbody cooling curve here
     Array Tv =
         Testing::generateGeometricGridv(100, Options::grainsolution_minGrainTemp, Options::grainsolution_maxGrainTemp);
-    Table<2> bbEmission(numSizes(), Tv.size());
-    for (size_t m = 0; m < numSizes(); m++)
+    Table<2> bbEmission(_sizev.size(), Tv.size());
+    for (size_t m = 0; m < _sizev.size(); m++)
     {
         double crossSection = Constant::PI * _sizev[m] * _sizev[m];
         for (int t = 0; t < Tv.size(); t++)
