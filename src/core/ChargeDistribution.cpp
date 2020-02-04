@@ -63,13 +63,13 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
     int numChargesGuess = zmaxGuess - zminGuess + 1;
     if (maxCharges && numChargesGuess > maxCharges)
     {
-        _fz.resize(maxCharges, -1);
+        _fz.resize(maxCharges);
         _zmin = centerZ - maxCharges / 2;
         // There's some assymetry here when maxCharges is even, but there is no right solution.
     }
     else
     {
-        _fz.resize(numChargesGuess, -1);
+        _fz.resize(numChargesGuess);
         _zmin = zminGuess;
     }
 
@@ -131,7 +131,7 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
     // Normalize
     double sum = 0.;
     for (double d : _fz) sum += d;
-    for (double& d : _fz) d /= sum;
+    for (auto& d : _fz) d /= sum;
 }
 
 void ChargeDistribution::plot(const std::string& file, const std::string& header) const
