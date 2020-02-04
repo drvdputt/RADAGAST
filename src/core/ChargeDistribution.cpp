@@ -60,7 +60,19 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
     // The result of the binary search
     int centerZ = currentZ;
 
-    _fz.resize(zmaxGuess - zminGuess + 1, -1);
+    int numChargesGuess = zmaxGuess - zminGuess + 1;
+    if (maxCharges && numChargesGuess > maxCharges)
+    {
+        _fz.resize(maxCharges, -1);
+        _zmin = centerZ - maxCharges / 2;
+        // There's some assymetry here when maxCharges is even, but there is no right solution.
+    }
+    else
+    {
+        _fz.resize(numChargesGuess, -1);
+        _zmin = zminGuess;
+    }
+
     // We will cut off the distribution at some point past the maximum (in either the positive or
     // the negative direction). For a Gaussian distribution, at half the height we have already
     // ~80% of the population. So a 10th of the height should definitely be sufficient.
@@ -70,12 +82,12 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
 
     // Apply detailed balance equation: start at one ... The equation which must be
     // satisfied is f(Z) * upRate(Z) = f(Z+1) * downRate(Z+1)
-    _fz[centerZ - zminGuess] = 1;
+    _fz[centerZ - _zmin] = 1;
 
     // ... for Z > centerZ
-    for (int z = centerZ + 1; z <= zmaxGuess; z++)
+    for (int z = centerZ + 1; z <= zmax(); z++)
     {
-        int index = z - zminGuess;
+        int index = z - _zmin;
         // f(z) =  f(z-1) * up(z-1) / down(z)
         double up = chargeUpRatef(z - 1);
         double down = chargeDownRatef(z);
@@ -91,9 +103,9 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
     }
 
     // ... for Z < centerZ
-    for (int z = centerZ - 1; z >= zminGuess; z--)
+    for (int z = centerZ - 1; z >= _zmin; z--)
     {
-        int index = z - zminGuess;
+        int index = z - _zmin;
         // f(z) = f(z+1) * down(z+1) / up(z)
         double up = chargeUpRatef(z);
         double down = chargeDownRatef(z + 1);
@@ -114,7 +126,7 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
     // Trim the top first! Makes things (i.e. dealing with the indices) much easier.
     _fz.erase(_fz.begin() + trimHigh + 1, _fz.end());
     _fz.erase(_fz.begin(), _fz.begin() + trimLow);
-    _zmin = zminGuess + trimLow;
+    _zmin += trimLow;
 
     // Normalize
     double sum = 0.;

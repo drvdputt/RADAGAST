@@ -75,7 +75,8 @@ TEST_CASE("Peaked charge distribution")
     auto up = [&](int z) { return height - slope * (z - desiredPeak); };
     auto down = [&](int z) { return height + slope * (z - desiredPeak); };
 
-    cd.calculateDetailedBalance(up, down, zmin, zmax);
+    // Call the main function. When maxCharges == 0, it is not used.
+    cd.calculateDetailedBalance(up, down, zmin, zmax, maxCharges);
 
     // Check that everything sums to 1
     double sum = 0;
