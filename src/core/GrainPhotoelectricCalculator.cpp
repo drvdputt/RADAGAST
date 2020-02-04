@@ -42,7 +42,7 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
     // Express a in angstroms
     double aA = a / Constant::ANG_CM;
 
-    // Shortest wavelength = highest possible energy of a photon
+    // Highest possible energy of a photon
     double hnumax = Constant::PLANCK * *(end(frequencyv) - 1);
 
     // The maximum charge is one more than the highest charge which still allows ionization by
@@ -54,43 +54,41 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
 
     // The few cases I've seen this happen, Zmin is always 0 and Zmax is always -1. Since Zmax only
     // depends on the maximum photon energy, it should be fine to increase it up to Zmin in these
-    // edge cases. Warn for now.
-    if (resultZmax < resultZmin)
-    {
-        cout << "Zmin " << resultZmin << " Zmax " << resultZmax << '\n';
-        resultZmax = resultZmin;
-    }
+    // edge cases.
+    if (resultZmax < resultZmin) resultZmax = resultZmin;
 
     // These two functions determine the up and down rates for the detailed balance
 
-    // The rate at which the grain moves out of charge Z, in the positive direction.
+    // The rate at which the grain moves out of charge Z, in the positive direction. Contributions
+    // by photoelectric ejection of electron, and collisions with positive particles. Collisions
+    // with multiply charged particles are treated as if they can only change the charge in steps
+    // of 1. This is technically incorrect, but the charging rate due to positive ions is very
+    // small anyway.
     auto chargeUpRate = [&](int z) -> double {
         double Jtotal{0};
-        // Photoelectric effect rate
         Jtotal += emissionRate(i, z, frequencyv, Qabsv, specificIntensityv);
-        /* Collisions with positive particles. Collisions with multiply charged
-		   particles are treated as if they can only change the charge by 1. This is
-		   technically incorrect, but the charging rate due to positive ions is very
-		   small anyway. */
         for (size_t j = 0; j < env._chargev.size(); j++)
+        {
             if (env._chargev[j] > 0)
                 Jtotal += collisionalChargingRate(i, env._T, z, env._chargev[j], env._massv[j], env._densityv[j]);
+        }
         return Jtotal;
     };
 
-    // The rate at which the grain moves out of charge Z, in the negative direction.
+    // The rate at which the grain moves out of charge Z, in the negative direction. Sums
+    // collisions over negative particles.
     auto chargeDownRate = [&](int z) -> double {
         double Jtotal{0};
-        // Collisions with negative particles
         for (size_t j = 0; j < env._chargev.size(); j++)
+        {
             if (env._chargev[j] < 0)
                 Jtotal += collisionalChargingRate(i, env._T, z, env._chargev[j], env._massv[j], env._densityv[j]);
+        }
         return Jtotal;
     };
 
     ChargeDistribution chargeDistribution;
     chargeDistribution.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin, resultZmax);
-
     return chargeDistribution;
 }
 
