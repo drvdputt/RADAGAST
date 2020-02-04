@@ -481,10 +481,6 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
     cd.plot("photoelectric/fZ.txt", header.str());
 }
 
-// TODO: optimize the following things by precalculating a number of frequently used values
-// (mainly exponentials). The plan is to store whatever cached values I need in the
-// GrainPhotoelectricCalculator class, and then use them to call optimized versions of the stuff
-// in WD01.
 double GrainPhotoelectricCalculator::ionizationPotential(int i, int z) const
 {
     return WD01::ionizationPotential(_sizev[i], z, _carOrSil);
