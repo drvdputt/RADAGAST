@@ -77,22 +77,37 @@ TEST_CASE("Peaked charge distribution")
 
     cd.calculateDetailedBalance(up, down, zmin, zmax);
 
+    // Check that everything sums to 1
+    double sum = 0;
+    for (int z = cd.zmin(); z <= cd.zmax(); z++) sum += cd.value(z);
+    DoctestUtils::checkTolerance("charge distribution normalization", sum, 1., 1.e-14);
+
     // Check that the peak is where expected
     for (int z = cd.zmin(); z < desiredPeak; z++) CHECK(cd.value(z) < cd.value(desiredPeak));
     for (int z = desiredPeak + 1; z <= cd.zmax(); z++) CHECK(cd.value(z) < cd.value(desiredPeak));
 
-    // If automatic trimming has happened, check that ratio of the density at the edge of the
-    // distribution is small enough compared to the densityt at the peak. Currently, the ratio
-    // where trimming occurs is hardcoded. Check the source of calculateDetailedBalance. Maybe make
-    // this fraction an option later.
-    if (cd.zmin() != zmin)
+    if (maxCharges)
     {
-        CHECK(cd.zmin() > zmin);
-        CHECK(cd.value(cd.zmin()) / cd.value(desiredPeak) < 0.1);
+        // If this option was used, check if it was applied correctly. Note that automatic trimming
+        // can still occur, even if this option was set, so the size of the solution can also be
+        // smaller than the given size.
+        CHECK(cd.numCharges() <= maxCharges);
     }
-    if (cd.zmax() != zmax)
+    else
     {
-        CHECK(cd.zmax() < zmax);
-        CHECK(cd.value(cd.zmax()) / cd.value(desiredPeak) < 0.1);
+        // Check if automatic trimming has happened, and if it functions correctly. The ratio of
+        // the density at the edge of the distribution should be small enough compared to the
+        // density at the peak. This ratio is currently hardcoded, but might be implemented as an
+        // option later.
+        if (cd.zmin() != zmin)
+        {
+            CHECK(cd.zmin() > zmin);
+            CHECK(cd.value(cd.zmin()) / cd.value(desiredPeak) < 0.1);
+        }
+        if (cd.zmax() != zmax)
+        {
+            CHECK(cd.zmax() < zmax);
+            CHECK(cd.value(cd.zmax()) / cd.value(desiredPeak) < 0.1);
+        }
     }
 }
