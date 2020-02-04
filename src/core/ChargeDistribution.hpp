@@ -26,6 +26,9 @@ public:
     /** Maximum charge for which data is stored */
     int zmax() const { return _zmin - 1 + _fz.size(); }
 
+    /** Width of the distribution data */
+    int numCharges() const { return _fz.size(); }
+
     /** Get the value of the charge distribution at the given z. Returns 0 if out of range. */
     double value(int z) const;
 
