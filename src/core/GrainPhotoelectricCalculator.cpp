@@ -31,8 +31,8 @@ int GrainPhotoelectricCalculator::minimumCharge(int i) const
     return WD01::minimumCharge(_sizev[i], Uait);
 }
 
-ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Environment& env,
-                                                                             const Array& Qabsv) const
+void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Environment& env, const Array& Qabsv,
+                                                               ChargeDistribution& cd) const
 {
     double a = _sizev[i];
 
@@ -74,7 +74,6 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
         }
         return Jtotal;
     };
-
     // The rate at which the grain moves out of charge Z, in the negative direction. Sums
     // collisions over negative particles.
     auto chargeDownRate = [&](int z) -> double {
@@ -86,10 +85,8 @@ ChargeDistribution GrainPhotoelectricCalculator::calculateChargeDistribution(int
         }
         return Jtotal;
     };
-
-    ChargeDistribution chargeDistribution;
-    chargeDistribution.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin, resultZmax);
-    return chargeDistribution;
+    // Limit the number of charges here
+    cd.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin, resultZmax, 128);
 }
 
 void GrainPhotoelectricCalculator::getPET_PDT_Emin(int i, int Z, double& pet, double& pdt, double& Emin) const
@@ -426,7 +423,8 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
         double intensityQabsIntegral = TemplatedUtils::integrate<double>(frequencyv, intensityTimesQabsv);
 
         // Calculate and write out the charge distribution and heating efficiency
-        ChargeDistribution cd = calculateChargeDistribution(i, env, Qabsv);
+        ChargeDistribution cd;
+        calculateChargeDistribution(i, env, Qabsv, cd);
         stringstream filename;
         filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2) << fixed
                  << a / Constant::ANG_CM << ".txt";
@@ -469,7 +467,8 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
     bool car = true;
     Array Qabsv = Testing::qAbsvvForTesting(car, {a}, frequencyv)[0];
 
-    ChargeDistribution cd = calculateChargeDistribution(0, env, Qabsv);
+    ChargeDistribution cd;
+    calculateChargeDistribution(0, env, Qabsv, cd);
 
     cout << "Zmax = " << cd.zmax() << " Zmin = " << cd.zmin() << '\n';
 

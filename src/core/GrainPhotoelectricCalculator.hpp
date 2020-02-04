@@ -62,7 +62,7 @@ public:
 
     /** Uses detailed balance to calculate the charge distribution of a grain a, in and environment
         env, given the absorption efficiency of that grain in function of the wavelength. */
-    ChargeDistribution calculateChargeDistribution(int i, const Environment& env, const Array& Qabsv) const;
+    void calculateChargeDistribution(int i, const Environment& env, const Array& Qabsv, ChargeDistribution& cd) const;
 
     /** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface area
         [erg s-1 cm-2], so we need to multipy with the surface area per volume unit (n_grain *

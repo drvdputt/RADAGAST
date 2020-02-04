@@ -74,7 +74,7 @@ void GrainSolution::recalculateChargeDistributions(const GrainPhotoelectricCalcu
     if (!_photoelectricCalculator) return;
 
     for (int i = 0; i < _population->numSizes(); i++)
-        _chargeDistributionv[i] = _photoelectricCalculator->calculateChargeDistribution(i, env, _population->qAbsv(i));
+        _photoelectricCalculator->calculateChargeDistribution(i, env, _population->qAbsv(i), _chargeDistributionv[i]);
 }
 
 double GrainSolution::photoelectricGasHeating(const GrainPhotoelectricCalculator::Environment& env) const
