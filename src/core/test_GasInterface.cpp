@@ -3,34 +3,48 @@
 #include "GasSolution.hpp"
 #include "Testing.hpp"
 
-TEST_CASE("Gas interface")
+TEST_CASE("Blackbodies test")
 {
     // Test if options don't make it crash
     Array frequencyv = Testing::defaultFrequencyv(100);
-    std::unique_ptr<GasModule::GasInterface> gip;
+    GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
+    GasModule::GrainInterface gri{};
 
-    SUBCASE("Full model blackbody test")
+    std::vector<double> Tv;
+    bool warnOnly = false;
+
+    SUBCASE("Very low color temperature - problems are expected here")
     {
-        std::vector<double> Tv = {1875., 3750., 7500., 15000., 30000.};
-        for (double Tc : Tv)
-        {
-            GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
-            GasModule::GrainInterface gri{};
-            GasSolution s = gi.solveInitialGuess(1000, Tc, gri);
-            double T = s.t();
-            CAPTURE(Tc);
-            CAPTURE(T);
-            DoctestUtils::checkTolerance("equilibrium temp vs color temp", T, Tc, 0.5);
-            WARN_MESSAGE(s.nH2() == 0., "without collisional dissociation, H2 won't go to "
-                                        "zero (both formation and dissociation likely 0)");
-        }
+        Tv = {66., 112., 225., 450., 900., 1875.};
+        warnOnly = true;
     }
-    SUBCASE("hhc option")
+    SUBCASE("Normal color temperature - should drive equilibrium")
     {
-        GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hhc");
+        Tv = { 3750., 7500., 15000., 30000.};
+        warnOnly = false;
     }
-    SUBCASE("hff and J V options")
+
+    for (double Tc : Tv)
     {
-        GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hff2", "8 2");
+        GasSolution s = gi.solveInitialGuess(1000, Tc, gri);
+        double T = s.t();
+        CAPTURE(Tc);
+        CAPTURE(T);
+        DoctestUtils::checkTolerance("equilibrium temp", T, Tc, 0.5, warnOnly);
+        WARN_MESSAGE(
+            s.nH2() == 0.,
+            "without collisional dissociation, H2 won't go to zero (both formation and dissociation likely 0)");
     }
+}
+
+TEST_CASE("hff and J V options")
+{
+    Array frequencyv = Testing::defaultFrequencyv(100);
+    GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hff2", "8 2");
+}
+
+TEST_CASE("hhc option")
+{
+    Array frequencyv = Testing::defaultFrequencyv(100);
+    GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hhc");
 }
