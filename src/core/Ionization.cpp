@@ -3,6 +3,7 @@
 #include "DebugMacros.hpp"
 #include "TemplatedUtils.hpp"
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 
 using namespace std;
@@ -139,9 +140,11 @@ double Ionization::heating(double np, double ne, double T, const Spectrum& speci
     // The heating is hence the total ionization rate (equal to the recombination rate since
     // we assume equilibrium), times the average energy of the release electron.
     double result = numberOfIonizations * topIntegral / bottom;
-
-    DEBUG("Ionization heating " << result << endl);
-
+    if (!std::isfinite(result))
+    {
+        DEBUG("Ionization heating was " << result << ", setting to zero.\n");
+        result = 0;
+    }
     return result;
 }
 
