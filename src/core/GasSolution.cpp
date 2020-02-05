@@ -1,5 +1,6 @@
 #include "GasSolution.hpp"
 #include "CollisionParameters.hpp"
+#include "DebugMacros.hpp"
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
@@ -86,6 +87,7 @@ double GasSolution::cooling() const
 {
     double freefreeCool = _freeFree.cooling(np() * ne(), _t);
     double hRecCool = Ionization::cooling(nH(), np(), ne(), _t);
+    DEBUG("Cooling contributions: FF" << freefreeCool << " FB " << hRecCool << '\n');
     return freefreeCool + hRecCool;
 }
 
@@ -93,11 +95,14 @@ double GasSolution::heating() const
 {
     // double freefreeHeat = _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity);
     // TODO: decide whether to keep the above, as it is negligible in any case I can imagine
-    double lineHeat = _hSolution->netHeating() + _h2Solution->netHeating();
+    double hLine = _hSolution->netHeating();
+    double h2Line = _h2Solution->netHeating();
     double hPhotoIonHeat = Ionization::heating(np(), ne(), _t, _specificIntensity);
     double dissHeat = _h2Solution->dissociationHeating(_specificIntensity);
     double grainHeat = grainHeating();
-    return lineHeat + hPhotoIonHeat + dissHeat + grainHeat;
+    DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
+                                        << dissHeat << " grain " << grainHeat << '\n');
+    return hLine + h2Line + hPhotoIonHeat + dissHeat + grainHeat;
 }
 
 double GasSolution::grainHeating(double* photoHeat, double* collCool) const
