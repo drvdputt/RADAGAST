@@ -1,5 +1,6 @@
 #include "SimpleH2.hpp"
 #include "CollisionParameters.hpp"
+#include "DebugMacros.hpp"
 #include "GloverAbel08.hpp"
 #include "LookupTable.hpp"
 #include "RadiationFieldTools.hpp"
@@ -49,8 +50,9 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
     // Energy of the psuedo level. See text below eq. A11 in TH85
     constexpr double Es = 2.6 / Constant::ERG_EV;
     _gamma4 = (colH + colH2) * _nH2s * Es;
-
     _collisionalExcitationCooling = gloverAbel08Cooling(cp);
+
+    DEBUG("Gamma4 " << _gamma4 << " GloverAbel08 " << _collisionalExcitationCooling << '\n');
 }
 
 double SimpleH2::dissociationRate(const Spectrum&) const
