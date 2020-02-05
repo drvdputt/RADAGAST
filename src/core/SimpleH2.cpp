@@ -104,8 +104,10 @@ double SimpleH2::gloverAbel08Cooling(const CollisionParameters& cp) const
     double coolPerH2LTE = _lteCool->evaluate(0, T);
     // erg s-1
 
-    // equation 39
-    double coolPerH2 = coolPerH2LTE / (1 + coolPerH2LTE / coolPerH2LowDensity);
+    // equation 39, in a safer (?) form (avoid divide by zero)
+    double coolPerH2 = 0.;
+    if (coolPerH2LowDensity > 0. && coolPerH2LTE > 0.)
+        coolPerH2 = coolPerH2LTE / (1. + coolPerH2LTE / coolPerH2LowDensity);
     return _nH2 * coolPerH2;
     // erg s-1 cm-3
 }
