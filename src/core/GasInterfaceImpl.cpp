@@ -67,9 +67,9 @@ namespace
         bool use_previous_solution;
     };
 
-    /* Function that will be used by the GSL search algorithm to find the equilibrium temperature.
-   The state of the system will be updated every time the algorithm calls this function (and
-   stored via the pointer suppied in the heating_f_params struct). */
+    // Function that will be used by the GSL search algorithm to find the equilibrium temperature.
+    // The state of the system will be updated every time the algorithm calls this function (and
+    // stored via the pointer suppied in the heating_f_params struct).
     double heating_f(double logT, void* params)
     {
         auto* p = static_cast<struct heating_f_params*>(params);
@@ -89,56 +89,77 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
 {
     GasSolution s = makeGasSolution(specificIntensity, &gri);
     if (n <= 0)
-        solveDensities(s, 0, 0, specificIntensity);
-    else
     {
-        const double Tmax = 100000.;
-        const double Tmin = 1.;
-        double logTmax = log10(Tmax);
-        const double logTmin = log10(Tmin);
-        const double logTtolerance = 1.e-3;
-
-        const gsl_root_fsolver_type* T = gsl_root_fsolver_brent;
-        gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
-
-        gsl_function F;
-        struct heating_f_params p = {this, n, &specificIntensity, &s, false};
-        F.function = &heating_f;
-        F.params = &p;
-
-        // For very high temperatures, the heating becomes positive again, and the GSL
-        // function will error out. It needs to to have different signs for the points
-        // bracketing the root.
-        double reduceMax = 1.;
-        while (heating_f(logTmax, &p) > 0)
-        {
-            while (logTmax - reduceMax < logTmin) reduceMax /= 2;
-
-            logTmax -= reduceMax;
-        }
-
-        // Iterate once to initialize the solution
-        gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
-        gsl_root_fsolver_iterate(solver);
-
-        // Then, start using the current solution as an initial guess of the next one
-        p.use_previous_solution = true;
-
-        gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
-        int test_interval = GSL_CONTINUE;
-        int counter = 0;
-        while (test_interval != GSL_SUCCESS)
-        {
-            gsl_root_fsolver_iterate(solver);
-            double lower = gsl_root_fsolver_x_lower(solver);
-            double upper = gsl_root_fsolver_x_upper(solver);
-            test_interval = gsl_root_test_interval(lower, upper, logTtolerance, logTtolerance);
-            counter++;
-        }
-        gsl_root_fsolver_free(solver);
-        // Remember that s gets updated through the pointer given to the function
-        // parameters
+        solveDensities(s, 0, 0, specificIntensity);
+        return s;
     }
+
+    const gsl_root_fsolver_type* T = gsl_root_fsolver_brent;
+    gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
+
+    gsl_function F;
+    struct heating_f_params p = {this, n, &specificIntensity, &s, false};
+    F.function = &heating_f;
+    F.params = &p;
+
+    const double Tmin = 1.;
+    const double logTmin = log10(Tmin);
+    const double logTtolerance = 1.e-3;
+    // Assume that the heating is positive at Tmin (this has yet to fail). Then, find a
+    // suitable upper limit for the bracket (one where the heating is negative. Try 10000
+    // first, which should be suitable for most applications. Then, keep multiplying the
+    // temperature with a constant factor to see if it helps.
+    const double Tmax = 10000.;
+    double logTmax = log10(Tmax);
+    double heating_f_Tmax = heating_f(logTmax, &p);
+    double heating_f_Tmin = heating_f(logTmin, &p);
+    double logFactor = log10(3.);
+    if (heating_f_Tmax >= 0. || heating_f_Tmin <= 0.)
+    {
+        logTmax += logFactor;
+        heating_f_Tmax = heating_f(logTmax, &p);
+    }
+
+    // Initialize the solver. Will fail if heating at Tmin and Tmax do not have different
+    // sign.
+    int status = gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
+    if (status == GSL_EINVAL)
+    {
+        // The heating is most likely negative on both sides in this case. Just solve for the
+        // lowest temperature as the 'safe' option.
+        cout << "heating at " << pow(10., logTmin) << " K -->" << heating_f_Tmin << '\n';
+        cout << "heating at " << pow(10., logTmax) << " K -->" << heating_f_Tmax << '\n';
+        solveDensities(s, n, Tmin, specificIntensity);
+        return s;
+    }
+
+    // Iterate once to initialize the solution
+    status = gsl_root_fsolver_iterate(solver);
+    if (status)
+    {
+        cerr << gsl_strerror(status) << " in gsl root iteration\n";
+        return s;
+    }
+    // Then, start using the current solution as an initial guess of the next one
+    p.use_previous_solution = true;
+
+    int test_interval = GSL_CONTINUE;
+    int counter = 0;
+    while (test_interval != GSL_SUCCESS)
+    {
+        status = gsl_root_fsolver_iterate(solver);
+        if (status)
+        {
+            cerr << gsl_strerror(status) << " in gsl root iteration\n";
+            return s;
+        }
+        double lower = gsl_root_fsolver_x_lower(solver);
+        double upper = gsl_root_fsolver_x_upper(solver);
+        test_interval = gsl_root_test_interval(lower, upper, logTtolerance, logTtolerance);
+        counter++;
+    }
+    gsl_root_fsolver_free(solver);
+    // s was already updated during the last time GSL called the heating function
     return s;
 }
 
