@@ -20,8 +20,8 @@ GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array& sizev, d
     for (size_t i = 0; i < _sizev.size(); i++)
     {
         _y1Cache[i] = WD01::y1(_sizev[i]);
-        _eStickPositiveCache = WD01::estick_positive(_sizev[i]);
-        _eStickNegativeCache = WD01::estick_negative(_sizev[i]);
+        _eStickPositiveCache[i] = WD01::estick_positive(_sizev[i]);
+        _eStickNegativeCache[i] = WD01::estick_negative(_sizev[i]);
     }
 }
 
