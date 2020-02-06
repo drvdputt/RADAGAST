@@ -20,6 +20,12 @@ namespace GasModule
     class GasInterface
     {
     public:
+        /** Static function which turns of any error handlers which could halt or abort the
+            program. Currently this simply turns off the GSL error handler. If this code would
+            become dependent on other libraries that have their own error handlers, this function
+            would be a useful way to turn them off too. */
+        static void errorHandlersOff();
+
         GasInterface(const std::valarray<double>& iFrequencyv, const std::valarray<double>& oFrequencyv,
                      const std::valarray<double>& eFrequencyv, const std::string& atomChoice = "",
                      const std::string& moleculeChoice = "");
