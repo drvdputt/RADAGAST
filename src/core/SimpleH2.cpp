@@ -52,7 +52,8 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
     _gamma4 = (colH + colH2) * _nH2s * Es;
     _collisionalExcitationCooling = gloverAbel08Cooling(cp);
 
-    DEBUG("Gamma4 " << _gamma4 << " GloverAbel08 " << _collisionalExcitationCooling << '\n');
+    DEBUG("G " << _g << " Gamma3 " << _gamma3 << " Gamma4 " << _gamma4 << " GA08 " << _collisionalExcitationCooling
+               << '\n');
 }
 
 double SimpleH2::dissociationRate(const Spectrum&) const
