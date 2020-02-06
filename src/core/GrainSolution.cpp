@@ -4,13 +4,12 @@
 #include "GrainH2Formation.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPhotoelectricData.hpp"
-#include "GrainPopulation.hpp"
 #include "Options.hpp"
 #include "SpecialFunctions.hpp"
 #include "Spectrum.hpp"
 #include "TemplatedUtils.hpp"
 
-GrainSolution::GrainSolution(const GrainPopulation* population)
+GrainSolution::GrainSolution(const GasModule::GrainPopulation* population)
     : _population{population},
       _chargeDistributionv(population->sizev().size()), _newTemperaturev{population->temperaturev()}
 {

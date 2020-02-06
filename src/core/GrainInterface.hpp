@@ -6,10 +6,10 @@
 #include <valarray>
 #include <vector>
 
-class GrainPopulation;
-
 namespace GasModule
 {
+    class GrainPopulation;
+
     /** List of grain types which have built-in values for H2 formation and the photoelectric
         effect. For anything else, the label 'OTHER' can be used, but then no contribution to the
         H2 formation or photoelectric heating will be made by this grain population. */

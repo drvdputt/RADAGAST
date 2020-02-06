@@ -9,7 +9,6 @@
 
 namespace GasModule
 {
-
     GrainInterface::GrainInterface() = default;
 
     GrainInterface::~GrainInterface() = default;

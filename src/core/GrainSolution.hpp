@@ -4,9 +4,9 @@
 #include "Array.hpp"
 #include "ChargeDistribution.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
+#include "GrainPopulation.hpp"
 #include <vector>
 
-class GrainPopulation;
 class SpeciesVector;
 class Spectrum;
 
@@ -20,12 +20,12 @@ public:
     /** Create a GrainSolution object for the given GrainPopulation. If the given population
         contains a GrainPhotoelectricData instance, then the GrainPhotoelectricCalculator will also
         be initialized. */
-    GrainSolution(const GrainPopulation* population);
+    GrainSolution(const GasModule::GrainPopulation* population);
 
     /** Recalculate the temperature for each size, by finding the temperature for which < blackbody
-        * kappa > = < radiation field * kappa > + extra heat (such as collisional, needs to be
-        * given for each size). Some things can probably be cached should this be slow. No idea how
-        * to handle this if stochastically heated grains would be a thing.
+        * kappa > = < radiation field * kappa > + extra heat (such as collisional, needs to be for
+        each size). Some things can probably be cached should this be slow. No idea how to handle
+        this if stochastically heated grains would be a thing.
 
         Calculates several extra contributions to the heating of the grains (collisions
         (Draine and Bertoldi 1996) and heat of H2 formation on the surface (Takahashi
@@ -59,7 +59,7 @@ public:
     double surfaceH2FormationRateCoeff(double Tgas) const;
 
 private:
-    const GrainPopulation* _population;
+    const GasModule::GrainPopulation* _population;
 
     // Charge distribution for each size
     std::vector<ChargeDistribution> _chargeDistributionv;
