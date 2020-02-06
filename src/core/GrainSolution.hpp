@@ -20,7 +20,7 @@ public:
     /** Create a GrainSolution object for the given GrainPopulation. If the given population
         contains a GrainPhotoelectricData instance, then the GrainPhotoelectricCalculator will also
         be initialized. */
-    GrainSolution(const GrainPopulation& population);
+    GrainSolution(const GrainPopulation* population);
 
     /** Recalculate the temperature for each size, by finding the temperature for which < blackbody
         * kappa > = < radiation field * kappa > + extra heat (such as collisional, needs to be

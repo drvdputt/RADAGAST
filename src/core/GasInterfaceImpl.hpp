@@ -117,7 +117,7 @@ public:
 private:
     /** Construct a new GasSolution model, passing all the necessary (references to) objects. The
         SpeciesModelManager is used to create the HModel and H2Model. */
-    GasSolution makeGasSolution(const Spectrum& specificIntensity, const GasModule::GrainInterface&) const;
+    GasSolution makeGasSolution(const Spectrum& specificIntensity, const GasModule::GrainInterface*) const;
 
     /** Create a species vector which is zero everywhere, except for e-, p+, H, and H2. Arguments:
         the total amount of H nuclei n, the ionized to total fraction (np / n), the molecular to

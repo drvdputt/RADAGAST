@@ -87,7 +87,7 @@ namespace
 GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specificIntensity,
                                                GasModule::GrainInterface& gri) const
 {
-    GasSolution s = makeGasSolution(specificIntensity, gri);
+    GasSolution s = makeGasSolution(specificIntensity, &gri);
     if (n <= 0)
         solveDensities(s, 0, 0, specificIntensity);
     else
@@ -145,7 +145,7 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
 GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum& specificIntensity,
                                              GasModule::GrainInterface& gri, double h2FormationOverride) const
 {
-    GasSolution s = makeGasSolution(specificIntensity, gri);
+    GasSolution s = makeGasSolution(specificIntensity, &gri);
     solveDensities(s, n, T, specificIntensity, false, h2FormationOverride);
     return s;
 }
@@ -315,7 +315,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
 // }
 
 GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
-                                              const GasModule::GrainInterface& gri) const
+                                              const GasModule::GrainInterface* gri) const
 {
     // TODO: rethink how the GasSolution is passed around, taking the following into account:
 

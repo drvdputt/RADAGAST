@@ -29,7 +29,7 @@ public:
         HModel and H2Model, ownership is transferred (using move) to this object, since their
         contents change while searching for the solution. When a non-trivial GrainInterface object
         is passed, this class will keep track of a list of GrainSolution objects. */
-    GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
+    GasSolution(const GasModule::GrainInterface* gri, const Spectrum& specificIntensity,
                 const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
                 const FreeBound& freeBound, const FreeFree& freeFree);
 

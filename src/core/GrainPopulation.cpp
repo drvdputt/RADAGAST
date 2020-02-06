@@ -14,9 +14,9 @@ GrainPopulation::GrainPopulation(GasModule::GrainTypeLabel type, const Array& si
                                  const Array& temperaturev, const Array& frequencyv, const std::vector<Array>& qAbsvv)
     : _sizev{sizev}, _densityv{densityv}, _temperaturev{temperaturev}, _qAbsvv{qAbsvv}
 {
-    Error::equalCheck("sizev.size() and densityv.size()", sizev.size(), densityv.size());
-    Error::equalCheck("sizev.size() and temperaturev.size()", sizev.size(), temperaturev.size());
-    Error::equalCheck("sizev.size() and qAbsvv.size()", sizev.size(), qAbsvv.size());
+    Error::equalCheck("sizev.size() and densityv.size()", _sizev.size(), _densityv.size());
+    Error::equalCheck("sizev.size() and temperaturev.size()", _sizev.size(), _temperaturev.size());
+    Error::equalCheck("sizev.size() and qAbsvv.size()", _sizev.size(), _qAbsvv.size());
 
     if (type == GasModule::GrainTypeLabel::CAR)
     {
@@ -36,12 +36,13 @@ GrainPopulation::GrainPopulation(GasModule::GrainTypeLabel type, const Array& si
     Array Tv =
         Testing::generateGeometricGridv(100, Options::grainsolution_minGrainTemp, Options::grainsolution_maxGrainTemp);
     Table<2> bbEmission(_sizev.size(), Tv.size());
+    Array blackbodyIntegrandv(frequencyv.size());
+
     for (size_t m = 0; m < _sizev.size(); m++)
     {
         double crossSection = Constant::PI * _sizev[m] * _sizev[m];
-        for (int t = 0; t < Tv.size(); t++)
+        for (size_t t = 0; t < Tv.size(); t++)
         {
-            Array blackbodyIntegrandv(frequencyv.size());
             for (size_t i = 0; i < frequencyv.size(); i++)
                 blackbodyIntegrandv[i] = qAbsvv[m][i] * SpecialFunctions::planck(frequencyv[i], Tv[t]);
 
@@ -58,6 +59,11 @@ void GrainPopulation::setDensityv(const Array& densityv)
 {
     Error::equalCheck("Size of new and old list of densities", densityv.size(), _densityv.size());
     _densityv = densityv;
+}
+
+size_t GrainPopulation::numSizes() const
+{
+    return _sizev.size();
 }
 
 void GrainPopulation::test() const

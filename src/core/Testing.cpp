@@ -439,13 +439,12 @@ void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainI
         bulkDen = 3.0;
 
     // write out grain size distribution, preferable in g cm-3
-    const auto* grainPopulationv = gr.populationv();
     for (size_t i = 0; i < gr.numPopulations(); i++)
     {
         ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
                      {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
 
-        const auto& pop = grainPopulationv->at(i);
+        const auto& pop = gr.populationv()->at(i);
         for (size_t m = 0; m < pop.numSizes(); m++)
         {
             double a = pop.size(m);

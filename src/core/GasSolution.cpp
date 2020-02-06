@@ -9,15 +9,18 @@
 #include "Ionization.hpp"
 #include "Options.hpp"
 
-GasSolution::GasSolution(const GasModule::GrainInterface& gri, const Spectrum& specificIntensity,
+GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum& specificIntensity,
                          const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
                          std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound, const FreeFree& freeFree)
     : _specificIntensity{specificIntensity}, _sv(speciesIndex), _hSolution(std::move(hModel)),
       _h2Solution(std::move(h2Model)), _freeBound{freeBound}, _freeFree{freeFree}
 {
-    _grainSolutionv.reserve(gri.numPopulations());
-    if (gri.populationv())
-        for (const auto& p : *gri.populationv()) _grainSolutionv.emplace_back(p);
+    int numPop = gri->numPopulations();
+    if (numPop)
+    {
+        _grainSolutionv.reserve(numPop);
+        for (int i = 0; i < numPop; i++) _grainSolutionv.emplace_back(&gri->populationv()->at(i));
+    }
 }
 
 void GasSolution::makeZero()

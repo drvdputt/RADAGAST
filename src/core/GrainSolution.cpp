@@ -10,11 +10,12 @@
 #include "Spectrum.hpp"
 #include "TemplatedUtils.hpp"
 
-GrainSolution::GrainSolution(const GrainPopulation& population)
-    : _population{&population}, _chargeDistributionv(population.numSizes()), _newTemperaturev{population.temperaturev()}
+GrainSolution::GrainSolution(const GrainPopulation* population)
+    : _population{population},
+      _chargeDistributionv(population->sizev().size()), _newTemperaturev{population->temperaturev()}
 {
-    if (population.photoelectricData())
-        _photoelectricCalculator = population.photoelectricData()->makeCalculator(population.sizev());
+    if (population->photoelectricData())
+        _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
 }
 
 void GrainSolution::recalculateTemperatures(const GrainPhotoelectricCalculator::Environment& env)
