@@ -49,8 +49,8 @@ namespace GasModule
                 for (size_t i = 0; i < frequencyv.size(); i++)
                     greybodyIntegrandv[i] = qAbsvv[m][i] * SpecialFunctions::planck(frequencyv[i], Tv[t]);
 
-                bbEmission(m, t) =
-                    crossSection * TemplatedUtils::integrate<double, Array, Array>(frequencyv, greybodyIntegrandv);
+                bbEmission(m, t) = Constant::FPI * crossSection
+                                   * TemplatedUtils::integrate<double, Array, Array>(frequencyv, greybodyIntegrandv);
             }
         }
         _greybodyCoolingCurves = LookupTable(Tv, bbEmission);

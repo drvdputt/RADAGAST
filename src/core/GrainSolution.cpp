@@ -45,14 +45,17 @@ void GrainSolution::recalculateTemperatures(const GrainPhotoelectricCalculator::
     }
 
     const Array& frequencyv = env._specificIntensity.frequencyv();
+    const Array& specificIntensityv = env._specificIntensity.valuev();
     const auto& qAbsvv = _population->qAbsvv();
 
     for (size_t i = 0; i < _population->numSizes(); i++)
     {
         double cross = Constant::PI * _population->size(i) * _population->size(i);
+        // work with the total absorption here (hence we multiply by 4pi and pi a^2). This makes it
+        // more straightforward to factor in the 'extra' heating contributions.
         double absorption =
-            cross
-            * TemplatedUtils::integrate<double, Array, Array>(frequencyv, qAbsvv[i] * env._specificIntensity.valuev());
+            Constant::FPI * cross
+            * TemplatedUtils::integrate<double, Array, Array>(frequencyv, qAbsvv[i] * specificIntensityv);
 
         auto heating = [&](double T) -> int {
             double bbEmission = 0;
