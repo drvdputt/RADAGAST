@@ -1,4 +1,5 @@
 #include "GrainPhotoelectricCalculator.hpp"
+#include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
 #include "IOTools.hpp"
@@ -294,6 +295,7 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
     double a = _sizev[i];
     double kT = env._T * Constant::BOLTZMAN;
     double kTgrain = Tgrain * Constant::BOLTZMAN;
+
     double lambdaG = cd.sumOverCharge([&](int zGrain) {
         double lambdaG_for_this_z = 0;
         // Not entirely sure if this is the right potential
@@ -302,15 +304,11 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
         for (size_t j = 0; j < env._massv.size(); j++)
         {
             // Dimensionless
-            double ZVg = env._chargev[j] * Vg;
+            int z_j = env._chargev[j];
+            double ZVg = z_j * Vg;
             double psi = ZVg / kT;
             double eta = psi <= 0 ? 1 - psi : exp(-psi);
             double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
-            double S = stickingCoefficient(i, zGrain, env._chargev[j]);
-            // cm s-1
-            double vbar = sqrt(8 * kT / Constant::PI / env._massv[j]);
-            // cm-3 * cm s-1 * erg = cm-2 s-1 erg
-
             // incoming collision
             double total = 2 * kT * ksi;
 
@@ -331,6 +329,28 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
                 // fine here.
                 if (env._chargev[j] == 1) total += Constant::RYDBERG * eta;
             }
+
+            double S = 0.;
+            if (z_j)
+            {
+                S = stickingCoefficient(i, zGrain, env._chargev[j]);
+            }
+            else
+            {
+                // TODO: for neutral particles, S needs to be the accomodation coefficient instead
+                // of the sticking coefficient. The value returned by the function above just gives
+                // 1 for neutral particles, but Baldwin states that it should be mM / (m^2 + M^2)
+                // (Draine 1978), with M the mass of a typical atom in the grain. Let's use 12 for
+                // now, which should work for graphite.
+                double m = env._massv[j];
+                double M = 12. * Constant::AMU_CGS;
+                S = m * M / (m * m + M * M);
+            }
+
+            // cm s-1
+            double vbar = sqrt(8 * kT / Constant::PI / env._massv[j]);
+
+            // cm-3 * cm s-1 * erg = cm-2 s-1 erg
             lambdaG_for_this_z += env._densityv[j] * vbar * S * total;
         }
         return lambdaG_for_this_z;
