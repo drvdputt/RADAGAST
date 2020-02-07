@@ -257,20 +257,22 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Envir
     double kT = Constant::BOLTZMAN * env._T;
     double eightkT3DivPi = 8 * kT * kT * kT / Constant::PI;
 
-    // For every collision partner, add the contibutions for each possible grain charge.
+    // For every charged collision partner (effectively electrons and protons), add the
+    // contributions for each possible grain charge.
     double particleSum = 0;
     for (size_t j = 0; j < env._chargev.size(); j++)
     {
-        // tau = akT / q^2 (WD01 eq 26)
         int z_j = env._chargev[j];
-        double tau = a * kT / z_j / z_j / Constant::ESQUARE;
-
-        double Zsum = cd.sumOverCharge([&](int zGrain) {
-            double ksi = zGrain / static_cast<double>(z_j);
-            return stickingCoefficient(i, zGrain, z_j) * WD01::lambdaTilde(tau, ksi);
-        });
-
-        particleSum += env._densityv[j] * sqrt(eightkT3DivPi / env._massv[j]) * Zsum;
+        if (z_j)
+        {
+            // tau = akT / q^2 (WD01 eq 26)
+            double tau = a * kT / z_j / z_j / Constant::ESQUARE;
+            double Zsum = cd.sumOverCharge([&](int zGrain) {
+                double ksi = zGrain / static_cast<double>(z_j);
+                return stickingCoefficient(i, zGrain, z_j) * WD01::lambdaTilde(tau, ksi);
+            });
+            particleSum += env._densityv[j] * sqrt(eightkT3DivPi / env._massv[j]) * Zsum;
+        }
     }
 
     /* The second term of equation 42: autoionization of grains with the most negative
