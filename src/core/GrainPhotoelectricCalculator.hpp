@@ -64,13 +64,13 @@ public:
         env, given the absorption efficiency of that grain in function of the wavelength. */
     void calculateChargeDistribution(int i, const Environment& env, const Array& Qabsv, ChargeDistribution& cd) const;
 
-    /** Recipe from 1991-Baldwin I tried to implement. Returns the cooling per grain surface area
-        [erg s-1 cm-2], so we need to multipy with the surface area per volume unit (n_grain *
-        sigma_grain). The last argument (bool) indicates whether we want to know the cooling of the
-        gas (false), or the heating of the grain (true). In the latter case, it adds a term that
-        takes into account the potential of the grain. */
+    /** The cooling due to collisions with a single grain of the given size [erg s-1]. This
+        function can also be used to calculate the extra heat that goes into the grain because of
+        this process. To do this, the last argument can be set to @c true, which adds two extra
+        terms (see recipe from 1991-Baldwin), which take into account the potential of the grain
+        and the energy of recombinations happening on its surface. */
     double gasGrainCollisionCooling(int i, const Environment& env, const ChargeDistribution& cd, double Tgrain,
-                                    bool addGrainPotential) const;
+                                    bool forGrain) const;
 
     /** The energy removed from the gas due to charged particles recombining with a grain, WD01
         equation 42. This is disabled in Options.hpp, because I think this conflicts (as in, double

@@ -289,13 +289,14 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Envir
 
 double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Environment& env,
                                                               const ChargeDistribution& cd, double Tgrain,
-                                                              bool addGrainPotential) const
+                                                              bool forGrain) const
 {
     double a = _sizev[i];
     double kT = env._T * Constant::BOLTZMAN;
     double kTgrain = Tgrain * Constant::BOLTZMAN;
     double lambdaG = cd.sumOverCharge([&](int zGrain) {
         double lambdaG_for_this_z = 0;
+        // Not entirely sure if this is the right potential
         double Ug = ionizationPotential(i, zGrain);
         double Vg = sqrt(Constant::ESQUARE) * Ug;
         for (size_t j = 0; j < env._massv.size(); j++)
@@ -317,20 +318,19 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
             // colliding particle (does not count for electrons, see text below eq 29)
             if (env._chargev[j] >= 0) total -= 2 * kTgrain * eta;
 
-            if (addGrainPotential)
+            if (forGrain)
             {
-                // A charged particle will slow down or speed up before it hits a
-                // charged grain
+                // A charged particle will slow down or speed up before it hits a charged grain
                 total -= ZVg * eta;
+
+                // when protons charge the grain, this means they recombine on the surface (not
+                // included in chemical network yet though). The recombination energy needs to go
+                // somewhere, so the grain gets extra heat. TODO: don't hardcode these things like
+                // this. For now this is not a problem because the proton is the only particle with
+                // charge 1. I'm pretty sure using 1 rydberg (= 13.6 eV = ionization potential) is
+                // fine here.
+                if (env._chargev[j] == 1) total += Constant::RYDBERG * eta;
             }
-
-            // when protons charge the grain, this means they recombine on the surface (not included
-            // in chemical network yet though). The recombination energy needs to go somewhere, so
-            // the grain gets extra heat. TODO: don't hardcode these things like this. For now this
-            // is not a problem because the proton is the only particle with charge 1. I'm pretty
-            // sure using 1 rydberg (= 13.6 eV = ionization potential) is fine here.
-            if (env._chargev[j] == 1) total += Constant::RYDBERG * eta;
-
             lambdaG_for_this_z += env._densityv[j] * vbar * S * total;
         }
         return lambdaG_for_this_z;
