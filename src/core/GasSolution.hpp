@@ -68,16 +68,17 @@ public:
     /** The total opacity at each frequency in 1 / cm */
     Array opacityv(const Array& oFrequencyv) const;
 
-    /** Total cooling */
+    /** Total cooling, including grain collisions. */
     double cooling() const;
 
     /** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
     double heating() const;
 
-    /** The heating by the grains only (expensive to calculate), minus the cooling by collisions
-        with the grains. Calculated together for efficiency. Optionally returns the individual
-        constributions through the pointer arguments. */
-    double grainHeating(double* photoHeat = nullptr, double* collCool = nullptr) const;
+    /** The heating by photoelectric effect on grains. */
+    double grainHeating() const;
+
+    /** The cooling by collisions with grains */
+    double grainCooling() const;
 
     /** Copies and/or recalculates many diagnostic values, and puts these in the given
         GasDiagnostics object */

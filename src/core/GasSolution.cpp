@@ -90,7 +90,8 @@ double GasSolution::cooling() const
 {
     double freefreeCool = _freeFree.cooling(np() * ne(), _t);
     double hRecCool = Ionization::cooling(nH(), np(), ne(), _t);
-    DEBUG("Cooling contributions: FF" << freefreeCool << " FB " << hRecCool << '\n');
+    double grainCool = grainCooling();
+    DEBUG("Cooling contributions: FF" << freefreeCool << " FB " << hRecCool << " Grcol " << grainCool << '\n');
     return freefreeCool + hRecCool;
 }
 
@@ -104,31 +105,36 @@ double GasSolution::heating() const
     double dissHeat = _h2Solution->dissociationHeating(_specificIntensity);
     double grainHeat = grainHeating();
     DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
-                                        << dissHeat << " grain " << grainHeat << '\n');
+                                        << dissHeat << " Grphot " << grainHeat << '\n');
     return hLine + h2Line + hPhotoIonHeat + dissHeat + grainHeat;
 }
 
-double GasSolution::grainHeating(double* photoHeat, double* collCool) const
+double GasSolution::grainHeating() const
 {
-    double grainPhotoelectricHeating = 0;
-    double gasGrainCooling = 0;
-
     // Specify the environment parameters
     GrainPhotoelectricCalculator::Environment env(
         _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
         {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
 
-    for (const auto& g : _grainSolutionv)
-    {
-        // This assumes that solveGrains was already called
-        grainPhotoelectricHeating += g.photoelectricGasHeating(env);
-        if (Options::cooling_gasGrainCollisions) gasGrainCooling += g.collisionalGasCooling(env);
-    }
+    // This assumes that solveGrains was already called
+    double grainPhotoelectricHeating = 0.;
+    for (const auto& g : _grainSolutionv) grainPhotoelectricHeating += g.photoelectricGasHeating(env);
+    return grainPhotoelectricHeating;
+}
 
-    if (photoHeat != nullptr) *photoHeat = grainPhotoelectricHeating;
-    if (collCool != nullptr) *collCool = gasGrainCooling;
+double GasSolution::grainCooling() const
+{
+    if (!Options::cooling_gasGrainCollisions) return 0.;
 
-    return grainPhotoelectricHeating - gasGrainCooling;
+    // Specify the environment parameters (TODO: find an alternative to this struct)
+    GrainPhotoelectricCalculator::Environment env(
+        _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
+        {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
+
+    // This assumes that solveGrains was already called
+    double gasGrainCooling = 0.;
+    for (const auto& g : _grainSolutionv) gasGrainCooling += g.collisionalGasCooling(env);
+    return gasGrainCooling;
 }
 
 void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
@@ -171,10 +177,9 @@ void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
     gd->setCooling("freefree", _freeFree.cooling(np() * ne(), _t));
 
     // I need this per grain size. Doing this thing for now.
-    double grainPhotoHeat = 0;
-    double grainCollCool = 0;
-    double totalGrainHeat = grainHeating(&grainPhotoHeat, &grainCollCool);
-    gd->setPhotoelectricHeating(Array({totalGrainHeat}));
+    double grainPhotoHeat = grainHeating();
+    double grainCollCool = grainCooling();
+    gd->setPhotoelectricHeating(Array({grainPhotoHeat}));
     gd->setHeating("total grainphoto", grainPhotoHeat);
     gd->setCooling("grain collisions", grainCollCool);
 }

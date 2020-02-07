@@ -25,15 +25,15 @@ void GrainSolution::recalculateTemperatures(const GrainPhotoelectricCalculator::
     {
         for (int i = 0; i < _population->numSizes(); i++)
         {
+            // Heat going into grain due to collisions
             extraGrainHeatPerSize[i] += _photoelectricCalculator->gasGrainCollisionCooling(
                 i, env, _chargeDistributionv[i], _newTemperaturev[i], true);
-            // cout << "extra grain heat " << m << " " << grainHeatPerSizev[m] << '\n';
 
-            // TODO: cache this if slow (is calculated in photoelectricGasHeating too)
+            // Reduction of heating due to ejection of photoelectrons. TODO: cache this if slow (is
+            // calculated in photoelectricGasHeating too)
             double grainPhotoPerSize =
                 _photoelectricCalculator->heatingRateA(i, env, _population->qAbsv(i), _chargeDistributionv[i]);
             extraGrainHeatPerSize[i] -= grainPhotoPerSize;
-            // cout << "- photo heat " << m << " " << grainPhotoPerSize << '\n';
         }
     }
 
@@ -101,12 +101,9 @@ double GrainSolution::collisionalGasCooling(const GrainPhotoelectricCalculator::
 
     double total = 0;
     for (int i = 0; i < _population->numSizes(); i++)
-    {
-        double nd = _population->density(i);
-        total += nd
+        total += _population->density(i)
                  * _photoelectricCalculator->gasGrainCollisionCooling(i, env, _chargeDistributionv[i],
                                                                       _population->temperature(i), false);
-    }
     return total;
 }
 
