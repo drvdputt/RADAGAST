@@ -35,11 +35,11 @@ namespace GasModule
         }
         // else, no data is available and these will be nullptr
 
-        // Optimization: pre-calculate the modified blackbody cooling curve here
+        // Optimization: pre-calculate the modified greybody cooling curve here
         Array Tv = Testing::generateGeometricGridv(100, Options::grainsolution_minGrainTemp,
                                                    Options::grainsolution_maxGrainTemp);
         Table<2> bbEmission(_sizev.size(), Tv.size());
-        Array blackbodyIntegrandv(frequencyv.size());
+        Array greybodyIntegrandv(frequencyv.size());
 
         for (size_t m = 0; m < _sizev.size(); m++)
         {
@@ -47,13 +47,13 @@ namespace GasModule
             for (size_t t = 0; t < Tv.size(); t++)
             {
                 for (size_t i = 0; i < frequencyv.size(); i++)
-                    blackbodyIntegrandv[i] = qAbsvv[m][i] * SpecialFunctions::planck(frequencyv[i], Tv[t]);
+                    greybodyIntegrandv[i] = qAbsvv[m][i] * SpecialFunctions::planck(frequencyv[i], Tv[t]);
 
                 bbEmission(m, t) =
-                    crossSection * TemplatedUtils::integrate<double, Array, Array>(frequencyv, blackbodyIntegrandv);
+                    crossSection * TemplatedUtils::integrate<double, Array, Array>(frequencyv, greybodyIntegrandv);
             }
         }
-        _blackbodyCoolingCurves = LookupTable(Tv, bbEmission);
+        _greybodyCoolingCurves = LookupTable(Tv, bbEmission);
     }
 
     GrainPopulation::GrainPopulation(GrainPopulation&&) = default;
@@ -73,6 +73,6 @@ namespace GasModule
 
     double GrainPopulation::totalThermalEmission(int m, double T) const
     {
-        return _blackbodyCoolingCurves.evaluate(m, T);
+        return _greybodyCoolingCurves.evaluate(m, T);
     }
 }  // namespace GasModule

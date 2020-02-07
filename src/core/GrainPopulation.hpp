@@ -72,7 +72,7 @@ namespace GasModule
         std::unique_ptr<GrainPhotoelectricData> _photoelectricData;
         // Total grey body emission for a set of temperatures (first argument of
         // LookupTable::evaluate is the size index)
-        LookupTable _blackbodyCoolingCurves;
+        LookupTable _greybodyCoolingCurves;
     };
 }  // namespace GasModule
 
