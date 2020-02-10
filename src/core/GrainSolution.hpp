@@ -5,6 +5,7 @@
 #include "ChargeDistribution.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPopulation.hpp"
+#include "Testing.hpp"
 #include <vector>
 
 class SpeciesVector;
@@ -16,6 +17,9 @@ class Spectrum;
     GrainPhotoelectricCalculator which might do some caching. */
 class GrainSolution
 {
+    friend void Testing::writeGrains(const std::string& outputPath, const std::vector<GrainSolution>& grs,
+                                     bool bulkCar);
+
 public:
     /** Create a GrainSolution object for the given GrainPopulation. If the given population
         contains a GrainPhotoelectricData instance, then the GrainPhotoelectricCalculator will also

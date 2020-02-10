@@ -428,7 +428,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
     cout << "Bralpha / HBeta " << evaluateSpectrum(fBralpha) / Hbeta << endl;
 }
 
-void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr, bool bulkCar)
+void Testing::writeGrains(const std::string& outputPath, const std::vector<GrainSolution>& grsv, bool bulkCar)
 {
     // Assume a certain bulk density (values taken from SKIRT source code for Draine
     // Graphite and Draine Silicate)
@@ -439,20 +439,22 @@ void Testing::writeGrains(const std::string& outputPath, const GasModule::GrainI
         bulkDen = 3.0;
 
     // write out grain size distribution, preferable in g cm-3
-    for (size_t i = 0; i < gr.numPopulations(); i++)
+    for (size_t i = 0; i < grsv.size(); i++)
     {
         ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
                      {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
 
-        const auto& pop = gr.populationv()->at(i);
-        for (size_t m = 0; m < pop.numSizes(); m++)
+        const auto* pop = grsv[i]._population;
+        for (size_t m = 0; m < pop->numSizes(); m++)
         {
-            double a = pop.size(m);
-            double numberDen = pop.density(m);
+            double a = pop->size(m);
+            double numberDen = pop->density(m);
             double mass = 4. / 3. * Constant::PI * a * a * a * bulkDen;
-            f.writeLine<Array>({a, numberDen, numberDen * mass, pop.temperature(m)});
+            double t = grsv[i]._newTemperaturev[m];
+            f.writeLine<Array>({a, numberDen, numberDen * mass, t});
         }
     }
+    // TODO: write out charge distributions
 }
 
 void Testing::plotHeatingCurve_main()
@@ -938,7 +940,7 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
         }
         GasModule::GasState gs = s.makeGasState(gasInterface.oFrequencyv(), gasInterface.eFrequencyv());
         writeGasState(prefix, gasInterface, gs);
-        writeGrains(prefix, gri);
+        writeGrains(prefix, s.grainSolutionv(), true);
         // plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 
         vector<string> populationColumns = {"label", "energy", "density"};
