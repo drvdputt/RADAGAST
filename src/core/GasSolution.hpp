@@ -97,6 +97,10 @@ public:
         (GrainSolution objects) are summed, which use their updated temperature value. */
     double kGrainH2FormationRateCoeff() const;
 
+    /** Access to the vector of grain solutions (one for each grain population, in the same order),
+        for diagnostic purposes. */
+    const std::vector<GrainSolution>& grainSolutionv() const { return _grainSolutionv; }
+
 private:
     std::vector<GrainSolution> _grainSolutionv;
     const Spectrum& _specificIntensity;

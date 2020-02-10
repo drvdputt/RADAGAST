@@ -92,7 +92,7 @@ double GasSolution::cooling() const
     double hRecCool = Ionization::cooling(nH(), np(), ne(), _t);
     double grainCool = grainCooling();
     DEBUG("Cooling contributions: FF" << freefreeCool << " FB " << hRecCool << " Grcol " << grainCool << '\n');
-    return freefreeCool + hRecCool;
+    return freefreeCool + hRecCool + grainCool;
 }
 
 double GasSolution::heating() const

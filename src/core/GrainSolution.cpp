@@ -11,7 +11,7 @@
 
 GrainSolution::GrainSolution(const GasModule::GrainPopulation* population)
     : _population{population},
-      _chargeDistributionv(population->sizev().size()), _newTemperaturev{population->temperaturev()}
+      _chargeDistributionv(population->sizev().size()), _newTemperaturev{population->initialTemperaturev()}
 {
     if (population->photoelectricData())
         _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
@@ -106,7 +106,7 @@ double GrainSolution::collisionalGasCooling(const GrainPhotoelectricCalculator::
     for (int i = 0; i < _population->numSizes(); i++)
         total += _population->density(i)
                  * _photoelectricCalculator->gasGrainCollisionCooling(i, env, _chargeDistributionv[i],
-                                                                      _population->temperature(i), false);
+                                                                      _newTemperaturev[i], false);
     return total;
 }
 

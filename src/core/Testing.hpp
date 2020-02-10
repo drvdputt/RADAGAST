@@ -9,6 +9,7 @@
 
 class FreeBound;
 class GasInterfaceImpl;
+class GrainSolution;
 class LevelCoefficients;
 class Spectrum;
 
@@ -53,7 +54,7 @@ namespace Testing
 
     /** bulkCar is a hack to be able to write out the mass density. The same bulk density is
         assumed for all grain populations. */
-    void writeGrains(const std::string& outputPath, const GasModule::GrainInterface& gr, bool bulkCar = true);
+    void writeGrains(const std::string& outputPath, const std::vector<GrainSolution>& grs, bool bulkCar);
 
     void plotHeatingCurve_main();
     void plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
