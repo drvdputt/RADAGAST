@@ -41,10 +41,10 @@ void ChargeDistribution::calculateDetailedBalance(std::function<double(int z)> c
     {
         // Compare the up and down rates for Z and Z+1 respectively
         // goal: up * f(z) == down * f(z+1)
-        // factor up/down == f(z+1)/f(z)
-        // --> factor > 1 means upward slope and vice versa
-        double factor = chargeUpRatef(currentZ) / chargeDownRatef(currentZ + 1);
-        if (factor > 1)
+        // factor up/down == f(z+1)/f(z) > 1 means upward slope and vice versa
+        double up = chargeUpRatef(currentZ);
+        double down = chargeDownRatef(currentZ + 1);
+        if (up > down)
         {
             // Upward slope --> the maximum is more to the right
             lowerbound = currentZ;
