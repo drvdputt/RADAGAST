@@ -8,24 +8,9 @@ Array RadiationFieldTools::generateSpecificIntensityv(const Array& frequencyv, d
     for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
         I_nu[iFreq] = SpecialFunctions::planck(frequencyv[iFreq], Tc);
 
-    // Cut out the UV part
-    size_t i = 0;
-    size_t startUV, endUV;
-    while (frequencyv[i] < nuMinHabing && i < frequencyv.size()) i++;
-    startUV = i > 0 ? i - 1 : 0;
-    while (frequencyv[i] < nuMaxHabing && i < frequencyv.size()) i++;
-    endUV = i + 1;
-    std::vector<double> frequenciesUV(begin(frequencyv) + startUV, begin(frequencyv) + endUV);
-    std::vector<double> isrfUV(begin(I_nu) + startUV, begin(I_nu) + endUV);
-
-    // Integrate over the UV only
-    double UVdensity = Constant::FPI / Constant::LIGHT * TemplatedUtils::integrate<double>(frequenciesUV, isrfUV);
-    double currentG0 = UVdensity / Constant::HABING_DENS;
-
-    // Rescale to _G0
+    // Rescale to the desired G0
+    double currentG0 = gHabing(Spectrum(frequencyv, I_nu));
     I_nu *= G0 / currentG0;
-
-    std::vector<double> isrfUVbis(begin(I_nu) + startUV, begin(I_nu) + endUV);
     return I_nu;
 }
 
