@@ -2,6 +2,7 @@
 #include "Constants.hpp"
 #include "Error.hpp"
 #include "Options.hpp"
+#include <gsl/gsl_math.h>
 #include <cmath>
 
 using namespace std;
@@ -102,10 +103,8 @@ double WD01::yield_cached(double a, int Z, double hnuDiff, double Emin, bool car
     // Below photoelectric threshold
     if (hnuDiff < 0) return 0;
 
-    // Compute yield (y2, y1, y0, and finally Y)
-
-    // Energy distribution parameters (parabola that becomes zero at Elow and Ehigh. See
-    // WD01 text between eq 10 and 11).
+    // Energy distribution parameters (parabola that becomes zero at Elow and Ehigh. See WD01 text
+    // between eq 10 and 11).
     double Elow, Ehigh;
     if (Z < 0)
     {
@@ -118,23 +117,24 @@ double WD01::yield_cached(double a, int Z, double hnuDiff, double Emin, bool car
         Ehigh = hnuDiff;
     }
 
-    double y2 = escapingFraction(Z, Elow, Ehigh);
-    double y1 = y1_cached;
-
     // Calculate y0 from eq 9, 16, 17
     double thetaOverW = hnuDiff;
     if (Z >= 0) thetaOverW += (Z + 1) * Constant::ESQUARE / a;
     thetaOverW /= workFunction(carbonaceous);
-    double thetaOverWtothe5th = thetaOverW * thetaOverW;
-    thetaOverWtothe5th *= thetaOverWtothe5th * thetaOverW;
 
-    double y0;
     // Different formulae for carbonaceous and silicate
+    double y0;
     if (carbonaceous)
+    {
+        double thetaOverWtothe5th = gsl_pow_5(thetaOverW);
         y0 = 9e-3 * thetaOverWtothe5th / (1 + 3.7e-2 * thetaOverWtothe5th);
+    }
     else
+    {
         y0 = 0.5 * thetaOverW / (1. + 5. * thetaOverW);
-
+    }
+    double y1 = y1_cached;
+    double y2 = escapingFraction(Z, Elow, Ehigh);
     return y2 * min(y0 * y1, 1.);
 }
 
@@ -148,16 +148,10 @@ double WD01::y1(double a)
     // to calculate.
     constexpr double la = 100 * Constant::ANG_CM;
     constexpr double le = 10 * Constant::ANG_CM;
-
     double beta = a / la;
     double alpha = beta + a / le;
     double beta2 = beta * beta;
     double alpha2 = alpha * alpha;
-
-    /* TODO: expm1 is has a heavy weight in the yield calculation performance. I should
-	   cache these per grain size. However, As stated above, la might depend on the
-	   frequency in the future, so this might become harder than it seems. Of course,
-	   caching for each frequency and size should also be possible. */
     double result =
         beta2 / alpha2 * (alpha2 - 2. * alpha - 2. * expm1(-alpha)) / (beta2 - 2. * beta - 2. * expm1(-beta));
     return result;
