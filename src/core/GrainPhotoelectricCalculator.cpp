@@ -153,8 +153,8 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, const Array& fr
     double a = _sizev[i];
     const double e2_a = Constant::ESQUARE / a;
 
-    // It's cheaper to calculate these together (and safer, less code duplication), so I
-    // made this funtion, and pass these values as arguments when needed.
+    // It's cheaper to calculate these together (and safer, less code duplication), so I made this
+    // funtion, and pass these values as arguments when needed.
     double pet, pdt, Emin;
     getPET_PDT_Emin(i, Z, pet, pdt, Emin);
 
@@ -165,11 +165,11 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, const Array& fr
         double Y = photoelectricYield(i, Z, hnuDiff, Emin);
 
         double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
-        // The integral over the electron energy distribution (integral E f(E) dE), over
-        // the energy range for which electrons can escape
+        // The integral over the electron energy distribution (integral E f(E) dE), over the energy
+        // range for which electrons can escape
         double IntE = WD01::energyIntegral(Elow, Ehigh, Emin);
-        // Divide by (integral f(E) dE) over the same range, which normalizes the above
-        // value --> IntE / y2 gives an average energy
+        // Divide by (integral f(E) dE) over the same range, which normalizes the above value -->
+        // IntE / y2 gives an average energy
         double y2 = WD01::escapingFraction(Z, Elow, Ehigh);
 
         return Y * IntE / y2;
@@ -194,8 +194,7 @@ double GrainPhotoelectricCalculator::heatingRateA(int i, const Environment& env,
         double heatAZ =
             heatingRateAZ(i, Z, env._specificIntensity.frequencyv(), Qabsv, env._specificIntensity.valuev());
 
-        /* Fraction of grains in this charge state * heating by a single particle of
-		   charge Z. */
+        // Fraction of grains in this charge state * heating by a single particle of charge Z.
         totalHeatingForGrainSize += fZz * heatAZ;
     }
     return totalHeatingForGrainSize;
@@ -205,8 +204,8 @@ double GrainPhotoelectricCalculator::emissionRate(int i, int Z, const Array& fre
                                                   const Array& specificIntensityv) const
 {
     double a = _sizev[i];
-    // Notice that there is quite some duplication compared to heatingRateAZ, but i didn't
-    // find it worth the effort to make more abstractions.
+    // Notice that there is quite some duplication compared to heatingRateAZ, but i didn't find it
+    // worth the effort to make more abstractions.
     double pet, pdt, Emin;
     getPET_PDT_Emin(i, Z, pet, pdt, Emin);
 
@@ -275,13 +274,12 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Envir
         }
     }
 
-    /* The second term of equation 42: autoionization of grains with the most negative
-	   charge inhibits the cooling of the gas. */
-    // EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
+    // The second term of equation 42: autoionization of grains with the most negative charge
+    // inhibits the cooling of the gas. EA(Zmin) = IP(Zmin-1) because IP(Z) = EA(Z+1)
     double secondTerm = 0;
-    /* This term is only included when the population of the maximally negative grain charge
-	   minimumCharge is significant. If it is not siginicant, then fZ will not cover
-	   minimumCharge, (and Zmin > minimumCharge). */
+    // This term is only included when the population of the maximally negative grain charge
+    // minimumCharge is significant. If it is not siginicant, then fZ will not cover minimumCharge,
+    // (and Zmin > minimumCharge).
     int zmin = cd.zmin();
     if (zmin == minimumCharge(i))
         secondTerm = cd.value(zmin) * collisionalChargingRate(i, env._T, zmin, -1, Constant::ELECTRONMASS, env._ne)
@@ -422,8 +420,8 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
     const Environment env(specificIntensity, gasT, ne, ne, {-1, 1}, {ne, ne},
                           {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
-    /* File that writes out the absorption efficiency, averaged using the input radiation
-	   field as weights. */
+    // File that writes out the absorption efficiency, averaged using the input radiation field as
+    // weights.
     ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
 
     // Output file will contain one line for every grain size
