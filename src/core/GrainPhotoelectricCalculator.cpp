@@ -338,12 +338,10 @@ double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Envir
             else
             {
                 // TODO: for neutral particles, S needs to be the accomodation coefficient instead
-                // of the sticking coefficient. The value returned by the function above just gives
-                // 1 for neutral particles, but Baldwin states that it should be mM / (m^2 + M^2)
-                // (Draine 1978), with M the mass of a typical atom in the grain. Let's use 12 for
-                // now, which should work for graphite.
+                // of the sticking coefficient. Baldwin states that it should be mM / (m^2 + M^2)
+                // and references Draine (1978), with M the mass of a typical atom in the grain.
                 double m = env._massv[j];
-                double M = 12. * Constant::AMU_CGS;
+                double M = WD01::atomMass(_carOrSil);
                 S = m * M / (m * m + M * M);
             }
 

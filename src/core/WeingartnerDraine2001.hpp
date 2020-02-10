@@ -6,6 +6,10 @@ namespace WD01
     /* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
        (2001) */
 
+    /** Return a mass value representative fhe average atom in the grain. Currently returns the
+        mass of either C or Si in grams. */
+    double atomMass(bool carbonaceous);
+
     /** Return the work function as mentioned in the paper, for carbonaceous/graphitic grains
         (carbonaceous == true) or silicate grains (carbonaceous == false). */
     double workFunction(bool carbonaceous);

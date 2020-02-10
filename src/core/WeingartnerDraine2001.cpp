@@ -6,6 +6,11 @@
 
 using namespace std;
 
+double WD01::atomMass(bool carbonaceous)
+{
+    return carbonaceous ? 12 * Constant::AMU_CGS : 28 * Constant::AMU_CGS;
+}
+
 double WD01::workFunction(bool carbonaceous)
 {
     return carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
