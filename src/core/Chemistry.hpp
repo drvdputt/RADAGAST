@@ -56,9 +56,9 @@ public:
         speeds is also given (rateCoeffv * density product). It will be used as a workspace, and
         can also be used to diagnose the speed of each reaction [s-1]. It needs to be of size
         _numReactions. The output for Fv and the current nv are passed by pointer, because their
-        memory is owned by two gsl_vector instances. When needed, an Eigen::Map<EVector> is used in
-        the implementation (such an object can not simply be passed as an argument, as there are
-        lots of weird semantics involved). */
+        memory is owned by two gsl_vector instances. An Eigen::Map<EVector> is used in the
+        implementation (such an object can not simply be passed as an argument, as there are lots
+        of weird semantics involved). */
     void evaluateFv(double* FvOutput, const double* nv, const EVector& rateCoeffv, EVector& kv) const;
 
     /** Evaluate the Jacobian of Fv [s-1]. Every column j is the derivative of Fv towards n_j. For

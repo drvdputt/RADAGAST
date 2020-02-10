@@ -90,9 +90,15 @@ void Chemistry::evaluateFv(double* FvOutput, const double* nv, const EVector& ra
     // factor n_s ^ R_s,r (see notes).
     for (int r = 0; r < _numReactions; r++) kv(r) = reactionSpeed(nv, rateCoeffv, r);
 
-    // Matrix multiplication between the net stoichiometry matrix (indexed on species,
-    // reaction) and the rate vector (indexed on reaction).
-    Eigen::Map<EVector>(FvOutput, _numSpecies) = _netStoichvv * kv;
+    // Matrix multiplication between the net stoichiometry matrix (indexed on species, reaction)
+    // and the rate vector (indexed on reaction).
+
+    // Using noalias() shaves roughly 30 percent off the total time spent on the chemistry. It
+    // tells Eigen that it is safe to write to FvOutput while calculating the product, so no
+    // temporary value is needed. This gets rid of an automatically generated resize() call.
+    // Normally, Eigen decides the best option by itself, but here it can't because it doesn't know
+    // at compile time what FvOuput points to, so it chooses the safest option by default.
+    Eigen::Map<EVector>(FvOutput, _numSpecies).noalias() = _netStoichvv * kv;
 }
 
 void Chemistry::evaluateJvv(double* JvvDataRowMajor, const double* nv, const EVector& rateCoeffv, EMatrix& Jkvv) const
@@ -103,7 +109,7 @@ void Chemistry::evaluateJvv(double* JvvDataRowMajor, const double* nv, const EVe
 
     // (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j). EMatrixRM has to be used because GSL stores
     // dfdy in row major order.
-    Eigen::Map<EMatrixRM>(JvvDataRowMajor, _numSpecies, _numSpecies) = _netStoichvv * Jkvv;
+    Eigen::Map<EMatrixRM>(JvvDataRowMajor, _numSpecies, _numSpecies).noalias() = _netStoichvv * Jkvv;
 }
 
 EMatrix_int Chemistry::makeReactantStoichvv() const
