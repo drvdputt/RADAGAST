@@ -49,11 +49,9 @@ EVector SimpleHChemistry::rateCoeffv(double T, const Spectrum& specificIntensity
     k(reactionIndex("H collisional ionization")) = Ionization::collisionalRateCoeff(T);
     k(reactionIndex("H radiative recombination")) = Ionization::recombinationRateCoeff(T);
     k(reactionIndex("H2 dissociation")) = kDissFromH2Levels;
-    /* The rate of this reaction is twice the H2 formation rate. See comment in constructor
-	   implementation. */
+    // The rate of this reaction is twice the H2 formation rate. See comment in constructor
+    // implementation.
     k(reactionIndex("half H2 formation")) = 2 * kH2FormationGrain;
-
     DEBUG("0 photo-ion; 1 coll-ion; 2 rad-rec; 3 dissoc; 4 H2form\n" << k << '\n');
-
     return k;
 }

@@ -21,10 +21,6 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
 
     // equation A8 and a factor 1e-1 (from the text: 10% pumps end up in dissociation)
     double Rpump = 3.4e-10 * beta * _g;
-    _solomonDissoc = .1 * Rpump;
-    // equation A12
-    _directDissoc = 1e-11 * _g;
-
     constexpr double Rdecay = 2e-7;  // s-1
 
     // Equation A13 and A14, for downward collisions --> deexcitation heating. Divide by 6 here: see
@@ -54,12 +50,16 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
 
     DEBUG("G " << _g << " Gamma3 " << _gamma3 << " Gamma4 " << _gamma4 << " GA08 " << _collisionalExcitationCooling
                << '\n');
+
+    _solomonDissoc = .1 * Rpump;
+    // equation A12, watch out for nan
+    _directDissoc = _nH2 > 0 ? 1e-11 * _g * _nH2s / _nH2 : 0;
 }
 
 double SimpleH2::dissociationRate(const Spectrum&) const
 {
     // In TH85, only H2* can be dissociated directly
-    return _solomonDissoc + _nH2s / _nH2 * _directDissoc;
+    return _solomonDissoc + _directDissoc;
 }
 
 double SimpleH2::dissociationHeating(const Spectrum&) const
