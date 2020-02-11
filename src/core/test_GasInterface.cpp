@@ -70,3 +70,24 @@ TEST_CASE("hhc option")
     Array frequencyv = Testing::defaultFrequencyv(100);
     GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hhc");
 }
+
+TEST_CASE("zero radiation field")
+{
+    Array frequencyv = Testing::defaultFrequencyv(300);
+    Array specificIntensityv(frequencyv.size());
+    Spectrum specificIntensity(frequencyv, specificIntensityv);
+    GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
+    double nHtotal = 0.;
+    GasModule::GrainInterface gri;
+
+    SUBCASE("zero dens") {}
+    SUBCASE("nonzero dens")
+    {
+        nHtotal = 100.;
+        SUBCASE("zero grains") {}
+        SUBCASE("nonzero grains") { Testing::genMRNDust(gri, nHtotal, specificIntensity, true); }
+    }
+
+    GasSolution s = gi.solveTemperature(nHtotal, specificIntensity, gri);
+    // no checks for now, just make sure it doesn't crash
+}
