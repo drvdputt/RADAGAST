@@ -19,7 +19,8 @@ namespace Testing
     std::vector<Array> qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv);
 
     // Makeshift dust equilibrium calculation
-    double equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv, const Array& crossSectionv);
+    double equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv, const Array& crossSectionv,
+                                  double minT, double maxT);
 
     // USEFUL CONSTANTS //
     constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);
@@ -93,7 +94,7 @@ namespace Testing
 
     GasModule::GasInterface genHonlyModel();
 
-    GasModule::GrainInterface genMRNDust(double nHtotal, const Spectrum& specificIntensityv);
+    void genMRNDust(GasModule::GrainInterface&, double nHtotal, const Spectrum& specificIntensityv, bool car);
 
     /** Run the model with the maximum number of levels, and iterate until the temperature
         converges. */

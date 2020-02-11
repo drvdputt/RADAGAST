@@ -110,14 +110,22 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
     // first, which should be suitable for most applications. Then, keep multiplying the
     // temperature with a constant factor to see if it helps.
     const double Tmax = 10000.;
+    const double Tmaxmax = 1.e7;
     double logTmax = log10(Tmax);
+    const double logTmaxmax = log10(Tmaxmax);
     double heating_f_Tmax = heating_f(logTmax, &p);
     double heating_f_Tmin = heating_f(logTmin, &p);
     double logFactor = log10(3.);
-    if (heating_f_Tmax >= 0. || heating_f_Tmin <= 0.)
+    while (heating_f_Tmax >= 0. && logTmax < logTmaxmax)
     {
         logTmax += logFactor;
         heating_f_Tmax = heating_f(logTmax, &p);
+    }
+    if (logTmax > logTmaxmax && heating_f_Tmax >= 0.)
+    {
+        // If net heating is still positive, just solve for the maximum temperature.
+        solveDensities(s, n, Tmax, specificIntensity);
+        return s;
     }
 
     // Initialize the solver. Will fail if heating at Tmin and Tmax do not have different

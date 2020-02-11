@@ -162,14 +162,8 @@ vector<Array> Testing::qAbsvvForTesting(bool car, const Array& av, const Array& 
 }
 
 double Testing::equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv,
-                                       const Array& crossSectionv)
+                                       const Array& crossSectionv, double minT, double maxT)
 {
-    // Assumes that both arguments on the same frequency grid
-
-    // There's probably quite some mistakes in this (instead of finding the right way to
-    // integrate / averaging, I just winged it). But hopefully it's close enough to make the
-    // cloudy comparison easier.
-
     double absorption = TemplatedUtils::integrate<double, Array, Array>(frequencyv, crossSectionv * specificIntensityv);
 
     auto heating = [&](double T) -> int {
@@ -186,7 +180,7 @@ double Testing::equilibriumTemperature(const Array& frequencyv, const Array& spe
             return 0;
     };
 
-    double result = TemplatedUtils::binaryIntervalSearch<double>(heating, 30., 1.e-3, 300., 1.);
+    double result = TemplatedUtils::binaryIntervalSearch<double>(heating, 30., 1.e-3, maxT, minT);
     return result;
 }
 
@@ -786,62 +780,46 @@ void Testing::runFullModel()
     runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
 }
 
-GasModule::GrainInterface Testing::genMRNDust(double nHtotal, const Spectrum& specificIntensity)
+void Testing::genMRNDust(GasModule::GrainInterface& gri, double nHtotal, const Spectrum& specificIntensity, bool car)
 {
-    GasModule::GrainInterface grainInterface;
-
     // need grains from .005 to .25 micron
     double amin = 50 * Constant::ANG_CM;
     double amax = 0.25 * Constant::UM_CM;
 
-    // Shared properties
     size_t numSizes = 10;
     Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
 
-    // Properties that differ between car and sil
-    auto addMRNCarOrSil = [&](bool car) {
-        double log10norm = car ? -25.13 : -25.11;
-        double C = pow(10., log10norm);
-        Array densityv(numSizes);
-        Array sizev(numSizes);
-        Array areav(numSizes);
-        for (size_t i = 0; i < numSizes; i++)
-        {
-            // analytic integration of dn = C nH a^{-3.5} da
-            // double bin_width = bin_edges[i + 1] - bin_edges[i];
-            // densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
-            densityv[i] = C * nHtotal / 2.5 * (pow(bin_edges[i], -2.5) - pow(bin_edges[i + 1], -2.5));
+    double log10norm = car ? -25.13 : -25.11;
+    double C = pow(10., log10norm);
+    Array densityv(numSizes);
+    Array sizev(numSizes);
+    Array areav(numSizes);
+    for (size_t i = 0; i < numSizes; i++)
+    {
+        // analytic integration of dn = C nH a^{-3.5} da
+        // double bin_width = bin_edges[i + 1] - bin_edges[i];
+        // densityv[i] = C * nHtotal * pow(sizev[i], -3.5) * bin_width;
+        densityv[i] = C * nHtotal / 2.5 * (pow(bin_edges[i], -2.5) - pow(bin_edges[i + 1], -2.5));
 
-            auto average_power_of_size = [&](double power) {
-                double exponent = 2.5 - power;
-                return C * nHtotal / exponent * (pow(bin_edges[i], -exponent) - pow(bin_edges[i + 1], -exponent))
-                       / densityv[i];
-            };
-            sizev[i] = average_power_of_size(1.);
-            areav[i] = average_power_of_size(2.);
-        }
-        auto label = car ? GasModule::GrainTypeLabel::CAR : GasModule::GrainTypeLabel::SIL;
-        const auto& qabsvv = qAbsvvForTesting(car, sizev, specificIntensity.frequencyv());
-
-        Array temperaturev(numSizes);
-        for (size_t i = 0; i < numSizes; i++)
-        {
-            Array crossSectionv = qabsvv[i] * Constant::PI * areav[i];
-            temperaturev[i] =
-                equilibriumTemperature(specificIntensity.frequencyv(), specificIntensity.valuev(), crossSectionv);
-            cout << "grain " << i << ": " << temperaturev[i] << " K\n";
-        }
-
-        grainInterface.addPopulation(label, sizev, densityv, temperaturev, specificIntensity.frequencyv(), qabsvv);
-    };
-
-    // Carbonaceous population:
-    addMRNCarOrSil(true);
-
-    // Silicate population:
-    // addMRNCarOrSil(false);
-
-    return grainInterface;
+        auto average_power_of_size = [&](double power) {
+            double exponent = 2.5 - power;
+            return C * nHtotal / exponent * (pow(bin_edges[i], -exponent) - pow(bin_edges[i + 1], -exponent))
+                   / densityv[i];
+        };
+        sizev[i] = average_power_of_size(1.);
+        areav[i] = average_power_of_size(2.);
+    }
+    auto label = car ? GasModule::GrainTypeLabel::CAR : GasModule::GrainTypeLabel::SIL;
+    const auto& qabsvv = qAbsvvForTesting(car, sizev, specificIntensity.frequencyv());
+    Array temperaturev(numSizes);
+    for (size_t i = 0; i < numSizes; i++)
+    {
+        Array crossSectionv = qabsvv[i] * Constant::PI * areav[i];
+        temperaturev[i] = equilibriumTemperature(specificIntensity.frequencyv(), specificIntensity.valuev(),
+                                                 crossSectionv, 1., 100000.);
+        // cout << "grain " << i << ": " << temperaturev[i] << " K\n";
+    }
+    gri.addPopulation(label, sizev, densityv, temperaturev, specificIntensity.frequencyv(), qabsvv);
 }
 
 namespace
@@ -886,7 +864,9 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
         bollum / 16 / Constant::PI / distance / distance / GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
     // Dust model
-    auto gri = genMRNDust(nHtotal, Spectrum{frequencyv, specificIntensityv});
+    GasModule::GrainInterface gri;
+    bool car = true;
+    genMRNDust(gri, nHtotal, Spectrum{frequencyv, specificIntensityv}, car);
 
     Spectrum specificIntensity(frequencyv, specificIntensityv);
     GasSolution s = gasInterface.solveTemperature(nHtotal, specificIntensity, gri);

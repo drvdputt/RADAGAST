@@ -1,17 +1,19 @@
 #include "DoctestUtils.hpp"
 #include "GasInterface.hpp"
 #include "GasSolution.hpp"
+#include "RadiationFieldTools.hpp"
 #include "Testing.hpp"
 
 TEST_CASE("Blackbodies test")
 {
     // Test if options don't make it crash
-    Array frequencyv = Testing::defaultFrequencyv(100);
+    Array frequencyv = Testing::defaultFrequencyv(300);
     GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
-    GasModule::GrainInterface gri{};
-
+    GasModule::GrainInterface gri;
+    double nHtotal = 1000;
     std::vector<double> Tv;
     bool warnOnly = false;
+    bool withDust = false;
 
     SUBCASE("Very low color temperature - problems are expected here")
     {
@@ -20,13 +22,23 @@ TEST_CASE("Blackbodies test")
     }
     SUBCASE("Normal color temperature - should drive equilibrium")
     {
-        Tv = { 3750., 7500., 15000., 30000.};
+        Tv = {3750., 7500., 15000., 30000.};
         warnOnly = false;
+
+        // Try this with and without dust
+        SUBCASE("no dust") { withDust = false; }
+        SUBCASE("MRNdust")
+        {
+            withDust = true;
+            warnOnly = true;
+        }
     }
 
     for (double Tc : Tv)
     {
-        GasSolution s = gi.solveInitialGuess(1000, Tc, gri);
+        Spectrum specificIntensity(frequencyv, RadiationFieldTools::generateBlackbodyv(frequencyv, Tc));
+        if (withDust) Testing::genMRNDust(gri, nHtotal, specificIntensity, true);
+        GasSolution s = gi.solveTemperature(nHtotal, specificIntensity, gri);
         double T = s.t();
         CAPTURE(Tc);
         CAPTURE(T);
