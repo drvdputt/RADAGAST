@@ -35,8 +35,12 @@ namespace GasModule
         }
         // else, no data is available and these will be nullptr
 
-        // Optimization: pre-calculate the modified greybody cooling curve here
-        Array Tv = Testing::generateGeometricGridv(100, Options::grainsolution_minGrainTemp,
+        // Optimization: pre-calculate the modified greybody cooling curve here. Use 100 points per
+        // order or magnitude.
+        int numPoints =
+            static_cast<int>(std::log10(Options::grainsolution_maxGrainTemp / Options::grainsolution_minGrainTemp)
+                             * Options::grainsolution_tPointsPerDex);
+        Array Tv = Testing::generateGeometricGridv(numPoints, Options::grainsolution_minGrainTemp,
                                                    Options::grainsolution_maxGrainTemp);
         Table<2> bbEmission(_sizev.size(), Tv.size());
         Array greybodyIntegrandv(frequencyv.size());
