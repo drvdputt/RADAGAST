@@ -17,7 +17,7 @@ TEST_CASE("Flat charge distribution")
     // balance equation: n(i) = n(i - 1) * u(i - 1) / d(i), where n(i), u(i) and d(i) are the
     // density, up rate and down rate of charge i, respectively.
     // When up and down rates are equal and constant, we expect a flat distribution
-    auto constant = [](int z) { return 2.; };
+    auto constant = [](int) { return 2.; };
     int zmin = -5;
     int zmax = 5;
     cd.calculateDetailedBalance(constant, constant, zmin, zmax);
