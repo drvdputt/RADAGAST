@@ -15,6 +15,7 @@
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
+#include "WeingartnerDraine2001.hpp"
 #include <gsl/gsl_const_cgs.h>
 #include <sys/stat.h>
 
@@ -430,15 +431,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
 
 void Testing::writeGrains(const std::string& outputPath, const std::vector<GrainSolution>& grsv, bool bulkCar)
 {
-    // Assume a certain bulk density (values taken from SKIRT source code for Draine
-    // Graphite and Draine Silicate)
-    double bulkDen;
-    if (bulkCar)
-        bulkDen = 2.24;  // g cm-3
-    else
-        bulkDen = 3.0;
-
-    // write out grain size distribution, preferable in g cm-3
+    // write out grain size distribution in different ways
     for (size_t i = 0; i < grsv.size(); i++)
     {
         ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
@@ -449,7 +442,7 @@ void Testing::writeGrains(const std::string& outputPath, const std::vector<Grain
         {
             double a = pop->size(m);
             double numberDen = pop->density(m);
-            double mass = 4. / 3. * Constant::PI * a * a * a * bulkDen;
+            double mass = 4. / 3. * Constant::PI * a * a * a * WD01::bulkDensity(bulkCar);
             double t = grsv[i]._newTemperaturev[m];
             f.writeLine<Array>({a, numberDen, numberDen * mass, t});
         }

@@ -52,8 +52,10 @@ namespace Testing
 
     void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi, const GasModule::GasState& gs);
 
-    /** bulkCar is a hack to be able to write out the mass density. The same bulk density is
-        assumed for all grain populations. */
+    /** Write out the grain properties to a file. One file will be written per grain population,
+        containing one line per size bin. The columns are the size, number density, mass density
+        and temperature. The last argument @c bulkCar indicates which bulk mass density to use for
+        converting the number density for each bin into a mass density. */
     void writeGrains(const std::string& outputPath, const std::vector<GrainSolution>& grs, bool bulkCar);
 
     void plotHeatingCurve_main();

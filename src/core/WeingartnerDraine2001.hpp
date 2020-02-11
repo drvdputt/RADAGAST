@@ -1,14 +1,17 @@
 #ifndef CORE_WEINGARTNERDRAINE2001_HPP
 #define CORE_WEINGARTNERDRAINE2001_HPP
 
+/** Functions to calculate the heating and charging rates according to the recipe by Weingartner
+    and Draine (2001). Over time, some other things related to graphite and silicate have been
+    added. */
 namespace WD01
 {
-    /* Functions to calculate the heating rate according to the recipe by Weingartner and Draine
-       (2001) */
-
     /** Return a mass value representative fhe average atom in the grain. Currently returns the
         mass of either C or Si in grams. */
     double atomMass(bool carbonaceous);
+
+    /** Return the bulk mass density of graphite or silicate. [g cm-3] */
+    double bulkDensity(bool carbonaceous);
 
     /** Return the work function as mentioned in the paper, for carbonaceous/graphitic grains
         (carbonaceous == true) or silicate grains (carbonaceous == false). */

@@ -15,6 +15,12 @@ double WD01::atomMass(bool carbonaceous)
     return carbonaceous ? 12.011 * Constant::AMU_CGS : 24.6 * Constant::AMU_CGS;
 }
 
+double WD01::bulkDensity(bool carbonaceous)
+{
+    // Values taken from SKIRT source code for Draine Graphite and Draine Silicate
+    return carbonaceous ? 2.24 : 3.0;
+}
+
 double WD01::workFunction(bool carbonaceous)
 {
     return carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
