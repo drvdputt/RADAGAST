@@ -73,14 +73,11 @@ namespace
     double heating_f(double logT, void* params)
     {
         auto* p = static_cast<struct heating_f_params*>(params);
-
-        // Refresh the solution stored somewhere, with optimization based on the current
-        // solution
+        // Refresh the solution stored somewhere, with optimization based on the current solution
         GasSolution& s = *p->solution_storage;
-        p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity, p->use_previous_solution);
-        double heat = s.heating();
-        double cool = s.cooling();
-        return heat - cool;
+        double netHeat = p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity,
+                                                              p->use_previous_solution);
+        return netHeat;
     }
 }  // namespace
 
@@ -105,10 +102,10 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
     const double Tmin = 1.;
     const double logTmin = log10(Tmin);
     const double logTtolerance = 1.e-3;
-    // Assume that the heating is positive at Tmin (this has yet to fail). Then, find a
-    // suitable upper limit for the bracket (one where the heating is negative. Try 10000
-    // first, which should be suitable for most applications. Then, keep multiplying the
-    // temperature with a constant factor to see if it helps.
+    // Assume that the heating is positive at Tmin (this has yet to fail). Then, find a suitable
+    // upper limit for the bracket (one where the heating is negative. Try 10000 first, which
+    // should be suitable for most applications. Then, keep multiplying the temperature with a
+    // constant factor to see if it helps.
     const double Tmax = 10000.;
     const double Tmaxmax = 1.e7;
     double logTmax = log10(Tmax);
@@ -128,8 +125,7 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
         return s;
     }
 
-    // Initialize the solver. Will fail if heating at Tmin and Tmax do not have different
-    // sign.
+    // Initialize the solver. Will fail if heating at Tmin and Tmax do not have different sign.
     int status = gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
     if (status == GSL_EINVAL)
     {
@@ -179,14 +175,14 @@ GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum&
     return s;
 }
 
-void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const Spectrum& specificIntensity,
-                                      bool startFromCurrent, double h2FormationOverride) const
+double GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const Spectrum& specificIntensity,
+                                        bool startFromCurrent, double h2FormationOverride) const
 {
     if (n <= 0)
     {
         s.setT(T);
         s.makeZero();
-        return;
+        return 0.;
     }
 
     DEBUG("Calculating densities for T = " << T << "K" << endl);
@@ -194,8 +190,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
     // Decide how to do the initial guess; manual, or using the previous state.
     bool manualGuess = true;
 
-    // If a previous solution is available (pointer is nonzero), then check if we want to
-    // use it
+    // If a previous solution is available (pointer is nonzero), then check if we want to use it
     if (startFromCurrent)
     {
         double fT = T / s.t();
@@ -212,22 +207,13 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
         double molFrac = 0.1;
         s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
     }
-
+    // if nHtotal starts drifting, I should do someting extra here
     DEBUG("Set initial guess for speciesNv to\n" << s.speciesVector() << '\n');
 
-    // else
-    // {
-    // 	// make sure that nHtotal and the initial guess are consistent
-    // 	double nNeutralOfSpeciesNv = s.speciesNv()(_inH) + 2 * s.speciesNv()(_inH2);
-    // 	double nHtotalOfSpeciesNv = s.speciesNv()(_inp) + nNeutralOfSpeciesNv;
-    // 	double ionFrac = s.speciesNv()(_inp) / nHtotalOfSpeciesNv;
-    // 	double molFrac = 2 * s.speciesNv()(_inH2) / nNeutralOfSpeciesNv;
-    // 	s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
-    // }
     s.setT(T);
 
-    // Formation rate on grain surfaces. We declare it here so that it can be passed to the
-    // level population calculation too (needed for H2 formation pumping).
+    // Formation rate on grain surfaces. We declare it here so that it can be passed to the level
+    // population calculation too (needed for H2 formation pumping).
     double kFormH2;
     if (h2FormationOverride >= 0)
         kFormH2 = h2FormationOverride;
@@ -243,7 +229,7 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
 	   CHEMISTRY SOLUTION -> LEVEL SOURCE AND SINK RATES |
 							     |
 	   LEVEL SOURCE AND SINK RATES -> LEVEL SOLUTION ----^
-	*/
+    */
 
     int counter = 0;
     bool stopCriterion = false;
@@ -264,8 +250,8 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
         // LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
         if (h2FormationOverride < 0)
         {
-            // update h2 formation rate if not overriden by a constant (need to
-            // update every iteration because grain temperature can change)
+            // update h2 formation rate if not overriden by a constant (need to update every
+            // iteration because grain temperature can change)
             kFormH2 = s.kGrainH2FormationRateCoeff();
         }
 
@@ -277,32 +263,23 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
         EVector newSpeciesNv = _chemistry.solveBalance(reactionRates, s.speciesVector().speciesNv());
         s.setSpeciesNv(newSpeciesNv);
 
-        /* TODO: Add effect of grain charging to chemical network. I think it
-		   might be possible to do this by imposing a conservation equation for
-		   the number of electrons: ne + nH + nH2 = (ne + nH + nH2)_0 + <Cg>*ng.
-		   The average grain charge <Gg> should be updated together with the
-		   rates I guess? Another option would be to include the grain charge
-		   rates into the network as extra reactions. The production vector
-		   would be (1 0 0 0) while the reactant vector would be zero (the
-		   grains don't disappear when they lose an electron) Grain
-		   recombination / charge exchange reaction could also be added. I need
-		   to think about whether the 'disappearing' particles will cause
-		   problems when coupled with conservation equations. */
+        // Recalculate the grain charge distributions and temperatures, which will affect the grain
+        // photoelectric heating, the h2 formation rate, and the gas-dust energy exchange (gas
+        // cooling)
+        s.solveGrains();
+        // TODO: Add effect of grain charging to chemical network. I think it might be possible to
+        // do this by imposing a conservation equation for the number of electrons: ne + nH + nH2 =
+        // (ne + nH + nH2)_0 + <Cg>*ng. Another option would be to include the grain charge rates
+        // into the network as extra reactions. Grain recombination / charge exchange reactions
+        // could also be added.
 
-        // CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%,
-        // or if the total amount is negligible compared to the norm.
+        // CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%, or if the
+        // total amount is negligible compared to the norm.
         EArray changev = newSpeciesNv - previousAbundancev;
         double norm = newSpeciesNv.norm();
         Eigen::Array<bool, Eigen::Dynamic, 1> convergedv =
-            changev.abs() <= 1e-3 * previousAbundancev.array() || newSpeciesNv.array() < 1.e-99 * norm;
+            changev.abs() <= 1e-3 * previousAbundancev.array() || newSpeciesNv.array() < 1.e-30 * norm;
 
-        // Recalculate the grain charge distributions and temperatures, which will
-        // affect the grain photoelectric heating, the h2 formation rate, and the
-        // gas-dust energy exchange (gas cooling)
-        s.solveGrains();
-
-        // TODO: these should be returned somehow, so that we don't have to calculate
-        // them again.
         double newHeating = s.heating();
         double newCooling = s.cooling();
         bool heatingConverged = TemplatedUtils::equalWithinTolerance(newHeating, previousHeating, 1e-2);
@@ -312,36 +289,17 @@ void GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const 
         DEBUG("New heat: " << newHeating << " previous: " << previousHeating << '\n');
         DEBUG("New cool: " << newCooling << " previous: " << previousCooling << '\n');
 
+        // Decide if we want to stop
+        bool allQuantitiesConverged = convergedv.all() && heatingConverged && coolingConverged;
+        stopCriterion = allQuantitiesConverged || counter > Options::densities_maxiterations;
+
+        // Save these results so they can be used for the next convergence check
         previousAbundancev = newSpeciesNv;
         previousHeating = newHeating;
         previousCooling = newCooling;
-
-        bool allQuantitiesConverged = convergedv.all() && heatingConverged && coolingConverged;
-
-        // Currently, the implementation without molecules does not need iteration.
-        stopCriterion = allQuantitiesConverged || counter > Options::densities_maxiterations;
     }
+    return previousHeating - previousCooling;
 }
-
-// GasSolution GasInterfaceImpl::solveDensitiesNoH2(double n, double T,
-//                                                  const Spectrum& specificIntensity,
-//                                                  const GasModule::GrainInterface&) const;
-// {
-// // When ignoring H2
-// // DIRECT SOLUTION (IONIZATION BALANCE ONLY, NO MOLECULES)
-
-// // Just solve the ionization balance in the nebular approximation.
-// double f = Ionization::solveBalance(nHtotal, T, specificIntensity);
-// DEBUG("Ionized fraction = " << f << endl);
-
-// // Neutral fraction
-// s.speciesNv[_inH] = nHtotal * (1 - f);
-// // Ionized fraction
-// s.speciesNv[_inp] = nHtotal * f;
-// // Electron density is simply equal to proton density
-// s.speciesNv[_ine] = s.speciesNv[_inp];
-// s.speciesNv[_inH2] = 0;
-// }
 
 GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
                                               const GasModule::GrainInterface* gri) const
