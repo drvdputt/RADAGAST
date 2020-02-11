@@ -29,6 +29,7 @@ TEST_CASE("Blackbodies test")
         SUBCASE("no dust") { withDust = false; }
         SUBCASE("MRNdust")
         {
+            // TODO: make the maximum grain temperature higher, since it wants to go to Tc
             withDust = true;
             warnOnly = true;
         }
@@ -42,10 +43,19 @@ TEST_CASE("Blackbodies test")
         double T = s.t();
         CAPTURE(Tc);
         CAPTURE(T);
+        // Ideally, the equilibrium temperature should approach the color temperature. Note that
+        // this will only work if all the implemented processes have their thermodynamic
+        // counterpart implemented too, which is probably not the case for the dust
+        // photoelectric/collision processes. Therefore, warnOnly is turned on when we have dust
+        // present. It works surprisingly well when running without dust though.
         DoctestUtils::checkTolerance("equilibrium temp", T, Tc, 0.5, warnOnly);
-        WARN_MESSAGE(
-            s.nH2() == 0.,
-            "without collisional dissociation, H2 won't go to zero (both formation and dissociation likely 0)");
+        if (!withDust)
+        {
+            // Without dust, we expect no H2 to be present
+            WARN_MESSAGE(
+                s.nH2() == 0.,
+                "without collisional dissociation, H2 won't go to zero (both formation and dissociation likely 0)");
+        }
     }
 }
 

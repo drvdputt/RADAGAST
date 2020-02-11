@@ -7,6 +7,7 @@
 
 namespace RadiationFieldTools
 {
+    Array generateBlackbodyv(const Array& frequencyv, double Tc);
     Array generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0);
 
     // Frequency to wavelength (and the other way around). nu = c / lambda, lambda = c / nu

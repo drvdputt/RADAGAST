@@ -2,16 +2,19 @@
 #include "SpecialFunctions.hpp"
 #include <vector>
 
-Array RadiationFieldTools::generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0)
+Array RadiationFieldTools::generateBlackbodyv(const Array& frequencyv, double Tc)
 {
     Array I_nu(frequencyv.size());
     for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
         I_nu[iFreq] = SpecialFunctions::planck(frequencyv[iFreq], Tc);
-
-    // Rescale to the desired G0
-    double currentG0 = gHabing(Spectrum(frequencyv, I_nu));
-    I_nu *= G0 / currentG0;
     return I_nu;
+}
+
+Array RadiationFieldTools::generateSpecificIntensityv(const Array& frequencyv, double Tc, double G0)
+{
+    const Array& I_nu = generateBlackbodyv(frequencyv, Tc);
+    double currentG0 = gHabing(Spectrum(frequencyv, I_nu));
+    return I_nu * G0 / currentG0;
 }
 
 Array RadiationFieldTools::freqToWavGrid(const Array& frequencyv)
