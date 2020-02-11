@@ -9,7 +9,10 @@ using namespace std;
 
 double WD01::atomMass(bool carbonaceous)
 {
-    return carbonaceous ? 12 * Constant::AMU_CGS : 28 * Constant::AMU_CGS;
+    // Treat all carbonaceous grains as pure carbon -> use atomic mass. I got the number for
+    // silicates from silicate_0m010.opc in cloudy (atomic mass of Si is 28, but theres also some
+    // O, Mg and Fe mixed in).
+    return carbonaceous ? 12.011 * Constant::AMU_CGS : 24.6 * Constant::AMU_CGS;
 }
 
 double WD01::workFunction(bool carbonaceous)
