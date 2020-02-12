@@ -205,8 +205,6 @@ double GrainPhotoelectricCalculator::emissionRate(int i, int Z, const Array& fre
                                                   const Array& specificIntensityv) const
 {
     double a = _sizev[i];
-    // Notice that there is quite some duplication compared to heatingRateAZ, but i didn't find it
-    // worth the effort to make more abstractions.
     double pet, pdt, Emin;
     getPET_PDT_Emin(i, Z, pet, pdt, Emin);
 

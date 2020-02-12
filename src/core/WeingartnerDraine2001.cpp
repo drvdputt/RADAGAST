@@ -30,12 +30,14 @@ double WD01::eMin(double a, int Z)
 {
     if (Options::weingartnerdraine2001_vanHoofEmin)
     {
-        // replace by van Hoof (2004) eq 1
+        // replace by van Hoof (2004) eq 1 (or WD06 eq 3)
         if (Z >= -1)
+        {
             return 0;
+        }
         else
         {
-            double ksi{-static_cast<double>(Z) - 1};
+            double ksi = abs(Z + 1);
             return thetaKsi(ksi) * (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(ksi, -0.26));
         }
     }
@@ -82,10 +84,9 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin)
     double Ediff = Ehigh - Elow;
     double Ediff3 = Ediff * Ediff * Ediff;
 
-    /* Compute integral f(E)E dE analytically, with f(E) defined by WD01 eq 10 f(E) is a
-	   parabola, and therefore f(E)E is a third order polynomial.  Thus the integral of f(E)E dE
-	   is a fourth order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2
-	   -min2). */
+    // Compute integral f(E)E dE analytically, with f(E) defined by WD01 eq 10 f(E) is a parabola,
+    // and therefore f(E)E is a third order polynomial. Thus the integral of f(E)E dE is a fourth
+    // order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2 - min2).
     double Emax2 = Emax * Emax;
     double Emin2 = Emin * Emin;
     return 6 / Ediff3

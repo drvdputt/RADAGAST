@@ -21,10 +21,10 @@ namespace Options
     // might count some things double in the equations for gas-grain collisional cooling.
     const bool grainphotoelectriceffect_recombinationCooling = false;
 
-    // Instead of using the Emin of WD01, use the expression provided in van Hoof (2004). Last time
-    // I tried this, weird things happened with the charge distribution, so please keep an eye on
-    // the charges if you decide to use this.
-    const bool weingartnerdraine2001_vanHoofEmin = false;
+    // Instead of using the Emin of WD01, use the expression provided in van Hoof (2004). The first
+    // time I tried this, weird things happened with the charge distribution. Things look fine now,
+    // but keep an eye on the average charge.
+    const bool weingartnerdraine2001_vanHoofEmin = true;
 
     // Choose the number of electronic levels for H2. Give a number from 1 to 3 to include up to: 1
     // B, 2 C+, 3 C-.
