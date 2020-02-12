@@ -356,8 +356,8 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
     cout << "Equilibrium temperature: " << gs.temperature() << endl;
 
     const Array& eFrequencyv = gi.eFrequencyv();
-    const Array& emv = gs._emissivityv;
-    Spectrum opv(gi.oFrequencyv(), gs._opacityv);
+    const Array& emv = gi.emissivity_SI(gs);
+    Spectrum opv(gi.oFrequencyv(), gi.opacity_SI(gs));
 
     char tab = '\t';
     ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
@@ -383,17 +383,17 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
         double wav = Constant::LIGHT / freq * Constant::CM_UM;
         out.precision(9);
         out << scientific << freq << tab << wav << tab << Constant::FPI * freq * emv[iFreq] << tab << opv.evaluate(freq)
-            << endl;
+            << '\n';
         wavfile.precision(9);
-        wavfile << wav << tab << freq << endl;
+        wavfile << wav << tab << freq << '\n';
     }
     out.close();
     wavfile.close();
 
     out = IOTools::ofstreamFile(outputPath + "raw_opacity.dat");
-    for (size_t iFreq = 0; iFreq < gs._opacityv.size(); iFreq++)
+    for (size_t iFreq = 0; iFreq < gi.oFrequencyv().size(); iFreq++)
     {
-        out << gi.oFrequencyv()[iFreq] << tab << gs._opacityv[iFreq] << endl;
+        out << gi.oFrequencyv()[iFreq] << tab << opv.valuev()[iFreq] << '\n';
     }
     out.close();
 
@@ -911,7 +911,8 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
             double wav = Constant::LIGHT / frequencyv[i];
             radfield.writeLine<Array>({wav * Constant::CM_UM, Constant::FPI * frequencyv[i] * specificIntensityv[i]});
         }
-        GasModule::GasState gs = s.makeGasState(gasInterface.oFrequencyv(), gasInterface.eFrequencyv());
+        GasModule::GasState gs;
+        s.setGasState(gs);
         writeGasState(prefix, gasInterface, gs);
         writeGrains(prefix, s.grainSolutionv(), true);
         // plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);

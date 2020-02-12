@@ -84,10 +84,8 @@ public:
         GasDiagnostics object */
     void fillDiagnostics(GasDiagnostics*) const;
 
-    /** Distills the GasSolution object into the necessary information to retrieve opacity and
-        emissivity. Grids on which the opacity and emissivity will be discretized (before being
-        stored in the gas state) need to be provided. */
-    GasModule::GasState makeGasState(const Array& oFrequencyv, const Array& eFrequencyv) const;
+    /** Writes the resulting temperature and densities into the given gas state object */
+    void setGasState(GasModule::GasState&) const;
 
     /** Get the H2 photodissociation rate from the H2 model [s-1]. */
     double kDissH2Levels() const;

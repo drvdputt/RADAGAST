@@ -80,12 +80,12 @@ public:
     void initializeGasState(GasModule::GasState&, double n, double T, GasModule::GrainInterface&,
                             GasDiagnostics* gd = nullptr) const;
 
-    /** The emissivity in SI units, for a given frequency index. (converted using 1 erg cm-3 s-1
-        Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1 sr-1). [W m-3 Hz-1 sr-1] */
-    double emissivity_SI(const GasModule::GasState& gs, size_t iFreq) const;
+    /** The emissivity in SI units (converted using 1 erg cm-3 s-1 Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1
+        sr-1). [W m-3 Hz-1 sr-1] */
+    Array emissivity_SI(const GasModule::GasState& gs) const;
 
     /** The total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1] */
-    double opacity_SI(const GasModule::GasState& gs, size_t iFreq) const;
+    Array opacity_SI(const GasModule::GasState& gs) const;
 
     /** This convenience function runs solveTemperature for a blackbody radiation field. The final
         temperature is usually close to the given color temperature T. */

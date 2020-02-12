@@ -24,7 +24,7 @@ void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n, const v
 {
     Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
     GasSolution s = solveTemperature(n, specificIntensity, grainInfo);
-    gs = s.makeGasState(_oFrequencyv, _eFrequencyv);
+    s.setGasState(gs);
     if (gd) s.fillDiagnostics(gd);
 }
 
@@ -32,18 +32,23 @@ void GasInterfaceImpl::initializeGasState(GasModule::GasState& gs, double n, dou
                                           GasDiagnostics* gd) const
 {
     GasSolution s = solveInitialGuess(n, T, gri);
-    gs = s.makeGasState(_oFrequencyv, _eFrequencyv);
+    s.setGasState(gs);
     if (gd) s.fillDiagnostics(gd);
 }
 
-double GasInterfaceImpl::emissivity_SI(const GasModule::GasState& gs, size_t iFreq) const
+Array GasInterfaceImpl::emissivity_SI(const GasModule::GasState& gs) const
 {
-    return 0.1 * gs._emissivityv[iFreq];
+    // TODO: calculate emissivity here, starting from the information in gas state and reusing
+    // parts of the gas code.
+    Array emissivityv(_eFrequencyv.size());
+    return 0.1 * emissivityv;
 }
 
-double GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs, size_t iFreq) const
+Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
 {
-    return 100 * gs._opacityv[iFreq];
+    // TODO: see above, but for opacity
+    Array opacityv(_oFrequencyv.size());
+    return 100 * opacityv;
 }
 
 GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T, GasModule::GrainInterface& gri) const

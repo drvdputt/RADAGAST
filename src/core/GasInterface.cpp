@@ -37,12 +37,9 @@ namespace GasModule
         _pimpl->initializeGasState(gs, n, T, gri, gd);
     }
 
-    double GasInterface::emissivity_SI(const GasState& gs, size_t iFreq) const
-    {
-        return _pimpl->emissivity_SI(gs, iFreq);
-    }
+    std::valarray<double> GasInterface::emissivity_SI(const GasState& gs) const { return _pimpl->emissivity_SI(gs); }
 
-    double GasInterface::opacity_SI(const GasState& gs, size_t iFreq) const { return _pimpl->opacity_SI(gs, iFreq); }
+    std::valarray<double> GasInterface::opacity_SI(const GasState& gs) const { return _pimpl->opacity_SI(gs); }
 
     GasSolution GasInterface::solveInitialGuess(double n, double T, GrainInterface& gri) const
     {

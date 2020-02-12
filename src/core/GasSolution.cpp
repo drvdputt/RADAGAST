@@ -184,13 +184,9 @@ void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
     gd->setCooling("grain collisions", grainCollCool);
 }
 
-GasModule::GasState GasSolution::makeGasState(const Array& oFrequencyv, const Array& eFrequencyv) const
+void GasSolution::setGasState(GasModule::GasState& g) const
 {
-    Array emv, opv;
-    if (eFrequencyv.size() > 2) emv = emissivityv(eFrequencyv);
-    if (oFrequencyv.size() > 2) opv = opacityv(oFrequencyv);
-    Array densityv(_sv.data(), _sv.size());
-    return {emv, opv, _t, densityv};
+    g.setMembers(_t, {_sv.data(), _sv.size()});
 }
 
 double GasSolution::kDissH2Levels() const
