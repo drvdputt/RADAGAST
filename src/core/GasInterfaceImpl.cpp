@@ -8,7 +8,6 @@
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
-#include "Timer.hpp"
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 
@@ -23,7 +22,6 @@ GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequ
 void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n, const valarray<double>& specificIntensityv,
                                       GasModule::GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
-    Timer t("Update gas state");
     Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
     GasSolution s = solveTemperature(n, specificIntensity, grainInfo);
     gs = s.makeGasState(_oFrequencyv, _eFrequencyv);
