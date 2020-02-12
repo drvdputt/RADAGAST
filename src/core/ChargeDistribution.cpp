@@ -10,6 +10,13 @@ double ChargeDistribution::value(int z) const
         return _fz[z - _zmin];
 }
 
+double ChargeDistribution::average() const
+{
+    double sum = 0;
+    for (int i = 0; i < _fz.size(); i++) sum += _fz[i] * (_zmin + i);
+    return sum;
+}
+
 double ChargeDistribution::sumOverCharge(std::function<double(int z)> functionOfZ) const
 {
     double sum = 0;

@@ -35,6 +35,9 @@ public:
     /** Get the value of the charge distribution at the given z. Returns 0 if out of range. */
     double value(int z) const;
 
+    /** Calculate the average charge */
+    double average() const;
+
     /** Evaluate a function for every charge and sum the relative contributions. */
     double sumOverCharge(std::function<double(int z)> functionOfZ) const;
 
