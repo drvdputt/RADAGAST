@@ -78,8 +78,7 @@ Array GasSolution::opacityv(const Array& oFrequencyv) const
     Array totalOpv(numFreq);
     for (size_t i = 0; i < numFreq; i++)
     {
-        // TODO: this should actually be the average over the cross section for
-        // this frequency bin
+        // TODO: this should actually be the average over the cross section for this frequency bin
         double ionizOp_iFreq = nH() * Ionization::crossSection(oFrequencyv[i]);
         totalOpv[i] = ionizOp_iFreq + contOpv[i] + lineOpv[i];
     }

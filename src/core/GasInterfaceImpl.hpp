@@ -125,6 +125,9 @@ private:
         neutral fraction (2 * nH2 / (nH + 2 * nH2)). */
     EVector guessSpeciesNv(double n, double ionToTotalFrac, double moleculeToNeutralFrac) const;
 
+    /** Utility function to get the product n_p n_e from a gas state. */
+    double npne(const GasModule::GasState&) const;
+
     std::valarray<double> _iFrequencyv;
     std::valarray<double> _oFrequencyv;
     std::valarray<double> _eFrequencyv;

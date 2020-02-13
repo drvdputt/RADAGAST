@@ -38,16 +38,30 @@ void GasInterfaceImpl::initializeGasState(GasModule::GasState& gs, double n, dou
 
 Array GasInterfaceImpl::emissivity_SI(const GasModule::GasState& gs) const
 {
-    // TODO: calculate emissivity here, starting from the information in gas state and reusing
-    // parts of the gas code.
+    // There is some duplication from GasSolution::emissivityv, but let's keep both for now.
     Array emissivityv(_eFrequencyv.size());
-    return 0.1 * emissivityv;
+    _freeBound.addEmissionCoefficientv(gs.temperature(), _eFrequencyv, emissivityv);
+    _freeFree.addEmissionCoefficientv(gs.temperature(), _eFrequencyv, emissivityv);
+    // TODO: switch to add line emissivity
+
+    // factor 0.1 is unit conversion from erg cm-3 s-1 Hz-1 to J m-3 s-1 Hz-1
+    return 0.1 * npne(gs) / Constant::FPI * emissivityv;
 }
 
 Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
 {
-    // TODO: see above, but for opacity
     Array opacityv(_oFrequencyv.size());
+    _freeFree.addOpacityCoefficientv(gs.temperature(), _oFrequencyv, opacityv);
+    opacityv *= npne(gs);
+
+    // TODO: this should actually be the average over the cross section for this frequency bin
+    for (size_t i = 0; i < _oFrequencyv.size(); i++)
+        opacityv += gs.density(_chemistry.speciesIndex().index("H")) * Ionization::crossSection(_oFrequencyv[i]);
+
+    // TODO: H2 opacity. Maybe use smoothed data file from Heays et al. 2017 (data on E. van
+    // Dishoeck's home page)
+
+    // convert from cm-1 to m-1
     return 100 * opacityv;
 }
 
@@ -338,4 +352,9 @@ EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac, double
                                                        {ionToTotalFrac * n, ionToTotalFrac * n,
                                                         (1 - moleculeToNeutralFrac) * (1 - ionToTotalFrac) * n,
                                                         moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2});
+}
+
+double GasInterfaceImpl::npne(const GasModule::GasState& gs) const
+{
+    return gs.density(_chemistry.speciesIndex().index("H+")) * gs.density(_chemistry.speciesIndex().index("e-"));
 }
