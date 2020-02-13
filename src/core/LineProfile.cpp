@@ -186,7 +186,7 @@ void LineProfile::addToBinned(const Array& frequencyv, Array& binnedSpectrumv, d
     }
 }
 
-double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax, std::string debug) const
+double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
 {
     // Approximate by value at line center if line is much narrower than the resolution of
     // the provided SED
@@ -197,15 +197,6 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
     // Else, do this very complicated integration with automated cutoff
     constexpr size_t numPoints = 20;
     const Array lineGrid = recommendedFrequencyGrid(numPoints);
-
-    if (!debug.empty())
-    {
-        auto f = IOTools::ofstreamFile(debug);
-        for (double nu : lineGrid)
-            f << std::setprecision(17) << nu << ' ' << SpecialFunctions::lorentz(nu - _center, _halfWidth_lorentz)
-              << ' ' << SpecialFunctions::gauss(nu - _center, _sigma_gauss) << ' ' << (*this)(nu) << std::endl;
-        f.close();
-    }
 
     if (Options::lineprofile_optimizedLineIntegration)
     {

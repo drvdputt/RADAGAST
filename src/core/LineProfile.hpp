@@ -28,10 +28,10 @@ public:
 
         The line profile is only evaluated if the expected contribution of a frequency point to the
         total (using a conservative heuristic) exceeds a minimum threshold. Optionally the maximum
-        of the spectrum can be given, to help with speeding up the calculation (for example when
-        calculation the line integral over the same spectrum for many different lines). This maximum
-        is used to guess when the calculation can be cut off. */
-    double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0, std::string debug = "") const;
+        of the spectrum can be given, to speed up the calculation (e.g. when calculating the line
+        integral over the same spectrum for many different lines). This maximum is used to guess
+        when the calculation can be cut off. */
+    double integrateSpectrum(const Spectrum& spectrum, double spectrumMax = 0) const;
 
 private:
     /** Generates a number of points around the line center. For the central points, it is attemped

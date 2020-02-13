@@ -45,7 +45,7 @@ TEST_CASE("Test line profile integration over spectrum")
     SUBCASE("mixed guassian/lorentzian line")
     {
         auto lp = testLine();
-        double integral = lp.integrateSpectrum(s, 0, "guasslorentz-points.dat");
+        double integral = lp.integrateSpectrum(s, 0);
         // This integral should be about equal to base, if gridpoints are chosen well
         double e = 1.e-2;
         DoctestUtils::checkTolerance("test value", integral, base, e, true);
@@ -54,7 +54,7 @@ TEST_CASE("Test line profile integration over spectrum")
     SUBCASE("mostly gaussian line")
     {
         auto lp = mostlyGaussianLine();
-        double integral = lp.integrateSpectrum(s, 0, "gauss-points.dat");
+        double integral = lp.integrateSpectrum(s, 0);
         // This integral should be about equal to base, if gridpoints are chosen well
         double e = 1.e-2;
         DoctestUtils::checkTolerance("test value", integral, base, e);
