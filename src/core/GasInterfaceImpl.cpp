@@ -62,7 +62,7 @@ Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
     // Dishoeck's home page)
 
     // convert from cm-1 to m-1
-    return 100 * opacityv;
+    return 100. * opacityv;
 }
 
 GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T, GasModule::GrainInterface& gri) const
