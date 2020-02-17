@@ -21,7 +21,7 @@ class BenchmarkResult:
 class CloudyResult:
     def __init__(self, directory):
         self.d = Path(directory)
-        self.ovr = pd.read_csv(self.d / 'hsphere.ovr', sep='\t')
+        self.ovr = pd.read_csv(self.d / 'overview.dat', sep='\t')
         self.ok = (len(self.ovr) >= 1
                    and self.ovr.to_numpy().dtype == np.float64)
         if not self.ok:

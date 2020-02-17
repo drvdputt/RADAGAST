@@ -146,7 +146,7 @@ def compare_populations():
 
 
 def compare_equilibrium():
-    cloudy_ovr = pd.read_csv('hsphere.ovr', sep='\t')
+    cloudy_ovr = pd.read_csv('overview.dat', sep='\t')
     t = cloudy_ovr['Te'][0]
     heat = cloudy_ovr['Htot'][0]
     hden = cloudy_ovr['hden'][0]

@@ -49,7 +49,7 @@ save grain opacity "grainopacity.out" last
 # save grain numb "grainnumberdensity.out" last
 # save grain sizes "grainsize.out" last
 # general output
-save overview "hsphere.ovr" last
+save overview "overview.dat" last
 save opacity "opacity.out" total units micron last
 save heating "heating.out" last
 save cooling "cooling.out" last
