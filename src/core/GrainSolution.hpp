@@ -58,7 +58,7 @@ public:
     /** Calculate the total energy transfer to the gas due to the thermalization of photoelectrons
         ejected from the grains. Should be called after the charge distributions have been
         calculated. */
-    double photoelectricGasHeating() const;
+    double photoelectricGasHeating();
 
     /** Calculate the total energy transfer from the gas to the grains due to collisions. Should be
         called after the charge distributions have been calculated. */

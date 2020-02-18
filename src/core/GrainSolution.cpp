@@ -90,7 +90,7 @@ void GrainSolution::recalculateChargeDistributions()
                                                               _chargeDistributionv[i]);
 }
 
-double GrainSolution::photoelectricGasHeating() const
+double GrainSolution::photoelectricGasHeating()
 {
     if (!_photoelectricCalculator) return 0;
 
