@@ -4,7 +4,6 @@
 #include "FreeBound.hpp"
 #include "FreeFree.hpp"
 #include "GasDiagnostics.hpp"
-#include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPopulation.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
@@ -38,17 +37,7 @@ void GasSolution::solveLevels(double formH2)
 
 void GasSolution::solveGrains()
 {
-    GrainPhotoelectricCalculator::Environment env(
-        _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
-        {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
-
-    for (auto& g : _grainSolutionv)
-    {
-        // I think charge distributions are best recalculated before the new
-        // temperatures (they affect the collisional processes)
-        g.recalculateChargeDistributions(env);
-        g.recalculateTemperatures(env);
-    }
+    for (auto& g : _grainSolutionv) g.recalculate(&_specificIntensity, _t, _sv);
 }
 
 Array GasSolution::emissivityv(const Array& eFrequencyv) const
@@ -110,14 +99,9 @@ double GasSolution::heating() const
 
 double GasSolution::grainHeating() const
 {
-    // Specify the environment parameters
-    GrainPhotoelectricCalculator::Environment env(
-        _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
-        {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
-
-    // This assumes that solveGrains was already called
+    // This assumes that solveGrains() was already called
     double grainPhotoelectricHeating = 0.;
-    for (const auto& g : _grainSolutionv) grainPhotoelectricHeating += g.photoelectricGasHeating(env);
+    for (const auto& g : _grainSolutionv) grainPhotoelectricHeating += g.photoelectricGasHeating();
     return grainPhotoelectricHeating;
 }
 
@@ -125,14 +109,9 @@ double GasSolution::grainCooling() const
 {
     if (!Options::cooling_gasGrainCollisions) return 0.;
 
-    // Specify the environment parameters (TODO: find an alternative to this struct)
-    GrainPhotoelectricCalculator::Environment env(
-        _specificIntensity, _t, ne(), np(), {-1, 1, 0, 0}, {ne(), np(), nH(), nH2()},
-        {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
-
     // This assumes that solveGrains was already called
     double gasGrainCooling = 0.;
-    for (const auto& g : _grainSolutionv) gasGrainCooling += g.collisionalGasCooling(env);
+    for (const auto& g : _grainSolutionv) gasGrainCooling += g.collisionalGasCooling();
     return gasGrainCooling;
 }
 

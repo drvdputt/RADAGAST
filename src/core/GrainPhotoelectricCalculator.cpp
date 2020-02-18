@@ -26,19 +26,25 @@ GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array& sizev, d
     }
 }
 
+GrainPhotoelectricCalculator::Locals::Locals(const Spectrum* specificIntensity, double T, double ne,
+                                             const std::vector<int>& chargev, const Array& densityv, const Array& massv)
+    : _specificIntensity(specificIntensity), _T(T), _ne(ne), _chargev(chargev), _densityv(densityv), _massv(massv),
+      _integrationWorkspace(specificIntensity->numPoints())
+{}
+
 int GrainPhotoelectricCalculator::minimumCharge(int i) const
 {
     double Uait = autoIonizationThreshold(i);
     return WD01::minimumCharge(_sizev[i], Uait);
 }
 
-void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Environment& env, const Array& Qabsv,
+void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, const Locals& env, const Array& Qabsv,
                                                                ChargeDistribution& cd) const
 {
     double a = _sizev[i];
 
-    const Array& frequencyv = env._specificIntensity.frequencyv();
-    const Array& specificIntensityv = env._specificIntensity.valuev();
+    const Array& frequencyv = env._specificIntensity->frequencyv();
+    const Array& specificIntensityv = env._specificIntensity->valuev();
 
     // Express a in angstroms
     double aA = a / Constant::ANG_CM;
@@ -184,7 +190,7 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, const Array& fr
     return heatingRatePE + heatingRatePD;
 }
 
-double GrainPhotoelectricCalculator::heatingRateA(int i, const Environment& env, const Array& Qabsv,
+double GrainPhotoelectricCalculator::heatingRateA(int i, const Locals& env, const Array& Qabsv,
                                                   const ChargeDistribution& cd) const
 {
     double totalHeatingForGrainSize = 0;
@@ -193,7 +199,7 @@ double GrainPhotoelectricCalculator::heatingRateA(int i, const Environment& env,
         double fZz = cd.value(Z);
         if (!isfinite(fZz)) Error::runtime("nan in charge distribution");
         double heatAZ =
-            heatingRateAZ(i, Z, env._specificIntensity.frequencyv(), Qabsv, env._specificIntensity.valuev());
+            heatingRateAZ(i, Z, env._specificIntensity->frequencyv(), Qabsv, env._specificIntensity->valuev());
 
         // Fraction of grains in this charge state * heating by a single particle of charge Z.
         totalHeatingForGrainSize += fZz * heatAZ;
@@ -246,7 +252,7 @@ double GrainPhotoelectricCalculator::collisionalChargingRate(int i, double gasT,
            * a * Jtilde;
 }
 
-double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Environment& env,
+double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Locals& env,
                                                               const ChargeDistribution& cd) const
 {
     double a = _sizev[i];
@@ -287,9 +293,8 @@ double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Envir
     return Constant::PI * a * a * particleSum * kT + secondTerm;
 }
 
-double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Environment& env,
-                                                              const ChargeDistribution& cd, double Tgrain,
-                                                              bool forGrain) const
+double GrainPhotoelectricCalculator::gasGrainCollisionCooling(int i, const Locals& env, const ChargeDistribution& cd,
+                                                              double Tgrain, bool forGrain) const
 {
     double a = _sizev[i];
     double kT = env._T * Constant::BOLTZMAN;
@@ -414,8 +419,7 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
 
     // Gather environment parameters
     const Spectrum specificIntensity(frequencyv, specificIntensityv);
-    const Environment env(specificIntensity, gasT, ne, ne, {-1, 1}, {ne, ne},
-                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
+    const Locals env(&specificIntensity, gasT, ne, {-1, 1}, {ne, ne}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
     // File that writes out the absorption efficiency, averaged using the input radiation field as
     // weights.
@@ -476,8 +480,7 @@ void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, dou
     Array frequencyv, specificIntensityv;
     testSpectrum(G0, frequencyv, specificIntensityv);
     Spectrum specificIntensity(frequencyv, specificIntensityv);
-    const Environment env(specificIntensity, gasT, ne, np, {-1, 1}, {ne, np},
-                          {Constant::ELECTRONMASS, Constant::PROTONMASS});
+    const Locals env(&specificIntensity, gasT, ne, {-1, 1}, {ne, np}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
 
     double a = _sizev[0];
     // Qabs for each frequency

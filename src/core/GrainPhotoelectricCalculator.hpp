@@ -25,6 +25,36 @@ public:
         ever made abstract, to acommodate for other grain types. */
     GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil);
 
+    /** Gathers the parameters that are different depending on the iteration, or the thread using
+        this calculator. */
+    class Locals
+    {
+        friend class GrainPhotoelectricCalculator;
+
+    public:
+        Locals() = default;
+
+        /** This constructor creates an environment struct for the photoelectric heating
+            calculation. It takes a frequency grid, a specific intensity of the ambient radiation
+            field for each of those frequencies, a gas temperature, an electron an proton density,
+            and then three lists which specify the particles which participate in the charging of
+            the grains. A list of particle charges, number densities and a list containing the mass
+            of each particle type should be provided. Also include negative particles, as they are
+            important for gasGrainCollisionCooling(). */
+        Locals(const Spectrum* specificIntensity, double T, double ne, const std::vector<int>& chargev,
+               const Array& densityv, const Array& massv);
+
+    private:
+        const Spectrum* _specificIntensity{nullptr};
+        double _T{0.}, _ne{0.};
+        std::vector<int> _chargev;
+        Array _densityv, _massv;
+        // Workspace for the various integrations. This is not a member of
+        // GrainPhotoelectricCalculator, because we do not assume that the radiation field size
+        // stays the same.
+        Array _integrationWorkspace;
+    };
+
     double yieldFunctionTest() const;
 
     /* Makes a plot of the heating efficiency in function of the grain size. Saved as a two-column
@@ -33,49 +63,26 @@ public:
 
     void chargeBalanceTest(double G0, double gasT, double ne, double np) const;
 
-    /** Gathers the parameters of the gas environment needed to run the photoelectric heating
-        recipe. */
-    typedef struct Environment
-    {
-        /** This constructor creates an environment struct for the photoelectric heating
-            calculation. It takes a frequency grid, a specific intensity of the ambient radiation
-            field for each of those frequencies, a gas temperature, an electron an proton density,
-            and then three lists which specify the particles which participate in the charging of
-            the grains. A list of particle charges, number densities and a list containing the mass
-            of each particle type should be provided. */
-        Environment(const Spectrum& specificIntensity, double T, double ne, double np, const std::vector<int>& chargev,
-                    const Array& densityv, const Array& massv)
-            : _specificIntensity(specificIntensity), _T(T), _ne(ne), _np(np), _chargev(chargev), _densityv(densityv),
-              _massv(massv){};
-        // Radiation field
-        Spectrum _specificIntensity;
-        // The gas temperature, and frequently used densities
-        double _T, _ne, _np;
-        /* Properties of all the charged particles in the environment (also contains ne and np). */
-        std::vector<int> _chargev;
-        Array _densityv, _massv;
-    } Environment;
-
     /** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain a
         charge distribution, and then RateAZ for every charge Z. */
-    double heatingRateA(int i, const Environment& env, const Array& Qabsv, const ChargeDistribution& cd) const;
+    double heatingRateA(int i, const Locals& env, const Array& Qabsv, const ChargeDistribution& cd) const;
 
     /** Uses detailed balance to calculate the charge distribution of a grain a, in and environment
         env, given the absorption efficiency of that grain in function of the wavelength. */
-    void calculateChargeDistribution(int i, const Environment& env, const Array& Qabsv, ChargeDistribution& cd) const;
+    void calculateChargeDistribution(int i, const Locals& env, const Array& Qabsv, ChargeDistribution& cd) const;
 
     /** The cooling due to collisions with a single grain of the given size [erg s-1]. This
         function can also be used to calculate the extra heat that goes into the grain because of
         this process. To do this, the last argument can be set to @c true, which adds two extra
         terms (see recipe from 1991-Baldwin), which take into account the potential of the grain
         and the energy of recombinations happening on its surface. */
-    double gasGrainCollisionCooling(int i, const Environment& env, const ChargeDistribution& cd, double Tgrain,
+    double gasGrainCollisionCooling(int i, const Locals& env, const ChargeDistribution& cd, double Tgrain,
                                     bool forGrain) const;
 
     /** The energy removed from the gas due to charged particles recombining with a grain, WD01
         equation 42. This is disabled in Options.hpp, because I think this conflicts (as in, double
         counts something) with the gas-grain collision recipe. */
-    double recombinationCoolingRate(int i, const Environment& env, const ChargeDistribution& cd) const;
+    double recombinationCoolingRate(int i, const Locals& env, const ChargeDistribution& cd) const;
 
 private:
     /** Implements WD01 equation 24. Calculates the negative charge necessary for a grain to

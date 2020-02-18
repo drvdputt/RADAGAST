@@ -26,6 +26,11 @@ public:
         be initialized. */
     GrainSolution(const GasModule::GrainPopulation* population);
 
+    /** Recalculate the grain temperatures and grain charges using updated radiation field,
+        temperature and densities. */
+    void recalculate(const Spectrum* specificIntensity, double T, const SpeciesVector& sv);
+
+private:
     /** Recalculate the temperature for each size, by finding the temperature for which < blackbody
         * kappa > = < radiation field * kappa > + extra heat (such as collisional, needs to be for
         each size). Some things can probably be cached should this be slow. No idea how to handle
@@ -42,38 +47,49 @@ public:
         Since the heating of the grains due to collisions with gas particles depends on the
         charge distribution of the grains, this should be called after
         recalculateChargeDistributions. */
-    void recalculateTemperatures(const GrainPhotoelectricCalculator::Environment& env);
+    void recalculateTemperatures();
 
     /** Recalculate the charge distribution for each size using the GrainPhotoelectricCalculator.
         If no calculator is present (population does not have grain photoelectric data), the
         default charge distribution is kept (all grain charges are at 0). */
-    void recalculateChargeDistributions(const GrainPhotoelectricCalculator::Environment& env);
+    void recalculateChargeDistributions();
 
+public:
     /** Calculate the total energy transfer to the gas due to the thermalization of photoelectrons
         ejected from the grains. Should be called after the charge distributions have been
-        calculated (for the same env). */
-    double photoelectricGasHeating(const GrainPhotoelectricCalculator::Environment& env) const;
+        calculated. */
+    double photoelectricGasHeating() const;
 
     /** Calculate the total energy transfer from the gas to the grains due to collisions. Should be
-        called after the charge distributions have been calculated (for the same env). */
-    double collisionalGasCooling(const GrainPhotoelectricCalculator::Environment& env) const;
+        called after the charge distributions have been calculated. */
+    double collisionalGasCooling() const;
 
     /** Calculate the total H2 formation rate per H density unit [s-1], summed over all sizes.
         Should be called after the temperatures grain have been updated. */
     double surfaceH2FormationRateCoeff(double Tgas) const;
 
 private:
+    // Population to which the vectors and arrays below map (one element per size)
     const GasModule::GrainPopulation* _population;
+
+    // Calculator instance which contains caching mechanisms based on the list of sizes of the
+    // population.
+    std::unique_ptr<GrainPhotoelectricCalculator> _photoelectricCalculator;
+
+    // Workspace for the calculator
+    GrainPhotoelectricCalculator::Locals _photoelectricLocals;
 
     // Charge distribution for each size
     std::vector<ChargeDistribution> _chargeDistributionv;
 
-    // Adjusted tempererature for each size
+    // Adjusted temperature for each size
     Array _newTemperaturev;
 
-    // Calculator instance which contains caching mechanisms based on the list of sizes of
-    // the population.
-    std::unique_ptr<GrainPhotoelectricCalculator> _photoelectricCalculator;
+    // Heating due to H2 formation for each size
+    Array _h2Heatv;
+
+    // Pointer to last used radiation field
+    const Spectrum* _specificIntensity{nullptr};
 };
 
 #endif  // CORE_GRAINSOLUTION_HPP
