@@ -19,6 +19,9 @@ public:
     /** Returns false if no data is available. */
     bool hasData() const { return _hasData; }
 
+    /** Returns the number of frequency points */
+    int numPoints() const { return _frequencyv.size(); }
+
     /** Interpolates the data to the given frequency. */
     double evaluate(double frequency) const;
 
