@@ -72,17 +72,17 @@ public:
     double cooling() const;
 
     /** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
-    double heating() const;
+    double heating();
 
     /** The heating by photoelectric effect on grains. */
-    double grainHeating() const;
+    double grainHeating();
 
     /** The cooling by collisions with grains */
     double grainCooling() const;
 
     /** Copies and/or recalculates many diagnostic values, and puts these in the given
         GasDiagnostics object */
-    void fillDiagnostics(GasDiagnostics*) const;
+    void fillDiagnostics(GasDiagnostics*);
 
     /** Writes the resulting temperature and densities into the given gas state object */
     void setGasState(GasModule::GasState&) const;

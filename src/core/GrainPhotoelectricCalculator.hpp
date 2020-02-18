@@ -65,11 +65,11 @@ public:
 
     /** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain a
         charge distribution, and then RateAZ for every charge Z. */
-    double heatingRateA(int i, const Locals& env, const Array& Qabsv, const ChargeDistribution& cd) const;
+    double heatingRateA(int i, Locals& env, const Array& Qabsv, const ChargeDistribution& cd) const;
 
     /** Uses detailed balance to calculate the charge distribution of a grain a, in and environment
         env, given the absorption efficiency of that grain in function of the wavelength. */
-    void calculateChargeDistribution(int i, const Locals& env, const Array& Qabsv, ChargeDistribution& cd) const;
+    void calculateChargeDistribution(int i, Locals& env, const Array& Qabsv, ChargeDistribution& cd) const;
 
     /** The cooling due to collisions with a single grain of the given size [erg s-1]. This
         function can also be used to calculate the extra heat that goes into the grain because of
@@ -89,15 +89,13 @@ private:
         immediately autoionize when an electron is captured. */
     int minimumCharge(int i) const;
 
-    /** Calculates the heating rate by a grain of size a and charge Z, given a wavelength-resolved
-        radiation field and absorption efficiency. */
-    double heatingRateAZ(int i, int Z, const Array& frequencyv, const Array& Qabsv,
-                         const Array& specificIntensityv) const;
+    /** Calculates the heating rate by a grain of size a and charge Z, given its absorption
+        efficiency. */
+    double heatingRateAZ(int i, int Z, Locals& env, const Array& Qabsv) const;
 
     /** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
         according to equation 25 of WD01. */
-    double emissionRate(int i, int Z, const Array& frequencyv, const Array& Qabsv,
-                        const Array& specificIntensityv) const;
+    double emissionRate(int i, int Z, Locals& env, const Array& Qabsv) const;
 
     /** The rate [s-1] at which a grain is charged by colliding with other particles. Taken from
         Draine & Sutin (1987) equations 3.1-3.5. */
@@ -113,13 +111,12 @@ private:
         with yield will give the total photoelectric emission rate in electrons s-1 cm-2, while
         multiplying with the average energy and the yield will give the heating rate in erg s-1
         cm-2. */
-    double photoelectricIntegrationLoop(const Array& frequencyv, const Array& Qabsv, const Array& specificIntensityv,
-                                        double pet,
+    double photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
                                         const std::function<double(double hnuDiff)>* f_hnuDiff = nullptr) const;
 
     /** Integration loop which applies equation 20 for the photodetachment cross section. Do not
         forget to multiply the result with abs(Z)! */
-    double photodetachmentIntegrationLoop(int Z, const Array& frequencyv, const Array& specificIntensityv, double pdt,
+    double photodetachmentIntegrationLoop(int Z, Locals& env, double pdt,
                                           const double* calcEnergyWithThisEmin = nullptr) const;
 
     /** Things specific for WD01. If another recipe is ever implemented, then

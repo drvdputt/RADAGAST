@@ -83,7 +83,7 @@ double GasSolution::cooling() const
     return freefreeCool + hRecCool + grainCool;
 }
 
-double GasSolution::heating() const
+double GasSolution::heating()
 {
     // double freefreeHeat = _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity);
     // TODO: decide whether to keep the above, as it is negligible in any case I can imagine
@@ -97,11 +97,11 @@ double GasSolution::heating() const
     return hLine + h2Line + hPhotoIonHeat + dissHeat + grainHeat;
 }
 
-double GasSolution::grainHeating() const
+double GasSolution::grainHeating()
 {
     // This assumes that solveGrains() was already called
     double grainPhotoelectricHeating = 0.;
-    for (const auto& g : _grainSolutionv) grainPhotoelectricHeating += g.photoelectricGasHeating();
+    for (auto& g : _grainSolutionv) grainPhotoelectricHeating += g.photoelectricGasHeating();
     return grainPhotoelectricHeating;
 }
 
@@ -115,7 +115,7 @@ double GasSolution::grainCooling() const
     return gasGrainCooling;
 }
 
-void GasSolution::fillDiagnostics(GasDiagnostics* gd) const
+void GasSolution::fillDiagnostics(GasDiagnostics* gd)
 
 {
     if (!gd) Error::runtime("GasDiagnostics is nullptr!");
