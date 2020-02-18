@@ -21,7 +21,7 @@ if(EIGEN_DIR)
 else()
   find_path(EIGEN_INCLUDE_DIR
     NAMES "Eigen"
-    PATHS "$ENV{HOME}/.local/include/eigen3" "$ENV{HOME}/.local/eigen3" )
+    PATHS "$ENV{HOME}/.local/include/eigen3" "$ENV{HOME}/.local/eigen3" "/usr/local/include/eigen3")
 endif()
 message(STATUS "Using Eigen headers at ${EIGEN_INCLUDE_DIR}")
 
