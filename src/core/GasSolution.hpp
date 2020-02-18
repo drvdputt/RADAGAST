@@ -17,11 +17,15 @@ class Spectrum;
 
 /** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl are
     called. This class serves as a workspace, where all the dynamic values (i.e. changing while
-    searching for the equilibrium) are stored. There are also functions that update the level
-    populations and the grain temperatures and charge distributions. They should typically be
-    called after setting a new temperature and a new species density vector. Once the equilibria
-    have been calculated, the other public functions can be called to calculate any derived
-    quantities. */
+    searching for the equilibrium) are stored. When each thread has its own GasSolution object to
+    work with, the code will be re-entrant.
+
+    There are functions that update the level populations and the grain temperatures and charge
+    distributions. They should typically be called after setting a new temperature and a new
+    species density vector. Once the equilibria have been calculated, the other public functions
+    can be called to calculate any derived quantities. Some of the latter are not const because
+    some caching or calculations using preallocated memory might happen somewhere down the
+    composition hierarchy. */
 class GasSolution
 {
 public:
