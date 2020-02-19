@@ -2,17 +2,18 @@
 #include "GasInterfaceImpl.hpp"
 #include <gsl/gsl_errno.h>
 
-using namespace std;
-
 namespace GasModule
 {
-    gsl_error_handler_t* _oldGSLErrorHandler;
+    namespace
+    {
+        gsl_error_handler_t* _oldGSLErrorHandler;
+    }
     void GasInterface::errorHandlersOff() { _oldGSLErrorHandler = gsl_set_error_handler_off(); }
 
-    GasInterface::GasInterface(const valarray<double>& iFrequencyv, const valarray<double>& oFrequencyv,
-                               const valarray<double>& eFrequencyv, const string& atomChoice,
-                               const string& moleculeChoice)
-        : _pimpl{make_unique<GasInterfaceImpl>(iFrequencyv, oFrequencyv, eFrequencyv, atomChoice, moleculeChoice)}
+    GasInterface::GasInterface(const std::valarray<double>& iFrequencyv, const std::valarray<double>& oFrequencyv,
+                               const std::valarray<double>& eFrequencyv, const std::string& atomChoice,
+                               const std::string& moleculeChoice)
+        : _pimpl{std::make_unique<GasInterfaceImpl>(iFrequencyv, oFrequencyv, eFrequencyv, atomChoice, moleculeChoice)}
     {}
 
     GasInterface::~GasInterface() = default;
