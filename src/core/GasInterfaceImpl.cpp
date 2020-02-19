@@ -56,7 +56,7 @@ Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
 
     // TODO: this should actually be the average over the cross section for this frequency bin
     for (size_t i = 0; i < _oFrequencyv.size(); i++)
-        opacityv += gs.density(_chemistry.speciesIndex().index("H")) * Ionization::crossSection(_oFrequencyv[i]);
+        opacityv[i] += gs.density(_chemistry.speciesIndex().index("H")) * Ionization::crossSection(_oFrequencyv[i]);
 
     // TODO: H2 opacity. Maybe use smoothed data file from Heays et al. 2017 (data on E. van
     // Dishoeck's home page)
