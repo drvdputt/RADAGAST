@@ -10,7 +10,8 @@ if [[ $BT == "Debug" ]]; then
 elif [[ $BT == "Release" ]]; then
     BUILD_DIR=../cmake_release
 else
-    BUILD_DIR=../cmake_$BT
+    echo Build type $BT not recognized.
+    exit 0
 fi
 
 mkdir -p $BUILD_DIR
