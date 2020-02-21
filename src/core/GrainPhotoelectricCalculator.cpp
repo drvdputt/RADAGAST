@@ -3,6 +3,7 @@
 #include "DebugMacros.hpp"
 #include "Error.hpp"
 #include "IOTools.hpp"
+#include "Options.hpp"
 #include "RadiationFieldTools.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
@@ -91,7 +92,8 @@ void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& en
         return Jtotal;
     };
     // Limit the number of charges here
-    cd.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin, resultZmax, 128);
+    cd.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin, resultZmax,
+                                Options::grainphotoelectriccalculator_maxcharges);
     DEBUG("grain" << i << " average charge " << cd.average() << '\n');
 }
 

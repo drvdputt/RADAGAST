@@ -33,6 +33,7 @@ namespace Options
     const int grainsolution_minGrainTemp = 1.;
     const int grainsolution_maxGrainTemp = 300.;
     const int grainsolution_tPointsPerDex = 100.;
+    const int grainphotoelectriccalculator_maxcharges = 16;
 
     //////////////////////////////////////////////
     // NUMERIC / METHOD / ITERATION / PRECISION //
