@@ -70,7 +70,7 @@ void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& en
     // with multiply charged particles are treated as if they can only change the charge in steps
     // of 1. This is technically incorrect, but the charging rate due to positive ions is very
     // small anyway.
-    auto chargeUpRate = [&](int z) -> double {
+    auto chargeUpRate = [&](int z) {
         double Jtotal{0};
         Jtotal += emissionRate(i, z, env, Qabsv);
         for (size_t j = 0; j < env._chargev.size(); j++)
@@ -82,7 +82,7 @@ void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& en
     };
     // The rate at which the grain moves out of charge Z, in the negative direction. Sums
     // collisions over negative particles.
-    auto chargeDownRate = [&](int z) -> double {
+    auto chargeDownRate = [&](int z) {
         double Jtotal{0};
         for (size_t j = 0; j < env._chargev.size(); j++)
         {
@@ -107,9 +107,8 @@ void GrainPhotoelectricCalculator::getPET_PDT_Emin(int i, int Z, double& pet, do
     pdt = ip_v + Emin;
 }
 
-double
-GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
-                                                           const std::function<double(double hnuDiff)>* f_hnuDiff) const
+double GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
+                                                                  std::function<double(double hnuDiff)> f_hnuDiff) const
 {
     const Array& frequencyv = env._specificIntensity->frequencyv();
     const Array& specificIntensityv = env._specificIntensity->valuev();
@@ -120,8 +119,7 @@ GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, const Ar
     while (frequencyv[i] > nu_pet && i > 0)
     {
         double hnu = Constant::PLANCK * frequencyv[i];
-        env._integrationWorkspace[i] = Qabsv[i] * specificIntensityv[i] / hnu;
-        if (f_hnuDiff) env._integrationWorkspace[i] *= (*f_hnuDiff)(hnu - pet);
+        env._integrationWorkspace[i] = Qabsv[i] * specificIntensityv[i] / hnu * f_hnuDiff(hnu - pet);
         i--;
     }
     // <function unit> sr-1 cm-2 s-1
@@ -169,7 +167,7 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, Locals& env, co
     // WD01 text between eq 10 and 11
     double Elow = Z < 0 ? Emin : -(Z + 1) * e2_a;
 
-    std::function<double(double)> yieldTimesAverageEnergy = [&](double hnuDiff) -> double {
+    auto yieldTimesAverageEnergy = [&](double hnuDiff) {
         double Y = photoelectricYield(i, Z, hnuDiff, Emin);
 
         double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
@@ -183,7 +181,7 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, Locals& env, co
         return Y * IntE / y2;
     };
     double heatingRatePE =
-        Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, pet, &yieldTimesAverageEnergy);
+        Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, pet, yieldTimesAverageEnergy);
 
     double heatingRatePD = 0;
     if (Z < 0) heatingRatePD = photodetachmentIntegrationLoop(Z, env, pdt, &Emin);
@@ -202,8 +200,8 @@ double GrainPhotoelectricCalculator::emissionRate(int i, int Z, Locals& env, con
     double pet, pdt, Emin;
     getPET_PDT_Emin(i, Z, pet, pdt, Emin);
 
-    function<double(double)> yieldf = [&](double hnuDiff) { return photoelectricYield(i, Z, hnuDiff, Emin); };
-    double emissionRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, pet, &yieldf);
+    auto yieldf = [&](double hnuDiff) { return photoelectricYield(i, Z, hnuDiff, Emin); };
+    double emissionRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, pet, yieldf);
     double emissionRatePD = 0;
     if (Z < 0) emissionRatePD = photodetachmentIntegrationLoop(Z, env, pdt, nullptr);
 

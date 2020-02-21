@@ -112,7 +112,7 @@ private:
         multiplying with the average energy and the yield will give the heating rate in erg s-1
         cm-2. */
     double photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
-                                        const std::function<double(double hnuDiff)>* f_hnuDiff = nullptr) const;
+                                        std::function<double(double hnuDiff)> f_hnuDiff) const;
 
     /** Integration loop which applies equation 20 for the photodetachment cross section. Do not
         forget to multiply the result with abs(Z)! */
