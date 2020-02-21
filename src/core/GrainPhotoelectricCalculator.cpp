@@ -207,17 +207,7 @@ double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, Locals& env, co
 double GrainPhotoelectricCalculator::heatingRateA(int i, Locals& env, const Array& Qabsv,
                                                   const ChargeDistribution& cd) const
 {
-    double totalHeatingForGrainSize = 0;
-    for (int Z = cd.zmin(); Z <= cd.zmax(); Z++)
-    {
-        double fZz = cd.value(Z);
-        if (!isfinite(fZz)) Error::runtime("nan in charge distribution");
-        double heatAZ = heatingRateAZ(i, Z, env, Qabsv);
-
-        // Fraction of grains in this charge state * heating by a single particle of charge Z.
-        totalHeatingForGrainSize += fZz * heatAZ;
-    }
-    return totalHeatingForGrainSize;
+    return cd.sumOverCharge([&](int z) { return heatingRateAZ(i, z, env, Qabsv); });
 }
 
 double GrainPhotoelectricCalculator::emissionRate(int i, int Z, Locals& env, const Array& Qabsv) const
