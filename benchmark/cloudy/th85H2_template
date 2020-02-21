@@ -11,6 +11,7 @@ luminosity total linear solar {lum}
 radius 1.0 to 1.01 linear parsecs
 # hden 2.51e4 linear
 hden {nh} linear
+stop temperature 100
 # LEVEL MODEL
 # database H-like collisions l-mixing off
 # database H-like collisional ionization off
