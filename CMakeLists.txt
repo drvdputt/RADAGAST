@@ -19,9 +19,10 @@ add_definitions(-march=native)
 if(EIGEN_DIR)
   set(EIGEN_INCLUDE_DIR ${EIGEN_DIR})
 else()
-  find_path(EIGEN_INCLUDE_DIR
-    NAMES "Eigen"
-    PATHS "$ENV{HOME}/.local/include/eigen3" "$ENV{HOME}/.local/eigen3" "/usr/local/include/eigen3")
+  find_path(EIGEN_INCLUDE_BASE
+    NAMES "eigen3"
+    PATHS "$ENV{HOME}/.local/include" "$ENV{HOME}/.local")
+  set(EIGEN_INCLUDE_DIR ${EIGEN_INCLUDE_BASE}/eigen3)
 endif()
 message(STATUS "Using Eigen headers at ${EIGEN_INCLUDE_DIR}")
 
