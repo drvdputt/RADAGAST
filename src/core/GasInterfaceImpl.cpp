@@ -4,22 +4,23 @@
 #include "GrainPhotoelectricCalculator.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
+#include "RadiationFieldTools.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
-
-using namespace std;
+#include <iostream>
 
 GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv,
-                                   const string& atomChoice, const string& moleculeChoice)
+                                   const std::string& atomChoice, const std::string& moleculeChoice)
     : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _eFrequencyv{eFrequencyv},
       _manager(atomChoice, moleculeChoice)
 {}
 
-void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n, const valarray<double>& specificIntensityv,
+void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
+                                      const std::valarray<double>& specificIntensityv,
                                       GasModule::GrainInterface& grainInfo, GasDiagnostics* gd) const
 {
     Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
@@ -63,6 +64,19 @@ Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
 
     // convert from cm-1 to m-1
     return 100. * opacityv;
+}
+
+std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
+                                        const std::valarray<double>& specificIntensity) const
+{
+    Spectrum si(_iFrequencyv, specificIntensity);
+    auto spindex = _chemistry.speciesIndex();
+    SpeciesVector sv(&spindex);
+    sv.setDensities(Eigen::Map<const EVector>(&gs._nv[0], gs._nv.size()));
+    std::stringstream ss;
+    ss << "G0 " << RadiationFieldTools::gHabing(si) << " T " << gs._t << " ne " << sv.ne() << " np " << sv.np()
+       << " nH " << sv.nH() << " nH2 " << sv.nH2();
+    return ss.str();
 }
 
 GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T, GasModule::GrainInterface& gri) const
@@ -138,7 +152,9 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
     if (logTmax > logTmaxmax && heating_f_Tmax >= 0.)
     {
         // If net heating is still positive, just solve for the maximum temperature.
-        solveDensities(s, n, Tmax, specificIntensity);
+        std::cout << "Could not find equilibrium temperature. G0 is " << RadiationFieldTools::gHabing(specificIntensity)
+                  << '\n';
+        solveDensities(s, n, Tmaxmax, specificIntensity);
         return s;
     }
 
@@ -148,8 +164,8 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
     {
         // The heating is most likely negative on both sides in this case. Just solve for the
         // lowest temperature as the 'safe' option.
-        cout << "heating at " << pow(10., logTmin) << " K -->" << heating_f_Tmin << '\n';
-        cout << "heating at " << pow(10., logTmax) << " K -->" << heating_f_Tmax << '\n';
+        std::cout << "heating at " << pow(10., logTmin) << " K -->" << heating_f_Tmin << '\n';
+        std::cout << "heating at " << pow(10., logTmax) << " K -->" << heating_f_Tmax << '\n';
         solveDensities(s, n, Tmin, specificIntensity);
         return s;
     }
@@ -158,7 +174,7 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
     status = gsl_root_fsolver_iterate(solver);
     if (status)
     {
-        cerr << gsl_strerror(status) << " in gsl root iteration\n";
+        std::cerr << gsl_strerror(status) << " in gsl root iteration\n";
         return s;
     }
     // Then, start using the current solution as an initial guess of the next one
@@ -171,7 +187,7 @@ GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specifi
         status = gsl_root_fsolver_iterate(solver);
         if (status)
         {
-            cerr << gsl_strerror(status) << " in gsl root iteration\n";
+            std::cerr << gsl_strerror(status) << " in gsl root iteration\n";
             return s;
         }
         double lower = gsl_root_fsolver_x_lower(solver);

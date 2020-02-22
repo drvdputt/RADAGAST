@@ -87,6 +87,9 @@ public:
     /** The total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1] */
     Array opacity_SI(const GasModule::GasState& gs) const;
 
+    /** A string containing a compact overview of the gas solution */
+    std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& specificIntensity) const;
+
     /** This convenience function runs solveTemperature for a blackbody radiation field. The final
         temperature is usually close to the given color temperature T. */
     GasSolution solveInitialGuess(double n, double T, GasModule::GrainInterface&) const;
