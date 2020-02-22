@@ -48,6 +48,7 @@ namespace GasModule
         void initializeGasState(GasState&, double n, double T, GrainInterface&, GasDiagnostics* gd = nullptr) const;
         std::valarray<double> emissivity_SI(const GasState& gs) const;
         std::valarray<double> opacity_SI(const GasState& gs) const;
+        std::string quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const;
 
         GasSolution solveInitialGuess(double n, double T, GrainInterface&) const;
         GasSolution solveTemperature(double n, const Spectrum& specificIntensity, GasModule::GrainInterface&) const;

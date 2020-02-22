@@ -42,6 +42,11 @@ namespace GasModule
 
     std::valarray<double> GasInterface::opacity_SI(const GasState& gs) const { return _pimpl->opacity_SI(gs); }
 
+    std::string GasInterface::quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const
+    {
+        return _pimpl->quickInfo(gs, specificIntensity);
+    }
+
     GasSolution GasInterface::solveInitialGuess(double n, double T, GrainInterface& gri) const
     {
         return _pimpl->solveInitialGuess(n, T, gri);
