@@ -94,7 +94,6 @@ void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& en
     // Limit the number of charges here
     cd.calculateDetailedBalance(chargeUpRate, chargeDownRate, resultZmin, resultZmax,
                                 Options::grainphotoelectriccalculator_maxcharges);
-    DEBUG("grain" << i << " average charge " << cd.average() << '\n');
 }
 
 void GrainPhotoelectricCalculator::getPET_PDT_Emin(int i, int Z, double& pet, double& pdt, double& Emin) const
