@@ -17,7 +17,7 @@ TEST_CASE("Blackbodies test")
 
     SUBCASE("Very low color temperature - problems are expected here")
     {
-        Tv = {66., 112., 225., 450., 900., 1875.};
+        Tv = {100., 300., 900., 1875.};
         warnOnly = true;
     }
     SUBCASE("Normal color temperature - should drive equilibrium")
@@ -52,9 +52,7 @@ TEST_CASE("Blackbodies test")
         if (!withDust)
         {
             // Without dust, we expect no H2 to be present
-            WARN_MESSAGE(
-                s.nH2() == 0.,
-                "without collisional dissociation, H2 won't go to zero (both formation and dissociation likely 0)");
+            DoctestUtils::checkRange("zero h2 dens", s.nH2(), 0., 1.e-17 * nHtotal, true);
         }
     }
 }
