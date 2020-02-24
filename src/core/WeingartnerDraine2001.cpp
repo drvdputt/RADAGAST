@@ -88,17 +88,20 @@ double WD01::energyIntegral(double Elow, double Ehigh, double Emin)
     // and therefore f(E)E is a third order polynomial. Thus the integral of f(E)E dE is a fourth
     // order polynomial: a/4 (max4 - min4) + b/3 (max3 - min3) + c/2 (max2 - min2).
     double Emax2 = Emax * Emax;
+    double Emax3 = Emax2 * Emax;
+    double Emax4 = Emax3 * Emax;
     double Emin2 = Emin * Emin;
+    double Emin3 = Emin2 * Emin;
+    double Emin4 = Emin3 * Emin;
     return 6 / Ediff3
-           * (-(Emax2 * Emax2 - Emin2 * Emin2) / 4. + (Ehigh + Elow) * (Emax2 * Emax - Emin2 * Emin) / 3.
-              - Elow * Ehigh * (Emax2 - Emin2) / 2.);
+           * (-(Emax4 - Emin4) / 4. + (Ehigh + Elow) * (Emax3 - Emin3) / 3. - Elow * Ehigh * (Emax2 - Emin2) / 2.);
 }
 
 double WD01::escapingFraction(int Z, double Elow, double Ehigh)
 {
     // Calculate y2 from eq 11
     double Ediff = Ehigh - Elow;
-    double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / Ediff / Ediff / Ediff : 1;
+    double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / (Ediff * Ediff * Ediff) : 1;
     return y2;
 }
 
@@ -143,9 +146,8 @@ double WD01::yield_cached(double a, int Z, double hnuDiff, double Emin, bool car
     {
         y0 = 0.5 * thetaOverW / (1. + 5. * thetaOverW);
     }
-    double y1 = y1_cached;
     double y2 = escapingFraction(Z, Elow, Ehigh);
-    return y2 * min(y0 * y1, 1.);
+    return y2 * min(y0 * y1_cached, 1.);
 }
 
 double WD01::y1(double a)
