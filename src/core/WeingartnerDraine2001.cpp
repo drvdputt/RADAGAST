@@ -259,10 +259,10 @@ double WD01::thetaNu(double nu)
 
 double WD01::sigmaPDT(int Z, double hnuDiff)
 {
-    constexpr double DeltaE = 3 / Constant::ERG_EV;
+    constexpr double DeltaE = 3. / Constant::ERG_EV;
     double x = hnuDiff / DeltaE;
-    double denom = 1 + x * x / 3;
+    double denom = 1 + x * x / 3.;
     // WD01 eq 20, with constant factor moved in front of integral
-    double sigma_pdt = 1.2e-17 * abs(Z) * x / denom / denom;
+    double sigma_pdt = 1.2e-17 * abs(Z) * x / (denom * denom);
     return sigma_pdt;
 }
