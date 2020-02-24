@@ -60,10 +60,10 @@ namespace WD01
     ///@}
 
     /** Draine & Sutin (1987) equations 3.6-3.10. */
-    double lambdaTilde(double tau, double ksi);
+    double lambdaTilde(double tau, double nu);
 
     /** Draine & Sutin (1987) equation 2.4a (with nu replaced by ksi in notation). */
-    double thetaKsi(double ksi);
+    double thetaNu(double nu);
 
     /** Photodetachment cross section (equation 20) */
     double sigmaPDT(int Z, double hnuDiff);

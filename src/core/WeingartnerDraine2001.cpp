@@ -28,25 +28,25 @@ double WD01::workFunction(bool carbonaceous)
 
 double WD01::eMin(double a, int Z)
 {
+    double e2_a = Constant::ESQUARE / a;
     if (Options::weingartnerdraine2001_vanHoofEmin)
     {
-        // replace by van Hoof (2004) eq 1 (or WD06 eq 3)
+        // replace by van Hoof (2004) eq 1 (or WD06 eq 3). Note that the factor e^2 / a has gone
+        // missing in WD06 eq 3.
         if (Z >= -1)
         {
             return 0;
         }
         else
         {
-            double ksi = abs(Z + 1);
-            return thetaKsi(ksi) * (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(ksi, -0.26));
+            double nu = abs(Z + 1);
+            return thetaNu(nu) * e2_a * (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(nu, -0.26));
         }
     }
     else
     {
         // WD01 eq 7
-        double e2_a{Constant::ESQUARE / a};
-        double Emin = Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
-        return Emin;
+        return Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
     }
 }
 
@@ -233,29 +233,22 @@ double WD01::stickingCoefficient(double a, int z, int z_i, bool carbonaceous)
     return stickingCoefficient_cached(a, z, z_i, carbonaceous, the_estick_positive, the_estick_negative);
 }
 
-double WD01::lambdaTilde(double tau, double ksi)
+double WD01::lambdaTilde(double tau, double nu)
 {
-    /* Found in 1987-Draine-Sutin (writing ksi instead of nu, to avoid confusion with
-	   frequency). */
-    if (ksi < 0)
-    {
-        return (2. - ksi / tau) * (1. + 1. / sqrt(tau - ksi));
-    }
-    else if (ksi > 0)
-    {
-        return (2. + ksi / tau) * (1. + 1. / sqrt(3. / 2. / tau + 3. * ksi)) * exp(-thetaKsi(ksi) / tau);
-    }
+    // Found in 1987-Draine-Sutin (n.b. nu is a ratio of charges, not frequency)
+    if (nu < 0)
+        return (2. - nu / tau) * (1. + 1. / sqrt(tau - nu));
+    else if (nu > 0)
+        return (2. + nu / tau) * (1. + 1. / sqrt(3. / 2. / tau + 3. * nu)) * exp(-thetaNu(nu) / tau);
     else
-    {
         return 2. + 3. / 2. * sqrt(Constant::PI / 2. / tau);
-    }
 }
 
-double WD01::thetaKsi(double ksi)
+double WD01::thetaNu(double nu)
 {
     // Note that this is an approximation. The exact solution is actually a root of an equation
-    if (ksi > 0.)
-        return ksi / (1. + 1. / sqrt(ksi));
+    if (nu > 0.)
+        return nu / (1. + 1. / sqrt(nu));
     else
         return 0;
 }
