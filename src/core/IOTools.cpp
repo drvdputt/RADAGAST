@@ -22,7 +22,7 @@ ifstream IOTools::ifstreamFile(const string& file)
 {
     ifstream input(file);
     if (!input) Error::runtime("Input file " + file + "not found.");
-    DEBUG("Opened file (read) " << file << endl);
+    DEBUG("Opened file (read) " << file << '\n');
     return input;
 }
 
@@ -30,7 +30,7 @@ ofstream IOTools::ofstreamFile(const string& file)
 {
     ofstream output(file);
     if (!output.is_open()) Error::runtime("Output file " + file + " could not be opened.");
-    DEBUG("Opened file (write) " << file << endl);
+    DEBUG("Opened file (write) " << file << '\n');
     return output;
 }
 

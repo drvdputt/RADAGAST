@@ -218,7 +218,7 @@ double GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, cons
         return 0.;
     }
 
-    DEBUG("Calculating densities for T = " << T << "K" << endl);
+    DEBUG("Calculating densities for T = " << T << "K\n");
 
     // Decide how to do the initial guess; manual, or using the previous state.
     bool manualGuess = true;
@@ -229,7 +229,7 @@ double GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, cons
         double fT = T / s.t();
         if (fT > 0.75 && fT < 1.5)
         {
-            DEBUG("Using previous speciesNv as initial guess" << std::endl);
+            DEBUG("Using previous speciesNv as initial guess\n");
             manualGuess = false;
         }
         // else manualGuess stays true

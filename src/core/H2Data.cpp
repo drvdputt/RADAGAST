@@ -29,13 +29,13 @@ H2Data::H2Data(int maxJ, int maxV) : LevelCoefficients(2 * Constant::HMASS_CGS),
     if (Options::h2data_plotLevelMatrices)
     {
         ofstream avvOut = IOTools::ofstreamFile("h2/einsteinA.dat");
-        avvOut << _avv << endl;
+        avvOut << _avv << '\n';
         avvOut.close();
 
         ofstream lvlOut = IOTools::ofstreamFile("h2/levels.dat");
         lvlOut << "# eState\tv\tJ\tE\n";
         for (const auto& l : _levelv)
-            lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j() << "\t" << l.e() << endl;
+            lvlOut << static_cast<int>(l.eState()) << "\t" << l.v() << "\t" << l.j() << "\t" << l.e() << '\n';
         lvlOut.close();
     }
 }
@@ -223,7 +223,7 @@ void H2Data::readLevelFile(const string& repoFile, ElectronicState eState)
             addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
         }
     }
-    DEBUG("Read in " << counter << " levels from " << repoFile << endl);
+    DEBUG("Read in " << counter << " levels from " << repoFile << '\n');
 }
 
 void H2Data::readTransProbFile(const string& repoFile, ElectronicState upperE, ElectronicState lowerE)
@@ -264,7 +264,7 @@ void H2Data::readTransProbFile(const string& repoFile, ElectronicState upperE, E
             }
         }
     }
-    DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << endl);
+    DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << '\n');
 }
 
 void H2Data::readDissProbFile(const string& repoFile, ElectronicState eState)
@@ -297,7 +297,7 @@ void H2Data::readDissProbFile(const string& repoFile, ElectronicState eState)
             counter++;
         }
     }
-    DEBUG("Read in " << counter << " dissociation rates from " << repoFile << endl);
+    DEBUG("Read in " << counter << " dissociation rates from " << repoFile << '\n');
 }
 
 void H2Data::readCollisionFile(const string& repoFile, CollisionPartner iPartner)
@@ -357,7 +357,7 @@ void H2Data::readCollisionFile(const string& repoFile, CollisionPartner iPartner
     }
     _qdataPerPartner[iPartner].check();
     DEBUG("Read in " << _qdataPerPartner[iPartner].transitionv().size() << " collision coefficients from " << repoFile
-                     << endl);
+                     << '\n');
 }
 
 EVector H2Data::makeEv() const
