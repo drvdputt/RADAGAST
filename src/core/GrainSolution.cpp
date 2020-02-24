@@ -101,12 +101,16 @@ double GrainSolution::photoelectricGasHeating()
 {
     if (!_photoelectricCalculator) return 0;
 
+    DEBUG("grain heat contributions: ");
     double total = 0;
     for (int i = 0; i < _population->numSizes(); i++)
     {
-        total += _population->density(i)
+        double contribution = _population->density(i)
                  * _photoelectricCalculator->heatingRateA(i, _photoelectricLocals, _population->qAbsv(i),
                                                           _chargeDistributionv[i]);
+        total += contribution;
+
+        DEBUG(' ' << i << ' ' << contribution);
 
         // The net heating rate (eq 41 without denominator)
         if (Options::grainphotoelectriceffect_recombinationCooling)
@@ -114,6 +118,7 @@ double GrainSolution::photoelectricGasHeating()
                 _population->density(i)
                 * _photoelectricCalculator->recombinationCoolingRate(i, _photoelectricLocals, _chargeDistributionv[i]);
     }
+    DEBUG('\n');
     return total;
 }
 
