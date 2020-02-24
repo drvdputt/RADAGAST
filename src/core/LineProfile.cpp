@@ -102,7 +102,7 @@ Array LineProfile::recommendedFrequencyGrid(int numPoints) const
         freqv[iCenter + i] = _center + x;
         freqv[iCenter - i] = _center - x;
     }
-    // std::cout << "added " << left << " linear points" << std::endl;
+    // std::cout << "added " << left << " linear points" << '\n';
     return freqv;
 }
 
@@ -234,7 +234,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
         for (size_t iRight = iCenter + 1; iRight < lineGrid.size(); iRight++)
         {
             double contribution = evaluateIntegralInterval(iRight);
-            // cout << "interval " << iRight - 1 << ", " << iRight << endl;
+            // cout << "interval " << iRight - 1 << ", " << iRight << '\n';
             integral += contribution;
 
             // Flag that breaks out of this loop if set to true by the end of this
@@ -301,7 +301,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
         for (size_t iRight = iCenter; iRight-- > 1;)
         {
             double contribution = evaluateIntegralInterval(iRight);
-            // cout << "interval " << iRight - 1 << ", " << iRight << endl;
+            // cout << "interval " << iRight - 1 << ", " << iRight << '\n';
             integral += contribution;
 
             bool stopIntegrating = false;
@@ -351,7 +351,7 @@ double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumM
         {
             double freq = frequencyv[i];
             double val = spectrum.evaluate(freq);
-            // cout << val << endl;
+            // cout << val << '\n';
             integrandv[i] = val * (*this)(freq);
         }
         return TemplatedUtils::integrate<double>(frequencyv, integrandv);
