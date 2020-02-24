@@ -115,17 +115,25 @@ double GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, c
     // yield is zero by definition below photoelectric threshold
     double nu_pet = pet / Constant::PLANCK;
     int i = frequencyv.size() - 1;
-    while (frequencyv[i] > nu_pet && i > 0)
+    while (i >= 0 && frequencyv[i] > nu_pet)
     {
         double hnu = Constant::PLANCK * frequencyv[i];
         env._integrationWorkspace[i] = Qabsv[i] * specificIntensityv[i] / hnu * f_hnuDiff(hnu - pet);
         i--;
     }
-    // <function unit> sr-1 cm-2 s-1
-    double integral =
-        TemplatedUtils::integrate<double>(frequencyv, env._integrationWorkspace, max(0, i), frequencyv.size() - 1);
-    // <function unit> cm-2 s-1
-    return Constant::FPI * integral;
+
+    if (i >= frequencyv.size() - 1)
+        return 0;
+    else
+    {
+        // don't forget to increment i!
+
+        // <function unit> sr-1 cm-2 s-1
+        double integral =
+            TemplatedUtils::integrate<double>(frequencyv, env._integrationWorkspace, i + 1, frequencyv.size() - 1);
+        // <function unit> cm-2 s-1
+        return Constant::FPI * integral;
+    }
 }
 
 double GrainPhotoelectricCalculator::photodetachmentIntegrationLoop(int Z, Locals& env, double pdt,
@@ -137,7 +145,7 @@ double GrainPhotoelectricCalculator::photodetachmentIntegrationLoop(int Z, Local
     // no effect below photodetachment threshold
     double nu_pdt = pdt / Constant::PLANCK;
     int i = frequencyv.size() - 1;
-    while (frequencyv[i] > nu_pdt && i > 0)
+    while (i >= 0 && frequencyv[i] > nu_pdt)
     {
         double hnu = Constant::PLANCK * frequencyv[i];
         double hnuDiff = hnu - pdt;
@@ -146,11 +154,17 @@ double GrainPhotoelectricCalculator::photodetachmentIntegrationLoop(int Z, Local
         if (calcEnergyWithThisEmin) env._integrationWorkspace[i] *= hnuDiff + *calcEnergyWithThisEmin;
         i--;
     }
-    // <erg optional> s-1 sr-1
-    double integral =
-        TemplatedUtils::integrate<double>(frequencyv, env._integrationWorkspace, max(0, i), frequencyv.size() - 1);
-    // <erg optional> s-1
-    return Constant::FPI * integral;
+
+    if (i >= frequencyv.size() - 1)
+        return 0;
+    else
+    {
+        // <erg optional> s-1 sr-1
+        double integral =
+            TemplatedUtils::integrate<double>(frequencyv, env._integrationWorkspace, i + 1, frequencyv.size() - 1);
+        // <erg optional> s-1
+        return Constant::FPI * integral;
+    }
 }
 
 double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, Locals& env, const Array& Qabsv) const

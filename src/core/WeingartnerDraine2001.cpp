@@ -101,9 +101,7 @@ double WD01::escapingFraction(int Z, double Elow, double Ehigh)
 {
     // Calculate y2 from eq 11
     double Ediff = Ehigh - Elow;
-    double Ediff2 = Ediff * Ediff;
-    double Ediff3 = Ediff2 * Ediff;
-    double y2 = Z >= 0 ? Ediff2 * (Ehigh - 3. * Elow) / Ediff3 : 1;
+    double y2 = Z >= 0 ? Ehigh * Ehigh * (Ehigh - 3. * Elow) / (Ediff * Ediff * Ediff) : 1;
     return y2;
 }
 
