@@ -57,6 +57,7 @@ void GrainSolution::recalculateTemperatures()
         }
     }
 
+    DEBUG("New temps for grains:");
     for (size_t i = 0; i < _population->numSizes(); i++)
     {
         double cross = Constant::PI * _population->size(i) * _population->size(i);
@@ -77,17 +78,23 @@ void GrainSolution::recalculateTemperatures()
         };
         _newTemperaturev[i] = TemplatedUtils::binaryIntervalSearch<double>(
             heating, 30., 1.e-3, Options::grainsolution_maxGrainTemp, Options::grainsolution_minGrainTemp);
-        DEBUG("New temp for grain " << i << " " << _newTemperaturev[i] << " K\n");
+        DEBUG(' ' << i << " " << _newTemperaturev[i]);
     }
+    DEBUG('\n');
 }
 
 void GrainSolution::recalculateChargeDistributions()
 {
     if (!_photoelectricCalculator) return;
 
+    DEBUG("grain average charge:");
     for (int i = 0; i < _population->numSizes(); i++)
+    {
         _photoelectricCalculator->calculateChargeDistribution(i, _photoelectricLocals, _population->qAbsv(i),
                                                               _chargeDistributionv[i]);
+        DEBUG(' ' << i << ' ' << _chargeDistributionv[i].average());
+    }
+    DEBUG('\n');
 }
 
 double GrainSolution::photoelectricGasHeating()
