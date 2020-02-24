@@ -9,7 +9,6 @@ TEST_CASE("Blackbodies test")
     // Test if options don't make it crash
     Array frequencyv = Testing::defaultFrequencyv(300);
     GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
-    GasModule::GrainInterface gri;
     double nHtotal = 1000;
     std::vector<double> Tv;
     bool warnOnly = false;
@@ -38,6 +37,7 @@ TEST_CASE("Blackbodies test")
     for (double Tc : Tv)
     {
         Spectrum specificIntensity(frequencyv, RadiationFieldTools::generateBlackbodyv(frequencyv, Tc));
+        GasModule::GrainInterface gri;
         if (withDust) Testing::genMRNDust(gri, nHtotal, specificIntensity, true);
         GasSolution s = gi.solveTemperature(nHtotal, specificIntensity, gri);
         double T = s.t();
