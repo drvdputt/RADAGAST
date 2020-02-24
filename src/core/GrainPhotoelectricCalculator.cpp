@@ -216,17 +216,17 @@ double GrainPhotoelectricCalculator::collisionalChargingRate(int i, double gasT,
     // WD eq 26: akT / q^2 = akT / e^2 / z^2
     double tau = a * kT / Constant::ESQUARE / particleCharge / particleCharge;
     // Ze / q = Z / z
-    double ksi = static_cast<double>(Z) / static_cast<double>(particleCharge);
+    double nu = static_cast<double>(Z) / static_cast<double>(particleCharge);
 
     double Jtilde;
-    if (ksi < 0)
+    if (nu < 0)
     {
-        Jtilde = (1. - ksi / tau) * (1. + sqrt(2. / (tau - 2. * ksi)));
+        Jtilde = (1. - nu / tau) * (1. + sqrt(2. / (tau - 2. * nu)));
     }
-    else if (ksi > 0)
+    else if (nu > 0)
     {
-        double toSquare = 1. + 1. / sqrt(4. * tau + 3. * ksi);
-        Jtilde = toSquare * toSquare * exp(-WD01::thetaKsi(ksi) / tau);
+        double toSquare = 1. + 1. / sqrt(4. * tau + 3. * nu);
+        Jtilde = toSquare * toSquare * exp(-WD01::thetaNu(nu) / tau);
     }
     else
     {
