@@ -428,8 +428,8 @@ void Testing::writeGrains(const std::string& outputPath, const std::vector<Grain
     // write out grain size distribution in different ways
     for (size_t i = 0; i < grsv.size(); i++)
     {
-        ColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
-                     {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
+        OutColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
+                        {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
 
         const auto* pop = grsv[i]._population;
         for (size_t m = 0; m < pop->numSizes(); m++)
@@ -468,12 +468,12 @@ void Testing::plotHeatingCurve(const GasModule::GasInterface& gi, const std::str
     GasDiagnostics gd;
     s.fillDiagnostics(&gd);
 
-    ColumnFile heatFile(outputPath + "heatcool.dat", {"temperature", "net", "heat", "cool", "grainheat"});
-    ColumnFile densFile(outputPath + "densities.dat", {"temperature", "e-", "H+", "H", "H2", "Htot"});
+    OutColumnFile heatFile(outputPath + "heatcool.dat", {"temperature", "net", "heat", "cool", "grainheat"});
+    OutColumnFile densFile(outputPath + "densities.dat", {"temperature", "e-", "H+", "H", "H2", "Htot"});
 
     vector<string> rateFileColNames = {"temperature"};
     for (auto name : gd.reactionNames()) rateFileColNames.emplace_back(name);
-    ColumnFile rateFile(outputPath + "chemrates.dat", rateFileColNames);
+    OutColumnFile rateFile(outputPath + "chemrates.dat", rateFileColNames);
 
     std::vector<int> h_conservation = {0, 1, 1, 2};
     size_t numSpecies = h_conservation.size();
@@ -836,7 +836,7 @@ namespace
             namev.emplace_back(item.first);
             valuev.emplace_back(item.second);
         }
-        ColumnFile f(filename, namev);
+        OutColumnFile f(filename, namev);
         f.writeLine(valuev);
     }
 }  // namespace
@@ -896,16 +896,16 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
             if (prefix[prefix.size() - 1] == '/') mkdir(prefix.c_str(), 0755);
         }
 
-        ColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
+        OutColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
         overview.writeLine<Array>({s.t(), s.ne(), s.np(), s.nH(), s.nH2()});
 
-        ColumnFile rates(prefix + "rates.dat", gd.reactionNames());
+        OutColumnFile rates(prefix + "rates.dat", gd.reactionNames());
         rates.writeLine(gd.reactionRates());
 
         writeMapAsColumnFile(prefix + "heat.dat", gd.otherHeating());
         writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
 
-        ColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
+        OutColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
         for (size_t i = 0; i < frequencyv.size(); i++)
         {
             double wav = Constant::LIGHT / frequencyv[i];
@@ -918,9 +918,9 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
         // plotHeatingCurve(*gasInterface.pimpl(), "MRNDust/", nHtotal, I_nu, gri);
 
         vector<string> populationColumns = {"label", "energy", "density"};
-        ColumnFile hpop(prefix + "hpopulations.dat", populationColumns);
+        OutColumnFile hpop(prefix + "hpopulations.dat", populationColumns);
         for (double n : gd.hPopulations()) hpop.writeLine<Array>({0., 0., n});
-        ColumnFile h2pop(prefix + "h2populations.dat", populationColumns);
+        OutColumnFile h2pop(prefix + "h2populations.dat", populationColumns);
         for (double n : gd.h2Populations()) h2pop.writeLine<Array>({0., 0., n});
     }
 }

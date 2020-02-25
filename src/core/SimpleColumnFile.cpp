@@ -2,7 +2,7 @@
 #include "IOTools.hpp"
 #include <sstream>
 
-void SimpleColumnFile::read(int numCols, int reserveLines)
+void InColumnFile::read(int numCols, int reserveLines)
 {
     _columnv.resize(numCols);
     for (auto& v : _columnv) v.reserve(reserveLines);
@@ -26,4 +26,17 @@ void SimpleColumnFile::read(int numCols, int reserveLines)
 
     // In case the given reservation was too large
     for (auto& v : _columnv) v.shrink_to_fit();
+}
+
+OutColumnFile::OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev)
+    : _outFile{IOTools::ofstreamFile(filePath)}, _numCols{colNamev.size()}
+{
+    _outFile << '#';
+    for (size_t i = 0; i < _numCols; i++) _outFile << i << ' ' << colNamev[i] << ';';
+    _outFile << '\n';
+}
+
+OutColumnFile::~OutColumnFile()
+{
+    _outFile.close();
 }

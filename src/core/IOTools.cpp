@@ -1,5 +1,6 @@
 #include "IOTools.hpp"
 #include "DebugMacros.hpp"
+#include "Error.hpp"
 
 #ifndef REPOROOT
 #    error \
@@ -48,17 +49,4 @@ vector<double> IOTools::allNumbersFromNextLine(const string& line)
     vector<double> nv;
     while (ss >> i) nv.emplace_back(i);
     return nv;
-}
-
-ColumnFile::ColumnFile(const string& filePath, const vector<string>& colNamev)
-    : _outFile{IOTools::ofstreamFile(filePath)}, _numCols{colNamev.size()}
-{
-    _outFile << '#';
-    for (size_t i = 0; i < _numCols; i++) _outFile << i << ' ' << colNamev[i] << ';';
-    _outFile << '\n';
-}
-
-ColumnFile::~ColumnFile()
-{
-    _outFile.close();
 }

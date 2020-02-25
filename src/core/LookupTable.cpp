@@ -6,7 +6,7 @@ LookupTable::LookupTable(const std::string& fname, int numCols, int guessSize)
 {
     if (numCols < 2) Error::runtime("numCols should be >= 2");
 
-    SimpleColumnFile scf(fname);
+    InColumnFile scf(fname);
     scf.read(numCols, guessSize);
 
     const auto& c0 = scf.column(0);
