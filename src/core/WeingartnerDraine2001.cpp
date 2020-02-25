@@ -12,7 +12,7 @@ double WD01::atomMass(bool carbonaceous)
     // Treat all carbonaceous grains as pure carbon -> use atomic mass. I got the number for
     // silicates from silicate_0m010.opc in cloudy (atomic mass of Si is 28, but theres also some
     // O, Mg and Fe mixed in).
-    return carbonaceous ? 12.011 * Constant::AMU_CGS : 24.6 * Constant::AMU_CGS;
+    return carbonaceous ? 12.011 * Constant::AMU : 24.6 * Constant::AMU;
 }
 
 double WD01::bulkDensity(bool carbonaceous)
