@@ -53,7 +53,7 @@ void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& en
 
     // The maximum charge is one more than the highest charge which still allows ionization by
     // photons of hnumax.
-    int resultZmax = floor(((hnumax - _workFunction) * Constant::ERG_EV / 14.4 * aA + .5 - .3 / aA) / (1 + .3 / aA));
+    int resultZmax = floor(((hnumax - _workFunction) / (14.4 * Constant::EV) * aA + .5 - .3 / aA) / (1 + .3 / aA));
 
     // The minimum charge is the most negative charge for which autoionization does not occur
     int resultZmin = minimumCharge(i);
@@ -365,8 +365,8 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
     const int Z = 10;
 
     // Plot range
-    const double hnuMin = 5 / Constant::ERG_EV;
-    const double hnuMax = 15 / Constant::ERG_EV;
+    const double hnuMin = 5 * Constant::EV;
+    const double hnuMax = 15 * Constant::EV;
     const size_t N = 500;
 
     ofstream out = IOTools::ofstreamFile("photoelectric/yieldTest.dat");
@@ -388,7 +388,7 @@ double GrainPhotoelectricCalculator::yieldFunctionTest() const
         for (size_t n = 0; n < N; n++)
         {
             double hnuDiff = hnu - hnu_pet;
-            if (hnuDiff > 0) out << hnu * Constant::ERG_EV << '\t' << photoelectricYield(i, Z, hnuDiff, Emin) << '\n';
+            if (hnuDiff > 0) out << hnu / Constant::EV << '\t' << photoelectricYield(i, Z, hnuDiff, Emin) << '\n';
             hnu += step;
         }
         out << '\n';

@@ -16,16 +16,16 @@ int main()
     double high_eV = 24;
     double Tc = 2950;
     // e = h nu ; n = e / h
-    double lowFreq = low_eV / Constant::ERG_EV / Constant::PLANCK;
-    double highFreq = high_eV / Constant::ERG_EV / Constant::PLANCK;
+    double lowFreq = low_eV * Constant::EV / Constant::PLANCK;
+    double highFreq = high_eV * Constant::EV / Constant::PLANCK;
     Array frequencyv = Testing::generateGeometricGridv(nPhotoBins, lowFreq, highFreq);
     Array intensityv(frequencyv.size());
     for (int i = 0; i < frequencyv.size(); i++) intensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
     Spectrum specificIntensity(frequencyv, intensityv);
 
     // Write out the radiation field in eV / cm2 / sr / hz
-    Array ev = Constant::PLANCK * frequencyv * Constant::ERG_EV;
-    Array iv = intensityv * Constant::ERG_EV;
+    Array ev = Constant::PLANCK * frequencyv / Constant::EV;
+    Array iv = intensityv / Constant::EV;
     std::ofstream radf("photobinj.dat");
     radf << "# Emid (eV)\tJ (eV / cm2 / sr)\n";
     for (int i = 0; i < nPhotoBins; i++)

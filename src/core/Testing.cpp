@@ -333,7 +333,7 @@ void Testing::plotIonizationStuff()
     Array kT_eVv = generateGeometricGridv(300, 1e-3, 1e3);
     for (double kT_eV : kT_eVv)
     {
-        double T = kT_eV / Constant::BOLTZMAN / Constant::ERG_EV;
+        double T = kT_eV / Constant::BOLTZMAN * Constant::EV;
         double cool = Ionization::cooling(n * (1 - f), f * n, f * n, T) / Constant::RYDBERG;
         out << kT_eV << "\t" << cool << endl;
     }

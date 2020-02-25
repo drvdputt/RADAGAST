@@ -259,7 +259,7 @@ EMatrix HFromFiles::cvv(const CollisionParameters& cp) const
     // Calculate the temperature in erg and in electron volt
     double T = cp._t;
     double kT = Constant::BOLTZMAN * T;
-    double T_eV = kT * Constant::ERG_EV;
+    double T_eV = kT / Constant::EV;
 
     EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
     // Electron contributions (n-changing)

@@ -81,7 +81,7 @@ double Ionization::crossSection(double frequency)
         double ya = 3.288e1;
         double P = 2.963;
 
-        double x = Constant::PLANCK * frequency * Constant::ERG_EV / E0;
+        double x = Constant::PLANCK * frequency / (E0 * Constant::EV);
         double y = x;
 
         double Fy = (x - 1) * (x - 1) * pow(y, 0.5 * P - 5.5) * pow(1 + sqrt(y / ya), -P);
@@ -152,7 +152,7 @@ double Ionization::cooling(double nH, double np, double ne, double T)
 {
     // Kinetic energy lost through radiative recombination
     double kT = Constant::BOLTZMAN * T;
-    double T_eV = kT * Constant::ERG_EV;
+    double T_eV = kT / Constant::EV;
 
     // use fit from 2017-Mao
     // ft = beta / alpha

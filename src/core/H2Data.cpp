@@ -293,7 +293,7 @@ void H2Data::readDissProbFile(const string& repoFile, ElectronicState eState)
         if (index > -1)
         {
             _dissProbv[index] = diss;
-            _dissKinEv[index] = kin / Constant::ERG_EV;
+            _dissKinEv[index] = kin * Constant::EV;
             counter++;
         }
     }

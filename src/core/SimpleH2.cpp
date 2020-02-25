@@ -44,7 +44,7 @@ void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& sp
     _gamma3 = 1.36e-23 * _nH2 * beta * _g;
 
     // Energy of the psuedo level. See text below eq. A11 in TH85
-    constexpr double Es = 2.6 / Constant::ERG_EV;
+    constexpr double Es = 2.6 * Constant::EV;
     _gamma4 = (colH + colH2) * _nH2s * Es;
     _collisionalExcitationCooling = gloverAbel08Cooling(cp);
 

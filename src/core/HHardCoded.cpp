@@ -118,7 +118,7 @@ EMatrix HydrogenHardcoded::cvv(const CollisionParameters& cp) const
     // Electron temperatures in electron volt
     const vector<double> grid_eT_eVv = {.5, 1., 3., 5., 10., 15., 20., 25.};
 
-    double eT_eV = Constant::BOLTZMAN * T * Constant::ERG_EV;
+    double eT_eV = Constant::BOLTZMAN * T / Constant::EV;
 
     // Naively inter- and extrapolate this data linearly
     size_t iRight = TemplatedUtils::index(eT_eV, grid_eT_eVv);

@@ -14,7 +14,7 @@ TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS)
     //		   2.29e-6, 0;
     EVector the_ev(2);
     EVector the_gv(2);
-    the_ev << 0, .00786 / Constant::ERG_EV;
+    the_ev << 0, .00786 * Constant::EV;
     the_gv << 1, 1;
 
     EMatrix the_avv(2, 2);

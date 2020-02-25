@@ -26,8 +26,8 @@ namespace GrainH2FormationData
     /** Numbers from Takahashi J., Uehara H., 2001, ApJ, 561, 843 for the energy added to a grain
         under H2 formation */
     ///@{
-    constexpr double grainHeatingPerH2Formed_sil = 0.4 / Constant::ERG_EV;
-    constexpr double grainHeatingPerH2Formed_car = 1.72 / Constant::ERG_EV;
+    constexpr double grainHeatingPerH2Formed_sil = 0.4 * Constant::EV;
+    constexpr double grainHeatingPerH2Formed_car = 1.72 * Constant::EV;
     ///@}
 }  // namespace GrainH2FormationData
 

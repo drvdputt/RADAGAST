@@ -23,7 +23,7 @@ double WD01::bulkDensity(bool carbonaceous)
 
 double WD01::workFunction(bool carbonaceous)
 {
-    return carbonaceous ? 4.4 / Constant::ERG_EV : 8 / Constant::ERG_EV;
+    return carbonaceous ? 4.4 * Constant::EV : 8 * Constant::EV;
 }
 
 double WD01::eMin(double a, int Z)
@@ -68,7 +68,7 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
     else  // if silicate
     {
         // WD01 eq 5 (using IP(Z < 0) = EA(Z + 1))
-        ip_v += 3 / Constant::ERG_EV;
+        ip_v += 3 * Constant::EV;
     }
     return ip_v;
 }
@@ -257,7 +257,7 @@ double WD01::thetaNu(double nu)
 
 double WD01::sigmaPDT(int Z, double hnuDiff)
 {
-    constexpr double DeltaE = 3. / Constant::ERG_EV;
+    constexpr double DeltaE = 3. * Constant::EV;
     double x = hnuDiff / DeltaE;
     double denom = 1 + x * x / 3.;
     // WD01 eq 20, with constant factor moved in front of integral
