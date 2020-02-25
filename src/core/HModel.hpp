@@ -25,6 +25,11 @@ public:
     /** From the level populations, calculate the net heating-cooling balance by (de-)excitation */
     double netHeating() const;
 
+    /** The population of the 2s level [cm-3]. This value can be stored to calculate the two-photon
+        continuum later, after this object is no longer available, using @c
+        TwoPhoton::emissivityv. */
+    double n2s() const;
+
     /** Read acces to the level solution, should one wish to inspect the solution in more detail */
     const LevelSolution* levelSolution() const { return &_levelSolution; }
 
