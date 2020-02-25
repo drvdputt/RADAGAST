@@ -13,22 +13,19 @@ namespace Constant
     constexpr double SOL_MASS = 1.9891e+33;        // Solar mass in gm.
     constexpr double SOL_LUM = 3.839e33;           // Solar mass in erg / s
     constexpr double HMASS_AMU = 1.0078250321;     // Hydrogen mass in atomic mass units.
-    constexpr double HMASS = 1.67353263e-24;   // Hydrogen mass in gm.
+    constexpr double HMASS = 1.67353263e-24;       // Hydrogen mass in gm.
 
     // Conversion factors and common constant combinations.
     constexpr double HBAR = PLANCK / 2. / PI;
-    constexpr double PLANCKLIGHT = PLANCK * LIGHT;    // hc in erg cm
-    constexpr double FPI = 4.0 * PI;                    // 4pi
-    constexpr double AMU = 1.66053886e-24;                // Atomic mass units --> gm
-    constexpr double ANGSTROM = 1.0e-8;                     // 1 Angstrom in cm
-    constexpr double UM = 1.0e-4;                      // 1 micrometer in cm
-    constexpr double AU = 1.49597871e+13;              // AU --> cm
-    constexpr double PC = 3.08567758e+18;              // Parsec --> cm
-    constexpr double JY_CGS = 1.0e-23;                    // Constants without wave conversion.
-    constexpr double MKS_CGS = 10.0;
-    constexpr double U_J = (FPI) / (LIGHT);   // Convert Energy Density to Field
-    constexpr double VFAC = (FPI) / 3.0;      // Volume factor (4/3)*pi
-    constexpr double ERG_EV = 6.24150974e11;  // Ergs -> electron volts
+    constexpr double PLANCKLIGHT = PLANCK * LIGHT;  // hc in erg cm
+    constexpr double FPI = 4.0 * PI;                // 4pi
+    constexpr double AMU = 1.66053886e-24;          // Atomic mass units --> gm
+    constexpr double ANGSTROM = 1.0e-8;             // 1 Angstrom in cm
+    constexpr double UM = 1.0e-4;                   // 1 micrometer in cm
+    constexpr double AU = 1.49597871e+13;           // AU --> cm
+    constexpr double PC = 3.08567758e+18;           // Parsec --> cm
+    constexpr double ERG_EV = 6.24150974e11;        // Ergs -> electron volts
+    constexpr double EV = 1.60218e-12;             // electron volt in erg
 
     // New constants
     // 1 Habing in ergs cm-3 (Energy density between 6 and 13.6 eV)
