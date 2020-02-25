@@ -45,7 +45,8 @@ Array GasInterfaceImpl::emissivity(const GasModule::GasState& gs, bool SI) const
     _freeFree.addEmissionCoefficientv(gs.temperature(), _eFrequencyv, emissivityv);
     emissivityv *= npne(gs) / Constant::FPI;
 
-    // TODO: switch to add line emissivity
+    // TODO: switch to add line emissivity (needs recalculation of levels)
+    // TODO: two photon continuum (needs only 1 level)
 
     if (SI)
         return RadiationFieldTools::emissivity_to_SI(emissivityv);
@@ -60,8 +61,7 @@ Array GasInterfaceImpl::opacity(const GasModule::GasState& gs, bool SI) const
     opacityv *= npne(gs);
 
     // TODO: this should actually be the average over the cross section for this frequency bin
-    for (size_t i = 0; i < _oFrequencyv.size(); i++)
-        opacityv[i] += gs.density(_chemistry.speciesIndex().index("H")) * Ionization::crossSection(_oFrequencyv[i]);
+    for (size_t i = 0; i < _oFrequencyv.size(); i++) opacityv[i] += nH(gs) * Ionization::crossSection(_oFrequencyv[i]);
 
     // TODO: H2 opacity. Maybe use smoothed data file from Heays et al. 2017 (data on E. van
     // Dishoeck's home page)
@@ -77,9 +77,7 @@ std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
                                         const std::valarray<double>& specificIntensity) const
 {
     Spectrum si(_iFrequencyv, specificIntensity);
-    auto spindex = _chemistry.speciesIndex();
-    SpeciesVector sv(&spindex);
-    sv.setDensities(Eigen::Map<const EVector>(&gs._nv[0], gs._nv.size()));
+    auto sv = speciesVector(gs);
     std::stringstream ss;
     ss << "G0 " << RadiationFieldTools::gHabing(si) << " T " << gs._t << " ne " << sv.ne() << " np " << sv.np()
        << " nH " << sv.nH() << " nH2 " << sv.nH2();
@@ -380,4 +378,16 @@ EVector GasInterfaceImpl::guessSpeciesNv(double n, double ionToTotalFrac, double
 double GasInterfaceImpl::npne(const GasModule::GasState& gs) const
 {
     return gs.density(_chemistry.speciesIndex().index("H+")) * gs.density(_chemistry.speciesIndex().index("e-"));
+}
+
+double GasInterfaceImpl::nH(const GasModule::GasState& gs) const
+{
+    return gs.density(_chemistry.speciesIndex().index("H"));
+}
+
+SpeciesVector GasInterfaceImpl::speciesVector(const GasModule::GasState& gs) const
+{
+    SpeciesVector sv(&_chemistry.speciesIndex());
+    sv.setDensities(Eigen::Map<const EVector>(&gs._nv[0], gs._nv.size()));
+    return sv;
 }

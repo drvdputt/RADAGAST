@@ -130,6 +130,11 @@ private:
 
     /** Utility function to get the product n_p n_e from a gas state. */
     double npne(const GasModule::GasState&) const;
+    double nH(const GasModule::GasState&) const;
+
+    /** Interpret the densities stored in the gas state as a species vector for the chemistry
+        network contained in this class. */
+    SpeciesVector speciesVector(const GasModule::GasState&) const;
 
     std::valarray<double> _iFrequencyv;
     std::valarray<double> _oFrequencyv;
