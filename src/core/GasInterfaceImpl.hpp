@@ -82,10 +82,10 @@ public:
 
     /** The emissivity in SI units (converted using 1 erg cm-3 s-1 Hz-1 sr-1 = 0.1 J m-3 s-1 Hz-1
         sr-1). [W m-3 Hz-1 sr-1] */
-    Array emissivity_SI(const GasModule::GasState& gs) const;
+    Array emissivity(const GasModule::GasState& gs, bool SI = false) const;
 
     /** The total opacity in SI units (converted from cm-1 = 100 * m-1). [m-1] */
-    Array opacity_SI(const GasModule::GasState& gs) const;
+    Array opacity(const GasModule::GasState& gs, bool SI = false) const;
 
     /** A string containing a compact overview of the gas solution */
     std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& specificIntensity) const;

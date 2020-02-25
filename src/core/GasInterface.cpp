@@ -38,9 +38,15 @@ namespace GasModule
         _pimpl->initializeGasState(gs, n, T, gri, gd);
     }
 
-    std::valarray<double> GasInterface::emissivity_SI(const GasState& gs) const { return _pimpl->emissivity_SI(gs); }
+    std::valarray<double> GasInterface::emissivity(const GasState& gs, bool SI) const
+    {
+        return _pimpl->emissivity(gs, SI);
+    }
 
-    std::valarray<double> GasInterface::opacity_SI(const GasState& gs) const { return _pimpl->opacity_SI(gs); }
+    std::valarray<double> GasInterface::opacity(const GasState& gs, bool SI) const
+    {
+        return _pimpl->opacity(gs, SI);
+    }
 
     std::string GasInterface::quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const
     {

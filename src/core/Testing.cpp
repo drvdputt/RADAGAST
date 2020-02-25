@@ -356,8 +356,8 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
     cout << "Equilibrium temperature: " << gs.temperature() << endl;
 
     const Array& eFrequencyv = gi.eFrequencyv();
-    const Array& emv = gi.emissivity_SI(gs);
-    Spectrum opv(gi.oFrequencyv(), gi.opacity_SI(gs));
+    const Array& emv = gi.emissivity(gs);
+    Spectrum opv(gi.oFrequencyv(), gi.opacity(gs));
 
     int precision = 9;
     {

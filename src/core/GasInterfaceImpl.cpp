@@ -37,19 +37,23 @@ void GasInterfaceImpl::initializeGasState(GasModule::GasState& gs, double n, dou
     if (gd) s.fillDiagnostics(gd);
 }
 
-Array GasInterfaceImpl::emissivity_SI(const GasModule::GasState& gs) const
+Array GasInterfaceImpl::emissivity(const GasModule::GasState& gs, bool SI) const
 {
     // There is some duplication from GasSolution::emissivityv, but let's keep both for now.
     Array emissivityv(_eFrequencyv.size());
     _freeBound.addEmissionCoefficientv(gs.temperature(), _eFrequencyv, emissivityv);
     _freeFree.addEmissionCoefficientv(gs.temperature(), _eFrequencyv, emissivityv);
+    emissivityv *= npne(gs) / Constant::FPI;
+
     // TODO: switch to add line emissivity
 
-    // factor 0.1 is unit conversion from erg cm-3 s-1 Hz-1 to J m-3 s-1 Hz-1
-    return 0.1 * npne(gs) / Constant::FPI * emissivityv;
+    if (SI)
+        return RadiationFieldTools::emissivity_to_SI(emissivityv);
+    else
+        return emissivityv;
 }
 
-Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
+Array GasInterfaceImpl::opacity(const GasModule::GasState& gs, bool SI) const
 {
     Array opacityv(_oFrequencyv.size());
     _freeFree.addOpacityCoefficientv(gs.temperature(), _oFrequencyv, opacityv);
@@ -63,7 +67,10 @@ Array GasInterfaceImpl::opacity_SI(const GasModule::GasState& gs) const
     // Dishoeck's home page)
 
     // convert from cm-1 to m-1
-    return 100. * opacityv;
+    if (SI)
+        return 100. * opacityv;
+    else
+        return opacityv;
 }
 
 std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
