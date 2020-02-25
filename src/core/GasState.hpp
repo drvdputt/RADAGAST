@@ -33,17 +33,13 @@ namespace GasModule
                                            const GasModule::GasState&);
 
     public:
-        /** Creates an empty GasState object. The resulting object can't be used for anything,
-            except to allocate space, and handing it to the update function of the \c
-            GasInterface. */
-        GasState() : _t{0.}, _nv{4} {}
-
         /** Set all the members of the gas state to new values. This function should not be used by
             clients, besides for testing purposes. */
-        void setMembers(double t, const std::valarray<double>& nv)
+        void setMembers(double t, const std::valarray<double>& nv, double n2s)
         {
             _t = t;
             _nv = nv;
+            _n2s = n2s;
         }
 
         /** Returns the gas temperature in K. */
@@ -54,8 +50,9 @@ namespace GasModule
         double density(int i) const { return _nv[i]; }
 
     private:
-        double _t;
-        std::valarray<double> _nv;
+        double _t{0.};
+        std::valarray<double> _nv{4};
+        double _n2s{0.};
     };
 } /* namespace GasModule */
 

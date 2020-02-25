@@ -164,7 +164,7 @@ void GasSolution::fillDiagnostics(GasDiagnostics* gd)
 
 void GasSolution::setGasState(GasModule::GasState& g) const
 {
-    g.setMembers(_t, {_sv.data(), _sv.size()});
+    g.setMembers(_t, {_sv.data(), _sv.size()}, _hSolution->n2s());
 }
 
 double GasSolution::kDissH2Levels() const
