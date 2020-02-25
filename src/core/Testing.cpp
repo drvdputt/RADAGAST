@@ -843,7 +843,7 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
     // Radiation field
     // Tc argument is color temperature
     double bollum = lumSol * Constant::SOL_LUM;
-    double distance = 1. * Constant::PC_CM;  // 1.0 AU
+    double distance = 1. * Constant::PC;  // 1.0 AU
 
     // double G0{1e2};
     Array frequencyv = gasInterface.iFrequencyv();
