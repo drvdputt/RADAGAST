@@ -17,8 +17,8 @@ namespace RadiationFieldTools
     /** Get the radiation field between 6 and 13.6 eV, in Habing units (1 Habing is 1.6e-3 erg cm-2
         s-1, between 6 and 13.6 eV) */
     double gHabing(const Spectrum& specificIntensity);
-    constexpr double nuMinHabing = Constant::LIGHT / (2400 * Constant::ANG_CM);
-    constexpr double nuMaxHabing = Constant::LIGHT / (912 * Constant::ANG_CM);
+    constexpr double nuMinHabing = Constant::LIGHT / (2400 * Constant::ANGSTROM);
+    constexpr double nuMaxHabing = Constant::LIGHT / (912 * Constant::ANGSTROM);
 }  // namespace RadiationFieldTools
 
 #endif  // CORE_RADIATIONFIELDTOOLS_HPP

@@ -45,7 +45,7 @@ void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& en
     double a = _sizev[i];
 
     // Express a in angstroms
-    double aA = a / Constant::ANG_CM;
+    double aA = a / Constant::ANGSTROM;
 
     // Highest possible energy of a photon
     const Array& frequencyv = env._specificIntensity->frequencyv();
@@ -446,7 +446,7 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
         calculateChargeDistribution(i, env, Qabsv, cd);
         stringstream filename;
         filename << "photoelectric/multi-fz/fz_a" << setfill('0') << setw(8) << setprecision(2) << fixed
-                 << a / Constant::ANG_CM << ".txt";
+                 << a / Constant::ANGSTROM << ".txt";
         stringstream header;
         header << "# a = " << a << '\n';
         header << "# ne = " << env._ne << '\n';
@@ -459,12 +459,12 @@ void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, doubl
         double efficiency = heating / totalAbsorbed;
         if (!isfinite(efficiency)) cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed << endl;
 
-        efficiencyOf << a / Constant::ANG_CM << '\t' << efficiency << '\n';
+        efficiencyOf << a / Constant::ANGSTROM << '\t' << efficiency << '\n';
 
         // Calculate and write out the ISRF-averaged absorption efficiency
         double intensityIntegral = TemplatedUtils::integrate<double>(frequencyv, specificIntensityv);
         double avgQabs = intensityQabsIntegral / intensityIntegral;
-        avgQabsOf << a / Constant::ANG_CM << '\t' << avgQabs << endl;
+        avgQabsOf << a / Constant::ANGSTROM << '\t' << avgQabs << endl;
     }
     efficiencyOf.close();
     cout << "Wrote " << efficiencyFnSs.str() << endl;

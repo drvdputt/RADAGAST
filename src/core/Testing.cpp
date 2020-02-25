@@ -138,7 +138,7 @@ namespace
 #ifdef PLOT_QABS
         stringstream filename;
         filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2) << fixed
-                 << a / Constant::ANG_CM << ".txt";
+                 << a / Constant::ANGSTROM << ".txt";
         ofstream qabsfile = IOTools::ofstreamFile(filename.str());
         for (size_t i = 0; i < frequencyv.size(); i++)
             qabsfile << frequencyv[i] * Constant::CM_UM << '\t' << QabsWav[i] << endl;
@@ -528,8 +528,8 @@ void Testing::plotPhotoelectricHeating()
     }
 
     {  // Grain sizes for heating rate test
-        double aMin = 3 * Constant::ANG_CM;
-        double aMax = 10000 * Constant::ANG_CM;
+        double aMin = 3 * Constant::ANGSTROM;
+        double aMax = 10000 * Constant::ANGSTROM;
         const size_t Na = 90;
         Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
         auto gpc = gpd.makeCalculator(sizev);
@@ -538,7 +538,7 @@ void Testing::plotPhotoelectricHeating()
     }
 
     {  // Single grain size for charge balance test
-        Array sizev(200. * Constant::ANG_CM, 1);
+        Array sizev(200. * Constant::ANGSTROM, 1);
         auto gpc = gpd.makeCalculator(sizev);
         for (int i : pickValues) gpc->chargeBalanceTest(G0values[i], gasT, ne, ne);
     }
@@ -774,7 +774,7 @@ void Testing::runFullModel()
 void Testing::genMRNDust(GasModule::GrainInterface& gri, double nHtotal, const Spectrum& specificIntensity, bool car)
 {
     // need grains from .005 to .25 micron
-    double amin = 50 * Constant::ANG_CM;
+    double amin = 50 * Constant::ANGSTROM;
     double amax = 0.25 * Constant::UM_CM;
 
     size_t numSizes = 10;

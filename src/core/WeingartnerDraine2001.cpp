@@ -40,13 +40,13 @@ double WD01::eMin(double a, int Z)
         else
         {
             double nu = abs(Z + 1);
-            return thetaNu(nu) * e2_a * (1 - 0.3 * pow(a / 10 / Constant::ANG_CM, -0.45) * pow(nu, -0.26));
+            return thetaNu(nu) * e2_a * (1 - 0.3 * pow(a / 10 / Constant::ANGSTROM, -0.45) * pow(nu, -0.26));
         }
     }
     else
     {
         // WD01 eq 7
-        return Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANG_CM / a, 0.75));
+        return Z >= 0 ? 0 : -(Z + 1) * e2_a / (1 + pow(27. * Constant::ANGSTROM / a, 0.75));
     }
 }
 
@@ -57,13 +57,13 @@ double WD01::ionizationPotential(double a, int Z, bool carbonaceous)
     if (Z >= 0)
     {
         // use the same expression for carbonaceous and silicate (WD01 eq 2)
-        ip_v += workFunction(carbonaceous) + (Z + 2) * e2_a * 0.3 * Constant::ANG_CM / a;
+        ip_v += workFunction(carbonaceous) + (Z + 2) * e2_a * 0.3 * Constant::ANGSTROM / a;
     }
     // For negatively charged grains, different expressions are used for car and sil
     else if (carbonaceous)
     {
         // WD01 eq 4 (using IP(Z < 0) = EA(Z + 1))
-        ip_v += workFunction(carbonaceous) - e2_a * 4.e-8 / (a + 7 * Constant::ANG_CM);
+        ip_v += workFunction(carbonaceous) - e2_a * 4.e-8 / (a + 7 * Constant::ANGSTROM);
     }
     else  // if silicate
     {
@@ -158,8 +158,8 @@ double WD01::y1(double a)
 
     // value from 1994-Bakes. WD01 uses the one in the comment above, which is more annoying
     // to calculate.
-    constexpr double la = 100 * Constant::ANG_CM;
-    constexpr double le = 10 * Constant::ANG_CM;
+    constexpr double la = 100 * Constant::ANGSTROM;
+    constexpr double le = 10 * Constant::ANGSTROM;
     double beta = a / la;
     double alpha = beta + a / le;
     double beta2 = beta * beta;
@@ -172,14 +172,14 @@ double WD01::y1(double a)
 double WD01::autoIonizationThreshold(double a, bool carbonaceous)
 {
     // WD01 eq 23
-    double aA = a / Constant::ANG_CM;
+    double aA = a / Constant::ANGSTROM;
     return carbonaceous ? 3.9 + 0.12 * aA + 2. / aA : 2.5 + 0.07 * aA + 8. / aA;
 }
 
 int WD01::minimumCharge(double a, double Uait)
 {
     // WD01 eq 24
-    return floor(-Uait / 14.4 * a / Constant::ANG_CM) + 1;
+    return floor(-Uait / 14.4 * a / Constant::ANGSTROM) + 1;
 }
 
 int WD01::minimumCharge(double a, bool carbonaceous)
@@ -189,7 +189,7 @@ int WD01::minimumCharge(double a, bool carbonaceous)
 
 double WD01::estick_positive(double a)
 {
-    double le = 10. * Constant::ANG_CM;
+    double le = 10. * Constant::ANGSTROM;
     double pElasticScatter = .5;
     return (1 - pElasticScatter) * (-expm1(-a / le));
 }
@@ -197,7 +197,7 @@ double WD01::estick_positive(double a)
 double WD01::estick_negative(double a)
 {
     // electron mean free path length in grain
-    double le = 10. * Constant::ANG_CM;
+    double le = 10. * Constant::ANGSTROM;
     // number of carbon atoms
     double NC = 468 * a * a * a / 1.e-21;
     return 0.5 * (-expm1(-a / le)) / (1 + exp(20 - NC));

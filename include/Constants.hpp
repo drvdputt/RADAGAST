@@ -17,14 +17,10 @@ namespace Constant
 
     // Conversion factors and common constant combinations.
     constexpr double HBAR = PLANCK / 2. / PI;
-    constexpr double PLANCKLIGHT = (PLANCK) * (LIGHT);    // hc in erg cm
-    constexpr double IPLANCKLIGHT = 1.0 / (PLANCKLIGHT);  // 1/hc
-    constexpr double FPI = 4.0 * (PI);                    // 4pi
-    constexpr double FPI_HC = FPI * IPLANCKLIGHT;         // 4pi/hc
-    constexpr double FPI_HC2 = FPI_HC * IPLANCKLIGHT;     // 4pi/(hc)^2
+    constexpr double PLANCKLIGHT = PLANCK * LIGHT;    // hc in erg cm
+    constexpr double FPI = 4.0 * PI;                    // 4pi
     constexpr double AMU = 1.66053886e-24;                // Atomic mass units --> gm
-    constexpr double ANG_UM = 1.0e-4;                     // Angstrom --> um
-    constexpr double ANG_CM = 1.0e-8;                     // Angstrom --> cm
+    constexpr double ANGSTROM = 1.0e-8;                     // Angstrom --> cm
     constexpr double UM_CM = 1.0e-4;                      // um --> cm
     constexpr double CM_UM = 1.0e4;                       // cm --> um
     constexpr double AU_CM = 1.49597871e+13;              // AU --> cm

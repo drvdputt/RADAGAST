@@ -56,8 +56,8 @@ double BigH2Model::dissociationRate(const Spectrum& specificIntensity) const
 
     // F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
     Array photonFluxv = Constant::FPI * iv / nuv / Constant::PLANCK;
-    constexpr double freqLWmin{Constant::LIGHT / 1108 / Constant::ANG_CM};
-    constexpr double freqLWmax{Constant::LIGHT / 912 / Constant::ANG_CM};
+    constexpr double freqLWmin{Constant::LIGHT / 1108 / Constant::ANGSTROM};
+    constexpr double freqLWmax{Constant::LIGHT / 912 / Constant::ANGSTROM};
     size_t iLWmin{TemplatedUtils::index(freqLWmin, nuv)};
     size_t iLWmax{TemplatedUtils::index(freqLWmax, nuv)};
     double F0 = TemplatedUtils::integrate<double>(nuv, photonFluxv, iLWmin, iLWmax);

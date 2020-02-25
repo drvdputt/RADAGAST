@@ -164,7 +164,7 @@ void H2Data::readDirectDissociation()
 
                 // Convert to the correct units and add
                 frequencyv.emplace_back(Constant::LIGHT * energy_invcm);
-                crossSectionv.emplace_back(crossSection_ang2 * Constant::ANG_CM * Constant::ANG_CM);
+                crossSectionv.emplace_back(crossSection_ang2 * Constant::ANGSTROM * Constant::ANGSTROM);
 
                 if (cont_diss.peek() == '#') break;
             }
