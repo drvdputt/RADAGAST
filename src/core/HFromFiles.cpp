@@ -327,8 +327,8 @@ EMatrix HFromFiles::PS64CollisionRateCoeff(int n, double T, double np) const
 	   coefficients in both ways and then take the average. */
 
     // mu is the reduced mass of the system of the colliding particles
-    constexpr double muOverm = Constant::PROTONMASS * Constant::HMASS_CGS / (Constant::PROTONMASS + Constant::HMASS_CGS)
-                               / Constant::ELECTRONMASS;
+    constexpr double muOverm =
+        Constant::PROTONMASS * Constant::HMASS / (Constant::PROTONMASS + Constant::HMASS) / Constant::ELECTRONMASS;
 
     const double qnlFactor = 9.93e-6 * sqrt(muOverm / T);
     const int n2 = n * n;

@@ -11,7 +11,7 @@
 
 using namespace std;
 
-H2Data::H2Data(int maxJ, int maxV) : LevelCoefficients(2 * Constant::HMASS_CGS), _maxJ{maxJ}, _maxV{maxV}
+H2Data::H2Data(int maxJ, int maxV) : LevelCoefficients(2 * Constant::HMASS), _maxJ{maxJ}, _maxV{maxV}
 {
     readLevels();
     readTransProbs();

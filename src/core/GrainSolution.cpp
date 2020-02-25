@@ -24,7 +24,7 @@ void GrainSolution::recalculate(const Spectrum* specificIntensity, double T, con
     _specificIntensity = specificIntensity;
     _photoelectricLocals = GrainPhotoelectricCalculator::Locals(
         specificIntensity, T, sv.ne(), {-1, 1, 0, 0}, {sv.ne(), sv.np(), sv.nH(), sv.nH2()},
-        {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS_CGS, 2 * Constant::HMASS_CGS});
+        {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS, 2 * Constant::HMASS});
 
     if (_population->h2formationData())
         _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(), _newTemperaturev,
@@ -106,8 +106,8 @@ double GrainSolution::photoelectricGasHeating()
     for (int i = 0; i < _population->numSizes(); i++)
     {
         double contribution = _population->density(i)
-                 * _photoelectricCalculator->heatingRateA(i, _photoelectricLocals, _population->qAbsv(i),
-                                                          _chargeDistributionv[i]);
+                              * _photoelectricCalculator->heatingRateA(i, _photoelectricLocals, _population->qAbsv(i),
+                                                                       _chargeDistributionv[i]);
         total += contribution;
 
         DEBUG(' ' << i << ' ' << contribution);

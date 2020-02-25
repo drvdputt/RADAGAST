@@ -13,7 +13,7 @@ namespace Constant
     constexpr double SOL_MASS = 1.9891e+33;        // Solar mass in gm.
     constexpr double SOL_LUM = 3.839e33;           // Solar mass in erg / s
     constexpr double HMASS_AMU = 1.0078250321;     // Hydrogen mass in atomic mass units.
-    constexpr double HMASS_CGS = 1.67353263e-24;   // Hydrogen mass in gm.
+    constexpr double HMASS = 1.67353263e-24;   // Hydrogen mass in gm.
 
     // Conversion factors and common constant combinations.
     constexpr double HBAR = PLANCK / 2. / PI;

@@ -90,7 +90,7 @@ TEST_CASE("H line profile normalizations")
         // Try different gaussian broadenings
         for (double T : {1, 10, 100, 1000, 10000})
         {
-            double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS_CGS);
+            double thermalVelocity = sqrt(Constant::BOLTZMAN * T / Constant::HMASS);
             double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
 
             LineProfile lp(nu0, sigma_nu, halfWidth);

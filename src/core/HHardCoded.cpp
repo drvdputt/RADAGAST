@@ -143,7 +143,7 @@ EMatrix HydrogenHardcoded::cvv(const CollisionParameters& cp) const
 
     /* Important for two-photon continuum vs lyman is the l-changing collisions between 2s and
 	   2p 1964-Pengelly eq 43, assuming for qnl = qnl->nl' if l can only be l=1 or l=0. */
-    double mu_m = Constant::HMASS_CGS / 2. / Constant::ELECTRONMASS;
+    double mu_m = Constant::HMASS / 2. / Constant::ELECTRONMASS;
     double constfactor = 9.93e-6 * sqrt(mu_m);
 
     //(6n^2(n^2 - l^2 - l - 1)) (eq 44)

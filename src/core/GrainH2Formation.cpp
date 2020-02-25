@@ -32,7 +32,7 @@ Array GrainH2Formation::surfaceH2FormationRateCoeffPerSize(const Array& sizev, c
 
     // Use mean particle speed of Maxwell distribution, not RMS as suggested by comment in
     // Cloudy source code.
-    double thermalVelocityH = sqrt(8. * Constant::BOLTZMAN / Constant::PI * Tgas / Constant::HMASS_CGS);
+    double thermalVelocityH = sqrt(8. * Constant::BOLTZMAN / Constant::PI * Tgas / Constant::HMASS);
 
     for (size_t i = 0; i < numSizes; i++)
     {

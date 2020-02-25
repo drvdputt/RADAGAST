@@ -193,7 +193,7 @@ Array Testing::improveFrequencyGrid(const LevelCoefficients& boundBound, const A
     boundBound.lineInfo(numLines, lineFreqv, naturalWidthv);
 
     double lineWindowFactor = 1.;
-    double thermalFactor = sqrt(Constant::BOLTZMAN * 50000 / Constant::HMASS_CGS) / Constant::LIGHT;
+    double thermalFactor = sqrt(Constant::BOLTZMAN * 50000 / Constant::HMASS) / Constant::LIGHT;
     naturalWidthv = lineWindowFactor * (naturalWidthv + lineFreqv * thermalFactor);
 
     vector<double> gridVector(begin(oldPoints), end(oldPoints));

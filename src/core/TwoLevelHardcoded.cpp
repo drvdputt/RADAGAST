@@ -2,7 +2,7 @@
 #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 
-TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS_CGS)
+TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS)
 {
     // Level and transition information
     //	_Ev << 0, .00786 / Constant::ERG_EV;
