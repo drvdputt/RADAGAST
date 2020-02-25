@@ -12,6 +12,7 @@
 #include "IOTools.hpp"
 #include "Ionization.hpp"
 #include "RadiationFieldTools.hpp"
+#include "SimpleColumnFile.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
@@ -359,43 +360,33 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
     const Array& emv = gi.emissivity_SI(gs);
     Spectrum opv(gi.oFrequencyv(), gi.opacity_SI(gs));
 
-    char tab = '\t';
-    ofstream out = IOTools::ofstreamFile(outputPath + "opticalProperties.dat");
-    vector<std::string> colnames = {
-        "frequency",
-        "wavelength",
-        "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
-        "opacity alpha_nu (cm-1)",
-    };
-    out << "#";
-    int i = 0;
-    for (const auto& s : colnames)
+    int precision = 9;
     {
-        out << i << ":" << s << tab;
-        i++;
+        OutColumnFile opticalPropertiesFile(outputPath + "opticalProperties.dat",
+                                            {
+                                                "frequency",
+                                                "wavelength",
+                                                "intensity j_nu (erg s-1 cm-3 Hz-1 sr-1)",
+                                                "opacity alpha_nu (cm-1)",
+                                            },
+                                            precision);
+        OutColumnFile wavelengthFile(outputPath + "wavelengths.dat", {"wav (micron)", "freq (Hz)"}, precision);
+        for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
+        {
+            double freq = eFrequencyv[iFreq];
+            double wav = Constant::LIGHT / freq * Constant::CM_UM;
+            opticalPropertiesFile.writeLine<vector<double>>(
+                {freq, wav, Constant::FPI * freq * emv[iFreq], opv.evaluate(freq)});
+            wavelengthFile.writeLine<vector<double>>({wav, freq});
+        }
     }
-    out << endl;
-    ofstream wavfile = IOTools::ofstreamFile(outputPath + "wavelengths.dat");
-    wavfile << "#wav (micron)" << tab << "freq (Hz)" << endl;
-    for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
     {
-        double freq = eFrequencyv[iFreq];
-        double wav = Constant::LIGHT / freq * Constant::CM_UM;
-        out.precision(9);
-        out << scientific << freq << tab << wav << tab << Constant::FPI * freq * emv[iFreq] << tab << opv.evaluate(freq)
-            << '\n';
-        wavfile.precision(9);
-        wavfile << wav << tab << freq << '\n';
+        OutColumnFile rawOpacityFile(outputPath + "raw_opacity.dat", {"frequency", "opacity (cm-1)"}, precision);
+        for (size_t iFreq = 0; iFreq < gi.oFrequencyv().size(); iFreq++)
+        {
+            rawOpacityFile.writeLine<vector<double>>({gi.oFrequencyv()[iFreq], opv.valuev()[iFreq]});
+        }
     }
-    out.close();
-    wavfile.close();
-
-    out = IOTools::ofstreamFile(outputPath + "raw_opacity.dat");
-    for (size_t iFreq = 0; iFreq < gi.oFrequencyv().size(); iFreq++)
-    {
-        out << gi.oFrequencyv()[iFreq] << tab << opv.valuev()[iFreq] << '\n';
-    }
-    out.close();
 
     // Print some line intensities relative to Hbeta
     double fHalpha = Constant::LIGHT / 656.453e-7;

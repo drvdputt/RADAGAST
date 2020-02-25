@@ -40,7 +40,7 @@ private:
 class OutColumnFile
 {
 public:
-    OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev);
+    OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev, int precision = -1);
     ~OutColumnFile();
 
     /** Writes one line to the file, separated by spaces. The argument should be of a typical

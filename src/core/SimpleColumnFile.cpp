@@ -1,5 +1,6 @@
 #include "SimpleColumnFile.hpp"
 #include "IOTools.hpp"
+#include <ios>
 #include <sstream>
 
 void InColumnFile::read(int numCols, int reserveLines)
@@ -28,10 +29,12 @@ void InColumnFile::read(int numCols, int reserveLines)
     for (auto& v : _columnv) v.shrink_to_fit();
 }
 
-OutColumnFile::OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev)
+OutColumnFile::OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev, int precision)
     : _outFile{IOTools::ofstreamFile(filePath)}, _numCols{colNamev.size()}
 {
-    _outFile << '#';
+    if (precision != -1) _outFile.precision(precision);
+
+    _outFile << std::scientific << '#';
     for (size_t i = 0; i < _numCols; i++) _outFile << i << ' ' << colNamev[i] << ';';
     _outFile << '\n';
 }
