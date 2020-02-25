@@ -9,6 +9,7 @@
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
+#include "TwoPhoton.hpp"
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
 #include <iostream>
@@ -46,7 +47,8 @@ Array GasInterfaceImpl::emissivity(const GasModule::GasState& gs, bool SI) const
     emissivityv *= npne(gs) / Constant::FPI;
 
     // TODO: switch to add line emissivity (needs recalculation of levels)
-    // TODO: two photon continuum (needs only 1 level)
+
+    emissivityv += TwoPhoton::emissivityv(_eFrequencyv, gs._n2s);
 
     if (SI)
         return RadiationFieldTools::emissivity_to_SI(emissivityv);
