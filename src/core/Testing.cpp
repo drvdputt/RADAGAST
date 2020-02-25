@@ -140,8 +140,7 @@ namespace
         filename << "photoelectric/multi-qabs/qabs_a" << setfill('0') << setw(8) << setprecision(2) << fixed
                  << a / Constant::ANGSTROM << ".txt";
         ofstream qabsfile = IOTools::ofstreamFile(filename.str());
-        for (size_t i = 0; i < frequencyv.size(); i++)
-            qabsfile << frequencyv[i] * Constant::CM_UM << '\t' << QabsWav[i] << endl;
+        for (size_t i = 0; i < frequencyv.size(); i++) qabsfile << frequencyv[i] << '\t' << QabsWav[i] << endl;
         qabsfile.close();
 #endif
         // Reverse order to make Qabs a function of frequency index
@@ -374,7 +373,7 @@ void Testing::writeGasState(const string& outputPath, const GasModule::GasInterf
         for (size_t iFreq = 0; iFreq < emv.size(); iFreq++)
         {
             double freq = eFrequencyv[iFreq];
-            double wav = Constant::LIGHT / freq * Constant::CM_UM;
+            double wav = Constant::LIGHT / freq / Constant::UM;
             opticalPropertiesFile.writeLine<vector<double>>(
                 {freq, wav, Constant::FPI * freq * emv[iFreq], opv.evaluate(freq)});
             wavelengthFile.writeLine<vector<double>>({wav, freq});
@@ -437,8 +436,8 @@ void Testing::writeGrains(const std::string& outputPath, const std::vector<Grain
 
 void Testing::plotHeatingCurve_main()
 {
-    Array frequencyv = generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM_CM),
-                                              Constant::LIGHT / (0.005 * Constant::UM_CM));
+    Array frequencyv =
+        generateGeometricGridv(500, Constant::LIGHT / (1e3 * Constant::UM), Constant::LIGHT / (0.005 * Constant::UM));
     double Tc = 30000;
     double g0 = 1e0;
     double n = 1000;
@@ -673,8 +672,8 @@ void Testing::runH2(bool write)
     double G0 = 10;
 
     // Base grid
-    Array unrefinedv = generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM_CM),
-                                              Constant::LIGHT / (0.005 * Constant::UM_CM));
+    Array unrefinedv =
+        generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM), Constant::LIGHT / (0.005 * Constant::UM));
 
     Array specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(unrefinedv, Tc, G0);
     Spectrum specificIntensity(unrefinedv, specificIntensityv);
@@ -700,7 +699,7 @@ void Testing::runH2(bool write)
         const string tab{"\t"};
         for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
         {
-            h2optical << frequencyv[iFreq] << tab << Constant::LIGHT / frequencyv[iFreq] * Constant::CM_UM << tab
+            h2optical << frequencyv[iFreq] << tab << Constant::LIGHT / frequencyv[iFreq] / Constant::UM << tab
                       << emissivityv[iFreq] << tab << opacityv[iFreq] << '\n';
         }
     }
@@ -708,8 +707,8 @@ void Testing::runH2(bool write)
 
 void Testing::runFromFilesvsHardCoded()
 {
-    Array unrefinedv = generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM_CM),
-                                              Constant::LIGHT / (0.00001 * Constant::UM_CM));
+    Array unrefinedv = generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM),
+                                              Constant::LIGHT / (0.00001 * Constant::UM));
 
     HFromFiles hl(5);
     FreeBound fb;
@@ -775,7 +774,7 @@ void Testing::genMRNDust(GasModule::GrainInterface& gri, double nHtotal, const S
 {
     // need grains from .005 to .25 micron
     double amin = 50 * Constant::ANGSTROM;
-    double amax = 0.25 * Constant::UM_CM;
+    double amax = 0.25 * Constant::UM;
 
     size_t numSizes = 10;
     Array bin_edges = generateGeometricGridv(numSizes + 1, amin, amax);
@@ -900,7 +899,7 @@ void Testing::runMRNDust(bool write, double nH, double Tc, double lumSol, bool o
         for (size_t i = 0; i < frequencyv.size(); i++)
         {
             double wav = Constant::LIGHT / frequencyv[i];
-            radfield.writeLine<Array>({wav * Constant::CM_UM, Constant::FPI * frequencyv[i] * specificIntensityv[i]});
+            radfield.writeLine<Array>({wav / Constant::UM, Constant::FPI * frequencyv[i] * specificIntensityv[i]});
         }
         GasModule::GasState gs;
         s.setGasState(gs);

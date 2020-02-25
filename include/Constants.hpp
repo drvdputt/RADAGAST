@@ -20,9 +20,8 @@ namespace Constant
     constexpr double PLANCKLIGHT = PLANCK * LIGHT;    // hc in erg cm
     constexpr double FPI = 4.0 * PI;                    // 4pi
     constexpr double AMU = 1.66053886e-24;                // Atomic mass units --> gm
-    constexpr double ANGSTROM = 1.0e-8;                     // Angstrom --> cm
-    constexpr double UM_CM = 1.0e-4;                      // um --> cm
-    constexpr double CM_UM = 1.0e4;                       // cm --> um
+    constexpr double ANGSTROM = 1.0e-8;                     // 1 Angstrom in cm
+    constexpr double UM = 1.0e-4;                      // 1 micrometer in cm
     constexpr double AU_CM = 1.49597871e+13;              // AU --> cm
     constexpr double PC_CM = 3.08567758e+18;              // Parsec --> cm
     constexpr double JY_CGS = 1.0e-23;                    // Constants without wave conversion.

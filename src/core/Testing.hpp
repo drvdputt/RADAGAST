@@ -23,8 +23,8 @@ namespace Testing
                                   double minT, double maxT);
 
     // USEFUL CONSTANTS //
-    constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM_CM);
-    constexpr double defaultMaxFreq = Constant::LIGHT / (0.005 * Constant::UM_CM);
+    constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM);
+    constexpr double defaultMaxFreq = Constant::LIGHT / (0.005 * Constant::UM);
 
     // UTILITY FUNCTIONS //
     Array generateGeometricGridv(size_t nPoints = 200, double min = 1e11, double max = 1e16);

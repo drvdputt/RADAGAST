@@ -402,8 +402,8 @@ namespace
     // Wavelength grid to use for the tests
     void testSpectrum(double G0, Array& frequencyv, Array& specificIntensityv)
     {
-        const double minWav{0.0912 * Constant::UM_CM};  // cutoff at 13.6 eV
-        const double maxWav{1000 * Constant::UM_CM};
+        const double minWav{0.0912 * Constant::UM};  // cutoff at 13.6 eV
+        const double maxWav{1000 * Constant::UM};
         const double Tc{3.e4};
         frequencyv = Testing::generateGeometricGridv(200, Constant::LIGHT / maxWav, Constant::LIGHT / minWav);
         specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0);
