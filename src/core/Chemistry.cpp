@@ -154,12 +154,17 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
 
     gsl_odeiv2_system s{ode_f, ode_j, _numSpecies, &params};
 
-    // 1 second initial step
-    double ini_step = 1;
+    // for a good guess for the initial step, find the fastest reaction (shaves off a little bit of
+    // time)
+    double maxSpeed = 0.;
+    for (int r = 0; r < _numReactions; r++) maxSpeed = std::max(maxSpeed, reactionSpeed(n0v.data(), rateCoeffv, r));
+    double ini_step = 1 / maxSpeed;
     double epsabs = 1;
-    double epsrel = 1e-15;
-    gsl_odeiv2_driver* d = gsl_odeiv2_driver_alloc_y_new(&s, gsl_odeiv2_step_bsimp, ini_step, epsabs, epsrel);
-
+    double epsrel = 1e-9;
+    double a_y = .5;
+    double a_dydt = .5;
+    gsl_odeiv2_driver* d =
+        gsl_odeiv2_driver_alloc_standard_new(&s, gsl_odeiv2_step_bsimp, ini_step, epsabs, epsrel, a_y, a_dydt);
     int max_steps = toEquilibrium ? 32 : 1;
     double t = 0;
     // Limit the time scale to roughly the age of the universe
@@ -209,11 +214,6 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
         if (absEquil && relEquil)
         {
             DEBUG("Reached chemical equilibrium after " << i << " iterations\n");
-            break;
-        }
-        else if (t > tMax)
-        {
-            DEBUG("Reached tMax in chemical solver after " << i << " iterations\n");
             break;
         }
     }
