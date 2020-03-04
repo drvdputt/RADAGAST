@@ -56,21 +56,21 @@ private:
 
 public:
     /** Calculate the total energy transfer to the gas due to the thermalization of photoelectrons
-        ejected from the grains. Should be called after the charge distributions have been
-        calculated. */
+        ejected from the grains. Should be called after @c recalculate(). */
     double photoelectricGasHeating();
 
     /** Calculate the total energy transfer from the gas to the grains due to collisions. Should be
-        called after the charge distributions have been calculated. */
+        called after @c recalculate(). */
     double collisionalGasCooling() const;
 
     /** Calculate the total H2 formation rate per H density unit [s-1], summed over all sizes.
-        Should be called after the temperatures grain have been updated. */
+        Should be called after @c recalculate(). */
     double surfaceH2FormationRateCoeff(double Tgas) const;
 
 private:
     // Population to which the vectors and arrays below map (one element per size)
     const GasModule::GrainPopulation* _population;
+    int _numSizes;
 
     // Calculator instance which contains caching mechanisms based on the list of sizes of the
     // population.
@@ -85,11 +85,15 @@ private:
     // Adjusted temperature for each size
     Array _newTemperaturev;
 
-    // Heating due to H2 formation for each size
+    // Heating (of grain) due to H2 formation for each size
     Array _h2Heatv;
 
     // Pointer to last used radiation field
     const Spectrum* _specificIntensity{nullptr};
+
+    // Cache photoelectric heating (or gas) during recalculate(), so it can be reused for
+    // photoelectricGasHeating. This is the heating for a single grain of a certain size.
+    Array _cachedPEHeatv;
 };
 
 #endif  // CORE_GRAINSOLUTION_HPP

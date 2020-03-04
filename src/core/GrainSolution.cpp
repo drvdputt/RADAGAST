@@ -11,9 +11,9 @@
 #include "TemplatedUtils.hpp"
 
 GrainSolution::GrainSolution(const GasModule::GrainPopulation* population)
-    : _population{population},
+    : _population{population}, _numSizes{population->numSizes()},
       _chargeDistributionv(population->numSizes()), _newTemperaturev{population->initialTemperaturev()},
-      _h2Heatv(population->numSizes())
+      _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())
 {
     if (population->photoelectricData())
         _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
@@ -29,36 +29,39 @@ void GrainSolution::recalculate(const Spectrum* specificIntensity, double T, con
     if (_population->h2formationData())
         _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(), _newTemperaturev,
                                                                                  T, sv.nH());
-
-    // I think the charge distributions are best calculated first, since they affect the the
-    // temperatures, but not vice versa.
     recalculateChargeDistributions();
+
+    // Calculate and store photoelectric heating for individual grains (depends on charge
+    // distribution). Simply stays 0 if no photoelectric calculator is available.
+    if (_photoelectricCalculator)
+    {
+        for (int i = 0; i < _numSizes; i++)
+            _cachedPEHeatv[i] = _photoelectricCalculator->heatingRateA(i, _photoelectricLocals, _population->qAbsv(i),
+                                                                       _chargeDistributionv[i]);
+    }
+
+    // temperatures depend on charge distributions and photoelectric heating
     recalculateTemperatures();
 }
 
 void GrainSolution::recalculateTemperatures()
 {
-    // Heat going into grains due to h2 formation on their surfaces
-    Array extraGrainHeatv = _h2Heatv;
+    // Heat going into grains due to h2 formation on their surfaces, minus reduction of heating due
+    // to ejection of photoelectrons
+    Array extraGrainHeatv = _h2Heatv - _cachedPEHeatv;
 
     if (_photoelectricCalculator && Options::cooling_gasGrainCollisions)
     {
-        for (int i = 0; i < _population->numSizes(); i++)
+        for (int i = 0; i < _numSizes; i++)
         {
             // Heat going into grain due to collisions
             extraGrainHeatv[i] += _photoelectricCalculator->gasGrainCollisionCooling(
                 i, _photoelectricLocals, _chargeDistributionv[i], _newTemperaturev[i], true);
-
-            // Reduction of heating due to ejection of photoelectrons. TODO: cache this if slow (is
-            // calculated in photoelectricGasHeating too)
-            double grainPhotoPerSize = _photoelectricCalculator->heatingRateA(
-                i, _photoelectricLocals, _population->qAbsv(i), _chargeDistributionv[i]);
-            extraGrainHeatv[i] -= grainPhotoPerSize;
         }
     }
 
     DEBUG("New temps for grains:");
-    for (size_t i = 0; i < _population->numSizes(); i++)
+    for (size_t i = 0; i < _numSizes; i++)
     {
         double cross = Constant::PI * _population->size(i) * _population->size(i);
         // work with the total absorption here (hence we multiply by 4pi and pi a^2). This makes it
@@ -88,7 +91,7 @@ void GrainSolution::recalculateChargeDistributions()
     if (!_photoelectricCalculator) return;
 
     DEBUG("grain average charge:");
-    for (int i = 0; i < _population->numSizes(); i++)
+    for (int i = 0; i < _numSizes; i++)
     {
         _photoelectricCalculator->calculateChargeDistribution(i, _photoelectricLocals, _population->qAbsv(i),
                                                               _chargeDistributionv[i]);
@@ -103,11 +106,9 @@ double GrainSolution::photoelectricGasHeating()
 
     DEBUG("grain heat contributions: ");
     double total = 0;
-    for (int i = 0; i < _population->numSizes(); i++)
+    for (int i = 0; i < _numSizes; i++)
     {
-        double contribution = _population->density(i)
-                              * _photoelectricCalculator->heatingRateA(i, _photoelectricLocals, _population->qAbsv(i),
-                                                                       _chargeDistributionv[i]);
+        double contribution = _population->density(i) * _cachedPEHeatv[i];
         total += contribution;
 
         DEBUG(' ' << i << ' ' << contribution);
@@ -127,7 +128,7 @@ double GrainSolution::collisionalGasCooling() const
     if (!_photoelectricCalculator) return 0;
 
     double total = 0;
-    for (int i = 0; i < _population->numSizes(); i++)
+    for (int i = 0; i < _numSizes; i++)
         total += _population->density(i)
                  * _photoelectricCalculator->gasGrainCollisionCooling(i, _photoelectricLocals, _chargeDistributionv[i],
                                                                       _newTemperaturev[i], false);
