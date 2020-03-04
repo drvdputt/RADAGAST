@@ -7,10 +7,11 @@ from read_benchmark_output import BenchmarkResult
 
 
 def main():
+    """Plot the results of some of the benchmarks that were set up using setup_benchmarks. Two kinds of plots are produced: those with one point per benchmark (temperature, densities, ...) and those with one curve per benchmark (emissivity). For the former, each quantity will be set out into a plot with one of the benchmark parameters (-x option) on the x-axis. For the latter, the value of the parameter specified by -x will be shown in the legend of the figure."""
     ap = argparse.ArgumentParser()
-    ap.add_argument('dirs', nargs='+')
-    ap.add_argument('-x', default='nh')
-    ap.add_argument('-prefix', default='')
+    ap.add_argument('dirs', nargs='+', help="list of benchmark results (directories) to go into the figure")
+    ap.add_argument('-x', default='nh', choices=['nh', 'tc', 'lum'], help="benchmark parameter to be put on the x-axis")
+    ap.add_argument('-prefix', default='', help="add a prefix to the names of the resulting pdf files")
     args = ap.parse_args()
 
     if args.x == 'nh':
@@ -111,7 +112,7 @@ def main():
     plt.ylabel('outward emission')
     plt.ylim(bottom=1e-30, top=max(y) * 1.1)
     plt.xlim(left=1e-2, right=3e5)
-    plt.gcf().legend()
+    plt.gcf().legend(title=par_xlabel)
     plt.savefig(args.prefix + 'emission.pdf')
 
     # populations
