@@ -11,7 +11,7 @@
 #include "TemplatedUtils.hpp"
 
 GrainSolution::GrainSolution(const GasModule::GrainPopulation* population)
-    : _population{population}, _numSizes{population->numSizes()},
+    : _population{population}, _numSizes(population->numSizes()),
       _chargeDistributionv(population->numSizes()), _newTemperaturev{population->initialTemperaturev()},
       _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())
 {
