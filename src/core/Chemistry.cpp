@@ -162,6 +162,8 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
 
     int max_steps = toEquilibrium ? 32 : 1;
     double t = 0;
+    // Limit the time scale to roughly the age of the universe
+    double tMax = 5.5e17;
     EVector nv = n0v;
     for (int i = 1; i <= max_steps; i++)
     {
@@ -179,9 +181,7 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
             EArray fv(_numSpecies, 1);
             evaluateFv(fv.data(), nv.data(), rateCoeffv, kv);
             double timeScale = (fv != 0).select(nv.array() / fv.abs(), 0).maxCoeff();
-
-            // Limit the time scale to roughly the age of the universe
-            timeScale = std::min(timeScale, 5.5e17);
+            timeScale = std::min(timeScale, tMax);
 
             // I found that using twice the value works slightly better, but there's a lot
             // of wiggle room of course
@@ -209,6 +209,11 @@ EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, d
         if (absEquil && relEquil)
         {
             DEBUG("Reached chemical equilibrium after " << i << " iterations\n");
+            break;
+        }
+        else if (t > tMax)
+        {
+            DEBUG("Reached tMax in chemical solver after " << i << " iterations\n");
             break;
         }
     }
