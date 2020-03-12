@@ -44,6 +44,11 @@ namespace GasModule
         return _pimpl->quickInfo(gs, specificIntensity);
     }
 
+    int GasInterface::index(const std::string& name) const
+    {
+        return _pimpl->index(name);
+    }
+
     GasSolution GasInterface::solveTemperature(double n, const Spectrum& specificIntensity,
                                                GasModule::GrainInterface& gri) const
     {

@@ -109,6 +109,14 @@ namespace GasModule
             string. */
         std::string quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const;
 
+        /** Return the index of the stored density in the gas state for a given species (specified
+            as a string). If the given species is not available, -1 will be returned. The @GasState
+            itself has no knowledge of what its stored densities mean. The latter can be different
+            depending on how the chemical network was set up. This index can be used to retrieve
+            the desired density from a @c GasState object that was created through this
+            @GasInterface instance. */
+        int index(const std::string& name) const;
+
         // ACCESS TO GASSOLUTION //
 
         /** Find the equilibrium temperature, by repeatedly solving the densities and evaluating th

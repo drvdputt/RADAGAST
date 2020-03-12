@@ -53,6 +53,7 @@ public:
     Array emissivity(const GasModule::GasState& gs, bool SI = false) const;
     Array opacity(const GasModule::GasState& gs, bool SI = false) const;
     std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& specificIntensity) const;
+    int index(const std::string& name) const;
 
     GasSolution solveTemperature(double n, const Spectrum& specificIntensity, GasModule::GrainInterface&) const;
     GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity, GasModule::GrainInterface&,

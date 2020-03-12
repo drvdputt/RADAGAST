@@ -78,6 +78,11 @@ std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
     return ss.str();
 }
 
+int GasInterfaceImpl::index(const std::string& name) const
+{
+    return _chemistry.speciesIndex().index(name);
+}
+
 namespace
 {
     struct heating_f_params
