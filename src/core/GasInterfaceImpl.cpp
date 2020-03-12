@@ -30,14 +30,6 @@ void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
     if (gd) s.fillDiagnostics(gd);
 }
 
-void GasInterfaceImpl::initializeGasState(GasModule::GasState& gs, double n, double T, GasModule::GrainInterface& gri,
-                                          GasDiagnostics* gd) const
-{
-    GasSolution s = solveInitialGuess(n, T, gri);
-    s.setGasState(gs);
-    if (gd) s.fillDiagnostics(gd);
-}
-
 Array GasInterfaceImpl::emissivity(const GasModule::GasState& gs, bool SI) const
 {
     // There is some duplication from GasSolution::emissivityv, but let's keep both for now.
@@ -84,14 +76,6 @@ std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
     ss << "G0 " << RadiationFieldTools::gHabing(si) << " T " << gs._t << " ne " << sv.ne() << " np " << sv.np()
        << " nH " << sv.nH() << " nH2 " << sv.nH2();
     return ss.str();
-}
-
-GasSolution GasInterfaceImpl::solveInitialGuess(double n, double T, GasModule::GrainInterface& gri) const
-{
-    Array iFrequencyv = Testing::defaultFrequencyv(1000);
-    Array blackbodyv(iFrequencyv.size());
-    for (size_t i = 0; i < iFrequencyv.size(); i++) blackbodyv[i] = SpecialFunctions::planck(iFrequencyv[i], T);
-    return solveTemperature(n, Spectrum(iFrequencyv, blackbodyv), gri);
 }
 
 namespace

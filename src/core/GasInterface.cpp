@@ -32,30 +32,16 @@ namespace GasModule
         _pimpl->updateGasState(gs, n, specificIntensityv, gri, gd);
     }
 
-    void GasInterface::initializeGasState(GasState& gs, double n, double T, GrainInterface& gri,
-                                          GasDiagnostics* gd) const
-    {
-        _pimpl->initializeGasState(gs, n, T, gri, gd);
-    }
-
     std::valarray<double> GasInterface::emissivity(const GasState& gs, bool SI) const
     {
         return _pimpl->emissivity(gs, SI);
     }
 
-    std::valarray<double> GasInterface::opacity(const GasState& gs, bool SI) const
-    {
-        return _pimpl->opacity(gs, SI);
-    }
+    std::valarray<double> GasInterface::opacity(const GasState& gs, bool SI) const { return _pimpl->opacity(gs, SI); }
 
     std::string GasInterface::quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const
     {
         return _pimpl->quickInfo(gs, specificIntensity);
-    }
-
-    GasSolution GasInterface::solveInitialGuess(double n, double T, GrainInterface& gri) const
-    {
-        return _pimpl->solveInitialGuess(n, T, gri);
     }
 
     GasSolution GasInterface::solveTemperature(double n, const Spectrum& specificIntensity,
@@ -70,10 +56,10 @@ namespace GasModule
         return _pimpl->solveDensities(n, T, specificIntensity, gri, h2FormationOverride);
     }
 
-    void GasInterface::solveDensities(GasSolution& s, double n, double T, const Spectrum& specificIntensity,
-                                      bool startFromCurrent, double h2FormationOverride) const
+    double GasInterface::solveDensities(GasSolution& s, double n, double T, const Spectrum& specificIntensity,
+                                        bool startFromCurrent, double h2FormationOverride) const
     {
-        _pimpl->solveDensities(s, n, T, specificIntensity, startFromCurrent, h2FormationOverride);
+        return _pimpl->solveDensities(s, n, T, specificIntensity, startFromCurrent, h2FormationOverride);
     }
 
     // GasSolution GasInterface::solveDensitiesNoH2(double n, double T,
