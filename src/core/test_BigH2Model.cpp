@@ -6,6 +6,8 @@
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("H2-specific algorithm")
 {
     H2Data hff(99, 99);

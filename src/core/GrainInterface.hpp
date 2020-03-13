@@ -56,6 +56,6 @@ namespace GasModule
     private:
         std::unique_ptr<std::vector<GrainPopulation>> _populationv;
     };
-} /* namespace GasModule */
+}
 
 #endif  // CORE_GRAININTERFACE_HPP

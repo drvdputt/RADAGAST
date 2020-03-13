@@ -5,10 +5,12 @@
 #include "HHardCoded.hpp"
 #include "SpeciesIndex.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")
 {
-    /** Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to the
-	    NIST values between different n. */
+    // Writes out the A-coefficients of a fully collapsed H-model, so that they can be compared to
+    // the NIST values between different n.
     HFromFiles hff(0);
     EMatrix avv = hff.avv().array();
     // cout << hff.avv() << endl;

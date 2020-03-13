@@ -4,6 +4,8 @@
 #include "RadiationFieldTools.hpp"
 #include "Testing.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("Blackbodies test")
 {
     // Test if options don't make it crash

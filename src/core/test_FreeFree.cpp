@@ -4,6 +4,8 @@
 #include "Testing.hpp"
 #include "doctest.h"
 
+using namespace GasModule;
+
 TEST_CASE("Free-free cooling data vs manual integration")
 {
     FreeFree ff;

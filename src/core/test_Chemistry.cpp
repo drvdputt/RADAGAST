@@ -2,6 +2,8 @@
 #include "DoctestUtils.hpp"
 #include "SpeciesIndex.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("single species with creation and destruction")
 {
     // one species, two reactions

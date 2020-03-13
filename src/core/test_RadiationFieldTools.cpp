@@ -2,6 +2,8 @@
 #include "RadiationFieldTools.hpp"
 #include "Testing.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("Calculation of G")
 {
     Array frequencyv = Testing::defaultFrequencyv(2000);

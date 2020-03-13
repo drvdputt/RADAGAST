@@ -3,43 +3,43 @@
 #include <ios>
 #include <sstream>
 
-void InColumnFile::read(int numCols, int reserveLines)
+namespace GasModule
 {
-    _columnv.resize(numCols);
-    for (auto& v : _columnv) v.reserve(reserveLines);
-
-    std::ifstream ifs = IOTools::ifstreamRepoFile(_fname);
-    std::string line;
-    while (getline(ifs, line))
+    void InColumnFile::read(int numCols, int reserveLines)
     {
-        if (line.front() == '#') continue;
+        _columnv.resize(numCols);
+        for (auto& v : _columnv) v.reserve(reserveLines);
 
-        auto iss = std::istringstream(line);
-        for (int i = 0; i < numCols; i++)
+        std::ifstream ifs = IOTools::ifstreamRepoFile(_fname);
+        std::string line;
+        while (getline(ifs, line))
         {
-            double temp;
-            iss >> temp;
-            if (iss.fail()) Error::runtime("Problem reading column file");
+            if (line.front() == '#') continue;
 
-            _columnv[i].emplace_back(temp);
+            auto iss = std::istringstream(line);
+            for (int i = 0; i < numCols; i++)
+            {
+                double temp;
+                iss >> temp;
+                if (iss.fail()) Error::runtime("Problem reading column file");
+
+                _columnv[i].emplace_back(temp);
+            }
         }
+
+        // In case the given reservation was too large
+        for (auto& v : _columnv) v.shrink_to_fit();
     }
 
-    // In case the given reservation was too large
-    for (auto& v : _columnv) v.shrink_to_fit();
-}
+    OutColumnFile::OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev, int precision)
+        : _outFile{IOTools::ofstreamFile(filePath)}, _numCols{colNamev.size()}
+    {
+        if (precision != -1) _outFile.precision(precision);
 
-OutColumnFile::OutColumnFile(const std::string& filePath, const std::vector<std::string>& colNamev, int precision)
-    : _outFile{IOTools::ofstreamFile(filePath)}, _numCols{colNamev.size()}
-{
-    if (precision != -1) _outFile.precision(precision);
+        _outFile << std::scientific << '#';
+        for (size_t i = 0; i < _numCols; i++) _outFile << i << ' ' << colNamev[i] << ';';
+        _outFile << '\n';
+    }
 
-    _outFile << std::scientific << '#';
-    for (size_t i = 0; i < _numCols; i++) _outFile << i << ' ' << colNamev[i] << ';';
-    _outFile << '\n';
-}
-
-OutColumnFile::~OutColumnFile()
-{
-    _outFile.close();
+    OutColumnFile::~OutColumnFile() { _outFile.close(); }
 }

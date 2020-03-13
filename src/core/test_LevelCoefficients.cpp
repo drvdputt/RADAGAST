@@ -8,6 +8,8 @@
 #include "TwoLevelHardcoded.hpp"
 #include "doctest.h"
 
+using namespace GasModule;
+
 TEST_CASE("Test LevelCoefficients implementation two level subclass")
 {
     TwoLevelHardcoded twolv{};

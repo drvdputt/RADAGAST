@@ -10,108 +10,110 @@
 #include "HModel.hpp"
 #include "SpeciesIndex.hpp"
 
-class FreeBound;
-class FreeFree;
-class GasDiagnostics;
-class Spectrum;
-
-/** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl are
-    called. This class serves as a workspace, where all the dynamic values (i.e. changing while
-    searching for the equilibrium) are stored. When each thread has its own GasSolution object to
-    work with, the code will be re-entrant.
-
-    There are functions that update the level populations and the grain temperatures and charge
-    distributions. They should typically be called after setting a new temperature and a new
-    species density vector. Once the equilibria have been calculated, the other public functions
-    can be called to calculate any derived quantities. Some of the latter are not const because
-    some caching or calculations using preallocated memory might happen somewhere down the
-    composition hierarchy. */
-class GasSolution
+namespace GasModule
 {
-public:
-    /** Some references to environmental parameters and other models are passed here. For the
-        HModel and H2Model, ownership is transferred (using move) to this object, since their
-        contents change while searching for the solution. When a non-trivial GrainInterface object
-        is passed, this class will keep track of a list of GrainSolution objects. */
-    GasSolution(const GasModule::GrainInterface* gri, const Spectrum& specificIntensity,
-                const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
-                const FreeBound& freeBound, const FreeFree& freeFree);
+    class FreeBound;
+    class FreeFree;
+    class GasDiagnostics;
+    class Spectrum;
 
-    GasSolution(GasSolution&&) = default;
+    /** Objects of this class are created whenever a one of the main functions of GasInterfaceImpl
+        are called. This class serves as a workspace, where all the dynamic values (i.e. changing
+        while searching for the equilibrium) are stored. When each thread has its own GasSolution
+        object to work with, the code will be re-entrant.
 
-    void makeZero();
+        There are functions that update the level populations and the grain temperatures and charge
+        distributions. They should typically be called after setting a new temperature and a new
+        species density vector. Once the equilibria have been calculated, the other public
+        functions can be called to calculate any derived quantities. Some of the latter are not
+        const because some caching or calculations using preallocated memory might happen somewhere
+        down the composition hierarchy. */
+    class GasSolution
+    {
+    public:
+        /** Some references to environmental parameters and other models are passed here. For the
+            HModel and H2Model, ownership is transferred (using move) to this object, since their
+            contents change while searching for the solution. When a non-trivial GrainInterface
+            object is passed, this class will keep track of a list of GrainSolution objects. */
+        GasSolution(const GasModule::GrainInterface* gri, const Spectrum& specificIntensity,
+                    const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
+                    const FreeBound& freeBound, const FreeFree& freeFree);
 
-    /** Solve the level populations for each level model contained here. The formation rate of H2
-        needs to be passed, because it pumps the H2 level populations. */
-    void solveLevels(double formH2 = 0);
+        GasSolution(GasSolution&&) = default;
 
-    /** Update the charge distribution and temperature of the grains based on the current species
-        densities. Should be called after using setSpeciesNv. */
-    void solveGrains();
+        void makeZero();
 
-    /** The radiation field */
-    const Spectrum& specificIntensity() const { return _specificIntensity; }
+        /** Solve the level populations for each level model contained here. The formation rate of
+            H2 needs to be passed, because it pumps the H2 level populations. */
+        void solveLevels(double formH2 = 0);
 
-    /** The temperature */
-    double t() const { return _t; }
+        /** Update the charge distribution and temperature of the grains based on the current
+            species densities. Should be called after using setSpeciesNv. */
+        void solveGrains();
 
-    /** Set a new temperature */
-    void setT(double t) { _t = t; }
+        /** The radiation field */
+        const Spectrum& specificIntensity() const { return _specificIntensity; }
 
-    /** The chemistry solution */
-    const SpeciesVector& speciesVector() const { return _sv; }
-    void setSpeciesNv(const EVector& nv) { _sv.setDensities(nv); }
-    double nH() const { return _sv.nH(); }
-    double nH2() const { return _sv.nH2(); }
-    double np() const { return _sv.np(); }
-    double ne() const { return _sv.ne(); }
+        /** The temperature */
+        double t() const { return _t; }
 
-    /** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
-    Array emissivityv(const Array& eFrequencyv) const;
+        /** Set a new temperature */
+        void setT(double t) { _t = t; }
 
-    /** The total opacity at each frequency in 1 / cm */
-    Array opacityv(const Array& oFrequencyv) const;
+        /** The chemistry solution */
+        const SpeciesVector& speciesVector() const { return _sv; }
+        void setSpeciesNv(const EVector& nv) { _sv.setDensities(nv); }
+        double nH() const { return _sv.nH(); }
+        double nH2() const { return _sv.nH2(); }
+        double np() const { return _sv.np(); }
+        double ne() const { return _sv.ne(); }
 
-    /** Total cooling, including grain collisions. */
-    double cooling() const;
+        /** The total emissivity per frequency unit, in erg / s / cm^3 / sr / hz */
+        Array emissivityv(const Array& eFrequencyv) const;
 
-    /** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
-    double heating();
+        /** The total opacity at each frequency in 1 / cm */
+        Array opacityv(const Array& oFrequencyv) const;
 
-    /** The heating by photoelectric effect on grains. */
-    double grainHeating();
+        /** Total cooling, including grain collisions. */
+        double cooling() const;
 
-    /** The cooling by collisions with grains */
-    double grainCooling() const;
+        /** The total heating, including the grain photoelectric effect, in erg / s / cm^3. */
+        double heating();
 
-    /** Copies and/or recalculates many diagnostic values, and puts these in the given
-        GasDiagnostics object */
-    void fillDiagnostics(GasDiagnostics*);
+        /** The heating by photoelectric effect on grains. */
+        double grainHeating();
 
-    /** Writes the resulting temperature and densities into the given gas state object */
-    void setGasState(GasModule::GasState&) const;
+        /** The cooling by collisions with grains */
+        double grainCooling() const;
 
-    /** Get the H2 photodissociation rate from the H2 model [s-1]. */
-    double kDissH2Levels() const;
+        /** Copies and/or recalculates many diagnostic values, and puts these in the given
+            GasDiagnostics object */
+        void fillDiagnostics(GasDiagnostics*);
 
-    /** Get the total grain surface H2 formation rate [s-1]. This is per H density unit;
-        multiplying with nH gives [cm-3 s-1]. The contributions of all grain populations
-        (GrainSolution objects) are summed, which use their updated temperature value. */
-    double kGrainH2FormationRateCoeff() const;
+        /** Writes the resulting temperature and densities into the given gas state object */
+        void setGasState(GasModule::GasState&) const;
 
-    /** Access to the vector of grain solutions (one for each grain population, in the same order),
-        for diagnostic purposes. */
-    const std::vector<GrainSolution>& grainSolutionv() const { return _grainSolutionv; }
+        /** Get the H2 photodissociation rate from the H2 model [s-1]. */
+        double kDissH2Levels() const;
 
-private:
-    std::vector<GrainSolution> _grainSolutionv;
-    const Spectrum& _specificIntensity;
-    double _t;
-    SpeciesVector _sv;
-    std::shared_ptr<HModel> _hSolution;
-    std::shared_ptr<H2Model> _h2Solution;
-    const FreeBound& _freeBound;
-    const FreeFree& _freeFree;
-};
+        /** Get the total grain surface H2 formation rate [s-1]. This is per H density unit;
+            multiplying with nH gives [cm-3 s-1]. The contributions of all grain populations
+            (GrainSolution objects) are summed, which use their updated temperature value. */
+        double kGrainH2FormationRateCoeff() const;
 
+        /** Access to the vector of grain solutions (one for each grain population, in the same
+            order), for diagnostic purposes. */
+        const std::vector<GrainSolution>& grainSolutionv() const { return _grainSolutionv; }
+
+    private:
+        std::vector<GrainSolution> _grainSolutionv;
+        const Spectrum& _specificIntensity;
+        double _t;
+        SpeciesVector _sv;
+        std::shared_ptr<HModel> _hSolution;
+        std::shared_ptr<H2Model> _h2Solution;
+        const FreeBound& _freeBound;
+        const FreeFree& _freeFree;
+    };
+}
 #endif  // CORE_GASSOLUTION_HPP

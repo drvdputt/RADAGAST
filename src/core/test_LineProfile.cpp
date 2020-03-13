@@ -5,6 +5,8 @@
 #include "Testing.hpp"
 #include "doctest.h"
 
+using namespace GasModule;
+
 namespace
 {
     LineProfile testLine()

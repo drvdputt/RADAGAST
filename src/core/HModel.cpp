@@ -6,92 +6,89 @@
 #include "LevelSolver.hpp"
 #include "TwoPhoton.hpp"
 
-void HModel::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity)
+namespace GasModule
 {
-    _levelSolution.setT(cp._t);
-
-    if (n <= 0)
+    void HModel::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity)
     {
-        int numLv = _hData->numLv();
-        _levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
-        _levelSolution.setNv(EVector::Zero(numLv));
-        return;
+        _levelSolution.setT(cp._t);
+
+        if (n <= 0)
+        {
+            int numLv = _hData->numLv();
+            _levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
+            _levelSolution.setNv(EVector::Zero(numLv));
+            return;
+        }
+
+        EMatrix Cvv;
+        EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, cp, &Cvv);
+        _levelSolution.setCvv(Cvv);
+
+        EVector the_sourcev = sourcev(cp);
+        EVector the_sinkv = sinkv(cp);
+        DEBUG("Solving levels nH = " << n << std::endl);
+        EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
+        _levelSolution.setNv(newNv);
     }
 
-    EMatrix Cvv;
-    EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, cp, &Cvv);
-    _levelSolution.setCvv(Cvv);
+    Array HModel::emissivityv(const Array eFrequencyv) const
+    {
+        return _levelSolution.emissivityv(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
+    }
 
-    EVector the_sourcev = sourcev(cp);
-    EVector the_sinkv = sinkv(cp);
-    DEBUG("Solving levels nH = " << n << std::endl);
-    EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
-    _levelSolution.setNv(newNv);
-}
+    Array HModel::opacityv(const Array oFrequencyv) const { return _levelSolution.opacityv(oFrequencyv); }
 
-Array HModel::emissivityv(const Array eFrequencyv) const
-{
-    return _levelSolution.emissivityv(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
-}
+    double HModel::netHeating() const { return _levelSolution.netHeating(); }
 
-Array HModel::opacityv(const Array oFrequencyv) const
-{
-    return _levelSolution.opacityv(oFrequencyv);
-}
+    double HModel::n2s() const
+    {
+        auto upper_lower = _hData->twoPhotonIndices();
+        // This index can mean either the resolved level 2s, or the collapsed level 2
+        size_t index2sOr2 = upper_lower[0];
+        size_t index1s = upper_lower[1];
 
-double HModel::netHeating() const
-{
-    return _levelSolution.netHeating();
-}
+        // The population of the 2s level needs to be guessed when n=2 is collapsed. We can check
+        // this by looking at the multiplicity of the level. Since 2s and 1s should both have the
+        // the same multiplicity, we can do:
+        const EVector& gv = _hData->gv();
+        bool collapsed = gv(index2sOr2) != gv(index1s);
 
-double HModel::n2s() const
-{
-    auto upper_lower = _hData->twoPhotonIndices();
-    // This index can mean either the resolved level 2s, or the collapsed level 2
-    size_t index2sOr2 = upper_lower[0];
-    size_t index1s = upper_lower[1];
+        // If collapsed, assume the population of the 2s level to be 1/4 of the total n=2
+        // population.
+        if (collapsed)
+            return 0.25 * _levelSolution.nv()(index2sOr2);
+        else
+            return _levelSolution.nv()(index2sOr2);
+    }
 
-    // The population of the 2s level needs to be guessed when n=2 is collapsed. We can
-    // check this by looking at the multiplicity of the level. Since 2s and 1s should both
-    // have the the same multiplicity, we can do:
-    const EVector& gv = _hData->gv();
-    bool collapsed = gv(index2sOr2) != gv(index1s);
+    Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
+    {
+        return TwoPhoton::emissivityv(eFrequencyv, n2s());
+    }
 
-    // If collapsed, assume the population of the 2s level to be 1/4 of the total n=2
-    // population.
-    if (collapsed)
-        return 0.25 * _levelSolution.nv()(index2sOr2);
-    else
-        return _levelSolution.nv()(index2sOr2);
-}
+    EVector HModel::sourcev(const CollisionParameters& cp) const
+    {
+        EVector result = _hData->recombinationRatev(cp._t);
+        double ne = cp._sv.ne();
+        double np = cp._sv.np();
+        return result * ne * np;
+    }
 
-Array HModel::twoPhotonEmissivityv(const Array& eFrequencyv) const
-{
-    return TwoPhoton::emissivityv(eFrequencyv, n2s());
-}
+    EVector HModel::sinkv(const CollisionParameters& cp) const
+    {
+        // TODO: ideally, this calculates the ionization rate from each level, using individual
+        // ionization cross sections.
 
-EVector HModel::sourcev(const CollisionParameters& cp) const
-{
-    EVector result = _hData->recombinationRatev(cp._t);
-    double ne = cp._sv.ne();
-    double np = cp._sv.np();
-    return result * ne * np;
-}
-
-EVector HModel::sinkv(const CollisionParameters& cp) const
-{
-    // TODO: ideally, this calculates the ionization rate from each level, using individual
-    // ionization cross sections.
-
-    /* The ionization rate calculation makes no distinction between the levels.  When
-	   the upper level population is small, and its decay rate is large, the second term
-	   doesn't really matter. Therefore, we choose the sink to be the same for each
-	   level.  Moreover, total source = total sink so we want sink*n0 + sink*n1 = source
-	   => sink = totalsource / n because n0/n + n1/n = 1. */
-    double ne = cp._sv.ne();
-    double np = cp._sv.np();
-    double nH = cp._sv.nH();
-    double totalSource = ne * np * Ionization::recombinationRateCoeff(cp._t);
-    double sink = totalSource / nH;  // Sink rate per (atom per cm3)
-    return EVector::Constant(_hData->numLv(), sink);
+        // The ionization rate calculation makes no distinction between the levels. When the upper
+        // level population is small, and its decay rate is large, the second term doesn't really
+        // matter. Therefore, we choose the sink to be the same for each level. Moreover, total
+        // source = total sink so we want sink*n0 + sink*n1 = source => sink = totalsource / n
+        // because n0/n + n1/n = 1.
+        double ne = cp._sv.ne();
+        double np = cp._sv.np();
+        double nH = cp._sv.nH();
+        double totalSource = ne * np * Ionization::recombinationRateCoeff(cp._t);
+        double sink = totalSource / nH;  // Sink rate per (atom per cm3)
+        return EVector::Constant(_hData->numLv(), sink);
+    }
 }

@@ -37,5 +37,4 @@ namespace GasModule
         if (!_populationv) return;
         for (const auto& population : *_populationv) population.test();
     }
-
-} /* namespace GasModule */
+}

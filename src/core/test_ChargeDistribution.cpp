@@ -1,6 +1,8 @@
 #include "ChargeDistribution.hpp"
 #include "DoctestUtils.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("Trivial charge distribution")
 {
     ChargeDistribution cd;

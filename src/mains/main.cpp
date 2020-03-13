@@ -44,13 +44,13 @@ int main(int argc, char** argv)
         // Testing::runFullModel();
         // Testing::runH2(true);
         if (argc == 1)
-            Testing::runMRNDust(true);
+            GasModule::Testing::runMRNDust(true);
         else if (argc == 4)
         {
             double nH = std::stod(argv[1]);
             double Tc = std::stod(argv[2]);
             double lumSol = std::stod(argv[3]);
-            Testing::runMRNDust(true, nH, Tc, lumSol, false);
+            GasModule::Testing::runMRNDust(true, nH, Tc, lumSol, false);
         }
     }
     catch (const std::exception& ex)

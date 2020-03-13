@@ -6,6 +6,8 @@
 #include "Spectrum.hpp"
 #include "Testing.hpp"
 
+using namespace GasModule;
+
 TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 {
     const double T = 10000;

@@ -5,6 +5,8 @@
 #include "TwoLevelHardcoded.hpp"
 #include "doctest.h"
 
+using namespace GasModule;
+
 TEST_CASE("Test LevelSolver using two-level LTE ")
 {
     double T = 500;

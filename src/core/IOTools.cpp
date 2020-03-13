@@ -14,39 +14,42 @@ namespace
     const string repoRoot = REPOROOT;
 }
 
-ifstream IOTools::ifstreamRepoFile(const string& pathRelativeToGitDir)
+namespace GasModule
 {
-    return ifstreamFile(repoRoot + "/" + pathRelativeToGitDir);
-}
+    ifstream IOTools::ifstreamRepoFile(const string& pathRelativeToGitDir)
+    {
+        return ifstreamFile(repoRoot + "/" + pathRelativeToGitDir);
+    }
 
-ifstream IOTools::ifstreamFile(const string& file)
-{
-    ifstream input(file);
-    if (!input) Error::runtime("Input file " + file + "not found.");
-    DEBUG("Opened file (read) " << file << '\n');
-    return input;
-}
+    ifstream IOTools::ifstreamFile(const string& file)
+    {
+        ifstream input(file);
+        if (!input) Error::runtime("Input file " + file + "not found.");
+        DEBUG("Opened file (read) " << file << '\n');
+        return input;
+    }
 
-ofstream IOTools::ofstreamFile(const string& file)
-{
-    ofstream output(file);
-    if (!output.is_open()) Error::runtime("Output file " + file + " could not be opened.");
-    DEBUG("Opened file (write) " << file << '\n');
-    return output;
-}
+    ofstream IOTools::ofstreamFile(const string& file)
+    {
+        ofstream output(file);
+        if (!output.is_open()) Error::runtime("Output file " + file + " could not be opened.");
+        DEBUG("Opened file (write) " << file << '\n');
+        return output;
+    }
 
-istringstream IOTools::istringstreamNextLine(ifstream& ifs)
-{
-    string line;
-    getline(ifs, line);
-    return istringstream(line);
-}
+    istringstream IOTools::istringstreamNextLine(ifstream& ifs)
+    {
+        string line;
+        getline(ifs, line);
+        return istringstream(line);
+    }
 
-vector<double> IOTools::allNumbersFromNextLine(const string& line)
-{
-    auto ss = istringstream(line);
-    double i;
-    vector<double> nv;
-    while (ss >> i) nv.emplace_back(i);
-    return nv;
+    vector<double> IOTools::allNumbersFromNextLine(const string& line)
+    {
+        auto ss = istringstream(line);
+        double i;
+        vector<double> nv;
+        while (ss >> i) nv.emplace_back(i);
+        return nv;
+    }
 }

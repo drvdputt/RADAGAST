@@ -6,6 +6,8 @@
 #include "Testing.hpp"
 #include <fstream>
 
+using namespace GasModule;
+
 int main()
 {
     SpeciesIndex spindex(SpeciesIndex::e_p_H_H2);

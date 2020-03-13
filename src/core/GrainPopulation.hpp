@@ -7,11 +7,11 @@
 #include <memory>
 #include <vector>
 
-class GrainH2Formation;
-class GrainPhotoelectricData;
-
 namespace GasModule
 {
+    class GrainH2Formation;
+    class GrainPhotoelectricData;
+
     class GrainPopulation
     {
     public:

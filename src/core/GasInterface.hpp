@@ -6,13 +6,13 @@
 #include <memory>
 #include <string>
 
-class GasDiagnostics;
-class GasInterfaceImpl;
-class GasSolution;
-class Spectrum;
-
 namespace GasModule
 {
+    class GasDiagnostics;
+    class GasInterfaceImpl;
+    class GasSolution;
+    class Spectrum;
+
     /** This is the interface class that other codes should use. We use the PIMPL pattern here to
         minimize the amount of includes necessary on the client side, so that the internals of the
         gas module can be changed without having to recompile large parts of the client code. For
@@ -145,5 +145,5 @@ namespace GasModule
     private:
         std::unique_ptr<GasInterfaceImpl> _pimpl;
     };
-}  // namespace GasModule
+}
 #endif  // CORE_GASINTERFACE_HPP
