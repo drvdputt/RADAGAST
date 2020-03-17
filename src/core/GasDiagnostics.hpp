@@ -17,11 +17,14 @@ namespace GasModule
         /** Configuration */
         bool saveLevelPopulations() const { return _saveLevelPopulations; }
 
-        /** The photoelectric heating contribution by each grain population */
+        /** Invidivual photoelectric heating contributions. TODO: make this work per population
+            and/or per size. */
         const std::valarray<double>& photoelectricHeating() const { return _photoelectricHeating; }
 
-        /** Other heating rates, stored as a map with keys */
-        const std::map<std::string, double>& otherHeating() const { return _heatingm; }
+        /** All heating rates (including total photoelectric), stored as a map with keys */
+        const std::map<std::string, double>& heating() const { return _heatingm; }
+
+        /** All cooling rates, stored as a map with keys */
         const std::map<std::string, double>& cooling() const { return _coolingm; }
 
         /** Names of the reactions in the chemical network used */
@@ -34,7 +37,8 @@ namespace GasModule
         /** Population density of the included H2 levels */
         const std::valarray<double>& h2Populations() const { return _h2Populationv; }
 
-        /** Get the value of a diagnostic that was added using putUserValue */
+        /** Get the value of a diagnostic that was added using setUserValue(). This is mainly
+            used for temporary diagnostics during debugging. */
         double userValue(const std::string& key) { return _userValuem.at(key); }
 
         void setPhotoelectricHeating(const std::valarray<double>& peh) { _photoelectricHeating = peh; }

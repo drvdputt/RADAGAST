@@ -901,7 +901,7 @@ namespace GasModule
             OutColumnFile rates(prefix + "rates.dat", gd.reactionNames());
             rates.writeLine(gd.reactionRates());
 
-            writeMapAsColumnFile(prefix + "heat.dat", gd.otherHeating());
+            writeMapAsColumnFile(prefix + "heat.dat", gd.heating());
             writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
 
             OutColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
