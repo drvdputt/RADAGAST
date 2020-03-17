@@ -14,4 +14,4 @@ add_library(gasmodule STATIC $<TARGET_OBJECTS:gasmodule_objects>)
 target_link_libraries(gasmodule GSL::gsl GSL::gslcblas)
 
 install(TARGETS gasmodule ARCHIVE DESTINATION lib)
-install(FILES GasInterface.hpp GrainInterface.hpp GasState.hpp GasDiagnostics.cpp DESTINATION include)
+install(FILES GasInterface.hpp GrainInterface.hpp GasState.hpp GasDiagnostics.hpp DESTINATION include)
