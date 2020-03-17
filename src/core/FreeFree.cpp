@@ -336,6 +336,9 @@ namespace GasModule
 
     double FreeFree::cooling(double np_ne, double T) const
     {
+        // safety for log
+        if (T <= 0) return 0;
+
         // Constant factor from 1998-Sutherland equation 18
         constexpr double fk = 1.42554e-27;
         // Interpolate and use the frequency integrated gaunt factor
