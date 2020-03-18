@@ -25,7 +25,7 @@ namespace GasModule
         double recombinationRateCoeff(double T);
 
         /** Heating due to thermalization of freed electrons */
-        double heating(double np, double ne, double T, const Spectrum& specificIntensity);
+        double heating(double nH, const Spectrum& specificIntensity);
 
         /** Kinetic energy lost during recombination (basically the photon energy, minus the
             binding energy contribution. */

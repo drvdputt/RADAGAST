@@ -91,7 +91,7 @@ namespace GasModule
         // TODO: decide whether to keep the above, as it is negligible in any case I can imagine
         double hLine = _hSolution->netHeating();
         double h2Line = _h2Solution->netHeating();
-        double hPhotoIonHeat = Ionization::heating(np(), ne(), _t, _specificIntensity);
+        double hPhotoIonHeat = Ionization::heating(nH(), _specificIntensity);
         double dissHeat = _h2Solution->dissociationHeating(_specificIntensity);
         double grainHeat = grainHeating();
         DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
@@ -145,7 +145,7 @@ namespace GasModule
         double netHline = _hSolution->netHeating();
         double netH2line = _h2Solution->netHeating();
 
-        gd->setHeating("H ion", Ionization::heating(np(), ne(), _t, _specificIntensity));
+        gd->setHeating("H ion", Ionization::heating(nH(), _specificIntensity));
         gd->setCooling("Hrec", Ionization::cooling(nH(), np(), ne(), _t));
         gd->setHeating("H deexc", netHline);
         gd->setCooling("H exc", -netHline);

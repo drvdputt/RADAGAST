@@ -112,42 +112,31 @@ namespace GasModule
         return a / (sqrt(T / T0) * pow(1 + sqrt(T / T0), 1 - b) * pow(1 + sqrt(T / T1), 1 + b));
     }
 
-    double Ionization::heating(double np, double ne, double T, const Spectrum& specificIntensity)
+    double Ionization::heating(double nH, const Spectrum& specificIntensity)
     {
-        // Use formula 3.2 from Osterbrock
-        double numberOfIonizations = np * ne * recombinationRateCoeff(T);
+        // 0. start from I_nu (erg s-1 cm-2 hz-1 sr-1)
+        const Array& Iv = specificIntensity.valuev();
+        const Array& nuv = specificIntensity.frequencyv();
 
-        auto nuv = specificIntensity.frequencyv();
-        auto iv = specificIntensity.valuev();
+        // 1. energy difference * number of photons s-1 cm-2 hz-1 = h(nu - threshold) * 4pi I_nu
+        // / (hnu) = (nu - threshold) * 4pi I_nu / nu. TODO: only do this calculation up to
+        // threshold
+        Array integrandv = (nuv - THRESHOLD) * Constant::FPI * Iv / nuv;
 
-        size_t nFreq = nuv.size();
-        Array integrand(nFreq);
-        size_t iThres = TemplatedUtils::index<double>(THRESHOLD, nuv);
-
-        // Integrand I_nu / nu * sigma
-        for (size_t i = iThres; i < nFreq; i++) integrand[i] = iv[i] / nuv[i] * crossSection(nuv[i]);
-
-        // The denominator comes from isolating n_0 from the balance equation, and now also
-        // includes the collisional term (top and bottom have been multiplied with h / 4pi, see
-        // 3.1, hence the extra factors)
-        double bottom = TemplatedUtils::integrate<double>(nuv, integrand)
-                        + Constant::PLANCK / Constant::FPI * ne * collisionalRateCoeff(T);
-
-        // Now multiply the original integrand with (nu - nu_0). Top / bottom will give the average
-        // energy left over after ionization.
-        for (size_t i = iThres; i < nFreq; i++) integrand[i] *= (nuv[i] - THRESHOLD);
-
-        double topIntegral = Constant::PLANCK * TemplatedUtils::integrate<double>(nuv, integrand);
-
-        // The heating is hence the total ionization rate (equal to the recombination rate since we
-        // assume equilibrium), times the average energy of the release electron.
-        double result = numberOfIonizations * topIntegral / bottom;
-        if (!std::isfinite(result))
+        // 2. multiply with crossSection, and stop when we go below threshold -> erg s-1 hz-1
+        int i = nuv.size() - 1;
+        while (i >= 0 && nuv[i] > THRESHOLD)
         {
-            DEBUG("Ionization heating was " << result << ", setting to zero.\n");
-            result = 0;
+            integrandv[i] *= crossSection(nuv[i]);
+            i--;
         }
-        return result;
+        // i is now 1 below integration bound
+
+        // 3. integrate over frequency -> erg s-1
+        double heatPerH = TemplatedUtils::integrate<double>(nuv, integrandv, i + 1, nuv.size() - 1);
+
+        // 4. multiply with H density -> erg s-1 cm-3
+        return nH * heatPerH;
     }
 
     double Ionization::cooling(double nH, double np, double ne, double T)
