@@ -26,7 +26,7 @@ namespace GasModule
     double LookupTable::evaluate(int i, double x) const
     {
         auto iLeftRight = TemplatedUtils::saneIndexPair(x, _xv);
-        return TemplatedUtils::interpolateLinear(x, _xv[iLeftRight[0]], _xv[iLeftRight[1]], _yv(i, iLeftRight[0]),
-                                                 _yv(i, iLeftRight[1]));
+        return TemplatedUtils::interpolateLinear(x, _xv[iLeftRight.first], _xv[iLeftRight.second],
+                                                 _yv(i, iLeftRight.first), _yv(i, iLeftRight.second));
     }
 }

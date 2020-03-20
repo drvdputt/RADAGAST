@@ -1,6 +1,7 @@
 #include "FreeBound.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "Error.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
@@ -145,85 +146,92 @@ namespace GasModule
     void FreeBound::addEmissionCoefficientv(double T, const Array& eFrequencyv, Array& gamma_nuv) const
     {
         double logT = log10(T);
-
         if (logT > _logTemperaturev[_logTemperaturev.size() - 1] || logT < _logTemperaturev[0])
         {
             DEBUG("Warning: temperature " << T << "K is outside of data range for free-bound continuum" << endl);
             return;
         }
 
-        // Find the grid point to the right of the requested log-temperature
-        size_t iRight = TemplatedUtils::index(logT, _logTemperaturev);
-        size_t iLeft = iRight - 1;
-        // The weight of the point to the right (= 1 if T is Tright, = 0 if T is Tleft)
-        double wRight = (logT - _logTemperaturev[iLeft]) / (_logTemperaturev[iRight] - _logTemperaturev[iLeft]);
+        // The data are rather coarse (only ~ 50 frequency points). According to the paper, we
+        // should interpolate linearly it in both temperature and frequency space before
+        // applying the normalization (= exponentiating).
+        size_t tLeft, tRight;
+        std::tie(tLeft, tRight) = TemplatedUtils::saneIndexPair(logT, _logTemperaturev);
 
-        // Interpolate the data for this temperature
-        Array t_interpolated_gammaDaggerv(_frequencyv.size());
-        for (size_t iFreq = 0; iFreq < _frequencyv.size(); iFreq++)
+        // Interpolate the data between these two temperature points, for all frequencies
+        int numOutputFreqs = eFrequencyv.size();
+        if (numOutputFreqs < 3) Error::runtime("eFrequencyv should have at least 3 points");
+        Array interpolated_gammaDaggerv(numOutputFreqs);
+
+        // Attention: do not integrate over bins here. It causes problems when a bin overlaps
+        // one of the normalization thresholds. Instead, we will just evaluate the spectrum at
+        // the frequency points using linear interpolation.
+
+        // Start with data points [0, 1] and update when freq goes above current upper point
+        size_t nuLo{0}, nuHi{1};
+        double minDataFreq = _frequencyv[0];
+        double maxDataFreq = _frequencyv[_frequencyv.size() - 1];
+        for (size_t i = 0; i < numOutputFreqs; i++)
         {
-            // If this loop is (to a significant degree) slow, consider transposing the
-            // gammaDaggervv table, to do this loop contiguously
+            double nu = eFrequencyv[i];
+            if (nu < minDataFreq || maxDataFreq < nu)
+            {
+                interpolated_gammaDaggerv[i] = 0;
+                continue;
+            }
 
-            // Interpolate gamma^dagger linearly in log T space
-            t_interpolated_gammaDaggerv[iFreq] =
-                _gammaDaggervv(iFreq, iLeft) + wRight * (_gammaDaggervv(iFreq, iRight) - _gammaDaggervv(iFreq, iLeft));
+            // Find new nuLo and nuHi pair when necessary
+            if (nu > _frequencyv[nuHi]) std::tie(nuLo, nuHi) = TemplatedUtils::saneIndexPair(nu, _frequencyv);
+
+            // Interpolate gamma^dagger bilinearly in logT-nu space.
+            interpolated_gammaDaggerv[i] = TemplatedUtils::interpolateBilinear(
+                logT, nu, _logTemperaturev[tLeft], _logTemperaturev[tRight], _frequencyv[nuLo], _frequencyv[nuHi],
+                _gammaDaggervv(nuLo, tLeft), _gammaDaggervv(nuLo, tRight), _gammaDaggervv(nuHi, tLeft),
+                _gammaDaggervv(nuHi, tRight));
         }
 
-        // Put onto the right frequency grid
-        Spectrum gammaDaggerSp(_frequencyv, t_interpolated_gammaDaggerv);
-        // Think about whether we should pick 'evaluate' or 'binned' here. (if a bin spans over
-        // a of the normalization threshold, we run into trouble...).
-        Array nu_interpolated_gammaDaggerv = gammaDaggerSp.binned(eFrequencyv);
-
-        /* We will use equation (1) of Ercolano and Storey 2006 to remove the normalization of
-	   the data. */
+        // Use equation (1) of Ercolano and Storey 2006 to remove the normalization of the data.
         double Ttothe3_2 = pow(T, 3. / 2.);
         double kT = Constant::BOLTZMAN * T;
-        /* "the nearest threshold of lower energy" i.e. the frequency in _thresholdv lower than
-	   the current one. */
-        size_t iThreshold = 0;
-        double lastThresh = _thresholdv[_thresholdv.size() - 1];
+        // Keep track of "the nearest threshold of lower energy" i.e. the frequency in
+        // _thresholdv lower than the current one.
+        int iThreshold = 0;
+        int iLastThresh = _thresholdv.size() - 1;
+        double lastThresh = _thresholdv[iLastThresh];
         double tE = 0;
 
-        // Only now apply the exponential factors (important for interpolation quality)
-        for (size_t i = 0; i < eFrequencyv.size(); i++)
+        // Apply the exponential factors
+        for (size_t i = 0; i < numOutputFreqs; i++)
         {
-            double freq = eFrequencyv[i];
+            double nu = eFrequencyv[i];
 
             // Skip over zero data, or when we are below the first threshold
-            if (nu_interpolated_gammaDaggerv[i] && freq >= _thresholdv[0])
-            {
-                // If the last threshold hasn't been passed yet, check if we have passed
-                // the next (i + 1)
-                if (freq < lastThresh)
-                {
-                    // This block must only be executed when a new threshold is
-                    // passed
-                    if (freq > _thresholdv[iThreshold + 1])
-                    {
-                        // find the next threshold of lower frequency (don't
-                        // just pick the next one, as this wouldn't work with
-                        // very coarse grids)
-                        iThreshold = TemplatedUtils::index(freq, _thresholdv) - 1;
-                        tE = Constant::PLANCK * _thresholdv[iThreshold];
-                    }
-                }
-                // When we have just moved past the last threshold, set the index one
-                // last time
-                else if (iThreshold < _thresholdv.size() - 1)
-                {
-                    iThreshold = _thresholdv.size() - 1;
-                    tE = Constant::PLANCK * _thresholdv[iThreshold];
-                }
-                double E = Constant::PLANCK * freq;
+            if (interpolated_gammaDaggerv[i] <= 0 || nu < _thresholdv[0]) continue;
 
-                double normalizationFactor = 1.e34 * Ttothe3_2 * exp((E - tE) / kT);
-                nu_interpolated_gammaDaggerv[i] /= normalizationFactor;
+            // If the last threshold hasn't been passed yet, we need to check if we have passed
+            // the next one and adjust the normalization parameters
+            if (nu < lastThresh)
+            {
+                if (nu > _thresholdv[iThreshold + 1])
+                {
+                    // find the next threshold of lower frequency (don't just pick the next one, as
+                    // this wouldn't work with very coarse grids)
+                    iThreshold = TemplatedUtils::index(nu, _thresholdv) - 1;
+                }
+                // else do nothing
             }
+            // When we are past the last threshold, use the energy of the last one
+            else
+                iThreshold = iLastThresh;
+
+            tE = Constant::PLANCK * _thresholdv[iThreshold];
+            double deltaE = Constant::PLANCK * nu - tE;
+            double normalizationFactor = 1.e34 * Ttothe3_2 * exp(deltaE / kT);
+            interpolated_gammaDaggerv[i] /= normalizationFactor;
         }
 
-        gamma_nuv += nu_interpolated_gammaDaggerv;
+        // Add the interpolated data to the total SED
+        gamma_nuv += interpolated_gammaDaggerv;
 
         // Also add the ionizing freebound continuum, which apparently is not included in
         // the data used here This is easily calculated using equation 4.21 from Osterbrock

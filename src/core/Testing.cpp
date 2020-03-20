@@ -129,7 +129,7 @@ namespace
             double aUp = qds.FILEAV[aIndex];
 
             const auto& q = qds.QABSVV;
-            QabsWav[w] = GasModule::TemplatedUtils::interpolateRectangular(
+            QabsWav[w] = GasModule::TemplatedUtils::interpolateBilinear(
                 wav, a, wLeft, wRight, aLow, aUp, q[wIndex - 1][aIndex - 1], q[wIndex][aIndex - 1],
                 q[wIndex - 1][aIndex], q[wIndex][aIndex]);
         }

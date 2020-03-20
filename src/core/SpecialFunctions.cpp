@@ -321,8 +321,8 @@ namespace GasModule
         if (iUpper == 0) iUpper = 1;
         size_t iLower = iUpper - 1;
 
-        return TemplatedUtils::interpolateRectangular(x, y, _xv[iLeft], _xv[iRight], _yv[iLower], _yv[iUpper],
-                                                      _fvv(iLeft, iLower), _fvv(iRight, iLower), _fvv(iLeft, iUpper),
-                                                      _fvv(iRight, iUpper));
+        return TemplatedUtils::interpolateBilinear(x, y, _xv[iLeft], _xv[iRight], _yv[iLower], _yv[iUpper],
+                                                   _fvv(iLeft, iLower), _fvv(iRight, iLower), _fvv(iLeft, iUpper),
+                                                   _fvv(iRight, iUpper));
     }
 }

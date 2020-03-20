@@ -1,6 +1,7 @@
 #include "Error.hpp"
 #include <array>
 #include <numeric>
+#include <utility>
 
 namespace GasModule
 {
@@ -53,7 +54,7 @@ namespace GasModule
             return current;
         }
 
-        template<typename T, typename T1> std::array<size_t, 2> saneIndexPair(T x, const T1& xContainer)
+        template<typename T, typename T1> std::pair<size_t, size_t> saneIndexPair(T x, const T1& xContainer)
         {
             size_t iRight = index(x, xContainer);
             if (iRight == 0)
@@ -61,15 +62,15 @@ namespace GasModule
             else if (iRight == xContainer.size())
                 iRight--;
             size_t iLeft = iRight - 1;
-            return std::array<size_t, 2>{iLeft, iRight};
+            return std::pair<size_t, size_t>(iLeft, iRight);
         }
 
         template<typename T, typename T1, typename T2>
         T evaluateLinInterpf(T x, const T1& xContainer, const T2& fContainer)
         {
             auto iLeftRight = saneIndexPair(x, xContainer);
-            double val = interpolateLinear(x, xContainer[iLeftRight[0]], xContainer[iLeftRight[1]],
-                                           fContainer[iLeftRight[0]], fContainer[iLeftRight[1]]);
+            double val = interpolateLinear(x, xContainer[iLeftRight.first], xContainer[iLeftRight.second],
+                                           fContainer[iLeftRight.first], fContainer[iLeftRight.second]);
             return val;
         }
 
@@ -81,8 +82,8 @@ namespace GasModule
         }
 
         template<typename T>
-        T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight, T fUpperLeft,
-                                 T fUpperRight)
+        T interpolateBilinear(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight, T fUpperLeft,
+                              T fUpperRight)
         {
             T weightRight = (x - xLeft) / (xRight - xLeft);
             T fLowerI = fLowerLeft + weightRight * (fLowerRight - fLowerLeft);

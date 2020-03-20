@@ -33,7 +33,7 @@ namespace GasModule
 
         /** Convenience function. Return the index left and right of x, or 0 and 1 if x <
             xContainer[0],q or size-2 and size-1 if x > xContainer[size-1]. */
-        template<typename T, typename T1> std::array<size_t, 2> saneIndexPair(T x, const T1& xContainer);
+        template<typename T, typename T1> std::pair<size_t, size_t> saneIndexPair(T x, const T1& xContainer);
 
         /** Evaluate the linear interpolation f(x) of a function f represented by fContainer =
             f(xContainer) */
@@ -43,8 +43,8 @@ namespace GasModule
         template<typename T> T interpolateLinear(T x, T xLeft, T xRight, T fLeft, T fRight);
 
         template<typename T>
-        T interpolateRectangular(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight, T fUpperLeft,
-                                 T fUpperRight);
+        T interpolateBilinear(T x, T y, T xLeft, T xRight, T yLow, T yUp, T fLowerLeft, T fLowerRight, T fUpperLeft,
+                              T fUpperRight);
 
         /** Trapezoidal integration over two containers. xContainer and yContainer should be the
             same size, and support iteration using std::begin and std::end. Should work with vector

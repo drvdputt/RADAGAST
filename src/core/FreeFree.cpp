@@ -242,7 +242,7 @@ namespace GasModule
         double yUp = _loguMin + _logStep * iUpper;
         double yLow = yUp - _logStep;
 
-        double gff = TemplatedUtils::interpolateRectangular<double>(
+        double gff = TemplatedUtils::interpolateBilinear<double>(
             logg2, logu, xLeft, xRight, yLow, yUp, _fileGauntFactorvv(iLower, iLeft),
             _fileGauntFactorvv(iLower, iRight), _fileGauntFactorvv(iUpper, iLeft), _fileGauntFactorvv(iUpper, iRight));
         return exp(gff);
