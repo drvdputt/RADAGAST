@@ -18,3 +18,4 @@ plots/
 cmake_install.cmake
 CMakeFiles/
 Makefile
+__pycache__
