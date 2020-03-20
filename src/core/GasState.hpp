@@ -40,8 +40,8 @@ namespace GasModule
         /** Returns the gas temperature in K. */
         double temperature() const { return _t; }
 
-        /** Return density at a certain index. Abstract for now, but maybe a solution will be
-            available in GasInterface later. */
+        /** Return density at a certain index. Use e.g. @c GasInterface::index("H") to find
+            correct index. */
         double density(int i) const { return _nv[i]; }
 
     private:
