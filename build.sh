@@ -6,7 +6,7 @@ BT=${2:-Release} # set to Release if argument is not given
 declare -a EXTRA
 if [[ $BT == "Debug" ]]; then
     BUILD_DIR=../cmake_debug
-    EXTRA=(-DCMAKE_CXX_FLAGS="-fsanitize=address -g" -DCMAKE_C_FLAGS="-fsanitize=address -g" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address")
+    EXTRA=(-DCMAKE_CXX_FLAGS="-fsanitize=address -g" -DCMAKE_C_FLAGS="-fsanitize=address -g" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -lasan" -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address -lasan")
 elif [[ $BT == "Release" ]]; then
     BUILD_DIR=../cmake_release
 else
