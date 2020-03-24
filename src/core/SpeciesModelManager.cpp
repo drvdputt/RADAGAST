@@ -2,6 +2,7 @@
 #include "BigH2Model.hpp"
 #include "HFromFiles.hpp"
 #include "HHardCoded.hpp"
+#include "Options.hpp"
 #include "SimpleH2.hpp"
 #include <sstream>
 
@@ -20,7 +21,7 @@ namespace GasModule
             _hData = std::make_unique<HFromFiles>();
 
         // H2 data
-        if (_enableBigH2)
+        if (Options::speciesmodelmanager_enableBigH2)
         {
             if (h2Option.empty())
                 _h2Data = std::make_unique<H2Data>();
@@ -41,7 +42,7 @@ namespace GasModule
 
     std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
     {
-        if (_enableBigH2)
+        if (Options::speciesmodelmanager_enableBigH2)
             return std::make_unique<BigH2Model>(_h2Data.get());
         else
             return std::make_unique<SimpleH2>(&_h2LTECool);

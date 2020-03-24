@@ -5,7 +5,6 @@
 #include "H2Model.hpp"
 #include "HModel.hpp"
 #include "LookupTable.hpp"
-#include "Options.hpp"
 #include "SimpleColumnFile.hpp"
 
 namespace GasModule
@@ -37,7 +36,6 @@ namespace GasModule
         std::unique_ptr<HData> _hData;
         std::unique_ptr<H2Data> _h2Data;
         LookupTable _h2LTECool{"dat/h2/lte_cooling.dat", 2, 380};
-        bool _enableBigH2{Options::speciesmodelmanager_enableBigH2};
     };
 }
 #endif  // CORE_SPECIESMODELMANAGER_HPP

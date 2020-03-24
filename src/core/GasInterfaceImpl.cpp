@@ -1,4 +1,5 @@
 #include "GasInterfaceImpl.hpp"
+// #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
