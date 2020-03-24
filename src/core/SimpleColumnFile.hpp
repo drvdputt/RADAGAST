@@ -15,8 +15,7 @@ namespace GasModule
         /** Create a new instance, setting the file name. No file handle is opened yet */
         InColumnFile(const std::string& fname) : _fname{fname} {}
 
-        /** Overwrite the columns stored in this object by reading the file from storage. The data
-            from the first numCols columns will be stored. For speed, a guess for the number of
+        /** Store the data from the first numCols columns. For speed, a guess for the number of
             lines can be given. */
         void read(int numCols, int reserveLines = 0);
 

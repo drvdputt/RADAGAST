@@ -17,13 +17,16 @@ namespace GasModule
             numX). */
         LookupTable(const Array& xv, const Table<2>& yv) : _xv{xv}, _yv{yv} {}
 
-        /** From data file in repo. Needs to be simple column file (see SimpleColumnFile) with the
-            data in the first two columns. The resulting lookup table will have one y_i per column
-            (depends on numCols given).*/
+        /** Create a lookup table from a data file in this repo. Needs to be simple column file
+            (see SimpleColumnFile) with at least two columns (and numCols should be >= 2).
+            Column 0 will be used as for xv, and the other (numCols - 1) column will get an y_i
+            entry (with i = 0 for column 1 of the file).*/
         LookupTable(const std::string& fname, int numCols, int guessSize);
 
-        /** Do a binary search and evaluate y_i by linearly interpolating for x. */
-        double evaluate(int i, double x) const;
+        /** Do a binary search and evaluate y_i by linearly interpolating for x. When the given
+            x is out of the bound of the data, return zero if extrapolate is false. Extrapolate
+            linearly using the last two points if extrapolate is true. */
+        double evaluate(int i, double x, bool extrapolate = false) const;
 
     private:
         Array _xv;
