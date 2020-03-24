@@ -93,6 +93,11 @@ namespace GasModule
         SpeciesModelManager _manager;
         FreeBound _freeBound{};
         FreeFree _freeFree{};
+
+        // Standalone, averaged (on ofrequencyv) H2 cross section. In the ideal case, the H2
+        // cross section is calculated from the levels, but level-dependent stuff is not
+        // available at the interface yet.
+        Array _h2crossv;
     };
 }
 #endif  // CORE_GASINTERFACEIMPL_HPP

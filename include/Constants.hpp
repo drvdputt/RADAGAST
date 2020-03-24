@@ -22,6 +22,7 @@ namespace Constant
     // length
     constexpr double ANGSTROM = 1.0e-8;    // 1 Angstrom in cm
     constexpr double AU = 1.49597871e+13;  // 1 AU in cm
+    constexpr double NM = 1.0e-7;          // 1 nanometer in cm
     constexpr double PC = 3.08567758e+18;  // 1 parsec in cm
     constexpr double UM = 1.0e-4;          // 1 micrometer in cm
 

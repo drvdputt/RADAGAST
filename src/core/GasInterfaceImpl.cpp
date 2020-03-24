@@ -6,8 +6,10 @@
 #include "Ionization.hpp"
 #include "Options.hpp"
 #include "RadiationFieldTools.hpp"
+#include "SimpleColumnFile.hpp"
 #include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
+#include "Spectrum.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include "TwoPhoton.hpp"
@@ -21,7 +23,23 @@ namespace GasModule
                                        const std::string& atomChoice, const std::string& moleculeChoice)
         : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _eFrequencyv{eFrequencyv},
           _manager(atomChoice, moleculeChoice)
-    {}
+    {
+        InColumnFile h2cross_leiden("dat/h2/crossections_leiden.txt");
+        h2cross_leiden.read(4, 1030);
+        auto wav_nm = h2cross_leiden.column(0);
+        auto absorption_cs_cm = h2cross_leiden.column(1);
+
+        int dataSize = wav_nm.size();
+        Array frequencyv(dataSize);
+        Array crossSectionv(dataSize);
+        for (int i = 0; i < dataSize; i++)
+        {
+            int ri = dataSize - 1 - i;
+            frequencyv[i] = Constant::LIGHT / (wav_nm[ri] * Constant::NM);
+            crossSectionv[i] = absorption_cs_cm[ri];
+        }
+        _h2crossv = Spectrum(frequencyv, crossSectionv).binned(oFrequencyv);
+    }
 
     void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
                                           const std::valarray<double>& specificIntensityv,
@@ -53,16 +71,34 @@ namespace GasModule
 
     Array GasInterfaceImpl::opacity(const GasModule::GasState& gs, bool SI) const
     {
+        auto sv = speciesVector(gs);
+
         Array opacityv(_oFrequencyv.size());
         _freeFree.addOpacityCoefficientv(gs.temperature(), _oFrequencyv, opacityv);
-        opacityv *= npne(gs);
+        opacityv *= sv.np() * sv.ne();
 
         // TODO: this should actually be the average over the cross section for this frequency bin
         for (size_t i = 0; i < _oFrequencyv.size(); i++)
-            opacityv[i] += nH(gs) * Ionization::crossSection(_oFrequencyv[i]);
+            opacityv[i] += sv.nH() * Ionization::crossSection(_oFrequencyv[i]);
 
-        // TODO: H2 opacity. Maybe use smoothed data file from Heays et al. 2017 (data on E. van
-        // Dishoeck's home page)
+        bool withLines = false;
+        if (withLines)
+        {
+            // TODO: make H model, calculate balance and get lines (no iteration needed if the
+            // given gas state is already self-consistent).
+
+            // TODO: H2 opacity. Maybe use smoothed data file from Heays et al. 2017 (data on E. van
+            // Dishoeck's home page)
+
+            // need grains here for h2 formation, which in turn I need for h2model.solve()
+
+            // auto h2model = _manager.makeH2Model();
+            // auto sv = speciesVector(gs);
+            // CollisionParameters cp(gs._t, sv);
+            // h2model.solve(sv.nH2(), cp, specificIntensity, h2form);
+        }
+
+        if (!withLines) opacityv += sv.nH2() * _h2crossv;
 
         // convert from cm-1 to m-1
         if (SI)
