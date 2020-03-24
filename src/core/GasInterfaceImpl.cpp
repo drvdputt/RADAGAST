@@ -27,7 +27,7 @@ namespace GasModule
         InColumnFile h2cross_leiden("dat/h2/crossections_leiden.txt");
         h2cross_leiden.read(4, 1030);
         auto wav_nm = h2cross_leiden.column(0);
-        auto absorption_cs_cm = h2cross_leiden.column(1);
+        auto absorption_cs_cm2 = h2cross_leiden.column(1);
 
         int dataSize = wav_nm.size();
         Array frequencyv(dataSize);
@@ -36,7 +36,7 @@ namespace GasModule
         {
             int ri = dataSize - 1 - i;
             frequencyv[i] = Constant::LIGHT / (wav_nm[ri] * Constant::NM);
-            crossSectionv[i] = absorption_cs_cm[ri];
+            crossSectionv[i] = absorption_cs_cm2[ri];
         }
         _h2crossv = Spectrum(frequencyv, crossSectionv).binned(oFrequencyv);
     }
