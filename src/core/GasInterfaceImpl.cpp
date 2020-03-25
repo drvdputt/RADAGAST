@@ -28,6 +28,8 @@ namespace GasModule
         h2cross_leiden.read(4, 1030);
         auto wav_nm = h2cross_leiden.column(0);
         auto absorption_cs_cm2 = h2cross_leiden.column(1);
+        // 1 absorption (ionization + LW); 2 LW (only dissociation, so ~10 times smaller than
+        // absorption); 3 ionization only
 
         int dataSize = wav_nm.size();
         Array frequencyv(dataSize);
