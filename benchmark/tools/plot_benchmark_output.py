@@ -33,6 +33,7 @@ def main():
         default="",
         help="add a prefix to the names of the resulting pdf files",
     )
+    ap.add_argument("-i", action="store_true", help="interactive plot window")
     args = ap.parse_args()
 
     if args.x == "nh":
@@ -150,46 +151,57 @@ def main():
     plt.savefig(args.prefix + "emission.pdf")
 
     # populations
-    fig, axs = plt.subplots(2, 2, sharex="col")
-    for i, d in enumerate(dirs):
-        br = BenchmarkResult(d)
-        par = br.get_nh_tc_lum()[par_index]
+    try:
+        fig, axs = plt.subplots(2, 2, sharex="col")
+        for i, d in enumerate(dirs):
+            br = BenchmarkResult(d)
+            par = br.get_nh_tc_lum()[par_index]
 
-        yc = br.cloudy.get_h_populations()
-        lc = axs[0][0].semilogy(
-            range(len(yc)), yc, label="cloudy {}".format(par), ls="none", marker="d"
-        )
-        color = lc[0].get_color()
+            yc = br.cloudy.get_h_populations()
+            lc = axs[0][0].semilogy(
+                range(len(yc)), yc, label="cloudy {}".format(par), ls="none", marker="d"
+            )
+            color = lc[0].get_color()
 
-        yg = br.gasmodule.get_h_populations()
-        axs[0][0].semilogy(range(len(yg)), yg, label="gasmodule", color=color)
+            yg = br.gasmodule.get_h_populations()
+            axs[0][0].semilogy(range(len(yg)), yg, label="gasmodule", color=color)
 
-        max_h_level = min(len(yc), len(yg))
-        axs[1][0].semilogy(
-            range(max_h_level), yg[:max_h_level] / yc[:max_h_level], color=color
-        )
+            max_h_level = min(len(yc), len(yg))
+            axs[1][0].semilogy(
+                range(max_h_level), yg[:max_h_level] / yc[:max_h_level], color=color
+            )
 
-        y2c = br.cloudy.get_h2_populations()
-        y2g = br.gasmodule.get_h2_populations()
+            y2c = br.cloudy.get_h2_populations()
+            y2g = br.gasmodule.get_h2_populations()
 
-        max_h2_level = min(len(y2c), len(y2g), 50)
+            max_h2_level = min(len(y2c), len(y2g), 50)
 
-        lc = axs[0][1].semilogy(range(max_h2_level), y2c[:max_h2_level], color=color)
-        axs[0][1].semilogy(
-            range(max_h2_level), y2g[:max_h2_level], color=color, ls="dashed"
-        )
-        axs[1][1].semilogy(
-            range(max_h2_level), y2g[:max_h2_level] / y2c[:max_h2_level], color=color
-        )
+            lc = axs[0][1].semilogy(
+                range(max_h2_level), y2c[:max_h2_level], color=color
+            )
+            axs[0][1].semilogy(
+                range(max_h2_level), y2g[:max_h2_level], color=color, ls="dashed"
+            )
+            axs[1][1].semilogy(
+                range(max_h2_level),
+                y2g[:max_h2_level] / y2c[:max_h2_level],
+                color=color,
+            )
 
-    fig.legend(*axs[0][0].get_legend_handles_labels())
-    axs[1][0].set_xlabel("h level index")
-    axs[1][1].set_xlabel("h2 level index")
-    axs[0][0].set_ylabel("population fraction")
-    axs[0][0].set_title("H")
-    axs[0][1].set_title("H2")
+        fig.legend(*axs[0][0].get_legend_handles_labels())
+        axs[1][0].set_xlabel("h level index")
+        axs[1][1].set_xlabel("h2 level index")
+        axs[0][0].set_ylabel("population fraction")
+        axs[0][0].set_title("H")
+        axs[0][1].set_title("H2")
 
-    plt.savefig(args.prefix + "populations.pdf")
+        plt.savefig(args.prefix + "populations.pdf")
+
+    except FileNotFoundError:
+        print("Skipping level population plot because of missing file")
+
+    if args.i:
+        plt.show()
 
 
 if __name__ == "__main__":
