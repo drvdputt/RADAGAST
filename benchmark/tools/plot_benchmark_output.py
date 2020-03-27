@@ -63,10 +63,24 @@ def main():
             lc = axs[0].plot(
                 x, data_cloudy[i], label="cloudy " + labels[i], marker="d", ls="none"
             )
+            # use big marker instead of line if only 1 dir was given
+            marker = "+" if len(dirs) == 1 else None
+            ms = 12
             axs[0].plot(
-                x, data_gasmod[i], label="gasmod " + labels[i], color=lc[0].get_color()
+                x,
+                data_gasmod[i],
+                label="gasmod " + labels[i],
+                color=lc[0].get_color(),
+                marker=marker,
+                ms=ms,
             )
-            axs[1].plot(x, data_gasmod[i] / data_cloudy[i], color=lc[0].get_color())
+            axs[1].plot(
+                x,
+                data_gasmod[i] / data_cloudy[i],
+                color=lc[0].get_color(),
+                marker=marker,
+                ms=ms,
+            )
 
         for ax in axs:
             ax.set_xscale("log")
@@ -110,6 +124,16 @@ def main():
         rate_cloudy[:, i] = br.cloudy.get_h2_rates()
         rate_gasmod[:, i] = br.gasmodule.get_h2_rates()
 
+    # compare np ne to make thinking easier
+    for i in range(len(dirs)):
+        print(
+            "{}: (np ne)cloudy = {}, (np ne)gasmod = {}".format(
+                dirs[i],
+                dens_cloudy[0, i] * dens_cloudy[1, i],
+                dens_gasmod[0, i] * dens_gasmod[1, i],
+            )
+        )
+
     plot_curves(
         temp_curve,
         temp_cloudy,
@@ -117,6 +141,7 @@ def main():
         "temperature (K)",
         args.prefix + "temperature.pdf",
     )
+
     plot_curves(
         dens_curves,
         dens_cloudy,
