@@ -25,11 +25,11 @@ namespace GasModule
         /** Convert an emissivity (assumed to be in erg / s / cm-3 / Hz) to W / cm-3 / Hz */
         template<typename T> T emissivity_to_SI(T value);
 
-        /** Get the radiation field between 6 and 13.6 eV, in Habing units (1 Habing is 1.6e-3 erg
-            cm-2 s-1, between 6 and 13.6 eV) */
+        /** Get the radiation field between 6 and 13.6 eV (2066 and 912 Angstrom), relative to
+            the Habing unit radiation field (see @c Constants) */
         double gHabing(const Spectrum& specificIntensity);
-        constexpr double nuMinHabing = Constant::LIGHT / (2400 * Constant::ANGSTROM);
-        constexpr double nuMaxHabing = Constant::LIGHT / (912 * Constant::ANGSTROM);
+        constexpr double nuMinHabing = 6. * Constant::EV / Constant::PLANCK;
+        constexpr double nuMaxHabing = Constant::LIGHT / (912. * Constant::ANGSTROM);
     }  // namespace RadiationFieldTools
 
     template<typename T> T RadiationFieldTools::emissivity_to_SI(T value)
