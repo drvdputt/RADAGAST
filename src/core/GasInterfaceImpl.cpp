@@ -27,9 +27,9 @@ namespace GasModule
         InColumnFile h2cross_leiden("dat/h2/crossections_leiden.txt");
         h2cross_leiden.read(4, 1030);
         auto wav_nm = h2cross_leiden.column(0);
-        auto absorption_cs_cm2 = h2cross_leiden.column(1);
         // 1 absorption (ionization + LW); 2 LW (only dissociation, so ~10 times smaller than
         // absorption); 3 ionization only
+        auto absorption_cs_cm2 = h2cross_leiden.column(3);
 
         int dataSize = wav_nm.size();
         Array frequencyv(dataSize);
