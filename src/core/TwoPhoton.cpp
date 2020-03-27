@@ -5,9 +5,9 @@ namespace GasModule
 {
     Array TwoPhoton::emissivityv(const Array& eFrequencyv, double n2s)
     {
-        // 1984-Nussbaumer, constant factor in eq 3 and Energy difference between 2s and 1s. We
-        // could use an HData object for this, but hardcoding is a fine enough solution. The number
-        // comes from h_1.elvlc in the CHIANTI data for H, and are in cm-1.
+        // 1984-Nussbaumer, constant factor in eq 3 and energy difference between 2s and 1s.
+        // While this data is also contained in the HData, pasting it here is easier. The number
+        // (in cm-1) comes from h_1.elvlc (file from CHIANTI).
         const double nu0 = 82258.956 * Constant::LIGHT;
         const double constFactor = Constant::PLANCK / Constant::FPI * n2s;
 
