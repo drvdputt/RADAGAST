@@ -8,6 +8,7 @@
 #include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
+#include <gsl/gsl_pow_int.h>
 #include <cmath>
 #include <fstream>
 
@@ -233,27 +234,30 @@ namespace GasModule
         // Add the interpolated data to the total SED
         gamma_nuv += interpolated_gammaDaggerv;
 
-        // Also add the ionizing freebound continuum, which apparently is not included in
-        // the data used here This is easily calculated using equation 4.21 from Osterbrock
-        // and the Milne relation, since we have an expression for the photoionization
-        // cross-section anyways
-        for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
-        {
-            double freq = eFrequencyv[iFreq];
-            if (freq > Ionization::THRESHOLD) gamma_nuv[iFreq] += ionizingContinuum(T, freq);
-        }
+        // Also add the ionizing freebound continuum, which apparently is not included in the
+        // data used here. This is easily calculated using equation 4.21 from Osterbrock and the
+        // Milne relation, since we have an expression for the photoionization cross-section
+        // anyways
+        for (size_t i = 0; i < numOutputFreqs; i++) gamma_nuv[i] += ionizingContinuumCoefficient(T, eFrequencyv[i]);
     }
 
-    double FreeBound::ionizingContinuum(double T, double frequency)
+    double FreeBound::ionizingContinuumCoefficient(double T, double frequency)
     {
-        double h2 = Constant::PLANCK * Constant::PLANCK;
-        double nu3 = frequency * frequency * frequency;
-        double m3 = Constant::ELECTRONMASS * Constant::ELECTRONMASS * Constant::ELECTRONMASS;
-        double c2 = Constant::LIGHT * Constant::LIGHT;
-        double u_nu = sqrt(2 / Constant::ELECTRONMASS * Constant::PLANCK * (frequency - Ionization::THRESHOLD));
-        double u2 = u_nu * u_nu;
-        double a_nu = Ionization::crossSection(frequency);
-        double f_u_nu = SpecialFunctions::maxwellBoltzman(u_nu, T, Constant::ELECTRONMASS);
-        return h2 * h2 * nu3 / u2 / m3 / c2 * a_nu * f_u_nu;
+        if (frequency < Ionization::THRESHOLD) return 0.;
+
+        // I found it non-trivial to find this whole formula written out somewhere. This
+        // conference paper has it: R.R. Sheeba et al 2019 J. Phys.: Conf. Ser.1289 012041. To
+        // derive it yourself: start from power_density_nu dnu = hnu * np * ne * ve * sigma(ve)
+        // * f(ve) dve. Every electron speed ve corresponds just 1 hnu = me ve^2 / 2 + I
+        // (kinetic + ionization energy). Apply the milne relation to replace sigma(ve) (the
+        // capture cross section), and fill in the maxwell distribution f(ve). Then sustitute ve
+        // = sqrt(2 (hnu - I) / me). Note that the weight ratio in the milne relation is 2; H1s
+        // has double the multiplicity of a proton, because of the electron spin.
+        const double factors = 4 * sqrt(2. / Constant::PI) * gsl_pow_4(Constant::PLANCK) / Constant::LIGHT2;
+        double kT = Constant::BOLTZMAN * T;
+        double hnuDelta = Constant::PLANCK * (frequency - Ionization::THRESHOLD);
+        double emCoeff_nu = factors * pow(Constant::ELECTRONMASS * kT, -1.5) * exp(-hnuDelta / kT)
+                            * Ionization::crossSection(frequency) * gsl_pow_3(frequency);
+        return emCoeff_nu;  // is multiplied with ne * ne / 4pi elsewhere in the code
     }
 }

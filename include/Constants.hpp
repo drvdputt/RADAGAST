@@ -30,6 +30,7 @@ namespace Constant
     constexpr double BOLTZMAN = 1.3806488e-16;        // Boltzman Constant, erg K^-1
     constexpr double FINESTRUCTURE = .0072973525664;  // Fine structure constant
     constexpr double LIGHT = 2.99792458e10;           // Speed of light cm sec^-1
+    constexpr double LIGHT2 = LIGHT * LIGHT;          // Speed of light squared
     constexpr double PLANCK = 6.62606957e-27;         // Planck Constant erg sec
     constexpr double PLANCKLIGHT = PLANCK * LIGHT;    // hc in erg cm
 
