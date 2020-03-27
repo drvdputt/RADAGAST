@@ -251,9 +251,15 @@ namespace GasModule
         // * f(ve) dve. Every electron speed ve corresponds just 1 hnu = me ve^2 / 2 + I
         // (kinetic + ionization energy). Apply the milne relation to replace sigma(ve) (the
         // capture cross section), and fill in the maxwell distribution f(ve). Then sustitute ve
-        // = sqrt(2 (hnu - I) / me). Note that the weight ratio in the milne relation is 2; H1s
-        // has double the multiplicity of a proton, because of the electron spin.
-        const double factors = 4 * sqrt(2. / Constant::PI) * gsl_pow_4(Constant::PLANCK) / Constant::LIGHT2;
+        // = sqrt(2 (hnu - I) / me).
+
+        // There remains one thing I'm not sure about: the factor 2 n^2 (the second number
+        // below). This is the weight factor in the Milne relation; I feel like it should be 2
+        // (so it's the same as in the mentioned article), but 1 makes it match the spectrum
+        // from cloudy.
+        const double milneWeight = 1;
+        const double factors =
+            2 * milneWeight * sqrt(2. / Constant::PI) * gsl_pow_4(Constant::PLANCK) / Constant::LIGHT2;
         double kT = Constant::BOLTZMAN * T;
         double hnuDelta = Constant::PLANCK * (frequency - Ionization::THRESHOLD);
         double emCoeff_nu = factors * pow(Constant::ELECTRONMASS * kT, -1.5) * exp(-hnuDelta / kT)
