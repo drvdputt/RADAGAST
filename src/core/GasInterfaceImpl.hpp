@@ -44,8 +44,7 @@ namespace GasModule
     class GasInterfaceImpl
     {
     public:
-        GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv,
-                         const std::string& atomChoice = "", const std::string& moleculeChoice = "");
+        GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv);
 
         const std::valarray<double>& iFrequencyv() const { return _iFrequencyv; }
         const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }

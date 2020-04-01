@@ -44,7 +44,7 @@ int main()
     double n = 1e4;
 
     // Load a model, and grab the underlying implementation
-    GasModule::GasInterface gasInterface(frequencyv, frequencyv, frequencyv, "", "5 0");
+    GasModule::GasInterface gasInterface(frequencyv, frequencyv, frequencyv);
 
     // No grains, we will manually override the h2 formation rate instead
     GasModule::GrainInterface gri{};

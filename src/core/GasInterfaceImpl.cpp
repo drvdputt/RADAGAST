@@ -19,10 +19,8 @@
 
 namespace GasModule
 {
-    GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv,
-                                       const std::string& atomChoice, const std::string& moleculeChoice)
-        : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _eFrequencyv{eFrequencyv},
-          _manager(atomChoice, moleculeChoice)
+    GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv)
+        : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _eFrequencyv{eFrequencyv}
     {
         InColumnFile h2cross_leiden("dat/h2/crossections_leiden.txt");
         h2cross_leiden.read(4, 1030);

@@ -46,12 +46,10 @@ namespace GasModule
             of the gas module is used. */
         static void errorHandlersOff();
 
-        /** Create an instance of the gas module. Multiple frequency grids are used, which need to
-            be specified by the user. Some configuration options in the form of strings are also
-            provided. The functionality of the latter can be considered deprecated. */
+        /** Create an instance of the gas module. Multiple frequency grids are used, which need
+            to be specified by the user. */
         GasInterface(const std::valarray<double>& iFrequencyv, const std::valarray<double>& oFrequencyv,
-                     const std::valarray<double>& eFrequencyv, const std::string& atomChoice = "",
-                     const std::string& moleculeChoice = "");
+                     const std::valarray<double>& eFrequencyv);
 
         /** Defer the implementation of the destructor to the cpp file. Needed because of the
             unique_ptr member. Also, putting "= default" here actually works with GDB if I remember

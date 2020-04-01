@@ -11,9 +11,8 @@ namespace GasModule
     void GasInterface::errorHandlersOff() { _oldGSLErrorHandler = gsl_set_error_handler_off(); }
 
     GasInterface::GasInterface(const std::valarray<double>& iFrequencyv, const std::valarray<double>& oFrequencyv,
-                               const std::valarray<double>& eFrequencyv, const std::string& atomChoice,
-                               const std::string& moleculeChoice)
-        : _pimpl{std::make_unique<GasInterfaceImpl>(iFrequencyv, oFrequencyv, eFrequencyv, atomChoice, moleculeChoice)}
+                               const std::valarray<double>& eFrequencyv)
+        : _pimpl{std::make_unique<GasInterfaceImpl>(iFrequencyv, oFrequencyv, eFrequencyv)}
     {}
 
     GasInterface::~GasInterface() = default;
@@ -44,10 +43,7 @@ namespace GasModule
         return _pimpl->quickInfo(gs, specificIntensity);
     }
 
-    int GasInterface::index(const std::string& name) const
-    {
-        return _pimpl->index(name);
-    }
+    int GasInterface::index(const std::string& name) const { return _pimpl->index(name); }
 
     GasSolution GasInterface::solveTemperature(double n, const Spectrum& specificIntensity,
                                                GasModule::GrainInterface& gri) const

@@ -450,7 +450,7 @@ namespace GasModule
         double g0 = 1e0;
         double n = 1000;
         Spectrum specificIntensity{frequencyv, RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, g0)};
-        GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv, "", "none"};
+        GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv};
         GasModule::GrainInterface gri{};
         string outputPath = "heatingcurve/";
         plotHeatingCurve(gi, outputPath, n, specificIntensity, gri);
@@ -713,23 +713,6 @@ namespace GasModule
         }
     }
 
-    void Testing::runFromFilesvsHardCoded()
-    {
-        Array unrefinedv = generateGeometricGridv(1000, Constant::LIGHT / (1e10 * Constant::UM),
-                                                  Constant::LIGHT / (0.00001 * Constant::UM));
-
-        HFromFiles hl(5);
-        FreeBound fb;
-        Array frequencyv = improveFrequencyGrid(hl, unrefinedv);
-        frequencyv = improveFrequencyGrid(fb, frequencyv);
-
-        GasModule::GasInterface gihhc(unrefinedv, unrefinedv, frequencyv, "hhc", "none");
-        runGasInterfaceImpl(gihhc, "hardcoded/");
-
-        GasModule::GasInterface gihff(unrefinedv, unrefinedv, frequencyv, "hff2", "none");
-        runGasInterfaceImpl(gihff, "fromfiles/");
-    }
-
     GasModule::GasInterface Testing::genFullModel(bool refine)
     {
         Array coarsev = defaultFrequencyv(3000);
@@ -747,7 +730,7 @@ namespace GasModule
         }
 
         cout << "Constructing new model using the improved frequency grid" << endl;
-        return {coarsev, coarsev, eFrequencyv, "", "99 99"};
+        return {coarsev, coarsev, eFrequencyv};
     }
 
     GasModule::GasInterface Testing::genHonlyModel()
@@ -765,7 +748,7 @@ namespace GasModule
 
         // TODO: make sure that this construction happens correctly. Since the rewrite, an Honly
         // model needs to be done differently.
-        return {coarsev, coarsev, frequencyv, "", "none"};
+        return {coarsev, coarsev, frequencyv};
     }
 
     void Testing::runFullModel()

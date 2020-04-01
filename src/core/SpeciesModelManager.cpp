@@ -8,34 +8,13 @@
 
 namespace GasModule
 {
-    SpeciesModelManager::SpeciesModelManager(const std::string& hOption, const std::string& h2Option)
+    SpeciesModelManager::SpeciesModelManager()
     {
-        // Choose hydrogen data
-        if (hOption == "hhc")
-            _hData = std::make_unique<HydrogenHardcoded>();
-        else if (hOption == "hff2")
-            _hData = std::make_unique<HFromFiles>(2);
-        else if (hOption == "hff4")
-            _hData = std::make_unique<HFromFiles>(4);
-        else
-            _hData = std::make_unique<HFromFiles>();
+        _hData = std::make_unique<HFromFiles>();
 
-        // H2 data
         if (Options::speciesmodelmanager_enableBigH2)
-        {
-            if (h2Option.empty())
-                _h2Data = std::make_unique<H2Data>();
-            else
-            {
-                int maxJ, maxV;
-                std::istringstream(h2Option) >> maxJ >> maxV;
-                if (maxJ < 0 || maxV < 0)
-                    Error::runtime("moleculeChoice is not of a correct format. It "
-                                   "should be "
-                                   "\"maxJ maxV\"");
-                _h2Data = std::make_unique<H2Data>(maxJ, maxV);
-            }
-        }
+            _h2Data = std::make_unique<H2Data>(Options::speciesmodelmanager_bigH2_maxJ,
+                                               Options::speciesmodelmanager_bigH2_maxV);
     }
 
     std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const { return std::make_unique<HModel>(_hData.get()); }

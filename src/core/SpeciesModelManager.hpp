@@ -18,11 +18,9 @@ namespace GasModule
     class SpeciesModelManager
     {
     public:
-        /** Create an instance of SpeciesModelManager with specific settings for H and H2.
-            Depending the given options, different data sets might be loaded, and the behaviour of
-            the make functions will be influenced. The options are undocumented for now, as the are
-            subject to change. Look at the 'if's in the implementation. */
-        SpeciesModelManager(const std::string& hOption, const std::string& h2Option);
+        /** Create an instance of SpeciesModelManager. The necessary data sets are prepared
+            according to the options in Options.hpp. */
+        SpeciesModelManager();
 
         /** Create a new HModel, which is given a pointer to the H data stored here. */
         std::unique_ptr<HModel> makeHModel() const;

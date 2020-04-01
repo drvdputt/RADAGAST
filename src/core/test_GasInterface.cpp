@@ -59,18 +59,6 @@ TEST_CASE("Blackbodies test")
     }
 }
 
-TEST_CASE("hff and J V options")
-{
-    Array frequencyv = Testing::defaultFrequencyv(100);
-    GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hff2", "8 2");
-}
-
-TEST_CASE("hhc option")
-{
-    Array frequencyv = Testing::defaultFrequencyv(100);
-    GasModule::GasInterface gi = GasModule::GasInterface(frequencyv, frequencyv, frequencyv, "hhc");
-}
-
 TEST_CASE("zero radiation field")
 {
     Array frequencyv = Testing::defaultFrequencyv(300);

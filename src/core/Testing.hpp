@@ -89,10 +89,6 @@ namespace GasModule
         /** Test the H2 implementation. */
         void runH2(bool write);
 
-        /** Do two full runs (determine 1 equilibrium GasState) using both HFF and HHC. The results
-            will be written out to separate files. */
-        void runFromFilesvsHardCoded();
-
         /** Generates a GasInterface object with the maximum number of levels and a suitable
             frequency grid. */
         GasModule::GasInterface genFullModel(bool refine = false);
