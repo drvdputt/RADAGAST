@@ -51,7 +51,7 @@ namespace GasModule
         /** H2 emission (if any) */
         virtual Array emissivityv(const Array& eFrequencyv) const = 0;
 
-        /** H2 opacity, both by lines and the continuum cross section (if any) */
+        /** H2 opacity, both by lines and the continuum dissociation cross section (if any) */
         virtual Array opacityv(const Array& oFrequencyv) const = 0;
 
         /** For debug / diagnostics purposes, a pointer to the level solution object can be given,

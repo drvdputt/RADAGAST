@@ -55,6 +55,9 @@ namespace GasModule
 
         Array emissivity(const GasModule::GasState& gs, bool SI = false) const;
         Array opacity(const GasModule::GasState& gs, bool SI = false) const;
+        Array opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
+                               const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const;
+
         std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& specificIntensity) const;
         int index(const std::string& name) const;
 

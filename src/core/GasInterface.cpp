@@ -38,6 +38,14 @@ namespace GasModule
 
     std::valarray<double> GasInterface::opacity(const GasState& gs, bool SI) const { return _pimpl->opacity(gs, SI); }
 
+    std::valarray<double> GasInterface::opacityWithLines(const GasModule::GasState& gs,
+                                                         const std::valarray<double>& specificIntensityv,
+                                                         const GrainInterface& gri, bool SI, bool addHLines,
+                                                         bool addH2Lines) const
+    {
+        return _pimpl->opacityWithLines(gs, specificIntensityv, gri, SI, addHLines, addH2Lines);
+    }
+
     std::string GasInterface::quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const
     {
         return _pimpl->quickInfo(gs, specificIntensity);

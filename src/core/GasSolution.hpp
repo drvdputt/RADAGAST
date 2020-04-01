@@ -105,6 +105,12 @@ namespace GasModule
             order), for diagnostic purposes. */
         const std::vector<GrainSolution>& grainSolutionv() const { return _grainSolutionv; }
 
+        /** Read access to the H model. Might be replaced later by a set of functions. */
+        const HModel* hModel() const { return _hSolution.get(); }
+
+        /** Read access to the H2 model. Might be replaced later by a set of functions. */
+        const H2Model* h2Model() const { return _h2Solution.get(); }
+
     private:
         std::vector<GrainSolution> _grainSolutionv;
         const Spectrum& _specificIntensity;

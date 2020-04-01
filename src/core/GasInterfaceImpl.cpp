@@ -81,24 +81,48 @@ namespace GasModule
         for (size_t i = 0; i < _oFrequencyv.size(); i++)
             opacityv[i] += sv.nH() * Ionization::crossSection(_oFrequencyv[i]);
 
-        bool withLines = false;
-        if (withLines)
-        {
-            // TODO: make H model, calculate balance and get lines (no iteration needed if the
-            // given gas state is already self-consistent).
+        // H2 ionization cross section is added separately
+        opacityv += sv.nH2() * _h2crossv;
 
-            // TODO: H2 opacity. Maybe use smoothed data file from Heays et al. 2017 (data on E. van
-            // Dishoeck's home page)
+        // convert from cm-1 to m-1
+        if (SI)
+            return 100. * opacityv;
+        else
+            return opacityv;
+    }
 
-            // need grains here for h2 formation, which in turn I need for h2model.solve()
+    Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
+                                             const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const
+    {
+        Array opacityv = opacity(gs, false);
 
-            // auto h2model = _manager.makeH2Model();
-            // auto sv = speciesVector(gs);
-            // CollisionParameters cp(gs._t, sv);
-            // h2model.solve(sv.nH2(), cp, specificIntensity, h2form);
-        }
+        // some copying happens here to put the data in the right types
+        Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
+        auto sv = speciesVector(gs);
 
-        if (!withLines) opacityv += sv.nH2() * _h2crossv;
+        // calculate the gas solution, hopefully with minimal iteration since we already provide
+        // the correct t and nv
+        auto s = makeGasSolution(specificIntensity, &gri);
+        s.setT(gs._t);
+        s.setSpeciesNv(sv.speciesNv());
+
+        // need grains here for h2 formation, which in turn I need for solving the levels (due
+        // to pumping)
+        s.solveGrains();
+
+        // some H2 collision rates depend on the ortho para ratio, while the ortho para ratio
+        // depends on the levels. So technically, we have to iterate. But it shouldn't matter
+        // too much. In the worst case, we can always call solveDensities (maybe with an option
+        // to keep abundances constant, since we want to use the ones contained in the gas state
+        // and not change them).
+        s.solveLevels(s.kGrainH2FormationRateCoeff() * sv.nH());
+
+        // add opacity of H lines
+        if (addHLines) opacityv += s.hModel()->opacityv(_oFrequencyv);
+
+        // add opacity of H2 lines and continuum dissociation cross section (does nothing when
+        // small H2 model is used)
+        if (addH2Lines) opacityv += s.h2Model()->opacityv(_oFrequencyv);
 
         // convert from cm-1 to m-1
         if (SI)
@@ -295,7 +319,7 @@ namespace GasModule
 	   CHEMISTRY SOLUTION -> LEVEL SOURCE AND SINK RATES |
 							     |
 	   LEVEL SOURCE AND SINK RATES -> LEVEL SOLUTION ----^
-    */
+        */
 
         int counter = 0;
         bool stopCriterion = false;
