@@ -9,7 +9,7 @@ namespace GasModule
         // PHYSICS //
         /////////////
 
-        constexpr bool speciesmodelmanager_enableBigH2 = false;
+        const bool speciesmodelmanager_enableBigH2 = true;
         const bool speciesmodelmanager_bigH2_maxJ = 99;
         const bool speciesmodelmanager_bigH2_maxV = 1;
 
