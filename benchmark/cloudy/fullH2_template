@@ -3,42 +3,29 @@
 init "honly.ini"
 title hsphere
 # SOURCE
-# blackbody 9.e3
 blackbody {tc}
-#luminosity total linear solar 2000.0
 luminosity total linear solar {lum}
 # GAS
 radius 1.0 to 1.01 linear parsecs
-# hden 2.51e4 linear
 hden {nh} linear
-# LEVEL MODEL
-# database H-like collisions l-mixing off
-# database H-like collisional ionization off
-database H-like levels resolved 4
-database H-like levels collapsed 20
-# database H-like levels print
-# database H-like topoff off
+stop temperature 50
+# database H-like levels resolved 4
+# database H-like levels collapsed 20
 database H2 levels 3
 database H2 collisional dissociation off
 database H2 grain collisions off
 database H2 H collisions 2015
-# database H2 gbar off
 database H2 limit off
-# database H2 chemistry simple
 set H2 Jura ELRD
 set H2 grain formation pumping DB96
-# GRAINS MODEL
 # Standard 3.5 slope MRN distribution (see data/ism.szd)
 grains "graphite_ism_10.opc" no qheat
-# constant grain temperature 110K linear
 no grain electrons
-# no grain gas collisional energy exchange
 no grain molecules
 no grain neutralization
 # turn off some physics
 no advection
 no charge transfer
-# grain output
 save grain abundance "grainabundance.g_cm-3.out" last
 save grain H2rate "grainH2rate.out" last
 save grain heating "grainheating.erg_cm-3_s-1.out" last
@@ -46,31 +33,23 @@ save grain temperature "graintemperature.out" last
 save grain charge "graincharge.out" last
 save grain extinction "grainextinction.out" last
 save grain opacity "grainopacity.out" last
-# save grain numb "grainnumberdensity.out" last
-# save grain sizes "grainsize.out" last
-# general output
 save overview "overview.dat" last
 save opacity "opacity.out" total units micron last
 save heating "heating.out" last
 save cooling "cooling.out" last
 save continuum "continuum.out" last units micron
-# radiation
 set save luminosity old
 save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
-# h2 output
 save chemistry rates destruction "h2destruction.out" "H2" coef last
 save chemistry rates creation "h2creation.out" "H2" last
 save h2 rates "h2rates.out" last
 save h2 populations "h2populations.frac.out" last
-# h output
 save chemistry rates destruction "hdestruction.out" "H" coef last
 save chemistry rates creation "hcreation.out" "H" last
 save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
 save hydrogen populations "hpopulations.cm-3.out" last
 save recombination coefficients "recombination.out" last
-# h+ output
 save chemistry rates destruction "pdestruction.out" "H+" coef last
 save chemistry rates creation "pcreation.out" "H+" last
-# case A no photoionization
 iterate to convergence
