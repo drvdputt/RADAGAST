@@ -1,5 +1,4 @@
 #include "GasInterfaceImpl.hpp"
-// #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
@@ -22,6 +21,7 @@ namespace GasModule
     GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv)
         : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _eFrequencyv{eFrequencyv}
     {
+        // this file is simple enough to load and process it ad-hoc here
         InColumnFile h2cross_leiden("dat/h2/crossections_leiden.txt");
         h2cross_leiden.read(4, 1030);
         auto wav_nm = h2cross_leiden.column(0);
@@ -38,7 +38,14 @@ namespace GasModule
             frequencyv[i] = Constant::LIGHT / (wav_nm[ri] * Constant::NM);
             crossSectionv[i] = absorption_cs_cm2[ri];
         }
-        _h2crossv = Spectrum(frequencyv, crossSectionv).binned(oFrequencyv);
+        Spectrum data(frequencyv, crossSectionv);
+        _h2crossv = data.binned(oFrequencyv);
+
+        // Use approximation (constant * H cross section) for frequencies above the data range.
+        // Otherwise, H2 will be transparent < 17 nm). Constant was determined by taking the
+        // averate ratio with respect to the H cross section for all data < 70 nm.
+        for (int i = oFrequencyv.size() - 1; i >= 0 && oFrequencyv[i] > data.freqMax(); i--)
+            _h2crossv[i] = 3.52480156 * Ionization::crossSection(oFrequencyv[i]);
     }
 
     void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
@@ -214,13 +221,19 @@ namespace GasModule
             solveDensities(s, n, Tmaxmax, specificIntensity);
             return s;
         }
+        if (heating_f_Tmin <= 0 && heating_f_Tmax <= 0)
+        {
+            // If even after all this, heating is negative on both sides, solve for the lowest
+            // temperature as the 'safe' option.
+            solveDensities(s, n, Tmin, specificIntensity);
+            return s;
+        }
 
         // Initialize the solver. Will fail if heating at Tmin and Tmax do not have different sign.
         int status = gsl_root_fsolver_set(solver, &F, logTmin, logTmax);
         if (status == GSL_EINVAL)
         {
-            // The heating is most likely negative on both sides in this case. Just solve for the
-            // lowest temperature as the 'safe' option.
+            // If something else is stil wrong, be verbose and solve for lowest temperature
             std::cout << "heating at " << pow(10., logTmin) << " K -->" << heating_f_Tmin << '\n';
             std::cout << "heating at " << pow(10., logTmax) << " K -->" << heating_f_Tmax << '\n';
             solveDensities(s, n, Tmin, specificIntensity);
