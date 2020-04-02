@@ -33,7 +33,7 @@ save overview "overview.dat" last
 save opacity "opacity.out" total units micron last
 save heating "heating.out" last
 save cooling "cooling.out" last
-save continuum "continuum.out" last units micron
+save continuum "continuum.out" last units micron luminosity
 save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save chemistry rates destruction "h2destruction.out" "H2" coef last
