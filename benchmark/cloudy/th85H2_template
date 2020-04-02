@@ -8,7 +8,7 @@ luminosity total linear solar {lum}
 # GAS
 radius 1.0 to 1.01 linear parsecs
 hden {nh} linear
-stop temperature 50
+stop temperature 30
 database H-like levels resolved 4
 database H-like levels collapsed 20
 set H2 Jura ELRD
