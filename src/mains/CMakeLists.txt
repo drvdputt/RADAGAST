@@ -1,6 +1,6 @@
 include_directories(../core ../../include ${EIGEN_INCLUDE_DIR})
 
-foreach(TARGET main krome_compare)
+foreach(TARGET main krome_compare make_wavelengthgrid)
   add_executable(${TARGET} ${TARGET}.cpp)
   # this static library already links to GSL
   target_link_libraries(${TARGET} gasmodule)
