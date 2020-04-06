@@ -103,6 +103,13 @@ namespace GasModule
             argument is @c true, SI units are used instead [m-1]. */
         std::valarray<double> opacityBasic(const GasState& gs, bool SI = false) const;
 
+        /** Same as the above, but will add the emissivity of the lines. Some recalculations are
+            necessary, hence the radiation field and grain details are needed again. */
+        std::valarray<double> emissivityWithLines(const GasModule::GasState& gs,
+                                                  const std::valarray<double>& specificIntensityv,
+                                                  const GrainInterface& gri, bool SI, bool addHLines,
+                                                  bool addH2Lines) const;
+
         /** Same as the above, but will add the opacity of the lines. Some recalculations are
             necessary, hence the radiation field and grain details are needed again. */
         std::valarray<double> opacityWithLines(const GasModule::GasState& gs,

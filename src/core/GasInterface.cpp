@@ -41,6 +41,14 @@ namespace GasModule
         return _pimpl->opacityBasic(gs, SI);
     }
 
+    std::valarray<double> GasInterface::emissivityWithLines(const GasModule::GasState& gs,
+                                                            const std::valarray<double>& specificIntensityv,
+                                                            const GrainInterface& gri, bool SI, bool addHLines,
+                                                            bool addH2Lines) const
+    {
+        return _pimpl->emissivityWithLines(gs, specificIntensityv, gri, SI, addHLines, addH2Lines);
+    }
+
     std::valarray<double> GasInterface::opacityWithLines(const GasModule::GasState& gs,
                                                          const std::valarray<double>& specificIntensityv,
                                                          const GrainInterface& gri, bool SI, bool addHLines,

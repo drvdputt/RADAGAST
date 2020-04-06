@@ -98,37 +98,61 @@ namespace GasModule
             return opacityv;
     }
 
-    Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
-                                             const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const
+    Array GasInterfaceImpl::emissivityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
+                                                const GrainInterface& gri, bool SI, bool addHLines,
+                                                bool addH2Lines) const
     {
-        Array opacityv = opacityBasic(gs, false);
+        // get the continuum
+        Array emissivityv = emissivityBasic(gs, false);
 
-        // some copying happens here to put the data in the right types
+        // copy some things
         Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
         auto sv = speciesVector(gs);
 
-        // calculate the gas solution, hopefully with minimal iteration since we already provide
-        // the correct t and nv
+        // calculate the gas solution, without iteration since we already provide the correct t
+        // and nv
+        auto s = makeGasSolution(specificIntensity, &gri);
+        s.setT(gs._t);
+        s.setSpeciesNv(sv.speciesNv());
+        s.solveGrains();
+        s.solveLevels();
+        // TODO: technically we have to iterate here, since some H2 collision rates depend on
+        // the ortho-para ratio, which is in turn derived from the levels populations. Ignoring
+        // for now.
+
+        if (addHLines) emissivityv += s.hModel()->emissivityv(_eFrequencyv);
+        if (addH2Lines) emissivityv += s.h2Model()->emissivityv(_eFrequencyv);
+        if (SI)
+            return RadiationFieldTools::emissivity_to_SI(emissivityv);
+        else
+            return emissivityv;
+    }
+
+    Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
+                                             const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const
+    {
+        // get the continuum
+        Array opacityv = opacityBasic(gs, false);
+
+        // copy some things
+        Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
+        auto sv = speciesVector(gs);
+
+        // calculate the gas solution, without iteration since we already provide the correct t
+        // and nv
         auto s = makeGasSolution(specificIntensity, &gri);
         s.setT(gs._t);
         s.setSpeciesNv(sv.speciesNv());
 
-        // need grains here for h2 formation, which in turn I need for solving the levels (due
-        // to pumping)
+        // H2 formation on grains can influence H2 level populations
         s.solveGrains();
+        s.solveLevels();
 
-        // some H2 collision rates depend on the ortho para ratio, while the ortho para ratio
-        // depends on the levels. So technically, we have to iterate. But it shouldn't matter
-        // too much. In the worst case, we can always call solveDensities (maybe with an option
-        // to keep abundances constant, since we want to use the ones contained in the gas state
-        // and not change them).
-        s.solveLevels(s.kGrainH2FormationRateCoeff() * sv.nH());
-
-        // add opacity of H lines
+        // opacity of H lines
         if (addHLines) opacityv += s.hModel()->opacityv(_oFrequencyv);
 
-        // add opacity of H2 lines and continuum dissociation cross section (does nothing when
-        // small H2 model is used)
+        // opacity of H2 lines and continuum dissociation cross section (both zero when small H2
+        // model is used)
         if (addH2Lines) opacityv += s.h2Model()->opacityv(_oFrequencyv);
 
         // convert from cm-1 to m-1
