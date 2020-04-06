@@ -10,7 +10,7 @@ namespace GasModule
         /////////////
 
         const bool speciesmodelmanager_enableBigH2 = true;
-        const int speciesmodelmanager_bigH2_maxJ = 15;
+        const int speciesmodelmanager_bigH2_maxJ = 10;
         const int speciesmodelmanager_bigH2_maxV = 1;
 
         // Take into account cooling of the gas by collisions with the grains. Also activates the
