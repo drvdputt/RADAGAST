@@ -104,18 +104,21 @@ int main()
         Array lineFreqv;
         Array lorentzWidthv;
         h2Data.lineInfo(numLines, lineFreqv, lorentzWidthv);
+        int count = 0;
         for (int i = 0; i < numLines; i++)
         {
             double center = Constant::LIGHT / lineFreqv[i];
-            if (center < 120 * Constant::NM)  // (UV only)
+            if (center < 240 * Constant::NM)  // (UV only)
             {
                 // for width, use formula copied from LevelCoefficients::lineProfile but with
                 // constant temperature (200 K is a rough guildelinee).
                 double thermalVelocity = sqrt(Constant::BOLTZMAN * 200 / (2 * Constant::HMASS));
                 double sigma = center * thermalVelocity / Constant::LIGHT;
                 addLinePoints(center, sigma, specialPoints);
+                count++;
             }
         }
+        std::cout << "Added points for " << count << " H2 (UV) lines\n";
     }
 
     std::sort(std::begin(specialPoints), std::end(specialPoints));
