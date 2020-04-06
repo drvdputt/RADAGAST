@@ -13,8 +13,9 @@ namespace GasModule
     GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum& specificIntensity,
                              const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
                              std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound, const FreeFree& freeFree)
-        : _specificIntensity{specificIntensity}, _sv(speciesIndex), _hSolution(std::move(hModel)),
-          _h2Solution(std::move(h2Model)), _freeBound{freeBound}, _freeFree{freeFree}
+        : _sv(speciesIndex), _hSolution(std::move(hModel)),
+          _h2Solution(std::move(h2Model)), _specificIntensity{specificIntensity}, _freeBound{freeBound}, _freeFree{
+                                                                                                             freeFree}
     {
         int numPop = gri->numPopulations();
         if (numPop)
@@ -30,16 +31,19 @@ namespace GasModule
         solveLevels();
     }
 
-    void GasSolution::solveLevels(double formH2)
+    void GasSolution::solveLevels()
     {
         CollisionParameters cp = {_t, _sv, _h2Solution->orthoPara()};
         _hSolution->solve(nH(), cp, _specificIntensity);
-        _h2Solution->solve(nH2(), cp, _specificIntensity, formH2);
+        _h2Solution->solve(nH2(), cp, _specificIntensity, _kGrainH2FormationRateCoeff * _sv.nH());
     }
 
     void GasSolution::solveGrains()
     {
         for (auto& g : _grainSolutionv) g.recalculate(&_specificIntensity, _t, _sv);
+
+        _kGrainH2FormationRateCoeff = 0.;
+        for (const auto& g : _grainSolutionv) _kGrainH2FormationRateCoeff += g.surfaceH2FormationRateCoeff(_t);
     }
 
     Array GasSolution::emissivityv(const Array& eFrequencyv) const
@@ -171,10 +175,5 @@ namespace GasModule
 
     double GasSolution::kDissH2Levels() const { return _h2Solution->dissociationRate(_specificIntensity); }
 
-    double GasSolution::kGrainH2FormationRateCoeff() const
-    {
-        double total = 0;
-        for (const auto& g : _grainSolutionv) total += g.surfaceH2FormationRateCoeff(_t);
-        return total;
-    }
+    double GasSolution::kGrainH2FormationRateCoeff() const { return _kGrainH2FormationRateCoeff; }
 }

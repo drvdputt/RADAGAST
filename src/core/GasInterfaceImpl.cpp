@@ -315,14 +315,6 @@ namespace GasModule
 
         s.setT(T);
 
-        // Formation rate on grain surfaces. We declare it here so that it can be passed to the level
-        // population calculation too (needed for H2 formation pumping).
-        double kFormH2;
-        if (h2FormationOverride >= 0)
-            kFormH2 = h2FormationOverride;
-        else
-            kFormH2 = s.kGrainH2FormationRateCoeff();
-
         /* The main loop:
 	 v---------------------------------------------------<
 	 > LEVELS SOLUTION, CHEMISTRY SOLUTION -> CHEM RATES |
@@ -341,8 +333,13 @@ namespace GasModule
         double previousCooling = 0;
         while (!stopCriterion)
         {
-            // CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
-            s.solveLevels(kFormH2 * s.speciesVector().nH());
+            // Update grain charge distributions and temperatures. Will affect the grain
+            // photoelectric heating, the h2 formation rate, the h2 levels, and the gas-dust
+            // energy exchange (gas cooling)
+            s.solveGrains();
+
+            // GRAIN AND CHEMISTRY SOLUTION -> SOURCE AND SINK RATES -> LEVEL SOLUTION
+            s.solveLevels();
 
             if (previousAbundancev.array().isNaN().any())
             {
@@ -350,31 +347,26 @@ namespace GasModule
                 Error::runtime("Nan in chemistry solution!");
             }
 
-            // LEVELS AND CHEMISTRY SOLUTIONS -> CHEM RATES
+            // GRAIN, LEVELS, AND CHEMISTRY SOLUTIONS -> CHEM RATES
+            double kFormH2 = 0;
             if (h2FormationOverride < 0)
-            {
-                // update h2 formation rate if not overriden by a constant (need to update every
-                // iteration because grain temperature can change)
                 kFormH2 = s.kGrainH2FormationRateCoeff();
-            }
+            else
+                kFormH2 = h2FormationOverride;
 
             double kDissH2Levels = s.kDissH2Levels();
             if (kDissH2Levels < 0) Error::runtime("negative dissociation rate!");
 
-            // CHEM RATES -> CHEMISTRY SOLUTION
+            // Calculate all reaction rates and put them (+ the H2 rates provided as arguments)
+            // into a vector of the right format
             EVector reactionRates = _chemistry.rateCoeffv(T, specificIntensity, kDissH2Levels, kFormH2);
+
+            // CHEM RATES -> CHEMISTRY SOLUTION
             EVector newSpeciesNv = _chemistry.solveBalance(reactionRates, s.speciesVector().speciesNv());
             s.setSpeciesNv(newSpeciesNv);
 
-            // Recalculate the grain charge distributions and temperatures, which will affect the grain
-            // photoelectric heating, the h2 formation rate, and the gas-dust energy exchange (gas
-            // cooling)
-            s.solveGrains();
-            // TODO: Add effect of grain charging to chemical network. I think it might be possible to
-            // do this by imposing a conservation equation for the number of electrons: ne + nH + nH2 =
-            // (ne + nH + nH2)_0 + <Cg>*ng. Another option would be to include the grain charge rates
-            // into the network as extra reactions. Grain recombination / charge exchange reactions
-            // could also be added.
+            // TODO: add grain charging / photoelectric ejection to chemical network. Can be
+            // important source of electrons sometimes.
 
             // CONVERGENCE CHECK. An abundance has converged if it changes by less than 1%, or if the
             // total amount is negligible compared to the norm.

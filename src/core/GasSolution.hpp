@@ -43,9 +43,10 @@ namespace GasModule
 
         void makeZero();
 
-        /** Solve the level populations for each level model contained here. The formation rate of
-            H2 needs to be passed, because it pumps the H2 level populations. */
-        void solveLevels(double formH2 = 0);
+        /** Solve the level populations for each level model contained here. It is recommended
+            to call this after solveGrains(), because grains can pump the H2 level
+            populations. */
+        void solveLevels();
 
         /** Update the charge distribution and temperature of the grains based on the current
             species densities. Should be called after using setSpeciesNv. */
@@ -112,12 +113,21 @@ namespace GasModule
         const H2Model* h2Model() const { return _h2Solution.get(); }
 
     private:
-        std::vector<GrainSolution> _grainSolutionv;
-        const Spectrum& _specificIntensity;
+        // externally settable quantities, to be set/updated before solveGrains and solveLevels
+        // are called
         double _t;
         SpeciesVector _sv;
+
+        // quantities updated by solveGrains()
+        std::vector<GrainSolution> _grainSolutionv;
+        double _kGrainH2FormationRateCoeff{0.};
+
+        // workspace for species models
         std::shared_ptr<HModel> _hSolution;
         std::shared_ptr<H2Model> _h2Solution;
+
+        // references to constant data
+        const Spectrum& _specificIntensity;
         const FreeBound& _freeBound;
         const FreeFree& _freeFree;
     };
