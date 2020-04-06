@@ -31,12 +31,15 @@ namespace GasModule
         _pimpl->updateGasState(gs, n, specificIntensityv, gri, gd);
     }
 
-    std::valarray<double> GasInterface::emissivity(const GasState& gs, bool SI) const
+    std::valarray<double> GasInterface::emissivityBasic(const GasState& gs, bool SI) const
     {
-        return _pimpl->emissivity(gs, SI);
+        return _pimpl->emissivityBasic(gs, SI);
     }
 
-    std::valarray<double> GasInterface::opacity(const GasState& gs, bool SI) const { return _pimpl->opacity(gs, SI); }
+    std::valarray<double> GasInterface::opacityBasic(const GasState& gs, bool SI) const
+    {
+        return _pimpl->opacityBasic(gs, SI);
+    }
 
     std::valarray<double> GasInterface::opacityWithLines(const GasModule::GasState& gs,
                                                          const std::valarray<double>& specificIntensityv,

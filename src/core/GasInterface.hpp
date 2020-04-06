@@ -97,11 +97,11 @@ namespace GasModule
         /** Return the emissivity of the gas, discretized on @c eFrequencyv [erg cm-3 s-1 Hz-1
             sr-1]. If the second argument is @c true, SI units are used instead [W m-3 Hz-1
             sr-1]. */
-        std::valarray<double> emissivity(const GasState& gs, bool SI = false) const;
+        std::valarray<double> emissivityBasic(const GasState& gs, bool SI = false) const;
 
         /** Return the opacity of the gas [cm-1], discretized on @c oFrequencyv. If the second
             argument is @c true, SI units are used instead [m-1]. */
-        std::valarray<double> opacity(const GasState& gs, bool SI = false) const;
+        std::valarray<double> opacityBasic(const GasState& gs, bool SI = false) const;
 
         /** Same as the above, but will add the opacity of the lines. Some recalculations are
             necessary, hence the radiation field and grain details are needed again. */

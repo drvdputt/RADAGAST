@@ -362,8 +362,8 @@ namespace GasModule
         cout << "Equilibrium temperature: " << gs.temperature() << endl;
 
         const Array& eFrequencyv = gi.eFrequencyv();
-        const Array& emv = gi.emissivity(gs);
-        Spectrum opv(gi.oFrequencyv(), gi.opacity(gs));
+        const Array& emv = gi.emissivityBasic(gs);
+        Spectrum opv(gi.oFrequencyv(), gi.opacityBasic(gs));
 
         int precision = 9;
         {

@@ -53,8 +53,8 @@ namespace GasModule
         void updateGasState(GasModule::GasState&, double n, const std::valarray<double>& specificIntensityv,
                             GasModule::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
-        Array emissivity(const GasModule::GasState& gs, bool SI = false) const;
-        Array opacity(const GasModule::GasState& gs, bool SI = false) const;
+        Array emissivityBasic(const GasModule::GasState& gs, bool SI = false) const;
+        Array opacityBasic(const GasModule::GasState& gs, bool SI = false) const;
         Array opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
                                const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const;
 

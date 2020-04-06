@@ -58,7 +58,7 @@ namespace GasModule
         if (gd) s.fillDiagnostics(gd);
     }
 
-    Array GasInterfaceImpl::emissivity(const GasModule::GasState& gs, bool SI) const
+    Array GasInterfaceImpl::emissivityBasic(const GasModule::GasState& gs, bool SI) const
     {
         // There is some duplication from GasSolution::emissivityv, but let's keep both for now.
         Array emissivityv(_eFrequencyv.size());
@@ -76,7 +76,7 @@ namespace GasModule
             return emissivityv;
     }
 
-    Array GasInterfaceImpl::opacity(const GasModule::GasState& gs, bool SI) const
+    Array GasInterfaceImpl::opacityBasic(const GasModule::GasState& gs, bool SI) const
     {
         auto sv = speciesVector(gs);
 
@@ -101,7 +101,7 @@ namespace GasModule
     Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
                                              const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const
     {
-        Array opacityv = opacity(gs, false);
+        Array opacityv = opacityBasic(gs, false);
 
         // some copying happens here to put the data in the right types
         Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
