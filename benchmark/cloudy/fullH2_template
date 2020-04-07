@@ -34,7 +34,7 @@ save grain charge "graincharge.out" last
 save grain extinction "grainextinction.out" last
 save grain opacity "grainopacity.out" last
 save overview "overview.dat" last
-save optical depths "opticaldepth.out" units micron
+save optical depths "opticaldepth.out" units micron last
 save heating "heating.out" last
 save cooling "cooling.out" last
 save continuum "continuum.out" last units micron luminosity
