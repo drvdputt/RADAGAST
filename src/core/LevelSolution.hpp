@@ -8,16 +8,16 @@ namespace GasModule
 {
     class LevelCoefficients;
 
-    /** Stores non-constant quantities that have to do with a level system, and claculates derived
-        quantities */
+    /** Stores non-constant quantities that have to do with a level system, and calculates
+        derived quantities */
     class LevelSolution
     {
     public:
         /** Pass a pointer to the correct LevelCoefficients object, for access to the constants.
             Make sure that the arguments passed to setCvv and setNv are dimensionally compatible
             with the given LevelCoefficients. A temperature and density are also needed to
-            calculate the line width and normalization. Once these have been set externally, using
-            the setters, the other functions can be called safely. */
+            calculate the line width and normalization. Once these have been set externally,
+            using the setters, the other functions can be called safely. */
         LevelSolution(const LevelCoefficients* lc) : _levelCoefficients{lc} {};
 
         /** Set new temperature */
@@ -26,18 +26,23 @@ namespace GasModule
 
         /** Update the collision coefficients */
         void setCvv(const EMatrix& cvv)
-            {
-                _isCvvSet = true;
-                _cvv = cvv;
-            }
+        {
+            _isCvvSet = true;
+            _cvv = cvv;
+        }
 
         /** Update the level populations */
         void setNv(const EVector& nv)
-            {
-                _isNvSet = true;
-                _nv = nv;
-            }
+        {
+            _isNvSet = true;
+            _nv = nv;
+        }
+
+        /** Return the stored populations */
         const EVector& nv() const { return _nv; }
+
+        /** Return the fractional populations */
+        EVector fv() const;
 
         /** The spectrum emitted by the line transitions, expressed as the emission coefficient
             j_nu f (erg/cm3/s/Hz). */

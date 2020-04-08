@@ -71,20 +71,12 @@ namespace GasModule
 #else
         EVector directv = directDissociationIntegralv(specificIntensity);
         EVector solomonv = spontaneousDissociationSinkv();
-
-        EVector popFracv;
-        if (_n > 0)
-            popFracv = _levelSolution.nv() / _n;
-        else
-            // We need to return something nonzero here, otherwise the chemistry will have
-            // no dissociation coefficient, which can be troublesomec.
-            popFracv = _h2Data->solveBoltzmanEquations(_levelSolution.t());
+        EVector fv = _levelSolution.fv();
 
         // Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which
-        // can be used in chemical network (it will multiply by the density again. TODO:
-        // need separate rates for H2g and H2*
-        double directFractional = directv.dot(popFracv);
-        double solomonFractional = solomonv.dot(popFracv);
+        // can be used in chemical network (it will multiply by the density again).
+        double directFractional = directv.dot(fv);
+        double solomonFractional = solomonv.dot(fv);
         DEBUG("Dissociation: direct rate:" << directFractional << " solomon rate: " << solomonFractional << '\n');
         return directFractional + solomonFractional;
 #endif

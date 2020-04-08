@@ -43,7 +43,9 @@ namespace GasModule
         LevelSolution _levelSolution;
         double _n{0.};
 
-        // Keep this allocated, instead of freeing it at the end of solve()
+        // Keep this allocated, instead of freeing it at the end of solve(); TODO: move these
+        // into LevelSolution, and pass LevelSolution to
+        // LevelCoefficients::totalTransitionRatesvv.
         EMatrix _cvv;
         EMatrix _bpvv;
         EMatrix _tvv;

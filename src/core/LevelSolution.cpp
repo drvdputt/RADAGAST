@@ -3,6 +3,17 @@
 
 namespace GasModule
 {
+    EVector LevelSolution::fv() const
+    {
+        double sum = _nv.sum();
+        if (sum > 0)
+            return _nv / sum;
+        else
+            // return something to helps with e.g. H2 dissociation rate (needs to be non-zero
+            // even if H2 density is zero)
+            return _levelCoefficients->solveBoltzmanEquations(_t);
+    }
+
     Array LevelSolution::emissivityv(const Array& eFrequencyv) const
     {
         Array total(eFrequencyv.size());
