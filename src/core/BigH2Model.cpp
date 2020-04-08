@@ -138,6 +138,13 @@ namespace GasModule
         return totalOpv;
     }
 
+    void BigH2Model::extraDiagnostics(GasDiagnostics& gd, const Spectrum& specificIntensity) const
+    {
+        EVector fv = _levelSolution.fv();
+        gd.setUserValue("BigH2 cont diss", directDissociationIntegralv(specificIntensity).dot(fv));
+        gd.setUserValue("BigH2 solo diss", spontaneousDissociationSinkv().dot(fv));
+    }
+
     EVector BigH2Model::dissociationSinkv(const Spectrum& specificIntensity) const
     {
         EVector directv = directDissociationIntegralv(specificIntensity);

@@ -24,6 +24,8 @@ namespace GasModule
             detail */
         const LevelSolution* levelSolution() const override { return &_levelSolution; }
 
+        void extraDiagnostics(GasDiagnostics&, const Spectrum& specificIntensity) const override;
+
     private:
         /** Level-resolved dissociation rates. By adding these to the sink terms when solving the
             statistical equilibrium, the effect of dissociation on the level population can be

@@ -2,6 +2,7 @@
 #define CORE_H2MODEL_HPP
 
 #include "Array.hpp"
+#include "GasDiagnostics.hpp"
 #include "LevelSolution.hpp"
 
 namespace GasModule
@@ -58,6 +59,12 @@ namespace GasModule
             if one exists in the subclass implementation */
         virtual bool hasLevels() const { return false; }
         virtual const LevelSolution* levelSolution() const { return nullptr; }
+
+        /** Add extra diagnostics related to H2 to the given GasDiagnostics object. Does nothing
+            by default, but can be overridden by the big or small H2 model to add different
+            contributions (preferable things that aren't already covered by
+            GasSolution::fillDiagnostics). */
+        virtual void extraDiagnostics(GasDiagnostics&, const Spectrum& /* specificIntensity */) const {}
     };
 }
 #endif  // CORE_H2MODEL_HPP

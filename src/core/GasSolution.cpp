@@ -166,6 +166,10 @@ namespace GasModule
         gd->setPhotoelectricHeating(Array({grainPhotoHeat}));
         gd->setHeating("total grainphoto", grainPhotoHeat);
         gd->setCooling("grain collisions", grainCollCool);
+
+        // Other things will be written to the 'user values' of gasDiagnostics, somewhere in
+        // these calls
+        _h2Solution->extraDiagnostics(*gd, _specificIntensity);
     }
 
     void GasSolution::setGasState(GasModule::GasState& g) const
