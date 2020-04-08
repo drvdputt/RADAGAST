@@ -13,18 +13,7 @@ add_definitions(-DREPOROOT=\"${PROJECT_SOURCE_DIR}\")
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
   add_definitions(-DSILENT)
 endif()
-
 add_definitions(-march=native)
-
-if(EIGEN_DIR)
-  set(EIGEN_INCLUDE_DIR ${EIGEN_DIR})
-else()
-  find_path(EIGEN_INCLUDE_BASE
-    NAMES "eigen3"
-    PATHS "$ENV{HOME}/.local/include" "$ENV{HOME}/.local")
-  set(EIGEN_INCLUDE_DIR ${EIGEN_INCLUDE_BASE}/eigen3)
-endif()
-message(STATUS "Using Eigen headers at ${EIGEN_INCLUDE_DIR}")
 
 add_subdirectory(src/core)
 add_subdirectory(src/mains)

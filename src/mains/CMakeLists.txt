@@ -1,14 +1,16 @@
-include_directories(../core ../../include ${EIGEN_INCLUDE_DIR})
+find_package(GSL REQUIRED)
 
+# configure multiple executables the same way
 foreach(TARGET main krome_compare make_wavelengthgrid)
   add_executable(${TARGET} ${TARGET}.cpp)
-  # this static library already links to GSL
+  target_include_directories(${TARGET} PRIVATE ../core ../../include)
+  # GSL is already included statically in 'gasmodule'
   target_link_libraries(${TARGET} gasmodule)
 endforeach()
 
-find_package(GSL REQUIRED) # populates GSL_INCLUDED_DIRS
-set(TARGET run_tests)
-add_executable(${TARGET} test.cpp $<TARGET_OBJECTS:gasmodule_objects>)
-target_link_libraries(${TARGET} GSL::gsl GSL::gslcblas)
-# the testing framework needs the object files instead of the library used
-# above, so we still need to link to GSL explicitly here
+# Configuration for tests executable is special; it won't work with the statically linked
+# 'gasmodule' archive. Instead, it needs the list of objects from the gasmodule_objects target
+# in ../core. Consequently, GSL still needs to be linked here.
+add_executable(run_tests test.cpp $<TARGET_OBJECTS:gasmodule_objects>)
+target_include_directories(run_tests PRIVATE ../../include)
+target_link_libraries(run_tests GSL::gsl GSL::gslcblas)

@@ -17,13 +17,10 @@ fi
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 
-# Explicitly unset EIGEN_DIR here, to test find_path
 cmake $SRC_DIR -DCMAKE_BUILD_TYPE=$BT \
       "${EXTRA[@]}" \
-      -DCMAKE_EXPORT_COMPILE_COMMANDS=YES -DCMAKE_INSTALL_PREFIX=$BUILD_DIR -UEIGEN_DIR
+      -DCMAKE_EXPORT_COMPILE_COMMANDS=YES -DCMAKE_INSTALL_PREFIX=$BUILD_DIR
 
 make -j$NJOB
 make install
 ln -sf $BUILD_DIR/compile_commands.json $SRC_DIR
-
-
