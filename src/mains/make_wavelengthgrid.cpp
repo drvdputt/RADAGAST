@@ -11,8 +11,8 @@
 const double min = 0.005 * Constant::UM;
 const double max = 1000 * Constant::UM;
 
-// points per dex in lyC (< 91 nm)
-const double ppd_below91 = 100;
+const double ppd_below70 = 100;
+const double ppd_70to91 = 400;
 
 // for H2 (91 to 120 nm)
 const double ppd_91to120 = 200;
@@ -23,8 +23,8 @@ const double ppd_120to1000 = 100;
 // the rest of the IR / submm
 const double ppd_IRtoSubmm = 50;
 
-const std::vector<double> ppd_values = {ppd_below91, ppd_91to120, ppd_120to1000, ppd_IRtoSubmm};
-const std::vector<double> ppd_right_bounds = {91.2 * Constant::NM, 120 * Constant::NM, 1 * Constant::UM, max};
+const std::vector<double> ppd_values = {ppd_below70, ppd_70to91, ppd_91to120, ppd_120to1000, ppd_IRtoSubmm};
+const std::vector<double> ppd_right_bounds = {70 * Constant::NM, 91.2 * Constant::NM, 120 * Constant::NM, 1 * Constant::UM, max};
 
 // index of the ppd bound > lambda
 int ppd_index(double lambda)
