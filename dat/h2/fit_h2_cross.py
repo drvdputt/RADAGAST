@@ -42,7 +42,7 @@ h = h_cs(wav)
 ratio = h2 / h
 
 # now fit something using data < 70 nm
-lambda_max = 70
+lambda_max = 28
 fit_where = np.where(wav < lambda_max)
 
 # power law?

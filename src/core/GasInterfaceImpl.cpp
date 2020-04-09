@@ -43,9 +43,9 @@ namespace GasModule
 
         // Use approximation (constant * H cross section) for frequencies above the data range.
         // Otherwise, H2 will be transparent < 17 nm). Constant was determined by taking the
-        // averate ratio with respect to the H cross section for all data < 70 nm.
+        // averate ratio with respect to the H cross section for all data < 28 nm.
         for (int i = oFrequencyv.size() - 1; i >= 0 && oFrequencyv[i] > data.freqMax(); i--)
-            _h2crossv[i] = 3.52480156 * Ionization::crossSection(oFrequencyv[i]);
+            _h2crossv[i] = 3.33 * Ionization::crossSection(oFrequencyv[i]);
     }
 
     void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
