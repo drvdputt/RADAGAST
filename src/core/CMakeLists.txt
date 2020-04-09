@@ -7,16 +7,15 @@ target_include_directories(gasmodule_obj PUBLIC ../../include INTERFACE ./)
 find_package(Eigen3 3.3 NO_MODULE QUIET)
 if(TARGET Eigen3::Eigen)
   # I wanted to use target_link_libraries here, but this is not supported for object libaries in
-  # cmake 3.5. So instead, extract the INCLUDE_DIRECTORIES property from the Eigen target using
-  # the following generator expression, and use PUBLIC to make sure that the includes are
-  # propagated to dependents of gasmodule_obj.
-  target_include_directories(gasmodule_obj SYSTEM PUBLIC $<TARGET_PROPERTY:Eigen3::Eigen,INCLUDE_DIRECTORIES>)
+  # cmake 3.5. So instead, use the EIGEN3_INCLUDE_DIR variable set by find_package(Eigen3) (see
+  # Eigen3Config.cmake in eigen source code).
+  message("Found Eigen ${EIGEN3_VERSION_STRING} package in ${EIGEN3_ROOT_DIR}")
+  target_include_directories(gasmodule_obj SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 elseif(EIGEN3_INCLUDE_DIR)
-  # if no package was found, use this variable instead
-  message("Using eigen at EIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}")
+  # if no package was found, try using manually set value
+  message("EIGEN_INCLUDE_DIR was set to ${EIGEN3_INCLUDE_DIR} manually")
   target_include_directories(gasmodule_obj SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 else()
-  # if both fail, make some suggestions and quit
   message(FATAL_ERROR
     "Could not find Eigen automatically. You have two options.\n"
     " 1) Install an eigen3 package that comes with Eigen3Config.cmake, and set Eigen3_DIR to the directory containing that file if necessary.\n"
