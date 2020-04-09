@@ -35,10 +35,11 @@ target_include_directories(gasmodule_obj SYSTEM PUBLIC ${REAL_EIGEN3_INCLUDE_DIR
 
 find_package(GSL REQUIRED)
 target_include_directories(gasmodule_obj SYSTEM PUBLIC
-  $<TARGET_PROPERTY:GSL::gsl,INCLUDE_DIRECTORIES>
-  $<TARGET_PROPERTY:GSL::gslcblas,INCLUDE_DIRECTORIES>)
+  $<TARGET_PROPERTY:GSL::gsl,INTERFACE_INCLUDE_DIRECTORIES>
+  $<TARGET_PROPERTY:GSL::gslcblas,INTERFACE_INCLUDE_DIRECTORIES>)
 
 add_library(gasmodule $<TARGET_OBJECTS:gasmodule_obj>)
+# make sure that include directories are inherited
 target_include_directories(gasmodule INTERFACE $<TARGET_PROPERTY:gasmodule_obj,INTERFACE_INCLUDE_DIRECTORIES>)
 target_link_libraries(gasmodule GSL::gsl GSL::gslcblas)
 
