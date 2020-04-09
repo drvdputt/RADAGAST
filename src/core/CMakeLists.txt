@@ -7,9 +7,10 @@ target_include_directories(gasmodule_obj PUBLIC ../../include INTERFACE ./)
 find_package(Eigen3 3.3 NO_MODULE QUIET)
 if(TARGET Eigen3::Eigen)
   # I wanted to use target_link_libraries here, but this is not supported for object libaries in
-  # cmake 3.5. So instead, use the EIGEN3_INCLUDE_DIR variable set by find_package(Eigen3) (see
-  # Eigen3Config.cmake in eigen source code).
+  # cmake 3.5. And EIGEN3_INCLUDE_DIR set by find_package(Eigen3) is buggy (Eigen3Config.cmake
+  # in eigen source code states *do not use*). So I use the target property instead.
   message("Found Eigen ${EIGEN3_VERSION_STRING} package in ${EIGEN3_ROOT_DIR}")
+  get_target_property(EIGEN3_INCLUDE_DIR Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
 elseif(EIGEN3_INCLUDE_DIR)
   # if no package was found, try using manually set value
   message("EIGEN_INCLUDE_DIR was set to ${EIGEN3_INCLUDE_DIR} manually")
@@ -25,7 +26,7 @@ elseif(IS_DIRECTORY ${EIGEN3_INCLUDE_DIR}/Eigen)
   set(REAL_EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIR})
 else()
   message(FATAL_ERROR
-    "Could not find Eigen in EIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR). You have two options.\n"
+    "Could not find Eigen in EIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR}. You have two options.\n"
     " 1) Install an eigen3 package that comes with Eigen3Config.cmake, and set Eigen3_DIR to the directory containing that file if necessary (usually somwhere/share/cmake).\n"
     " 2) Download and decompress eigen3, and set -DEIGEN3_INCLUDE_DIR to the parent directory of 'eigen3' or 'Eigen'.")
 endif()
@@ -40,7 +41,7 @@ target_include_directories(gasmodule_obj SYSTEM PUBLIC
 add_library(gasmodule $<TARGET_OBJECTS:gasmodule_obj>)
 target_include_directories(gasmodule INTERFACE $<TARGET_PROPERTY:gasmodule_obj,INTERFACE_INCLUDE_DIRECTORIES>)
 target_link_libraries(gasmodule GSL::gsl GSL::gslcblas)
-  
+
 # install static libary and headers to the typical directories under CMAKE_INSTALL_PREFIX
 install(TARGETS gasmodule ARCHIVE DESTINATION lib)
 install(FILES GasInterface.hpp GrainInterface.hpp GasState.hpp GasDiagnostics.hpp DESTINATION include)
