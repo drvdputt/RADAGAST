@@ -10,18 +10,28 @@ if(TARGET Eigen3::Eigen)
   # cmake 3.5. So instead, use the EIGEN3_INCLUDE_DIR variable set by find_package(Eigen3) (see
   # Eigen3Config.cmake in eigen source code).
   message("Found Eigen ${EIGEN3_VERSION_STRING} package in ${EIGEN3_ROOT_DIR}")
-  target_include_directories(gasmodule_obj SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 elseif(EIGEN3_INCLUDE_DIR)
   # if no package was found, try using manually set value
   message("EIGEN_INCLUDE_DIR was set to ${EIGEN3_INCLUDE_DIR} manually")
-  target_include_directories(gasmodule_obj SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
+endif()
+
+# One last thing: on some systems, the path to an eigen module (e.g. Dense) looks like this:
+# somewhere/eigen3/Eigen/Dense. On others, its somwhere/Eigen/Dense, omitting the 'eigen3' part.
+# We use the common part, Eigen/Dense, in the code, so in the former case, we should add eigen3
+# to the include dir.
+if (IS_DIRECTORY ${EIGEN3_INCLUDE_DIR}/eigen3/Eigen)
+  set(REAL_EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIR}/eigen3)
+elseif(IS_DIRECTORY ${EIGEN3_INCLUDE_DIR}/Eigen)
+  set(REAL_EIGEN3_INCLUDE_DIR ${EIGEN3_INCLUDE_DIR})
 else()
   message(FATAL_ERROR
-    "Could not find Eigen automatically. You have two options.\n"
-    " 1) Install an eigen3 package that comes with Eigen3Config.cmake, and set Eigen3_DIR to the directory containing that file if necessary.\n"
-    " 2) Download and decompress eigen3, and set -DEIGEN3_INCLUDE_DIR to the location where you chose to put 'eigen3/'.")
+    "Could not find Eigen in EIGEN3_INCLUDE_DIR=${EIGEN3_INCLUDE_DIR). You have two options.\n"
+    " 1) Install an eigen3 package that comes with Eigen3Config.cmake, and set Eigen3_DIR to the directory containing that file if necessary (usually somwhere/share/cmake).\n"
+    " 2) Download and decompress eigen3, and set -DEIGEN3_INCLUDE_DIR to the parent directory of 'eigen3' or 'Eigen'.")
 endif()
-  
+
+target_include_directories(gasmodule_obj SYSTEM PUBLIC ${REAL_EIGEN3_INCLUDE_DIR})
+
 find_package(GSL REQUIRED)
 target_include_directories(gasmodule_obj SYSTEM PUBLIC
   $<TARGET_PROPERTY:GSL::gsl,INCLUDE_DIRECTORIES>
