@@ -1,7 +1,7 @@
 #ifndef CORE_EIGENALIASES_HPP
 #define CORE_EIGENALIASES_HPP
 
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 
 namespace GasModule
 {
