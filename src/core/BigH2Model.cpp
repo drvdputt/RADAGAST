@@ -2,7 +2,9 @@
 #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "H2Data.hpp"
 #include "LevelSolver.hpp"
+#include <sstream>
 
 namespace GasModule
 {
@@ -113,7 +115,7 @@ namespace GasModule
         for (size_t i = 0; i < _h2Data->numLv(); i++)
         {
             double n = _levelSolution.nv()(i);
-            if (_h2Data->isOrtho(i))
+            if (_h2Data->level(i).ortho())
                 orthoSum += n;
             else
                 paraSum += n;
@@ -140,9 +142,26 @@ namespace GasModule
 
     void BigH2Model::extraDiagnostics(GasDiagnostics& gd, const Spectrum& specificIntensity) const
     {
+        auto levelLabel = [](const H2Data::H2Level& level) {
+            std::stringstream label;
+            label << "E" << static_cast<int>(level.eState()) << " J" << level.j() << " v" << level.v();
+            return label.str();
+        };
+
         EVector fv = _levelSolution.fv();
-        gd.setUserValue("BigH2 cont diss", directDissociationIntegralv(specificIntensity).dot(fv));
-        gd.setUserValue("BigH2 solo diss", spontaneousDissociationSinkv().dot(fv));
+
+        EVector contDissv = directDissociationIntegralv(specificIntensity);
+        gd.setUserValue("H2 contdiss", contDissv.dot(fv));
+        for (int i : _h2Data->levelsWithCrossSectionv())
+            gd.setUserValue("H2 contdiss " + levelLabel(_h2Data->level(i)), contDissv[i] * fv[i]);
+
+        EVector solomonDissv = spontaneousDissociationSinkv();
+        gd.setUserValue("H2 solomon", solomonDissv.dot(fv));
+        for (int i = 0; i < _h2Data->numLv(); i++)
+        {
+            double dissContribution = solomonDissv[i] * fv[i];
+            if (dissContribution > 0) gd.setUserValue("H2 solomon " + levelLabel(_h2Data->level(i)), dissContribution);
+        }
     }
 
     EVector BigH2Model::dissociationSinkv(const Spectrum& specificIntensity) const

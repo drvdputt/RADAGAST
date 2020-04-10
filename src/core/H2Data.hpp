@@ -95,6 +95,9 @@ namespace GasModule
             levels have been read in. */
         void readCollisionFile(const std::string& repoFile, CollisionPartner iPartner);
 
+    public:
+        /** This class contains the details about a single H2 level, and provides functions to
+            calculate some simple derived properties of that level. */
         class H2Level
         {
         public:
@@ -131,7 +134,6 @@ namespace GasModule
             bool _ortho;
         };
 
-    public:
         /** Implement this inherited function to provide collision coefficients for the level
             transitions */
         EMatrix cvv(const CollisionParameters& cp) const override;
@@ -143,8 +145,8 @@ namespace GasModule
         /** Same as the above, but returns -1 if level is not found. */
         int indexFind(ElectronicState eState, int j, int v) const;
 
-        /** True if level at given index is ortho, false if para */
-        bool isOrtho(size_t index) const { return _levelv[index].ortho(); }
+        /** Return details of level at the given level index. */
+        const H2Level& level(int index) const { return _levelv[index]; }
 
         /** Get the index pointing to the first (index-wise, not energy-wise) electronically
             excited level. All indices @f$ i < @f$ @c startOfExcitedIndices() correspond to levels
@@ -165,14 +167,14 @@ namespace GasModule
         /** Cross section for direct dissociation from level with index @c index. */
         double directDissociationCrossSection(double nu, size_t index) const;
 
-        /** Get all the cross sections as a vector of Spectrum objects. This is handy if you want
-        to integrate over these cross sections efficiently, since the Spectrum object contains the
-        minimum and maximum frequency. */
-        const std::vector<Spectrum>& directDissociationCrossSections(size_t index) const;
+        /** Get the cross sections for direct dissociation from the given level. The Spectrum
+            class is used for each cross section, so that the frequencies and cross sections are
+            packaged together. */
+        const std::vector<Spectrum>& directDissociationCrossSections(int index) const;
 
         /** Return a list of all the levels for which a direct dissociation cross section is
             available */
-        const std::vector<size_t>& levelsWithCrossSectionv() const { return _levelsWithCrossSectionv; }
+        const std::vector<int>& levelsWithCrossSectionv() const { return _levelsWithCrossSectionv; }
 
         /** return the distribution of newly formed hydrogen over the electronic ground state. For
         now, we use equation 19 from Draine and Bertoldi (1996), which does not depend on grain
@@ -262,7 +264,7 @@ namespace GasModule
         std::vector<std::vector<Spectrum>> _dissociationCrossSectionv;
 
         // Keep track of which levels have such cross sections, for easy looping
-        std::vector<size_t> _levelsWithCrossSectionv;
+        std::vector<int> _levelsWithCrossSectionv;
     };
 }
 #endif  // CORE_H2FROMFILES_HPP

@@ -409,7 +409,7 @@ namespace GasModule
         return sigma;
     }
 
-    const vector<Spectrum>& H2Data::directDissociationCrossSections(size_t index) const
+    const vector<Spectrum>& H2Data::directDissociationCrossSections(int index) const
     {
         return _dissociationCrossSectionv[index];
     }
