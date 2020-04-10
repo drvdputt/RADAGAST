@@ -29,17 +29,18 @@ namespace GasModule
 
         /** Names of the reactions in the chemical network used */
         const std::vector<std::string>& reactionNames() const { return _reactionNamev; }
+
         /** Rates of the reactions in the chemical network used */
         const std::valarray<double>& reactionRates() const { return _reactionRatev; }
 
         /** Population density of the included H levels */
         const std::valarray<double>& hPopulations() const { return _hPopulationv; }
+
         /** Population density of the included H2 levels */
         const std::valarray<double>& h2Populations() const { return _h2Populationv; }
 
-        /** Get the value of a diagnostic that was added using setUserValue(). This is mainly
-            used for temporary diagnostics during debugging. */
-        double userValue(const std::string& key) { return _userValuem.at(key); }
+        /** Things that fall outside of a specific category */
+        const std::map<std::string, double>& userValues() const { return _userValuem; }
 
         void setPhotoelectricHeating(const std::valarray<double>& peh) { _photoelectricHeating = peh; }
         void setReactionNames(const std::vector<std::string>& rn) { _reactionNamev = rn; }
