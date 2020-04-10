@@ -42,12 +42,6 @@ namespace GasModule
         }
     }
 
-    size_t H2Data::indexOutput(ElectronicState eState, int j, int v) const
-    {
-        // This cast is safe, as the default underlying type of an enum is int.
-        return _ejvToIndexm.at({static_cast<int>(eState), j, v});
-    }
-
     int H2Data::indexFind(ElectronicState eState, int j, int v) const
     {
         auto iter = _ejvToIndexm.find({static_cast<int>(eState), j, v});
@@ -394,19 +388,6 @@ namespace GasModule
         double np = cp._sv.np();
         addToCvv(the_cvv, T, HPLUS, np);
         return the_cvv;
-    }
-
-    double H2Data::directDissociationCrossSection(double nu, int j, int v) const
-    {
-        return directDissociationCrossSection(nu, indexOutput(ElectronicState::X, j, v));
-    }
-
-    double H2Data::directDissociationCrossSection(double nu, size_t index) const
-    {
-        double sigma{0.};
-        // Evaluate all the cross sections for this level at this frequency
-        for (const Spectrum& cs : _dissociationCrossSectionv[index]) sigma += cs.evaluate(nu);
-        return sigma;
     }
 
     const vector<Spectrum>& H2Data::directDissociationCrossSections(int index) const

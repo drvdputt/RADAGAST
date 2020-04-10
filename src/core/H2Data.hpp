@@ -138,10 +138,6 @@ namespace GasModule
             transitions */
         EMatrix cvv(const CollisionParameters& cp) const override;
 
-        /** Retrieve the index of a level with these quantum numbers. Will throw an out of range
-            error when no level was read in for these quantum numbers */
-        size_t indexOutput(ElectronicState eState, int j, int v) const;
-
         /** Same as the above, but returns -1 if level is not found. */
         int indexFind(ElectronicState eState, int j, int v) const;
 
@@ -161,12 +157,6 @@ namespace GasModule
             [erg] */
         const EVector& dissociationKineticEnergyv() const { return _dissKinEv; }
 
-        /** Cross section for direct dissociation from @f$ X(J,v) @f$. */
-        double directDissociationCrossSection(double nu, int j, int v) const;
-
-        /** Cross section for direct dissociation from level with index @c index. */
-        double directDissociationCrossSection(double nu, size_t index) const;
-
         /** Get the cross sections for direct dissociation from the given level. The Spectrum
             class is used for each cross section, so that the frequencies and cross sections are
             packaged together. */
@@ -176,9 +166,9 @@ namespace GasModule
             available */
         const std::vector<int>& levelsWithCrossSectionv() const { return _levelsWithCrossSectionv; }
 
-        /** return the distribution of newly formed hydrogen over the electronic ground state. For
-        now, we use equation 19 from Draine and Bertoldi (1996), which does not depend on grain
-        properties. */
+        /** return the distribution of newly formed hydrogen over the electronic ground state.
+            For now, we use equation 19 from Draine and Bertoldi (1996), which does not depend
+            on grain properties. */
         EVector formationDistribution() const;
 
     private:
