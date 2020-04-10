@@ -886,6 +886,7 @@ namespace GasModule
 
             writeMapAsColumnFile(prefix + "heat.dat", gd.heating());
             writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
+            writeMapAsColumnFile(prefix + "uservalues.dat", gd.userValues());
 
             OutColumnFile radfield(prefix + "nu_jnu.dat", {"frequency", "nu Jnu"});
             for (size_t i = 0; i < frequencyv.size(); i++)

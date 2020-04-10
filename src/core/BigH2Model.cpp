@@ -4,6 +4,7 @@
 #include "DebugMacros.hpp"
 #include "H2Data.hpp"
 #include "LevelSolver.hpp"
+#include <iomanip>
 #include <sstream>
 
 namespace GasModule
@@ -144,7 +145,8 @@ namespace GasModule
     {
         auto levelLabel = [](const H2Data::H2Level& level) {
             std::stringstream label;
-            label << "E" << static_cast<int>(level.eState()) << " J" << level.j() << " v" << level.v();
+            label << "E" << static_cast<int>(level.eState()) << std::setfill('0') << " J" << std::setw(2) << level.j()
+                  << " v" << std::setw(2) << level.v();
             return label.str();
         };
 
