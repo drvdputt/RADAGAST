@@ -10,8 +10,15 @@ namespace GasModule
         /////////////
 
         const bool speciesmodelmanager_enableBigH2 = true;
-        const int speciesmodelmanager_bigH2_maxJ = 10;
-        const int speciesmodelmanager_bigH2_maxV = 1;
+
+        // Determine which levels and transition data to load/use for the electronic ground
+        // state (X) and the electronically excited states (E). These can be set separately
+        // because different levels are important for different processes.
+        const int h2data_X_maxJ = 6;
+        const int h2data_X_maxV = 1;
+        const int h2data_E_maxJ = 4;
+        const int h2data_E_minV = 8;
+        const int h2data_E_maxV = 25;
 
         // Take into account cooling of the gas by collisions with the grains. Also activates the
         // corresponding heating term for the grains.

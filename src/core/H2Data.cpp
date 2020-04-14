@@ -13,7 +13,9 @@ using namespace std;
 
 namespace GasModule
 {
-    H2Data::H2Data(int maxJ, int maxV) : LevelCoefficients(2 * Constant::HMASS), _maxJ{maxJ}, _maxV{maxV}
+    H2Data::H2Data(int groundMaxJ, int groundMaxV, int excitedMaxJ, int excitedMinV, int excitedMaxV)
+        : LevelCoefficients(2 * Constant::HMASS), _groundMaxJ{groundMaxJ}, _groundMaxV{groundMaxV},
+          _excitedMaxJ{excitedMaxJ}, _excitedMinV{excitedMinV}, _excitedMaxV{excitedMaxV}
     {
         readLevels();
         readTransProbs();
@@ -44,6 +46,8 @@ namespace GasModule
 
     int H2Data::indexFind(ElectronicState eState, int j, int v) const
     {
+        if (!validJV(eState, j, v)) return -1;
+
         auto iter = _ejvToIndexm.find({static_cast<int>(eState), j, v});
         if (iter == _ejvToIndexm.end())
             return -1;
@@ -136,9 +140,10 @@ namespace GasModule
                 string cleanline = regex_replace(line, regex("[^0-9.]+"), " ");
                 istringstream(cleanline) >> nei >> nef >> vi >> ji;
 
-                // Skip to the next #! block if we are not treating this level (There should be no
-                // data for states other than X, but let's ignore nei anyway. .
-                if (nei > 0 || !validJV(ji, vi)) continue;  // This will never be used;
+                // Skip to the next #! block if we are not treating this level (There should be
+                // no data for states other than X, but let's check nei anyway.
+                int index = indexFind(ElectronicState::X, ji, vi);
+                if (nei > 0 || index == -1) continue;
 
                 // Read the data
                 string dataline;
@@ -166,10 +171,8 @@ namespace GasModule
                 // the end of the file.
 
                 // Add the new cross section at the correct level index.
-                int index = indexFind(ElectronicState::X, ji, vi);
-                if (index > -1)
-                    _dissociationCrossSectionv[index].emplace_back(Array(frequencyv.data(), frequencyv.size()),
-                                                                   Array(crossSectionv.data(), crossSectionv.size()));
+                _dissociationCrossSectionv[index].emplace_back(Array(frequencyv.data(), frequencyv.size()),
+                                                               Array(crossSectionv.data(), crossSectionv.size()));
             }
         }
         // Remember which levels have cross sections, for easy iterating
@@ -211,7 +214,7 @@ namespace GasModule
 
             // Add the level if within the requested J,v limits. Convert 1/wavelength [cm-1] to
             // ergs by using E = hc / lambda.
-            if (validJV(j, v))
+            if (validJV(eState, j, v))
             {
                 counter++;
                 addLevel(eState, j, v, Constant::PLANCKLIGHT * k);
@@ -246,16 +249,13 @@ namespace GasModule
             Error::equalCheck("EU and cast of upperE", EU, static_cast<int>(upperE));
             Error::equalCheck("EL and cast of lowerE", EL, static_cast<int>(lowerE));
 
-            // If within the J,v limits, fill in the coefficient.
-            if (validJV(JU, VU) && validJV(JL, VL))
+            // If we have the levels involved, fill in the coefficient.
+            int upperIndex = indexFind(upperE, JU, VU);
+            int lowerIndex = indexFind(lowerE, JL, VL);
+            if (upperIndex > -1 && lowerIndex > -1)
             {
-                int upperIndex = indexFind(upperE, JU, VU);
-                int lowerIndex = indexFind(lowerE, JL, VL);
-                if (upperIndex > -1 && lowerIndex > -1)
-                {
-                    _avv(upperIndex, lowerIndex) = A;
-                    counter++;
-                }
+                _avv(upperIndex, lowerIndex) = A;
+                counter++;
             }
         }
         DEBUG("Read in " << counter << " Einstein A coefficients from " << repoFile << '\n');
@@ -280,8 +280,6 @@ namespace GasModule
             // diss prob in s-1, kin energy in eV
             double diss, kin;
             istringstream(line) >> v >> j >> diss >> kin;
-
-            if (!validJV(j, v)) continue;
 
             int index = indexFind(eState, j, v);
             if (index > -1)
@@ -325,9 +323,6 @@ namespace GasModule
             istringstream issCollRates(line);
             int VU, JU, VL, JL;
             issCollRates >> VU >> JU >> VL >> JL;
-
-            // If we are not treating this level (the J or the v is out of range), skip.
-            if (!validJV(JU, VU) || !validJV(JL, VL)) continue;
 
             int upperIndex = indexFind(ElectronicState::X, JU, VU);
             int lowerIndex = indexFind(ElectronicState::X, JL, VL);
@@ -395,7 +390,13 @@ namespace GasModule
         return _dissociationCrossSectionv[index];
     }
 
-    bool H2Data::validJV(int J, int v) const { return J <= _maxJ && v <= _maxV; }
+    bool H2Data::validJV(ElectronicState eState, int J, int v) const
+    {
+        if (eState == ElectronicState::X)
+            return J <= _groundMaxJ && v <= _groundMaxV;
+        else
+            return J <= _excitedMaxJ && _excitedMinV < v && v < _excitedMaxV;
+    }
 
     void H2Data::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner, double nPartner) const
     {

@@ -24,7 +24,8 @@ const double ppd_120to1000 = 100;
 const double ppd_IRtoSubmm = 50;
 
 const std::vector<double> ppd_values = {ppd_below70, ppd_70to91, ppd_91to120, ppd_120to1000, ppd_IRtoSubmm};
-const std::vector<double> ppd_right_bounds = {70 * Constant::NM, 91.2 * Constant::NM, 120 * Constant::NM, 1 * Constant::UM, max};
+const std::vector<double> ppd_right_bounds = {70 * Constant::NM, 91.2 * Constant::NM, 120 * Constant::NM,
+                                              1 * Constant::UM, max};
 
 // index of the ppd bound > lambda
 int ppd_index(double lambda)
@@ -98,8 +99,9 @@ int main()
     // H2 lines
     if (GasModule::Options::speciesmodelmanager_enableBigH2)
     {
-        GasModule::H2Data h2Data(GasModule::Options::speciesmodelmanager_bigH2_maxJ,
-                                 GasModule::Options::speciesmodelmanager_bigH2_maxV);
+        GasModule::H2Data h2Data(GasModule::Options::h2data_X_maxJ, GasModule::Options::h2data_X_maxV,
+                                 GasModule::Options::h2data_E_maxJ, GasModule::Options::h2data_E_minV,
+                                 GasModule::Options::h2data_E_maxV);
         int numLines;
         Array lineFreqv;
         Array lorentzWidthv;

@@ -13,8 +13,8 @@ namespace GasModule
         _hData = std::make_unique<HFromFiles>();
 
         if (Options::speciesmodelmanager_enableBigH2)
-            _h2Data = std::make_unique<H2Data>(Options::speciesmodelmanager_bigH2_maxJ,
-                                               Options::speciesmodelmanager_bigH2_maxV);
+            _h2Data = std::make_unique<H2Data>(Options::h2data_X_maxJ, Options::h2data_X_maxV, Options::h2data_E_maxJ,
+                                               Options::h2data_E_minV, Options::h2data_E_maxV);
     }
 
     std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const { return std::make_unique<HModel>(_hData.get()); }

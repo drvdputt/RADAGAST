@@ -21,7 +21,7 @@ namespace GasModule
     public:
         /** Create a new instance, reading in all the data. Optional arguments: upper limits for
             vibrational and rotational numbers. The data goes to 31 for J, and to 14 for v. */
-        H2Data(int maxJ = 99, int maxV = 99);
+        H2Data(int xMaxJ = 99, int xMaxV = 99, int eMaxJ = 99, int eMinV = 0, int eMaxV = 99);
 
         /** A clear way to index the electronic states of molecular hydrogen. The files from cloudy
             index these in the same order, from 0 to 6. To get this numerical index, it should be
@@ -138,7 +138,8 @@ namespace GasModule
             transitions */
         EMatrix cvv(const CollisionParameters& cp) const override;
 
-        /** Same as the above, but returns -1 if level is not found. */
+        /** Return the index of the level with the given quantum numbers. Returns -1 if level is
+            not found. */
         int indexFind(ElectronicState eState, int j, int v) const;
 
         /** Return details of level at the given level index. */
@@ -173,7 +174,7 @@ namespace GasModule
 
     private:
         /** Returns true if the given J and V are within the boundaries specified by the user. */
-        bool validJV(int J, int v) const;
+        bool validJV(ElectronicState eState, int J, int v) const;
 
         /** Adds the Cif and Cfi derived from the collision coefficient in qdata to the_cvv(i, f)
             and the_cvv(f, i) respectively. For each transition in the CollisionData object, q_if
@@ -201,7 +202,8 @@ namespace GasModule
 
         // Settings
         bool _bB{false}, _bCplus{false}, _bCminus{false};
-        int _maxJ, _maxV;
+        int _groundMaxJ, _groundMaxV;
+        int _excitedMaxJ, _excitedMinV, _excitedMaxV;
 
         // Contains the quantum numbers and energies of the levels
         std::vector<H2Level> _levelv;
