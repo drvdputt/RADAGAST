@@ -190,10 +190,11 @@ namespace GasModule
 
     double LineProfile::integrateSpectrum(const Spectrum& spectrum, double spectrumMax) const
     {
-        // Approximate by value at line center if line is much narrower than the resolution of the
-        // provided SED
+        // Approximate by value at line center if line is much narrower than the resolution of
+        // the provided SED, or if option forces this
         double spectrumResolutionAtCenter = spectrum.resolution(_center);
-        if (5 * _halfWidth_lorentz < spectrumResolutionAtCenter && 3 * _sigma_gauss < spectrumResolutionAtCenter)
+        if ((5 * _halfWidth_lorentz < spectrumResolutionAtCenter && 3 * _sigma_gauss < spectrumResolutionAtCenter)
+            || Options::lineprofile_forceTrivialIntegration)
             return spectrum.evaluate(_center);
 
         // Else, do this very complicated integration with automated cutoff

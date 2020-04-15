@@ -54,6 +54,10 @@ namespace GasModule
         // abundances --> levels)-loop.
         const int densities_maxiterations = 25;
 
+        // When integrating a spectrum a line profile, use the trivial approximation: 1 times
+        // the intensity evaluated at the line center
+        const bool lineprofile_forceTrivialIntegration = true;
+
         // When integrating the product of a line profile with a spectrum, use a cutoff heuristic
         // to optimize this integration. When false, the line is integrated over the whole
         // wavelength range instead.

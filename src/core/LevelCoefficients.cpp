@@ -92,32 +92,29 @@ namespace GasModule
         forActiveLinesDo([&](size_t upper, size_t lower) {
             // Calculate Pij for the lower triangle (= stimulated emission)
             LineProfile lp = lineProfile(upper, lower, T, Cvv);
-            double lowResIntegral = lp.integrateSpectrum(specificIntensity, spectrumMax);
+            double linePower = lp.integrateSpectrum(specificIntensity, spectrumMax);
 
             if (Options::levelcoefficients_reportSpecIntegral)
             {
-                // Compare above integral to explicit calculation using the whole
-                // wavelength range with many points. Useful check in case of steep
-                // slopes in the spectrum, or very wide wings of the line.
+                // Compare above integral to explicit calculation using the whole wavelength
+                // range with many points. Useful check in case of steep slopes in the spectrum,
+                // or very wide wings of the line.
                 auto f = [&](double x) -> double { return lp(x) * specificIntensity.evaluate(x); };
 
                 size_t many_points = 1e6;
                 double manualIntegral = TemplatedUtils::integrateFunction<double>(
                     f, specificIntensity.freqMin(), specificIntensity.freqMax(), many_points);
 
-                double ratio = manualIntegral / lowResIntegral;
+                double ratio = manualIntegral / linePower;
 
-                if (abs(ratio - 1.) > 1.e-6) cout << lowResIntegral << "\t MR:" << ratio << endl;
+                if (abs(ratio - 1.) > 1.e-6) cout << linePower << "\t MR:" << ratio << endl;
             }
-
-            BPvv(upper, lower) = lowResIntegral;
 
             // Multiply by Bij in terms of Aij, valid for i > j
             double nu_ij = (_ev(upper) - _ev(lower)) / Constant::PLANCK;
-            BPvv(upper, lower) *= Constant::CSQUARE_TWOPLANCK / nu_ij / nu_ij / nu_ij * _avv(upper, lower);
+            BPvv(upper, lower) = Constant::CSQUARE_TWOPLANCK / (nu_ij * nu_ij * nu_ij) * _avv(upper, lower) * linePower;
 
-            /* Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij =
-                                Pji. */
+            /* Derive the upper triangle (= absorption) using gi Bij = gj Bji and Pij = Pji. */
             BPvv(lower, upper) = _gv(upper) / _gv(lower) * BPvv(upper, lower);
         });
         return BPvv;
