@@ -39,7 +39,7 @@ namespace GasModule
 
         // Choose the number of electronic levels for H2. Give a number from 1 to 3 to include up
         // to: 1 B, 2 C+, 3 C-.
-        const int h2data_numExcitedLevels = 2;
+        const int h2data_numExcitedLevels = 1;
 
         const int grainsolution_minGrainTemp = 1.;
         const int grainsolution_maxGrainTemp = 300.;

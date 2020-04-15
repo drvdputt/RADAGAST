@@ -395,7 +395,7 @@ namespace GasModule
         if (eState == ElectronicState::X)
             return J <= _groundMaxJ && v <= _groundMaxV;
         else
-            return J <= _excitedMaxJ && _excitedMinV < v && v < _excitedMaxV;
+            return J <= _excitedMaxJ && _excitedMinV <= v && v <= _excitedMaxV;
     }
 
     void H2Data::addToCvv(EMatrix& the_cvv, double T, CollisionPartner iPartner, double nPartner) const

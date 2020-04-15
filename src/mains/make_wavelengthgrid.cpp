@@ -8,6 +8,8 @@
 #include "SimpleColumnFile.hpp"
 
 // parameters
+const double thermalWidth = 80.;
+
 const double min = 0.005 * Constant::UM;
 const double max = 1000 * Constant::UM;
 
@@ -114,7 +116,7 @@ int main()
             {
                 // for width, use formula copied from LevelCoefficients::lineProfile but with
                 // constant temperature (200 K is a rough guildelinee).
-                double thermalVelocity = sqrt(Constant::BOLTZMAN * 200 / (2 * Constant::HMASS));
+                double thermalVelocity = sqrt(Constant::BOLTZMAN * thermalWidth / (2 * Constant::HMASS));
                 double sigma = center * thermalVelocity / Constant::LIGHT;
                 addLinePoints(center, sigma, specialPoints);
                 count++;
