@@ -220,7 +220,6 @@ namespace GasModule
 
         const double Tmin = 1.;
         const double logTmin = log10(Tmin);
-        const double logTtolerance = 1.e-3;
         // Assume that the heating is positive at Tmin (this has yet to fail). Then, find a suitable
         // upper limit for the bracket (one where the heating is negative. Try 10000 first, which
         // should be suitable for most applications. Then, keep multiplying the temperature with a
@@ -274,6 +273,7 @@ namespace GasModule
         // Then, start using the current solution as an initial guess of the next one
         p.use_previous_solution = true;
 
+        double logTtolerance = std::log10(1. + Options::solvetemperature_Ttolerance);
         int test_interval = GSL_CONTINUE;
         int counter = 0;
         while (test_interval != GSL_SUCCESS)
@@ -286,7 +286,7 @@ namespace GasModule
             }
             double lower = gsl_root_fsolver_x_lower(solver);
             double upper = gsl_root_fsolver_x_upper(solver);
-            test_interval = gsl_root_test_interval(lower, upper, logTtolerance, logTtolerance);
+            test_interval = gsl_root_test_interval(lower, upper, logTtolerance, 0);
             counter++;
         }
         gsl_root_fsolver_free(solver);

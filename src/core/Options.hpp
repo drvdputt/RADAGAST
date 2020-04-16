@@ -50,6 +50,9 @@ namespace GasModule
         // NUMERIC / METHOD / ITERATION / PRECISION //
         //////////////////////////////////////////////
 
+        // Relative tolerance for the equilibrium temperature
+        const double solvetemperature_Ttolerance = 0.001;
+
         // The maximum allowed amount of iterations for the (levels --> chemrates --> chemistry -->
         // abundances --> levels)-loop.
         const int densities_maxiterations = 25;
