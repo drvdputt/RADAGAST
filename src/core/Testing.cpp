@@ -696,8 +696,8 @@ namespace GasModule
         sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2, {ne, np, nH, nH2}));
         CollisionParameters cp(T, sv);
 
-        BigH2Model h2m(&h2l);
-        h2m.solve(nH2, cp, specificIntensity);
+        BigH2Model h2m(&h2l, &specificIntensity);
+        h2m.solve(nH2, cp);
         if (write)
         {
             Array emissivityv = h2m.emissivityv(frequencyv);

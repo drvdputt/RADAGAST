@@ -11,7 +11,6 @@ using namespace GasModule;
 TEST_CASE("H2-specific algorithm")
 {
     H2Data hff(99, 99);
-    BigH2Model bigh2(&hff);
 
     EVector ev = hff.ev();
 
@@ -36,8 +35,9 @@ TEST_CASE("H2-specific algorithm")
 
         Array specificIntensityv(frequencyv.size());
         Spectrum specificIntensity(frequencyv, specificIntensityv);
+        BigH2Model bigh2(&hff, &specificIntensity);
 
-        bigh2.solve(n, cp, specificIntensity);
+        bigh2.solve(n, cp);
         EVector nv_lte = n * hff.solveBoltzmanEquations(T);
 
         const EVector& nv_sol = bigh2.levelSolution()->nv();
@@ -62,7 +62,9 @@ TEST_CASE("H2-specific algorithm")
 
         Array specificIntensityv(frequencyv.size());
         Spectrum specificIntensity(frequencyv, specificIntensityv);
-        bigh2.solve(n, cp, specificIntensity);
+        BigH2Model bigh2(&hff, &specificIntensity);
+
+        bigh2.solve(n, cp);
         const EVector& nv = bigh2.levelSolution()->nv();
 
         // Check if some individual levels are indeed close to 0
@@ -90,7 +92,8 @@ TEST_CASE("H2-specific algorithm")
         for (size_t i = 0; i < frequencyv.size(); i++)
             specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
         Spectrum specificIntensity(frequencyv, specificIntensityv);
-        bigh2.solve(n, cp, specificIntensity);
+        BigH2Model bigh2(&hff, &specificIntensity);
+        bigh2.solve(n, cp);
         EVector nv_lte = n * hff.solveBoltzmanEquations(T);
         const EVector& nv_sol = bigh2.levelSolution()->nv();
 

@@ -446,7 +446,7 @@ namespace GasModule
         // Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
         // C++14. Scott Meyers.
         std::unique_ptr<HModel> hm = _manager.makeHModel();
-        std::unique_ptr<H2Model> h2m = _manager.makeH2Model();
+        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&specificIntensity);
         GasSolution s(gri, specificIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), _freeBound, _freeFree);
         return s;
     }

@@ -9,7 +9,11 @@
 
 namespace GasModule
 {
-    void BigH2Model::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity, double h2form)
+    BigH2Model::BigH2Model(const H2Data* h2Data, const Spectrum* specificIntensity)
+        : _h2Data{h2Data}, _specificIntensity{specificIntensity}, _levelSolution(_h2Data)
+    {}
+
+    void BigH2Model::solve(double n, const CollisionParameters& cp, double h2form)
     {
         _levelSolution.setT(cp._t);
         _n = n;
@@ -22,7 +26,7 @@ namespace GasModule
             return;
         }
 
-        _tvv = _h2Data->totalTransitionRatesvv(specificIntensity, cp, &_cvv, &_bpvv);
+        _tvv = _h2Data->totalTransitionRatesvv(*_specificIntensity, cp, &_cvv, &_bpvv);
         _levelSolution.setCvv(_cvv);
 
         // TODO: Use better formation pumping recipe
@@ -30,7 +34,7 @@ namespace GasModule
         sourcev.head(_h2Data->startOfExcitedIndices()) = _h2Data->formationDistribution();
         sourcev *= h2form / sourcev.sum();
 
-        EVector sinkv = dissociationSinkv(specificIntensity);
+        EVector sinkv = dissociationSinkv();
 
         if (!_levelSolution.isNvSet())
         {
@@ -51,13 +55,13 @@ namespace GasModule
         _levelSolution.setNv(newNv);
     }
 
-    double BigH2Model::dissociationRate(const Spectrum& specificIntensity) const
+    double BigH2Model::dissociationRate() const
     {
 #ifdef STERNBERG2014
         // TODO: move this to simple h2 model
         // See 2014-Sternberg eq 3
-        auto iv = specificIntensity.valuev();
-        auto nuv = specificIntensity.frequencyv();
+        auto iv = *_specificIntensity.valuev();
+        auto nuv = *_specificIntensity.frequencyv();
 
         // F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
         Array photonFluxv = Constant::FPI * iv / nuv / Constant::PLANCK;
@@ -72,7 +76,7 @@ namespace GasModule
         double result{5.8e-11 * Iuv};
         return result;
 #else
-        EVector directv = directDissociationIntegralv(specificIntensity);
+        EVector directv = directDissociationIntegralv();
         EVector solomonv = spontaneousDissociationSinkv();
         EVector fv = _levelSolution.fv();
 
@@ -85,7 +89,7 @@ namespace GasModule
 #endif
     }
 
-    double BigH2Model::dissociationHeating(const Spectrum& specificIntensity) const
+    double BigH2Model::dissociationHeating() const
     {
         // Fraction that dissociates per second * kinetic energy per dissociation * density of
         // level population = heating power density
@@ -94,7 +98,7 @@ namespace GasModule
         double solomonHeat = _levelSolution.nv().dot((p * k).matrix());
 
         // TODO: precalculate this?
-        EVector directHeatv = directDissociationIntegralv(specificIntensity, true);
+        EVector directHeatv = directDissociationIntegralv(true);
         double directHeat = _levelSolution.nv().dot(directHeatv);
 
         DEBUG("Dissociation heat: direct heat: " << directHeat << " solomon heat:" << solomonHeat << '\n');
@@ -140,7 +144,7 @@ namespace GasModule
         return totalOpv;
     }
 
-    void BigH2Model::extraDiagnostics(GasDiagnostics& gd, const Spectrum& specificIntensity) const
+    void BigH2Model::extraDiagnostics(GasDiagnostics& gd) const
     {
         auto levelLabel = [](const H2Data::H2Level& level) {
             std::stringstream label;
@@ -151,7 +155,7 @@ namespace GasModule
 
         EVector fv = _levelSolution.fv();
 
-        EVector contDissv = directDissociationIntegralv(specificIntensity);
+        EVector contDissv = directDissociationIntegralv();
         gd.setUserValue("H2 contdiss", contDissv.dot(fv));
         for (int i : _h2Data->levelsWithCrossSectionv())
             gd.setUserValue("H2 contdiss " + levelLabel(_h2Data->level(i)), contDissv[i] * fv[i]);
@@ -165,14 +169,14 @@ namespace GasModule
         }
     }
 
-    EVector BigH2Model::dissociationSinkv(const Spectrum& specificIntensity) const
+    EVector BigH2Model::dissociationSinkv() const
     {
-        EVector directv = directDissociationIntegralv(specificIntensity);
+        EVector directv = directDissociationIntegralv();
         EVector solomonv = spontaneousDissociationSinkv();
         return directv + solomonv;
     }
 
-    EVector BigH2Model::directDissociationIntegralv(const Spectrum& specificIntensity, bool heatRate) const
+    EVector BigH2Model::directDissociationIntegralv(bool heatRate) const
     {
         // TODO: this can take up quite some time. If we assume that the specific intensity is
         // always constant during the lifetime of a BigH2Model, the we can just calculate this
@@ -192,8 +196,8 @@ namespace GasModule
                 const Array& cs_nuv = cs.frequencyv();
 
                 // Usable integration range
-                double minFreq = std::max(cs.freqMin(), specificIntensity.freqMin());
-                double maxFreq = std::min(cs.freqMax(), specificIntensity.freqMax());
+                double minFreq = std::max(cs.freqMin(), _specificIntensity->freqMin());
+                double maxFreq = std::min(cs.freqMax(), _specificIntensity->freqMax());
 
                 // Integration lower bound: Index right of the minimum frequency
                 size_t iNuMin = TemplatedUtils::index(minFreq, cs_nuv);
@@ -212,7 +216,7 @@ namespace GasModule
                     // I_nu / h nu. (As always constant factors are applied after
                     // integrating.)
                     double nu = cs_nuv[iNu];
-                    sigmaFv[iNu] *= specificIntensity.evaluate(nu) / nu;
+                    sigmaFv[iNu] *= _specificIntensity->evaluate(nu) / nu;
 
                     // If we are calculating the heating rate (erg s-1) instead of
                     // the number rate (s-1), multiply with the energy minus the

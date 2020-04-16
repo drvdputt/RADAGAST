@@ -7,16 +7,17 @@
 
 namespace GasModule
 {
-    SimpleH2::SimpleH2(const LookupTable* lteCool) : _lteCool{lteCool} {}
+    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* specificIntensity) : _lteCool{lteCool}
+    {
+        _g = RadiationFieldTools::gHabing(*specificIntensity);
+    }
 
-    void SimpleH2::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity, double h2form)
+    void SimpleH2::solve(double n, const CollisionParameters& cp, double h2form)
     {
         _nH2 = n;
 
         // double Rpump = 3.4e-10 * beta(tau) * G_0 * exp(-2.5 * Av); I assume that G_0 * exp(-2.5
-        // * Av) is just the attenuated radiation field. We should calculate G here directly from
-        // the given specific intensity.
-        _g = RadiationFieldTools::gHabing(specificIntensity);
+        // * Av) is just the attenuated radiation field.
 
         // We might needs some value for tau / beta to describe self-shielding. For now, use 1.
         double beta = 1;
@@ -58,13 +59,13 @@ namespace GasModule
         _directDissoc = _nH2 > 0 ? 1e-11 * _g * _nH2s / _nH2 : 0;
     }
 
-    double SimpleH2::dissociationRate(const Spectrum&) const
+    double SimpleH2::dissociationRate() const
     {
         // In TH85, only H2* can be dissociated directly
         return _solomonDissoc + _directDissoc;
     }
 
-    double SimpleH2::dissociationHeating(const Spectrum&) const { return _gamma3; }
+    double SimpleH2::dissociationHeating() const { return _gamma3; }
 
     double SimpleH2::netHeating() const { return _gamma4 - _collisionalExcitationCooling; }
 

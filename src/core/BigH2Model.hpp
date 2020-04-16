@@ -9,11 +9,10 @@ namespace GasModule
     class BigH2Model : public H2Model
     {
     public:
-        BigH2Model(const H2Data* h2Data) : _h2Data{h2Data}, _levelSolution(_h2Data) {}
-        void solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity,
-                   double h2form = 0) override;
-        double dissociationRate(const Spectrum& specificIntensity) const override;
-        double dissociationHeating(const Spectrum& specificIntensity) const override;
+        BigH2Model(const H2Data* h2Data, const Spectrum* specificIntensity);
+        void solve(double n, const CollisionParameters& cp, double h2form = 0) override;
+        double dissociationRate() const override;
+        double dissociationHeating() const override;
         double netHeating() const override;
         double orthoPara() const override;
         Array emissivityv(const Array& eFrequencyv) const override;
@@ -24,24 +23,25 @@ namespace GasModule
             detail */
         const LevelSolution* levelSolution() const override { return &_levelSolution; }
 
-        void extraDiagnostics(GasDiagnostics&, const Spectrum& specificIntensity) const override;
+        void extraDiagnostics(GasDiagnostics&) const override;
 
     private:
         /** Level-resolved dissociation rates. By adding these to the sink terms when solving the
             statistical equilibrium, the effect of dissociation on the level population can be
             taken in to account. [s-1] */
-        EVector dissociationSinkv(const Spectrum& specificIntensity) const;
+        EVector dissociationSinkv() const;
 
         /** For each level of X, calculate the direct radiative dissociation rate [s-1] by
             integrating the cross section over the appropriate frequency range. If heatRate is
             true, the integrand is multiplied by (hnu - threshold), so that the heating rate [erg
             s-1] due to this process is given instead. */
-        EVector directDissociationIntegralv(const Spectrum& specificIntensity, bool heatRate = false) const;
+        EVector directDissociationIntegralv(bool heatRate = false) const;
 
         /** Sink term due to the spontaneous dissociation rate. [s-1] */
         const EVector& spontaneousDissociationSinkv() const;
 
         const H2Data* _h2Data;
+        const Spectrum* _specificIntensity;
         LevelSolution _levelSolution;
         double _n{0.};
 

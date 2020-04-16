@@ -19,11 +19,11 @@ namespace GasModule
 
     std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const { return std::make_unique<HModel>(_hData.get()); }
 
-    std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model() const
+    std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model(const Spectrum* specificIntensity) const
     {
         if (Options::speciesmodelmanager_enableBigH2)
-            return std::make_unique<BigH2Model>(_h2Data.get());
+            return std::make_unique<BigH2Model>(_h2Data.get(), specificIntensity);
         else
-            return std::make_unique<SimpleH2>(&_h2LTECool);
+            return std::make_unique<SimpleH2>(&_h2LTECool, specificIntensity);
     }
 }

@@ -26,9 +26,10 @@ namespace GasModule
         std::unique_ptr<HModel> makeHModel() const;
 
         /** Create a new H2Model polymorphically. Depending on the heuristics given, either a
-            BigH2Model or a SmallH2Model might be created. A BigH2Model will get access to the H2
-            data stored here, while a SmallH2Model ideally does not need it. */
-        std::unique_ptr<H2Model> makeH2Model() const;
+            BigH2Model or a SmallH2Model might be created. A BigH2Model will get access to the
+            H2 data stored here, while a SmallH2Model ideally does not need it. The H2 models
+            need the radiation field at construction, so pass it here as an argument. */
+        std::unique_ptr<H2Model> makeH2Model(const Spectrum* specificIntensityv) const;
 
     private:
         std::unique_ptr<HData> _hData;

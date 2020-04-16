@@ -35,7 +35,7 @@ namespace GasModule
     {
         CollisionParameters cp = {_t, _sv, _h2Solution->orthoPara()};
         _hSolution->solve(nH(), cp, _specificIntensity);
-        _h2Solution->solve(nH2(), cp, _specificIntensity, _kGrainH2FormationRateCoeff * _sv.nH());
+        _h2Solution->solve(nH2(), cp, _kGrainH2FormationRateCoeff * _sv.nH());
     }
 
     void GasSolution::solveGrains()
@@ -96,7 +96,7 @@ namespace GasModule
         double hLine = _hSolution->netHeating();
         double h2Line = _h2Solution->netHeating();
         double hPhotoIonHeat = Ionization::heating(nH(), _specificIntensity);
-        double dissHeat = _h2Solution->dissociationHeating(_specificIntensity);
+        double dissHeat = _h2Solution->dissociationHeating();
         double grainHeat = grainHeating();
         DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
                                             << dissHeat << " Grphot " << grainHeat << '\n');
@@ -127,7 +127,7 @@ namespace GasModule
         if (!gd) Error::runtime("GasDiagnostics is nullptr!");
 
         double h2form = kGrainH2FormationRateCoeff();
-        double h2dissoc = _h2Solution->dissociationRate(_specificIntensity);
+        double h2dissoc = _h2Solution->dissociationRate();
 
         double hphotoion = Ionization::photoRateCoeff(_specificIntensity);
         double hcolion = Ionization::collisionalRateCoeff(_t);
@@ -156,7 +156,7 @@ namespace GasModule
 
         gd->setHeating("H2 deexc", netH2line);
         gd->setCooling("H2 exc", -netH2line);
-        gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating(_specificIntensity));
+        gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating());
         // gd->setHeating("freefree", x);
         gd->setCooling("freefree", _freeFree.cooling(np() * ne(), _t));
 
@@ -169,7 +169,7 @@ namespace GasModule
 
         // Other things will be written to the 'user values' of gasDiagnostics, somewhere in
         // these calls
-        _h2Solution->extraDiagnostics(*gd, _specificIntensity);
+        _h2Solution->extraDiagnostics(*gd);
     }
 
     void GasSolution::setGasState(GasModule::GasState& g) const
@@ -177,7 +177,7 @@ namespace GasModule
         g.setMembers(_t, {_sv.data(), _sv.size()}, _hSolution->n2s());
     }
 
-    double GasSolution::kDissH2Levels() const { return _h2Solution->dissociationRate(_specificIntensity); }
+    double GasSolution::kDissH2Levels() const { return _h2Solution->dissociationRate(); }
 
     double GasSolution::kGrainH2FormationRateCoeff() const { return _kGrainH2FormationRateCoeff; }
 }
