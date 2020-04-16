@@ -11,7 +11,11 @@ namespace GasModule
 {
     BigH2Model::BigH2Model(const H2Data* h2Data, const Spectrum* specificIntensity)
         : _h2Data{h2Data}, _specificIntensity{specificIntensity}, _levelSolution(_h2Data)
-    {}
+    {
+        // since the radiation field stays constant, precalculate these integrals
+        _directDissociationRatev = directDissociationIntegralv();
+        _directDissociationHeatv = directDissociationIntegralv(true);
+    }
 
     void BigH2Model::solve(double n, const CollisionParameters& cp, double h2form)
     {
@@ -34,8 +38,6 @@ namespace GasModule
         sourcev.head(_h2Data->startOfExcitedIndices()) = _h2Data->formationDistribution();
         sourcev *= h2form / sourcev.sum();
 
-        EVector sinkv = dissociationSinkv();
-
         if (!_levelSolution.isNvSet())
         {
             EVector initialGuessv = EVector::Zero(_h2Data->numLv());
@@ -49,6 +51,10 @@ namespace GasModule
             _levelSolution.setNv(initialGuessv);
         }
 
+        // direct + solomon
+        EVector sinkv = _directDissociationRatev + _h2Data->dissociationProbabilityv();
+        // There are no transitions between electronically excited levels. Get this index here,
+        // so that the solver called below can simplify the calculation using this assumption.
         int fullyConnectedCutoff = _h2Data->startOfExcitedIndices();
         EVector newNv = LevelSolver::statisticalEquilibrium_iterative(n, _tvv, sourcev, sinkv, _levelSolution.nv(),
                                                                       fullyConnectedCutoff);
@@ -76,14 +82,10 @@ namespace GasModule
         double result{5.8e-11 * Iuv};
         return result;
 #else
-        EVector directv = directDissociationIntegralv();
-        EVector solomonv = spontaneousDissociationSinkv();
+        // use fractional abundances here to get dissociation rate in [s-1]
         EVector fv = _levelSolution.fv();
-
-        // Dot product = total rate [cm-3 s-1]. Divide by total to get [s-1] rate, which
-        // can be used in chemical network (it will multiply by the density again).
-        double directFractional = directv.dot(fv);
-        double solomonFractional = solomonv.dot(fv);
+        double directFractional = _directDissociationRatev.dot(fv);
+        double solomonFractional = _h2Data->dissociationProbabilityv().dot(fv);
         DEBUG("Dissociation: direct rate:" << directFractional << " solomon rate: " << solomonFractional << '\n');
         return directFractional + solomonFractional;
 #endif
@@ -96,11 +98,7 @@ namespace GasModule
         auto p = _h2Data->dissociationProbabilityv().array();
         auto k = _h2Data->dissociationKineticEnergyv().array();
         double solomonHeat = _levelSolution.nv().dot((p * k).matrix());
-
-        // TODO: precalculate this?
-        EVector directHeatv = directDissociationIntegralv(true);
-        double directHeat = _levelSolution.nv().dot(directHeatv);
-
+        double directHeat = _levelSolution.nv().dot(_directDissociationHeatv);
         DEBUG("Dissociation heat: direct heat: " << directHeat << " solomon heat:" << solomonHeat << '\n');
         return solomonHeat + directHeat;
     }
@@ -155,12 +153,11 @@ namespace GasModule
 
         EVector fv = _levelSolution.fv();
 
-        EVector contDissv = directDissociationIntegralv();
-        gd.setUserValue("H2 contdiss", contDissv.dot(fv));
+        gd.setUserValue("H2 contdiss", _directDissociationRatev.dot(fv));
         for (int i : _h2Data->levelsWithCrossSectionv())
-            gd.setUserValue("H2 contdiss " + levelLabel(_h2Data->level(i)), contDissv[i] * fv[i]);
+            gd.setUserValue("H2 contdiss " + levelLabel(_h2Data->level(i)), _directDissociationRatev[i] * fv[i]);
 
-        EVector solomonDissv = spontaneousDissociationSinkv();
+        const EVector& solomonDissv = _h2Data->dissociationProbabilityv();
         gd.setUserValue("H2 solomon", solomonDissv.dot(fv));
         for (int i = 0; i < _h2Data->numLv(); i++)
         {
@@ -169,20 +166,8 @@ namespace GasModule
         }
     }
 
-    EVector BigH2Model::dissociationSinkv() const
-    {
-        EVector directv = directDissociationIntegralv();
-        EVector solomonv = spontaneousDissociationSinkv();
-        return directv + solomonv;
-    }
-
     EVector BigH2Model::directDissociationIntegralv(bool heatRate) const
     {
-        // TODO: this can take up quite some time. If we assume that the specific intensity is
-        // always constant during the lifetime of a BigH2Model, the we can just calculate this
-        // once, at creation. In practice, one run of the gas module will then only require one
-        // call of this function.
-
         EVector result{EVector::Zero(_h2Data->numLv())};
 
         // For each level that has cross section data
@@ -232,6 +217,4 @@ namespace GasModule
         }
         return result;
     }
-
-    const EVector& BigH2Model::spontaneousDissociationSinkv() const { return _h2Data->dissociationProbabilityv(); }
 }
