@@ -131,12 +131,11 @@ namespace GasModule
         // Start with the line opacity
         Array totalOpv = _levelSolution.opacityv(oFrequencyv);
 
-        // Then add the dissociation cross sections of each level
-        for (size_t iLv : _h2Data->levelsWithCrossSectionv())
+        // Then add the dissociation cross section contribution by each level
+        for (int i : _h2Data->levelsWithCrossSectionv())
         {
-            const std::vector<Spectrum>& csv = _h2Data->directDissociationCrossSections(iLv);
-            for (const Spectrum& cs : csv) totalOpv += cs.binned(oFrequencyv);
-            // TODO: Discovered bug. Need to multiply with level density here!
+            for (const Spectrum& cs : _h2Data->directDissociationCrossSections(i))
+                totalOpv += _levelSolution.nv()(i) * cs.binned(oFrequencyv);
         }
         return totalOpv;
     }
@@ -183,10 +182,10 @@ namespace GasModule
         EVector result{EVector::Zero(_h2Data->numLv())};
 
         // For each level that has cross section data
-        for (size_t iLv : _h2Data->levelsWithCrossSectionv())
+        for (int i : _h2Data->levelsWithCrossSectionv())
         {
             // For each cross section
-            for (const Spectrum& cs : _h2Data->directDissociationCrossSections(iLv))
+            for (const Spectrum& cs : _h2Data->directDissociationCrossSections(i))
             {
                 // We will integrate over (part of, in case the input spectrum is not
                 // wide enough) the grid for the cross section
@@ -223,8 +222,8 @@ namespace GasModule
                 }
 
                 // Integrate to total number of dissociations (s-1)
-                result(iLv) += Constant::FPI / Constant::PLANCK
-                               * TemplatedUtils::integrate<double>(cs_nuv, sigmaFv, iNuMin, iNuMax);
+                result(i) += Constant::FPI / Constant::PLANCK
+                             * TemplatedUtils::integrate<double>(cs_nuv, sigmaFv, iNuMin, iNuMax);
             }
         }
         return result;
