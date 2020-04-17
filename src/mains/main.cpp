@@ -32,17 +32,17 @@ int main(int argc, char** argv)
     try
     {
         // // These output graphable data which can be used to check correctness.
-        // Testing::plotPhotoelectricHeating();
-        // Testing::plotIonizationStuff();
-        // Testing::plotPS64Collisions();
-        // Testing::plotInterpolationTests();
-        // Testing::plotHeatingCurve_main();
+        // GasModule::Testing::plotPhotoelectricHeating();
+        // GasModule::Testing::plotIonizationStuff();
+        // GasModule::Testing::plotPS64Collisions();
+        // GasModule::Testing::plotInterpolationTests();
+        // GasModule::Testing::plotHeatingCurve_main();
 
         // These do a run, with writeout, but the results are not directly comparable to
         // something in the way that the ones above work.
-        // Testing::runFromFilesvsHardCoded();
-        // Testing::runFullModel();
-        // Testing::runH2(true);
+        // GasModule::Testing::runFromFilesvsHardCoded();
+        // GasModule::Testing::runFullModel();
+        // GasModule::Testing::runH2(true);
         if (argc == 1)
             GasModule::Testing::runMRNDust(true);
         else if (argc == 4)
