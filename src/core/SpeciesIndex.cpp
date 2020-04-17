@@ -4,6 +4,11 @@ namespace GasModule
 {
     const std::vector<std::string> SpeciesIndex::e_p_H_H2{"e-", "H+", "H", "H2"};
 
+    SpeciesIndex SpeciesIndex::makeDefault()
+    {
+        return SpeciesIndex(e_p_H_H2);
+    }
+
     SpeciesIndex::SpeciesIndex(const std::vector<std::string>& namev) : _namev{namev}
     {
         for (const std::string& s : namev) _indexMap.insert({s, _indexMap.size()});

@@ -44,7 +44,12 @@ namespace GasModule
         std::map<std::string, int> _indexMap;
 
     public:
+        /** Frequently used set of species strings. Is always {"e-", "H+", "H", "H2"}. */
         static const std::vector<std::string> e_p_H_H2;
+
+        /** Convenience function. Create a species index with the default indexing scheme (e-,
+            H+, H, H2). */
+        static SpeciesIndex makeDefault();
     };
 
     class SpeciesVector
@@ -54,7 +59,7 @@ namespace GasModule
         SpeciesVector(const SpeciesIndex* speciesIndex);
 
         /** Things like the chemical network (which owns a SpeciesIndex) should be able to set this
-            directly. Note that this will crash if e-, H+, H or H2 are not prosent. */
+            directly. Note that this will crash if e-, H+, H or H2 are not present. */
         void setDensities(const EVector& nv) { _nv = nv; }
         void setNe(double ne) { _nv(_ine) = ne; }
         void setNp(double np) { _nv(_inp) = np; }
