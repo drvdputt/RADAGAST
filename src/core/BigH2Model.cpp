@@ -105,7 +105,6 @@ namespace GasModule
 
     double BigH2Model::netHeating() const
     {
-        // TODO cooling effect of collisional dissociation?
         return _levelSolution.netHeating();
     }
 
