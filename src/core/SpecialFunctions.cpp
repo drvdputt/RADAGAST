@@ -285,49 +285,4 @@ namespace GasModule
     {
         return sigma * std::sqrt(-2 * std::log(Constant::SQRT2PI * sigma * g));
     }
-
-    SpecialFunctions::LookupTable2D::LookupTable2D(std::function<double(double, double)> ff) : _ff{ff} {}
-
-    void SpecialFunctions::LookupTable2D::setup(const Array& xv, const Array& yv)
-
-    {
-        _xv = xv;
-        _yv = yv;
-        size_t nx = xv.size();
-        size_t ny = yv.size();
-
-        _xMin = _xv[0];
-        _xMax = _xv[nx - 1];
-        _yMin = _yv[0];
-        _yMax = _yv[ny - 1];
-
-        // Tabulate the function on the given grids
-        _fvv.resize(nx, ny);
-        for (size_t x = 0; x < nx; x++)
-            for (size_t y = 0; y < ny; y++) _fvv(x, y) = _ff(xv[x], yv[y]);
-    }
-
-    double SpecialFunctions::LookupTable2D::operator()(double x, double y) const
-    {
-        // If out of the tabulated range, calculate explicitly. TODO: option to provide an
-        // approximate "emergency" function that should be used when values are needed outside
-        // of the tabulated range.
-        if (x < _xMin || x > _xMax || y < _yMin || y > _yMax)
-        {
-            std::cout << "Lookup table out of range: << " << x << ", " << y << std::endl;
-            return _ff(x, y);
-        }
-
-        size_t iRight = TemplatedUtils::index(x, _xv);
-        if (iRight == 0) iRight = 1;
-        size_t iLeft = iRight - 1;
-
-        size_t iUpper = TemplatedUtils::index(y, _yv);
-        if (iUpper == 0) iUpper = 1;
-        size_t iLower = iUpper - 1;
-
-        return TemplatedUtils::interpolateBilinear(x, y, _xv[iLeft], _xv[iRight], _yv[iLower], _yv[iUpper],
-                                                   _fvv(iLeft, iLower), _fvv(iRight, iLower), _fvv(iLeft, iUpper),
-                                                   _fvv(iRight, iUpper));
-    }
 }

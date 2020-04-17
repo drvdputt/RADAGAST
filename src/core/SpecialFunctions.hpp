@@ -47,20 +47,6 @@ namespace GasModule
 
         double gauss(double x, double sigma);
         double inverse_gauss(double g, double sigma);
-
-        class LookupTable2D
-        {
-        public:
-            LookupTable2D(std::function<double(double, double)> ff);
-            void setup(const Array& xv, const Array& yv);
-            double operator()(double x, double y) const;
-
-        private:
-            std::function<double(double, double)> _ff;
-            Array _xv, _yv;
-            double _xMin{0}, _xMax{0}, _yMin{0}, _yMax{0};
-            Table<2> _fvv;
-        };
     }
 }
 #endif /* _SPECIALFUNCTIONS_ */
