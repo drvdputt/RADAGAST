@@ -12,6 +12,9 @@ namespace GasModule
         are defined here, with some standardized, readable failure messages. */
     namespace DoctestUtils
     {
+        // Option that makes some of my tests dump data to files, to do some manual
+        // checking/plotting of results.
+        const bool allowFileOutput = false;
 
         inline void checkRange(std::string quantityName, double value, double min, double max, bool warn = false)
         {

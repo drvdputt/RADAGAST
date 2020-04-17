@@ -377,8 +377,6 @@ namespace GasModule
         addToCvv(the_cvv, T, H2ORTHO, cp._orthoH2 * nH2);
         addToCvv(the_cvv, T, H2PARA, (1. - cp._orthoH2) * nH2);
 
-        // TODO: test if these are loaded correctly (compare with graph in Lee paper)
-
         // H+-H2 collisions
         double np = cp._sv.np();
         addToCvv(the_cvv, T, HPLUS, np);
