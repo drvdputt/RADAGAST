@@ -102,3 +102,23 @@ namespace GasModule
         // erg s-1 cm-3
     }
 }
+
+// Alternative for dissociation rate: maybe look at sterberg paper again, and use this old piece
+// of code somewhere:
+//
+// // See 2014-Sternberg eq 3
+// auto iv = *_specificIntensity.valuev();
+// auto nuv = *_specificIntensity.frequencyv();
+
+// // F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
+// Array photonFluxv = Constant::FPI * iv / nuv / Constant::PLANCK;
+// constexpr double freqLWmin{Constant::LIGHT / 1108 / Constant::ANGSTROM};
+// constexpr double freqLWmax{Constant::LIGHT / 912 / Constant::ANGSTROM};
+// size_t iLWmin{TemplatedUtils::index(freqLWmin, nuv)};
+// size_t iLWmax{TemplatedUtils::index(freqLWmax, nuv)};
+// double F0 = TemplatedUtils::integrate<double>(nuv, photonFluxv, iLWmin, iLWmax);
+
+// // eq 4 and 5
+// double Iuv{F0 / 2.07e7};
+// double result{5.8e-11 * Iuv};
+// return result;

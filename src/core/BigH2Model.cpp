@@ -63,32 +63,12 @@ namespace GasModule
 
     double BigH2Model::dissociationRate() const
     {
-#ifdef STERNBERG2014
-        // TODO: move this to simple h2 model
-        // See 2014-Sternberg eq 3
-        auto iv = *_specificIntensity.valuev();
-        auto nuv = *_specificIntensity.frequencyv();
-
-        // F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
-        Array photonFluxv = Constant::FPI * iv / nuv / Constant::PLANCK;
-        constexpr double freqLWmin{Constant::LIGHT / 1108 / Constant::ANGSTROM};
-        constexpr double freqLWmax{Constant::LIGHT / 912 / Constant::ANGSTROM};
-        size_t iLWmin{TemplatedUtils::index(freqLWmin, nuv)};
-        size_t iLWmax{TemplatedUtils::index(freqLWmax, nuv)};
-        double F0 = TemplatedUtils::integrate<double>(nuv, photonFluxv, iLWmin, iLWmax);
-
-        // eq 4 and 5
-        double Iuv{F0 / 2.07e7};
-        double result{5.8e-11 * Iuv};
-        return result;
-#else
         // use fractional abundances here to get dissociation rate in [s-1]
         EVector fv = _levelSolution.fv();
         double directFractional = _directDissociationRatev.dot(fv);
         double solomonFractional = _h2Data->dissociationProbabilityv().dot(fv);
         DEBUG("Dissociation: direct rate:" << directFractional << " solomon rate: " << solomonFractional << '\n');
         return directFractional + solomonFractional;
-#endif
     }
 
     double BigH2Model::dissociationHeating() const
