@@ -17,7 +17,10 @@ namespace GasModule
                                                Options::h2data_E_minV, Options::h2data_E_maxV);
     }
 
-    std::unique_ptr<HModel> SpeciesModelManager::makeHModel() const { return std::make_unique<HModel>(_hData.get()); }
+    std::unique_ptr<HModel> SpeciesModelManager::makeHModel(const Spectrum* specificIntensity) const
+    {
+        return std::make_unique<HModel>(_hData.get(), specificIntensity);
+    }
 
     std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model(const Spectrum* specificIntensity) const
     {

@@ -34,7 +34,7 @@ namespace GasModule
     void GasSolution::solveLevels()
     {
         CollisionParameters cp = {_t, _sv, _h2Solution->orthoPara()};
-        _hSolution->solve(nH(), cp, _specificIntensity);
+        _hSolution->solve(nH(), cp);
         _h2Solution->solve(nH2(), cp, _kGrainH2FormationRateCoeff * _sv.nH());
     }
 

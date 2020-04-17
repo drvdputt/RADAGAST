@@ -426,7 +426,8 @@ namespace GasModule
     GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
                                                   const GasModule::GrainInterface* gri) const
     {
-        // TODO: rethink how the GasSolution is passed around, taking the following into account:
+        // Since I keep forgetting why it is good to make a factory function return unique
+        // pointers, here is a reminder:
 
         // std::unique_ptr is the C++11 way to express exclusive ownership, but one of its most
         // attractive features is that it easily and efficiently converts to a std::shared_ptr.
@@ -445,7 +446,7 @@ namespace GasModule
 
         // Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
         // C++14. Scott Meyers.
-        std::unique_ptr<HModel> hm = _manager.makeHModel();
+        std::unique_ptr<HModel> hm = _manager.makeHModel(&specificIntensity);
         std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&specificIntensity);
         GasSolution s(gri, specificIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), _freeBound, _freeFree);
         return s;

@@ -2,13 +2,21 @@
 #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "EigenAliases.hpp"
 #include "Ionization.hpp"
 #include "LevelSolver.hpp"
+#include "Spectrum.hpp"
 #include "TwoPhoton.hpp"
 
 namespace GasModule
 {
-    void HModel::solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity)
+    HModel::HModel(const HData* hData, const Spectrum* specificIntensity)
+        : _hData{hData}, _specificIntensity{specificIntensity}, _levelSolution(_hData)
+    {
+        _ionizationRate = Ionization::photoRateCoeff(*specificIntensity);
+    }
+
+    void HModel::solve(double n, const CollisionParameters& cp)
     {
         _levelSolution.setT(cp._t);
 
@@ -21,11 +29,11 @@ namespace GasModule
         }
 
         EMatrix Cvv;
-        EMatrix Tvv = _hData->totalTransitionRatesvv(specificIntensity, cp, &Cvv);
+        EMatrix Tvv = _hData->totalTransitionRatesvv(*_specificIntensity, cp, &Cvv);
         _levelSolution.setCvv(Cvv);
 
         EVector the_sourcev = sourcev(cp);
-        EVector the_sinkv = sinkv(cp);
+        EVector the_sinkv = sinkv();
         DEBUG("Solving levels nH = " << n << std::endl);
         EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
         _levelSolution.setNv(newNv);
@@ -74,21 +82,15 @@ namespace GasModule
         return result * ne * np;
     }
 
-    EVector HModel::sinkv(const CollisionParameters& cp) const
+    EVector HModel::sinkv() const
     {
-        // TODO: ideally, this calculates the ionization rate from each level, using individual
-        // ionization cross sections.
-
-        // The ionization rate calculation makes no distinction between the levels. When the upper
-        // level population is small, and its decay rate is large, the second term doesn't really
-        // matter. Therefore, we choose the sink to be the same for each level. Moreover, total
-        // source = total sink so we want sink*n0 + sink*n1 = source => sink = totalsource / n
-        // because n0/n + n1/n = 1.
-        double ne = cp._sv.ne();
-        double np = cp._sv.np();
-        double nH = cp._sv.nH();
-        double totalSource = ne * np * Ionization::recombinationRateCoeff(cp._t);
-        double sink = totalSource / nH;  // Sink rate per (atom per cm3)
-        return EVector::Constant(_hData->numLv(), sink);
+        // The ionization rate calculation makes no distinction between the levels. When the
+        // upper level population is small, and its decay rate is large, the second term doesn't
+        // really matter. Therefore, only add a sink term for the ground state (however, I think
+        // the level solver replaces this equation by the conservation equation anyway, so it
+        // probably doesn't matter).
+        EVector result = EVector::Zero(_hData->numLv());
+        result[_hData->index(1, 0)] = _ionizationRate;
+        return result;
     }
 }

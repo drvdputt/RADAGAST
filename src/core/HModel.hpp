@@ -10,11 +10,14 @@ namespace GasModule
     {
     public:
         /** Pass a pointer to the HData object at construction, so that the constant H data and
-            functions can be accessed. */
-        HModel(const HData* hData) : _hData{hData}, _levelSolution(_hData) {}
+            functions can be accessed. A pointer to the radiation field is passed. This way,
+            some quantities can be precalculated, using the assumption that the radiation field
+            stays constant; with the added benefit that the function singatures become
+            smaller. */
+        HModel(const HData* hData, const Spectrum* specificIntensity);
 
         /** Solve the H levels, and store them in this object. */
-        void solve(double n, const CollisionParameters& cp, const Spectrum& specificIntensity);
+        void solve(double n, const CollisionParameters& cp);
 
         /** This function returns the line emission spectrum + the continuum emitted by the 2s-1s
             two-photon process. */
@@ -48,17 +51,19 @@ namespace GasModule
             s-1] */
         EVector sourcev(const CollisionParameters& cp) const;
 
-        /** Produces the sink term to be used by the equilibrium equations. In this case, hydrogen
-            disappears from the level populations because it's being ionized. In the current
-            implementation, all the ionization is assumed to be drawn equally from all levels.
-            TODO: add the effects of H2 formation in here?. Take care of this using actual
-            ionization cross sections? [s-1] */
-        EVector sinkv(const CollisionParameters& cp) const;
+        /** Produces the sink term to be used by the equilibrium equations. Currently, some
+            hydrogen disappears from the ground state because it's being ionized (ionization
+            from higher states is ignored). Any possible sink due to H2 formation is ignored
+            since it's much slower than the transitions between which we are trying to calculate
+            the balance. [s-1] */
+        EVector sinkv() const;
 
         /** This function calculates the two-photon continuum using Nussbaumer \& Smutz (1984). */
         Array twoPhotonEmissivityv(const Array& eFrequencyv) const;
 
         const HData* _hData;
+        const Spectrum* _specificIntensity;
+        double _ionizationRate{0.};
         LevelSolution _levelSolution;
     };
 }
