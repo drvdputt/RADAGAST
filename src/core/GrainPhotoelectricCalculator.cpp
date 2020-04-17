@@ -354,7 +354,7 @@ namespace GasModule
                 }
 
                 // cm s-1
-                double vbar = sqrt(8 * kT / Constant::PI / env._massv[j]);
+                double vbar = SpecialFunctions::meanThermalVelocity(env._T, env._massv[j]);
 
                 // cm-3 * cm s-1 * erg = cm-2 s-1 erg
                 lambdaG_for_this_z += env._densityv[j] * vbar * S * total;

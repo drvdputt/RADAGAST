@@ -252,6 +252,11 @@ namespace GasModule
         return Constant::FPI * std::pow(m / Constant::PI / twokT, 1.5) * v2 * std::exp(-m * v2 / twokT);
     }
 
+    double SpecialFunctions::meanThermalVelocity(double T, double m)
+    {
+        return sqrt(8. / Constant::PI * Constant::BOLTZMAN * T / m);
+    }
+
     double SpecialFunctions::planck(double nu, double T)
     {
         constexpr double twoPlanckOverCsquare = 2 * Constant::PLANCK / Constant::LIGHT / Constant::LIGHT;

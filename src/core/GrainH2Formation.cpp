@@ -1,4 +1,6 @@
 #include "GrainH2Formation.hpp"
+#include "Constants.hpp"
+#include "SpecialFunctions.hpp"
 
 namespace GasModule
 {
@@ -31,16 +33,13 @@ namespace GasModule
         double onePlusSqrtFrac = 1. + sqrtEHc_Es / sqrtEHp_Es;
 
         double Tgas_100 = Tgas / 100.;
-
-        // Use mean particle speed of Maxwell distribution, not RMS as suggested by comment in
-        // Cloudy source code.
-        double thermalVelocityH = sqrt(8. * Constant::BOLTZMAN / Constant::PI * Tgas / Constant::HMASS);
+        double vH = SpecialFunctions::meanThermalVelocity(Tgas, Constant::HMASS);
 
         for (size_t i = 0; i < numSizes; i++)
         {
             // Cross section of the grain. This needs to be an integrated quantity over the bin,
             // but lets approximate for now. TODO: integrated cross section for grains.
-            double Td{temperaturev[i]};  
+            double Td{temperaturev[i]};
             double sigmad{sizev[i]};
             sigmad *= sigmad * Constant::PI;
 
@@ -64,7 +63,7 @@ namespace GasModule
 
             // sigma_d * epsilon_H2 * S_h. Needs to be multiplied with the grain number density
             // later
-            double product = 0.5 * thermalVelocityH * sigmad * epsilon * S;
+            double product = 0.5 * vH * sigmad * epsilon * S;
             if (std::isfinite(product)) formationPerGrainPerHPerSizev[i] = product;
             // Else it will stay 0
         }

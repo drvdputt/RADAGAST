@@ -23,6 +23,11 @@ namespace GasModule
             probability density per velocity unit, the unit of the result is s / cm. */
         double maxwellBoltzman(double v, double T, double m);
 
+        /** Mean particle velocity of Maxwell distribution. Typical use is a v-factor for the
+            rate of a collisional process (e.g. grain charging, grain H2 formation). Note that
+            this is not the same as the RMS velocity. */
+        double meanThermalVelocity(double T, double m);
+
         /** This function evaluates Planck's law at a frequency nu, for a photon gas of temperature
             T. The result is the specific intensity in cgs: erg / s / cm^2 / sr / Hz. */
         double planck(double nu, double T);
