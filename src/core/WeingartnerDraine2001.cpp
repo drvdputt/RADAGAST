@@ -202,13 +202,13 @@ namespace GasModule
         return 0.5 * (-expm1(-a / le)) / (1 + exp(20 - NC));
     }
 
-    double WD01::stickingCoefficient_cached(double a, int z, int z_i, bool carbonaceous, double estick_cached_positive,
-                                            double estick_cached_negative)
+    double WD01::stickingCoefficient_cached(double a, int z, int zParticle, bool carbonaceous,
+                                            double estick_cached_positive, double estick_cached_negative)
     {
         // ions
-        if (z_i >= 0) return 1;
+        if (zParticle >= 0) return 1;
         // electrons
-        else if (z_i == -1)
+        else if (zParticle == -1)
         {
             // negative and neutral grains
             if (z <= 0)
@@ -227,11 +227,11 @@ namespace GasModule
             return 0;
     }
 
-    double WD01::stickingCoefficient(double a, int z, int z_i, bool carbonaceous)
+    double WD01::stickingCoefficient(double a, int z, int zParticle, bool carbonaceous)
     {
         double the_estick_positive = estick_positive(a);
         double the_estick_negative = estick_negative(a);
-        return stickingCoefficient_cached(a, z, z_i, carbonaceous, the_estick_positive, the_estick_negative);
+        return stickingCoefficient_cached(a, z, zParticle, carbonaceous, the_estick_positive, the_estick_negative);
     }
 
     double WD01::lambdaTilde(double tau, double nu)
