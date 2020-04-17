@@ -2,6 +2,7 @@
 #define CORE_HYDROGENFROMFILES_HPP
 
 #include "Array.hpp"
+#include "CollisionData.hpp"
 #include "HData.hpp"
 #include <map>
 #include <vector>
@@ -159,19 +160,11 @@ namespace GasModule
         // Anderson collision data
         // -----------------------
 
-        // The entries are the collision strength (dimensionless), at different temperature points
-        // as listed in the Anderson data file. The Anderson data only lists downward collisions.
-        // We store each collision strength between to levels as a function of the temperature
-        // using a map. This map is indexed on pairs of integers: {upper Anderson index, lower
-        // Anderson index}. The arrays contained in it are indexed the same way as the temperature
-        // points listed in _andersonTempv.
-        std::map<std::array<int, 2>, Array> _andersonUpsilonvm;
-
-        // Temperatures for anderson data (eV). TODO: use CollisionData class instead.
-        Array _andersonTempv{{0.5, 1.0, 3.0, 5.0, 10.0, 15.0, 20.0, 25.0}};
-
         // Map from {n, l} to the indices used in the Anderson data
         std::map<std::array<int, 2>, int> _nlToAndersonIndexm;
+
+        // Store the data using this class
+        CollisionData _qdataAnderson;
 
         // Misc
         // ----

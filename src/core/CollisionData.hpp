@@ -52,7 +52,8 @@ namespace GasModule
         /** Get a list of all the transitions (initial, final) that were inserted. */
         const std::vector<std::array<int, 2>>& transitionv() const { return _transitionv; }
 
-        /** Get the data entry for the transition i -> f, for the temperature at index iT. */
+        /** Get the data entry for the transition i -> f, for the temperature at index iT.
+            Returns 0 if no data was inserted for i -> f. */
         double q(int iT, int i, int f) const;
 
         /** Directly access by transtion index. These are handy if you're iterating over the

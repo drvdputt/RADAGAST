@@ -49,7 +49,13 @@ namespace GasModule
 
     double CollisionData::q(int iT, int i, int f) const
     {
-        int transitionIndex = _transitionToColm.at({i, f});
-        return _qvv(iT, transitionIndex);
+        auto mapEntry = _transitionToColm.find({i, f});
+        if (mapEntry == _transitionToColm.end())
+            return 0.;
+        else
+        {
+            int transitionIndex = mapEntry->second;
+            return _qvv(iT, transitionIndex);
+        }
     }
 }
