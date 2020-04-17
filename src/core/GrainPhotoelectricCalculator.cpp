@@ -5,6 +5,7 @@
 #include "IOTools.hpp"
 #include "Options.hpp"
 #include "RadiationFieldTools.hpp"
+#include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
