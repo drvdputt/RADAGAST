@@ -167,9 +167,10 @@ namespace GasModule
             available */
         const std::vector<int>& levelsWithCrossSectionv() const { return _levelsWithCrossSectionv; }
 
-        /** return the distribution of newly formed hydrogen over the electronic ground state.
-            For now, we use equation 19 from Draine and Bertoldi (1996), which does not depend
-            on grain properties. */
+        /** Return the distribution of newly formed hydrogen into each level of the electronic
+            ground state. Normalized to 1. For now, we use equation 19 from Draine and Bertoldi
+            (1996), which does not depend on grain properties. Alternatively, the recipe from
+            Takahashi (2001) could be used. */
         EVector formationDistribution() const;
 
     private:

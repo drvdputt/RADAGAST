@@ -33,7 +33,6 @@ namespace GasModule
         _tvv = _h2Data->totalTransitionRatesvv(*_specificIntensity, cp, &_cvv, &_bpvv);
         _levelSolution.setCvv(_cvv);
 
-        // TODO: Use better formation pumping recipe
         EVector sourcev = EVector::Zero(_h2Data->numLv());
         sourcev.head(_h2Data->startOfExcitedIndices()) = _h2Data->formationDistribution();
         sourcev *= h2form / sourcev.sum();
