@@ -5,6 +5,7 @@
 #include "IOTools.hpp"
 #include "Options.hpp"
 #include "RadiationFieldTools.hpp"
+#include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include "WeingartnerDraine2001.hpp"
@@ -29,12 +30,21 @@ namespace GasModule
         }
     }
 
-    GrainPhotoelectricCalculator::Locals::Locals(const Spectrum* specificIntensity, double T, double ne,
-                                                 const std::vector<int>& chargev, const Array& densityv,
-                                                 const Array& massv)
-        : _specificIntensity(specificIntensity), _T(T), _ne(ne), _chargev(chargev), _densityv(densityv), _massv(massv),
-          _integrationWorkspace(specificIntensity->numPoints())
-    {}
+    // these are the same for all instances of Locals
+    const int GrainPhotoelectricCalculator::Locals::_ie{0};
+    const int GrainPhotoelectricCalculator::Locals::_ip{1};
+    const int GrainPhotoelectricCalculator::Locals::_iH{2};
+    const int GrainPhotoelectricCalculator::Locals::_iH2{3};
+    const std::array<int, 4> GrainPhotoelectricCalculator::Locals::_chargev{-1, 1, 0, 0};
+    const std::array<double, 4> GrainPhotoelectricCalculator::Locals::_massv{
+        Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS, 2 * Constant::HMASS};
+
+    GrainPhotoelectricCalculator::Locals::Locals(const Spectrum* specificIntensity, double T, const SpeciesVector& sv)
+        : _specificIntensity(specificIntensity), _T(T), _integrationWorkspace(specificIntensity->numPoints())
+    {
+        // these are different every time a new Locals is created
+        _densityv = {sv.ne(), sv.np(), sv.nH(), sv.nH2()};
+    }
 
     int GrainPhotoelectricCalculator::minimumCharge(int i) const
     {
@@ -268,14 +278,14 @@ namespace GasModule
         double particleSum = 0;
         for (size_t j = 0; j < env._chargev.size(); j++)
         {
-            int z_j = env._chargev[j];
-            if (z_j)
+            int zParticle = env._chargev[j];
+            if (zParticle)
             {
                 // tau = akT / q^2 (WD01 eq 26)
-                double tau = a * kT / z_j / z_j / Constant::ESQUARE;
+                double tau = a * kT / (zParticle * zParticle * Constant::ESQUARE);
                 double Zsum = cd.sumOverCharge([&](int zGrain) {
-                    double ksi = zGrain / static_cast<double>(z_j);
-                    return stickingCoefficient(i, zGrain, z_j) * WD01::lambdaTilde(tau, ksi);
+                    double ksi = zGrain / static_cast<double>(zParticle);
+                    return stickingCoefficient(i, zGrain, zParticle) * WD01::lambdaTilde(tau, ksi);
                 });
                 particleSum += env._densityv[j] * sqrt(eightkT3DivPi / env._massv[j]) * Zsum;
             }
@@ -289,7 +299,8 @@ namespace GasModule
         // minimumCharge, (and Zmin > minimumCharge).
         int zmin = cd.zmin();
         if (zmin == minimumCharge(i))
-            secondTerm = cd.value(zmin) * collisionalChargingRate(i, env._T, zmin, -1, Constant::ELECTRONMASS, env._ne)
+            secondTerm = cd.value(zmin)
+                         * collisionalChargingRate(i, env._T, zmin, -1, Constant::ELECTRONMASS, env._densityv[env._ie])
                          * ionizationPotential(i, zmin - 1);
 
         return Constant::PI * a * a * particleSum * kT + secondTerm;
@@ -308,11 +319,11 @@ namespace GasModule
             // Not entirely sure if this is the right potential
             double Ug = ionizationPotential(i, zGrain);
             double Vg = sqrt(Constant::ESQUARE) * Ug;
-            for (size_t j = 0; j < env._massv.size(); j++)
+            for (size_t j = 0; j < env._chargev.size(); j++)
             {
                 // Dimensionless
-                int z_j = env._chargev[j];
-                double ZVg = z_j * Vg;
+                int zParticle = env._chargev[j];
+                double ZVg = zParticle * Vg;
                 double psi = ZVg / kT;
                 double eta = psi <= 0 ? 1 - psi : exp(-psi);
                 double ksi = psi <= 0 ? 1 - psi / 2 : (1 + psi / 2) * exp(-psi);
@@ -321,33 +332,32 @@ namespace GasModule
 
                 // energy carried away by evaporation of the neutralized/thermalized version of the
                 // colliding particle (does not count for electrons, see text below eq 29)
-                if (env._chargev[j] >= 0) total -= 2 * kTgrain * eta;
+                if (j != env._ie) total -= 2 * kTgrain * eta;
 
                 if (forGrain)
                 {
                     // A charged particle will slow down or speed up before it hits a charged grain
                     total -= ZVg * eta;
 
-                    // when protons charge the grain, this means they recombine on the surface (not
-                    // included in chemical network yet though). The recombination energy needs to
-                    // go somewhere, so the grain gets extra heat. TODO: don't hardcode these
-                    // things like this. For now this is not a problem because the proton is the
-                    // only particle with charge 1. I'm pretty sure using 1 rydberg (= 13.6 eV =
-                    // ionization potential) is fine here.
-                    if (env._chargev[j] == 1) total += Constant::RYDBERG * eta;
+                    // when protons charge the grain, this means they recombine on the surface
+                    // (not included in chemical network yet though). The recombination energy
+                    // needs to go somewhere, so the grain gets extra heat. I'm pretty sure
+                    // using 1 rydberg (= 13.6 eV = ionization potential) is fine here.
+                    if (j == env._ip) total += Constant::RYDBERG * eta;
                 }
 
                 double S = 0.;
-                if (z_j)
+                if (zParticle)
                 {
-                    S = stickingCoefficient(i, zGrain, env._chargev[j]);
+                    // For charged particles, use the same sticking coefficient that was used
+                    // for the charging rates (for consistency).
+                    S = stickingCoefficient(i, zGrain, zParticle);
                 }
                 else
                 {
-                    // TODO: for neutral particles, S needs to be the accomodation coefficient
-                    // instead of the sticking coefficient. Baldwin states that it should be mM /
-                    // (m^2 + M^2) and references Draine (1978), with M the mass of a typical atom
-                    // in the grain.
+                    // For neutral particles, S needs to be an accomodation coefficient instead.
+                    // Baldwin states that it should be mM / (m^2 + M^2) and references Draine
+                    // (1978), with M the mass of a typical atom in the grain.
                     double m = env._massv[j];
                     double M = WD01::atomMass(_carOrSil);
                     S = m * M / (m * m + M * M);
@@ -423,7 +433,11 @@ namespace GasModule
 
         // Gather environment parameters
         const Spectrum specificIntensity(frequencyv, specificIntensityv);
-        Locals env(&specificIntensity, gasT, ne, {-1, 1}, {ne, ne}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
+        SpeciesIndex spindex = SpeciesIndex::makeDefault();
+        SpeciesVector sv(&spindex);
+        sv.setNe(ne);
+        sv.setNp(ne);
+        Locals env(&specificIntensity, gasT, sv);
 
         // File that writes out the absorption efficiency, averaged using the input radiation field
         // as weights.
@@ -455,7 +469,7 @@ namespace GasModule
                      << a / Constant::ANGSTROM << ".txt";
             stringstream header;
             header << "# a = " << a << '\n';
-            header << "# ne = " << env._ne << '\n';
+            header << "# ne = " << env._densityv[env._ie] << '\n';
             header << "# Tgas = " << env._T << '\n';
             cd.plot(filename.str(), header.str());
 
@@ -484,7 +498,11 @@ namespace GasModule
         Array frequencyv, specificIntensityv;
         testSpectrum(G0, frequencyv, specificIntensityv);
         Spectrum specificIntensity(frequencyv, specificIntensityv);
-        Locals env(&specificIntensity, gasT, ne, {-1, 1}, {ne, np}, {Constant::ELECTRONMASS, Constant::PROTONMASS});
+        auto spindex = SpeciesIndex::makeDefault();
+        SpeciesVector sv(&spindex);
+        sv.setNe(ne);
+        sv.setNp(np);
+        Locals env(&specificIntensity, gasT, sv);
 
         double a = _sizev[0];
         // Qabs for each frequency

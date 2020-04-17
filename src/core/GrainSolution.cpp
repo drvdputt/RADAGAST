@@ -24,9 +24,7 @@ namespace GasModule
     void GrainSolution::recalculate(const Spectrum* specificIntensity, double T, const SpeciesVector& sv)
     {
         _specificIntensity = specificIntensity;
-        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(
-            specificIntensity, T, sv.ne(), {-1, 1, 0, 0}, {sv.ne(), sv.np(), sv.nH(), sv.nH2()},
-            {Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS, 2 * Constant::HMASS});
+        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(specificIntensity, T, sv);
 
         if (_population->h2formationData())
             _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(),

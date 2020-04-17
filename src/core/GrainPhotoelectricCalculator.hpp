@@ -4,6 +4,7 @@
 #include "ChargeDistribution.hpp"
 #include "Constants.hpp"
 #include "GrainInterface.hpp"
+#include "SpeciesIndex.hpp"
 #include "Spectrum.hpp"
 #include <functional>
 #include <vector>
@@ -35,22 +36,23 @@ namespace GasModule
 
             /** This constructor creates an environment struct for the photoelectric heating
                 calculation. It takes a frequency grid, a specific intensity of the ambient
-                radiation field for each of those frequencies, a gas temperature, an electron an
-                proton density, and then three lists which specify the particles which participate
-                in the charging of the grains. A list of particle charges, number densities and a
-                list containing the mass of each particle type should be provided. Also include
-                negative particles, as they are important for gasGrainCollisionCooling(). */
-            Locals(const Spectrum* specificIntensity, double T, double ne, const std::vector<int>& chargev,
-                   const Array& densityv, const Array& massv);
+                radiation field for each of those frequencies, a gas temperature, and the
+                species densities. From the latter, the most important densities are extracted
+                (ne, np, nH, nH2), and those densities and those densities are placed in an
+                array at the same indices as the charges and masses, for easy iteration over the
+                relevant species. */
+            Locals(const Spectrum* specificIntensity, double T, const SpeciesVector& sv);
 
         private:
             const Spectrum* _specificIntensity{nullptr};
-            double _T{0.}, _ne{0.};
-            std::vector<int> _chargev;
-            Array _densityv, _massv;
-            // Workspace for the various integrations. This is not a member of
-            // GrainPhotoelectricCalculator, because we do not assume that the radiation field size
-            // stays the same.
+            double _T{0.};
+            static const int _ie, _ip, _iH, _iH2;
+            static const std::array<int, 4> _chargev;
+            static const std::array<double, 4> _massv;
+            std::array<double, 4> _densityv;
+            // Workspace for the various integrations. This might become a member of
+            // GrainPhotoelectricCalculator later, since a new instance of it is made every time
+            // a new GasSolution (and hence GrainSolution) is constructed.
             Array _integrationWorkspace;
         };
 
