@@ -173,9 +173,8 @@ namespace GasModule
         }
         _numL = _levelOrdering.size();
 
-        _totalAv = EVector::Zero(_numL);
-        for (size_t i = 0; i < _numL; i++)
-            for (size_t f = 0; f < _numL; f++) _totalAv[i] += einsteinA(_levelOrdering[i], _levelOrdering[f]);
+        // Total transition rate from each level = sum over each row
+        _totalAv = makeAvv().rowwise().sum();
     }
 
     size_t HFromFiles::index(int n, int l) const
@@ -202,32 +201,31 @@ namespace GasModule
 
     EMatrix HFromFiles::makeAvv() const
     {
-        EMatrix the_avv(_numL, _numL);
-        for (size_t i = 0; i < _numL; i++)
+        EMatrix the_avv = EMatrix::Zero(_numL, _numL);
+
+        // algorithm: for each transition coefficient available from the data (nlj-resolved),
+        // find out the corresponding indices in our Avv matrix, and add the coefficient with
+        // the right weight.
+        int numLevelsFromData = _chiantiLevelv.size();
+        for (int i = 0; i < numLevelsFromData; i++)
         {
-            const HydrogenLevel& initial = _levelOrdering[i];
-            int ni = initial.n();
-            int li = initial.l();
-            for (size_t f = 0; f < _numL; f++)
+            // When combining different initial (upper) levels, the coefficients for decay to a
+            // specific final (lower) level need to be averaged using the statistical weights g
+            // of the original levels, relative to the collapsed level (note that sum of
+            // g_original = g_collapsed). This is based on the assumption that the populations
+            // are statistically distributed.
+            int iTarget = index(_chiantiLevelv[i].n(), _chiantiLevelv[i].l());
+            double weight = _chiantiLevelv[i].g() / _levelOrdering[iTarget].g();
+
+            for (int f = 0; f < numLevelsFromData; f++)
             {
-                const HydrogenLevel& final = _levelOrdering[f];
-                int nf = final.n();
-                int lf = final.l();
-                // Both resolved
-                if (initial.nlResolved() && final.nlResolved()) the_avv(i, f) = einsteinA(ni, li, nf, lf);
-                // Collapsed to resolved
-                else if (initial.nCollapsed() && final.nlResolved())
-                    the_avv(i, f) = einsteinA(ni, nf, lf);
-                // Resolved to collapsed should not exist (downward) or be zero (upward).
-                else if (initial.nlResolved() && final.nCollapsed())
-                {
-                    // The collapsed-collapsed equivalent should always be 0 in this case
-                    the_avv(i, f) = einsteinA(ni, nf);
-                    assert(the_avv(i, f) == 0.);
-                }
-                // Collapsed to collapsed
-                else
-                    the_avv(i, f) = einsteinA(ni, nf);
+                // When combining different lower levels, the coefficients for decay from a
+                // specific upper level simply need to be summed (the total arrival rate into
+                // the lower level is the sum of the arrival rates into the other levels). We do
+                // not need to check the collapse scheme (fTarget will point to the same level
+                // multiple times, if coefficients need to be summed).
+                int fTarget = index(_chiantiLevelv[f].n(), _chiantiLevelv[f].l());
+                the_avv(iTarget, fTarget) += weight * _chiantiAvv(i, f);
             }
         }
         return the_avv;
@@ -406,73 +404,6 @@ namespace GasModule
         double esum = 0;
         for (int l = 0; l < n; l++) esum += energy(n, l) * (2 * l + 1);
         return esum / (n * n);
-    }
-
-    double HFromFiles::einsteinA(int ni, int li, int nf, int lf) const
-    {
-        if (ni < nf)
-            return 0.;
-        else
-        {
-            double Asum = 0;
-            // sum over the final j states
-            for (int twoJplus1f : twoJplus1range(lf))
-            {
-                int lIndex = indexCHIANTI(nf, lf, twoJplus1f);
-
-                // average over the initial j states
-                for (int twoJplus1i : twoJplus1range(li))
-                {
-                    int uIndex = indexCHIANTI(ni, li, twoJplus1i);
-                    Asum += _chiantiAvv(uIndex, lIndex) * twoJplus1i;
-                }
-            }
-            // divide by multiplicity of li state to get the average
-            return Asum / (4 * li + 2);
-        }
-    }
-
-    double HFromFiles::einsteinA(int ni, int nf, int lf) const
-    {
-        // average over the initial l states
-        double Asum = 0;
-        for (int li = 0; li < ni; li++) Asum += einsteinA(ni, li, nf, lf) * (2 * li + 1);
-        return Asum / (ni * ni);
-    }
-
-    double HFromFiles::einsteinA(int ni, int nf) const
-    {
-        // sum over the final l states
-        double Asum = 0;
-        for (int lf = 0; lf < nf; lf++) Asum += einsteinA(ni, nf, lf);
-        return Asum;
-    }
-
-    double HFromFiles::einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const
-    {
-        // No output for upward transitions
-        if (initial.e() < final.e())
-            return 0;
-        else
-        {
-            // Resolved-resolved
-            if (initial.nlResolved() && final.nlResolved())
-                return einsteinA(initial.n(), initial.l(), final.n(), final.l());
-            // Collapsed-resolved
-            else if (initial.nCollapsed() && final.nlResolved())
-                return einsteinA(initial.n(), final.n(), final.l());
-            // Resolved-collapsed (should not be called, and if it is, the collapsed-collapsed
-            // result should be zero).
-            else if (initial.nlResolved() && final.nCollapsed())
-            {
-                double a = einsteinA(initial.n(), final.n());
-                assert(a == 0);
-                return a;
-            }
-            // Collapsed-collapsed
-            else
-                return einsteinA(initial.n(), final.n());
-        }
     }
 
     double HFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T) const

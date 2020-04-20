@@ -62,7 +62,7 @@ namespace GasModule
             int twoJplus1() const { return _twoJplus1; }
             double e() const { return _e; }
 
-            /** Degeneracy of the level. */
+            /** Degeneracy of the level. Double because ratios of different g are often used. */
             double g() const
             {
                 if (nCollapsed())
@@ -119,16 +119,6 @@ namespace GasModule
         /** Collapsed version */
         double energy(int n) const;
 
-        /** Return the merged A coefficient using the values read in from the CHIANTI database.
-            These are collapsed over the different j-values. [s-1] */
-        double einsteinA(int ni, int li, int nf, int lf) const;
-        /** With the initial level collapsed */
-        double einsteinA(int ni, int nf, int lf) const;
-        /** With initial and final levels collapsed */
-        double einsteinA(int ni, int nf) const;
-        /** Version that automatically uses the correct overload */
-        double einsteinA(const HydrogenLevel& initial, const HydrogenLevel& final) const;
-
         /** Return the the total electron collision strength (Upsilon [dimensionless]). For the
             moment, there are only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt.
             Phys., 2002, 35, 1613). Note that only queries for downward (in energy) transitions
@@ -145,8 +135,8 @@ namespace GasModule
         // Chianti data
         // ------------
 
-        // Store the information about the levels in a vector. The index of a level in this vector
-        // is the number in the first column of the CHIANTI .elvlc file minus 1.
+        // The levels, stored as they were read in (j-resolved). The index of a level in this
+        // vector is the number in the first column of the CHIANTI .elvlc file minus 1.
         std::vector<HydrogenLevel> _chiantiLevelv;
 
         // The Einstein A coefficients read in from the wgfa file from CHIANTI
