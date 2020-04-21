@@ -69,10 +69,6 @@ namespace GasModule
         void evaluateJvv(double* JvvOutputRowMajor, const double* nv, const EVector& rateCoeffv, EMatrix& Jkvv) const;
 
     private:
-        // Turn list of reactions into coefficient matrices
-        EMatrix_int makeReactantStoichvv() const;
-        EMatrix makeProductStoichvv() const;
-
         /** Solve the chemistry by evolving the system until equilibrium. */
         EVector solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const;
 
@@ -87,22 +83,37 @@ namespace GasModule
         // Keep track of index for each species name.
         SpeciesIndex _speciesIndex;
 
-        typedef struct Reaction
+        class Reaction
         {
+        public:
+            /** Create a new reaction which can be used in Chemistry. The names and numbers
+                stored are processed when Chemistry::prepareCoefficients() is called. The
+                exponents for the reactant densities in the reaction speed formula will be set
+                to their stoichiometric coefficient. (e.g. exponent of nH would be 2 if 2H -> H2
+                was a reaction). */
             Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
-                     const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv)
-                : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv}, _pCoeffv{pCoeffv}
-            {}
-            std::vector<std::string> _rNamev, _pNamev;
-            std::vector<int> _rCoeffv;
-            std::vector<double> _pCoeffv;
-        } Reaction;
+                     const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv);
+
+            /** Create a new reaction with custom exponents for the reactant densities. The last
+                argument needs to have the same size as rNamev and rCoeffv. Exponents are
+                integer since it's faster and currently we don't need real ones. */
+            Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
+                     const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv,
+                     const std::vector<int>& rPowerv);
+
+            const std::vector<std::string> _rNamev, _pNamev;
+            const std::vector<int> _rCoeffv;
+            const std::vector<double> _pCoeffv;
+            const std::vector<int> _rPowerv;
+        };
+
         std::vector<Reaction> _reactionv;
         std::map<std::string, int> _reactionIndexm;
 
-        // Filled in by prepareCoefficients()
-        EMatrix_int _rStoichvv;
-        EMatrix _netStoichvv;
+        // Filled in by prepareCoefficients(), indexed on (species, reaction)
+        EMatrix_int _rStoichvv;  // reactant coefficients
+        EMatrix_int _rPowervv;   // reactant density power in reaction speed
+        EMatrix _netStoichvv;    // product - reactant coefficients
         size_t _numSpecies;
         int _numReactions;
     };

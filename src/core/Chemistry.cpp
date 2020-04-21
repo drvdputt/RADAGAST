@@ -61,9 +61,33 @@ namespace GasModule
     void Chemistry::prepareCoefficients()
     {
         _numSpecies = _speciesIndex.size();
-        _rStoichvv = makeReactantStoichvv();
-        _netStoichvv = makeProductStoichvv() - _rStoichvv.cast<double>();
-        _numReactions = _rStoichvv.cols();
+        _numReactions = _reactionv.size();
+
+        // coefficients on left side
+        _rStoichvv = EMatrix_int::Zero(_numSpecies, _numReactions);
+        // power of species in reaction speed density product
+        _rPowervv = EMatrix_int::Zero(_numSpecies, _numReactions);
+        // coefficients on the right - those on the left
+        _netStoichvv = EMatrix::Zero(_numSpecies, _numReactions);
+
+        // for every reaction
+        for (size_t r = 0; r < _reactionv.size(); r++)
+        {
+            // for every reactant
+            for (size_t i = 0; i < _reactionv[r]._rNamev.size(); i++)
+            {
+                int s = _speciesIndex.index(_reactionv[r]._rNamev[i]);
+                _rStoichvv(s, r) = _reactionv[r]._rCoeffv[i];
+                _rPowervv(s, r) = _reactionv[r]._rPowerv[i];
+                _netStoichvv(s, r) -= _reactionv[r]._rCoeffv[i];
+            }
+            // for every product
+            for (size_t i = 0; i < _reactionv[r]._pNamev.size(); i++)
+            {
+                int s = _speciesIndex.index(_reactionv[r]._pNamev[i]);
+                _netStoichvv(s, r) += _reactionv[r]._pCoeffv[i];
+            }
+        }
     }
 
     int Chemistry::reactionIndex(const std::string& reactionName) const { return _reactionIndexm.at(reactionName); }
@@ -104,34 +128,6 @@ namespace GasModule
         // (d f_i / d_nj) = sum_r S_ir * (d k_r / d n_j). EMatrixRM has to be used because GSL stores
         // dfdy in row major order.
         Eigen::Map<EMatrixRM>(JvvDataRowMajor, _numSpecies, _numSpecies).noalias() = _netStoichvv * Jkvv;
-    }
-
-    EMatrix_int Chemistry::makeReactantStoichvv() const
-    {
-        EMatrix_int R = EMatrix_int::Zero(_numSpecies, _reactionv.size());
-        for (size_t r = 0; r < _reactionv.size(); r++)
-        {
-            for (size_t i = 0; i < _reactionv[r]._rNamev.size(); i++)
-            {
-                int s = _speciesIndex.index(_reactionv[r]._rNamev[i]);
-                R(s, r) = _reactionv[r]._rCoeffv[i];
-            }
-        }
-        return R;
-    }
-
-    EMatrix Chemistry::makeProductStoichvv() const
-    {
-        EMatrix P = EMatrix::Zero(_numSpecies, _reactionv.size());
-        for (size_t r = 0; r < _reactionv.size(); r++)
-        {
-            for (size_t i = 0; i < _reactionv[r]._pNamev.size(); i++)
-            {
-                int s = _speciesIndex.index(_reactionv[r]._pNamev[i]);
-                P(s, r) = _reactionv[r]._pCoeffv[i];
-            }
-        }
-        return P;
     }
 
     EVector Chemistry::solveTimeDep(const EVector& rateCoeffv, const EVector& n0v, double maxTime) const
@@ -275,4 +271,16 @@ namespace GasModule
             }
         }
     }
+
+    Chemistry::Reaction::Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
+                                  const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv)
+        : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv}, _pCoeffv{pCoeffv}, _rPowerv{rCoeffv}
+    {}
+
+    Chemistry::Reaction::Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
+                                  const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv,
+                                  const std::vector<int>& rPowerv)
+        : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv}, _pCoeffv{pCoeffv}, _rPowerv{rPowerv}
+    {}
+
 }
