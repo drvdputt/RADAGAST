@@ -32,11 +32,8 @@ namespace GasModule
         // H2 -> H + H
         addReaction("H2 dissociation", {"H2"}, {1}, {"H"}, {2});
 
-        // H2 formation on grain surfaces H + H -> H2. Need to put 1 here for the H stoichiometry,
-        // because the rate scales with nH instead of nH^2 (see rateCoeffv()). By then using twice
-        // (not the word 'half' in the label) the reaction rate, we end up with an equal tempo of
-        // H2 formation, but one that scales only linearly with nH. TODO: find a way around the 0.5
-        // coefficient, so that I can use integer coefficients
+        // H2 formation on grain surfaces grain + 2H -> H2. Need to overide the power of nH by 1
+        // (see last argument), otherwise the rate will scale as nH * nH.
         addReaction("H2 formation", {"H"}, {2}, {"H2"}, {1}, {1});
 
         prepareCoefficients();
