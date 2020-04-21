@@ -110,15 +110,12 @@ namespace GasModule
         //---------------------//
         // READ COLLISION DATA //
         //---------------------//
-        int andersonIndex = 1;
+
+        // Set up index -> nl translation for the Anderson data. Subtract 1 when using an index
+        // from the file!
         for (int n = 0; n <= cNMAX; n++)
-        {
             for (int l = 0; l < n; l++)
-            {
-                _nlToAndersonIndexm.insert({{n, l}, andersonIndex});
-                andersonIndex++;
-            }
-        }
+                _andersonIndexm1ToNLv.push_back({n, l});
 
         ifstream h_coll_str = IOTools::ifstreamRepoFile("dat/h_coll_str.dat");
         getline(h_coll_str, line);
@@ -271,33 +268,48 @@ namespace GasModule
 
     EMatrix HFromFiles::cvv(const CollisionParameters& cp) const
     {
-        // Calculate the temperature in erg and in electron volt
         double T = cp._t;
         double kT = Constant::BOLTZMAN * T;
 
         EMatrix the_cvv = EMatrix::Zero(_numL, _numL);
+
         // Electron contributions (n-changing)
         double ne = cp._sv.ne();
         if (ne > 0)
         {
-            for (size_t i = 0; i < _numL; i++)
+            // interpolate the collision strength data in temperature space
+            Array UpsilonDownv = _qdataAnderson.qv(T);
+
+            // process the interpolated data
+            int numTransitions = _qdataAnderson.transitionv().size();
+            for (int transitionIndex = 0; transitionIndex < numTransitions; transitionIndex++)
             {
-                const HydrogenLevel& ini = _levelOrdering[i];
-                for (size_t f = 0; f < _numL; f++)
-                {
-                    const HydrogenLevel& fin = _levelOrdering[f];
-                    // For downward transitions, calculate the collision rate, and derive the
-                    // rate for the corresponding upward transition too
-                    if (ini.e() > fin.e())
-                    {
-                        double UpsilonDown = eCollisionStrength(ini, fin, T);
-                        double Cif = UpsilonDown * 8.6291e-6 / ini.g() / sqrt(T) * ne;
-                        double Cfi = Cif * ini.g() / fin.g() * exp((fin.e() - ini.e()) / kT);
-                        the_cvv(i, f) += Cif;
-                        the_cvv(f, i) += Cfi;
-                    }
-                    // for upward transitions do nothing because we already covered them above
-                }
+                // get initial and final n,l and the corresponding degeneracy
+                int iData = _qdataAnderson.transitionv()[transitionIndex][0];
+                int ni = _andersonIndexm1ToNLv[iData - 1][0];
+                int li = _andersonIndexm1ToNLv[iData - 1][1];
+                double gi = 4 * li + 2;
+
+                int fData = _qdataAnderson.transitionv()[transitionIndex][1];
+                int nf = _andersonIndexm1ToNLv[fData - 1][0];
+                int lf = _andersonIndexm1ToNLv[fData - 1][1];
+                double gf = 4 * li + 2;
+
+                // get initial and final index where the contribution needs to go
+                int iTarget = index(ni, li);
+                int fTarget = index(nf, lf);
+
+                // upward and downward rates, derived from the interpolated collision strength
+                double rateDown = UpsilonDownv[transitionIndex] * 8.6291e-6 / (gi * sqrt(T)) * ne;
+                double rateUp =
+                    rateDown * gi / gf * exp((_levelOrdering[fTarget].e() - _levelOrdering[iTarget].e()) / kT);
+
+                // analogously to makeAvv(), add these numbers to the transition matrix at the
+                // right position and with the right weights
+                double iWeight = gi / _levelOrdering[iTarget].g();
+                double fWeight = gf / _levelOrdering[fTarget].g();
+                the_cvv(iTarget, fTarget) += iWeight * rateDown;
+                the_cvv(fTarget, iTarget) += fWeight * rateUp;
             }
         }
 
@@ -307,8 +319,8 @@ namespace GasModule
         {
             for (int n = 0; n <= _resolvedUpTo; n++)
             {
-                /* The formulae of PS64 are implemented separately. The result is indexed on
-			   li, lf. */
+                // The formulae of PS64 are implemented separately. The result is indexed on li,
+                // lf.
                 EMatrix qvv = PS64CollisionRateCoeff(n, T, np);
                 // Fill in the collision rates for all combinations of li lf
                 for (int li = 0; li < n; li++)
@@ -317,15 +329,14 @@ namespace GasModule
                     for (int lf = 0; lf < n; lf++)
                     {
                         size_t f = index(n, lf);
-                        /* None of the previous contributions should have been
-					   l-changing */
+                        // None of the previous contributions should have been l-changing
                         assert(the_cvv(i, f) == 0);
                         the_cvv(i, f) += qvv(li, lf) * np;
                     }
                 }
             }
         }
-        // Make all negative entries 0... FIXME investigate if a more better solution exists
+        // Make all negative entries 0
         return the_cvv.array().max(0);
     }
 
@@ -404,72 +415,5 @@ namespace GasModule
         double esum = 0;
         for (int l = 0; l < n; l++) esum += energy(n, l) * (2 * l + 1);
         return esum / (n * n);
-    }
-
-    double HFromFiles::eCollisionStrength(int ni, int li, int nf, int lf, double T) const
-    {
-        /* Find the requested transition in the map that translates n,l to the index in the
-	   Anderson file. */
-        auto uAndersonIndexIt = _nlToAndersonIndexm.find({ni, li});
-        auto lAndersonIndexIt = _nlToAndersonIndexm.find({nf, lf});
-        auto indexMapEnd = _nlToAndersonIndexm.end();
-        /* When either of the levels is not in the map, that means there are no transitions
-	   involving this level in the data set. The result is 0. */
-        if (uAndersonIndexIt == indexMapEnd || lAndersonIndexIt == indexMapEnd) return 0;
-
-        int i = uAndersonIndexIt->second;
-        int f = lAndersonIndexIt->second;
-        if (i <= f)
-            Error::runtime("This function should only be used for downward collisional "
-                           "transitions");
-
-        const Array& tv = _qdataAnderson.temperaturev();
-        int left, right;
-        std::tie(left, right) = TemplatedUtils::saneIndexPair(T, tv);
-        double Upsilon = TemplatedUtils::interpolateLinear(T, tv[left], tv[right], _qdataAnderson.q(left, i, f),
-                                                           _qdataAnderson.q(right, i, f));
-        return max(Upsilon, 0.);
-    }
-
-    double HFromFiles::eCollisionStrength(int ni, int nf, int lf, double T) const
-    {
-        // Collision strengths must be summed over all initial states
-        double Upsilonsum = 0;
-        for (int li = 0; li < ni; li++) Upsilonsum += eCollisionStrength(ni, li, nf, lf, T);
-        return Upsilonsum;
-    }
-
-    double HFromFiles::eCollisionStrength(int ni, int nf, double T) const
-    {
-        // Also sum over all final states
-        double Upsilonsum = 0;
-        for (int lf = 0; lf < nf; lf++) Upsilonsum += eCollisionStrength(ni, nf, lf, T);
-        return Upsilonsum;
-    }
-
-    double HFromFiles::eCollisionStrength(const HydrogenLevel& ini, const HydrogenLevel& fin, double T) const
-    {
-        // No output for upward transitions
-        if (ini.e() < fin.e())
-            return 0;
-        else
-        {
-            // Resolved-resolved
-            if (ini.nlResolved() && fin.nlResolved()) return eCollisionStrength(ini.n(), ini.l(), fin.n(), fin.l(), T);
-            // Collapsed-resolved
-            else if (ini.nCollapsed() && fin.nlResolved())
-                return eCollisionStrength(ini.n(), fin.n(), fin.l(), T);
-            // Resolved-collapsed (should not be called as this does not exist for downward
-            // transitions, and if it is, the collapsed-collapsed result should be zero.
-            else if (ini.nlResolved() && fin.nCollapsed())
-            {
-                double eCollStr = eCollisionStrength(ini.n(), fin.n(), T);
-                assert(eCollStr == 0);
-                return eCollStr;
-            }
-            // Collapsed-collapsed
-            else
-                return eCollisionStrength(ini.n(), fin.n(), T);
-        }
     }
 }

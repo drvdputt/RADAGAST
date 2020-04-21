@@ -79,6 +79,10 @@ namespace GasModule
         };
 
     public:
+        /** Calculate the collision rates. Contributions: 1. n-changing rates based on the
+            electron collision strength data Anderson+2002 (J. Phys. B: At., Mol. Opt. Phys.,
+            2002, 35, 1613). 2. l-changing collision rate coefficients as described by Pengelley
+            \& Seaton (1964) */
         EMatrix cvv(const CollisionParameters& cp) const override;
 
         int nMax() const override { return 5; }
@@ -119,19 +123,6 @@ namespace GasModule
         /** Collapsed version */
         double energy(int n) const;
 
-        /** Return the the total electron collision strength (Upsilon [dimensionless]). For the
-            moment, there are only contributions from Anderson+2002 (J. Phys. B: At., Mol. Opt.
-            Phys., 2002, 35, 1613). Note that only queries for downward (in energy) transitions
-            have the potential to return a nonzero result. The temperature needs to be given in
-            electron volt in this case. Need separate function for proton collision strength? */
-        double eCollisionStrength(int ni, int li, int nf, int lf, double T_eV) const;
-        /** With the initial level collapsed */
-        double eCollisionStrength(int ni, int nf, int lf, double T_eV) const;
-        /** With initial and final levels collapsed */
-        double eCollisionStrength(int ni, int nf, double T_eV) const;
-        /** Version that automatically uses the correct overload */
-        double eCollisionStrength(const HydrogenLevel& initial, const HydrogenLevel& final, double T_eV) const;
-
         // Chianti data
         // ------------
 
@@ -150,8 +141,9 @@ namespace GasModule
         // Anderson collision data
         // -----------------------
 
-        // Map from {n, l} to the indices used in the Anderson data
-        std::map<std::array<int, 2>, int> _nlToAndersonIndexm;
+        // Correspondence between the in the Anderson data file (minus 1), and n,l. Minus 1
+        // because the indices in the file start from 1.
+        std::vector<std::array<int,2>> _andersonIndexm1ToNLv;
 
         // Store the data using this class
         CollisionData _qdataAnderson;
