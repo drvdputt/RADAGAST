@@ -47,7 +47,7 @@ TEST_CASE("Compare HHardcoded and HFromFiles.")
     EVector evhc = hhc.ev();
     EVector evff = hff.ev();
     // hc_vs_ff(evhc, evff);
-    DoctestUtils::compareMatrices(evhc, evff, 0.01);
+    DoctestUtils::compareMatrices(evhc, evff, 1.e-3);
 
     assert(hhc.gv() == hff.gv());
 
@@ -55,11 +55,11 @@ TEST_CASE("Compare HHardcoded and HFromFiles.")
     EMatrix avvhc = hhc.avv();
     EMatrix avvff = hff.avv();
     // hc_vs_ff(avvhc, avvff);
-    DoctestUtils::compareMatrices(avvhc, avvff, 0.01);
+    DoctestUtils::compareMatrices(avvhc, avvff, 1.e-2);
 
     // cout << "Extra A:" << endl;
     EMatrix eavvhc = hhc.extraAvv();
     EMatrix eavvff = hff.extraAvv();
     // hc_vs_ff(eavvhc, eavvff);
-    DoctestUtils::compareMatrices(eavvhc, eavvff, 0.01);
+    DoctestUtils::compareMatrices(eavvhc, eavvff, 1.e-2);
 }

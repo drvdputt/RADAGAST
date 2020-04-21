@@ -13,7 +13,7 @@ using namespace std;
 namespace
 {
     const int cNMAX = 5;
-
+    const string chiantiBaseName = "/dat/CHIANTI_8.0.6_data/h/h_1/h_1";
     inline vector<int> twoJplus1range(int l)
     {
         /* If l > 0, then j can be either l + 0.5 or l - 0.5. If l==0, j is always 1/2 and
@@ -27,7 +27,7 @@ namespace GasModule
     HFromFiles::HFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
     {
         if (_resolvedUpTo > cNMAX) Error::rangeCheck<int>("Number of resolved levels", _resolvedUpTo, 2, cNMAX);
-        // Read-in, and steps that are safe during read-in
+        readLevels();
         readData();
         // Steps that need to happen after read-in
         prepareForOutput();
@@ -37,57 +37,12 @@ namespace GasModule
 
     void HFromFiles::readData()
     {
-        const string basename{REPOROOT "/dat/CHIANTI_8.0.6_data/h/h_1/h_1"};
-
-        //-----------------//
-        // READ LEVEL DATA //
-        //-----------------//
-        ifstream elvlc = IOTools::ifstreamFile(basename + ".elvlc");
-        string line;
-
-        // Start with the first line
-        getline(elvlc, line);
-        while (line.compare(1, 2, "-1"))
-        {
-            // Read the different parts of the line
-            int lvIndex, twoSplus1;
-            string config;
-            char lSymbol;
-            double j, observedEnergy, theoreticalEnergy;
-            istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >> observedEnergy
-                >> theoreticalEnergy;
-
-            // Get the first number from the config string
-            int n;
-            istringstream(config) >> n;
-
-            // Translate the angular momentum letter
-            int l = _lNumberm.at(lSymbol);
-
-            // Store 2j+1 (static cast to make it clear that j is not integer)
-            int twoJplus1 = static_cast<int>(2 * j + 1);
-
-            // Convert the energy from cm-1 to erg
-            double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
-
-            // The level indices in the data structures will go from 0 to number of levels minus
-            // one. The quantum numbers are also used as keys in a map, so we can quickly retrieve
-            // the index for a given configuration. The level indices in the file go from 1 to the
-            // number of levels, while those in the map and in all the vectors will go from 0 to
-            // numL - 1. */
-            _chiantiLevelv.emplace_back(n, l, twoJplus1, e);
-            _nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
-
-            // Go the the next line
-            getline(elvlc, line);
-        }
-        elvlc.close();
-
         //-----------------//
         // READ EINSTEIN A //
         //-----------------//
         _chiantiAvv = EMatrix::Zero(_chiantiLevelv.size(), _chiantiLevelv.size());
-        ifstream wgfa = IOTools::ifstreamFile(basename + ".wgfa");
+        ifstream wgfa = IOTools::ifstreamRepoFile(chiantiBaseName + ".wgfa");
+        string line;
         getline(wgfa, line);
         while (line.compare(1, 2, "-1"))
         {
@@ -95,9 +50,9 @@ namespace GasModule
             double wavAngstrom, gf, A;
             istringstream(line) >> leftIndex >> rightIndex >> wavAngstrom >> gf >> A;
 
-            /* A comment in the cloudy code recommended to do this, as there are apparently some files
-           in the CHIANTI database where the left index represents the upper level of the
-           transition: */
+            // A comment in the cloudy code recommended to do this, as there are apparently some
+            // files in the CHIANTI database where the left index represents the upper level of
+            // the transition
             int upperIndex = max(leftIndex, rightIndex);
             int lowerIndex = min(leftIndex, rightIndex);
 
@@ -114,8 +69,7 @@ namespace GasModule
         // Set up index -> nl translation for the Anderson data. Subtract 1 when using an index
         // from the file!
         for (int n = 0; n <= cNMAX; n++)
-            for (int l = 0; l < n; l++)
-                _andersonIndexm1ToNLv.push_back({n, l});
+            for (int l = 0; l < n; l++) _andersonIndexm1ToNLv.push_back({n, l});
 
         ifstream h_coll_str = IOTools::ifstreamRepoFile("dat/h_coll_str.dat");
         getline(h_coll_str, line);
@@ -151,27 +105,90 @@ namespace GasModule
 
     void HFromFiles::prepareForOutput()
     {
+        // Total transition rate from each level = sum over each row
+        _totalAv = makeAvv().rowwise().sum();
+    }
+
+    void HFromFiles::readLevels()
+    {
+        // Map from quantum numbers to level index as listed in the CHIANTI elvlc file. Uses
+        // fixed size arrays as keys {n, l, 2j+1}. We will use it at the end of this function to
+        // process the nlj levels into nl levels.
+        std::map<std::array<int, 3>, int> nljToChiantiIndexm;
+
+        ifstream elvlc = IOTools::ifstreamRepoFile(chiantiBaseName + ".elvlc");
+        string line;
+
+        // Start with the first line
+        getline(elvlc, line);
+        while (line.compare(1, 2, "-1"))
+        {
+            // Read the different parts of the line
+            int lvIndex, twoSplus1;
+            string config;
+            char lSymbol;
+            double j, observedEnergy, theoreticalEnergy;
+            istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >> observedEnergy
+                >> theoreticalEnergy;
+
+            // Get the first number from the config string
+            int n;
+            istringstream(config) >> n;
+
+            // Translate the angular momentum letter
+            int l = _lNumberm.at(lSymbol);
+
+            // Store 2j+1 (static cast to make it clear that j is not integer)
+            int twoJplus1 = static_cast<int>(2 * j + 1);
+
+            // Convert the energy from cm-1 to erg
+            double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
+
+            // The level indices in the data structures will go from 0 to number of levels minus
+            // one. The level indices in the file go from 1 to the number of levels, while those
+            // used for the vector and the map will go from 0 to numL - 1.
+            _chiantiLevelv.emplace_back(n, l, twoJplus1, e);
+            nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
+
+            // Go the the next line
+            getline(elvlc, line);
+        }
+        elvlc.close();
+
+        // take the appropriate averages (either over j, or over j and l)
         _levelOrdering.clear();
         int n = 1;
         while (n <= _resolvedUpTo)
         {
             for (int l = 0; l < n; l++)
             {
-                _levelOrdering.emplace_back(n, l, energy(n, l));
+                // average over the j states
+                double energy = 0;
+                for (int twoJplus1 : twoJplus1range(l))
+                    energy += _chiantiLevelv[nljToChiantiIndexm.at({n, l, twoJplus1})].e() * twoJplus1;
+                energy /= 4 * l + 2;
+
+                _levelOrdering.emplace_back(n, l, energy);
                 _nlToOutputIndexm.insert({{n, l}, _levelOrdering.size() - 1});
             }
             n++;
         }
         while (n <= cNMAX)
         {
-            _levelOrdering.emplace_back(n, energy(n));
+            // overage over the l and j states
+            double energy = 0;
+            for (int l = 0; l < n; l++)
+            {
+                for (int twoJplus1 : twoJplus1range(l))
+                    energy += _chiantiLevelv[nljToChiantiIndexm.at({n, l, twoJplus1})].e() * twoJplus1;
+            }
+            energy /= 2 * n * n;
+
+            _levelOrdering.emplace_back(n, energy);
             _nlToOutputIndexm.insert({{n, -1}, _levelOrdering.size() - 1});
             n++;
         }
         _numL = _levelOrdering.size();
-
-        // Total transition rate from each level = sum over each row
-        _totalAv = makeAvv().rowwise().sum();
     }
 
     size_t HFromFiles::index(int n, int l) const
@@ -345,10 +362,10 @@ namespace GasModule
         EMatrix q_li_lf_goingUp = EMatrix::Zero(n, n);
         EMatrix q_li_lf_goingDown = EMatrix::Zero(n, n);
 
-        /* We will apply PS64 eq 43. Keeping eq 38 in mind, we can find the partial rates one by
-	   one, applying detailed balance at each step. Note however that the results are different
-	   depending on which side (l = 0 or l = n - 1) you start. Maybe we should calculate the
-	   coefficients in both ways and then take the average. */
+        // We will apply PS64 eq 43. Keeping eq 38 in mind, we can find the partial rates one by
+        // one, applying detailed balance at each step. Note however that the results are
+        // different depending on which side (l = 0 or l = n - 1) you start. We calculate the
+        // coefficients in both ways and then take the average.
 
         // mu is the reduced mass of the system of the colliding particles
         constexpr double muOverm =
@@ -361,8 +378,8 @@ namespace GasModule
             // eq 44: Z is charge of the colliding particle, z that of the nucleus
             double D_nl = 6 * n2 * (n2 - l * l - l - 1);
 
-            /* eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
-		   prevented divergence in the calculations of PS64 */
+            // eq 45,46: take the smallest of the two, since Rc represents a cutoff value that
+            // prevented divergence in the calculations of PS64
             size_t i = index(n, l);
             double tau2 = 1. / _totalAv(i) / _totalAv(i);
             double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
@@ -399,21 +416,5 @@ namespace GasModule
         }
         const EMatrix result = (q_li_lf_goingUp + q_li_lf_goingDown) / 2.;
         return result.array().max(0);
-    }
-
-    double HFromFiles::energy(int n, int l) const
-    {
-        // Take an average over the j states
-        double esum = 0;
-        for (int twoJplus1 : twoJplus1range(l)) esum += _chiantiLevelv[indexCHIANTI(n, l, twoJplus1)].e() * twoJplus1;
-        return esum / (4 * l + 2);
-    }
-
-    double HFromFiles::energy(int n) const
-    {
-        // Average over the l states
-        double esum = 0;
-        for (int l = 0; l < n; l++) esum += energy(n, l) * (2 * l + 1);
-        return esum / (n * n);
     }
 }

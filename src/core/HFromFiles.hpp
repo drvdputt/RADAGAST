@@ -34,6 +34,18 @@ namespace GasModule
             resolved levels that was requested during construction. */
         void prepareForOutput();
 
+        /** Read and process the levels and their quantum numbers from the CHIANTI file: 1s 2s
+            2p 2p 3s 3p 3p 3d 3d 4s 4p 4p 4d 4d 4f 4f 5s 5p 5p 5d 5d 5f 5f 5g 5g. They are
+            j-resolved (Hence the duplicates shown in this sentence). */
+        void readLevels();
+
+        /** Read the transition coefficients (assumes that readLevels has already been
+            called) */
+        void readTransProbs();
+
+        /** Read collision data (Anderson) */
+        void readCollisions();
+
         EVector makeEv() const;
         EVector makeGv() const;
         EMatrix makeAvv() const;
@@ -113,16 +125,6 @@ namespace GasModule
             declared private here. [cm3 s-1] */
         EMatrix PS64CollisionRateCoeff(int n, double T, double ne) const;
 
-        //---------------------------------------------//
-        // FUNCTIONS DEALING WITH COLLAPSING OF LEVELS //
-        //---------------------------------------------//
-
-        /** Returns energy of a level read in from CHIANTI, given the principal (n) and angular
-            momentum (l) numbers. Already averaged over different j. [erg] */
-        double energy(int n, int l) const;
-        /** Collapsed version */
-        double energy(int n) const;
-
         // Chianti data
         // ------------
 
@@ -132,11 +134,6 @@ namespace GasModule
 
         // The Einstein A coefficients read in from the wgfa file from CHIANTI
         EMatrix _chiantiAvv;
-
-        // Map from quantum numbers to level index as listed in the CHIANTI elvlc file. Uses fixed
-        // size arrays as keys {n, l, 2j+1}.
-        std::map<std::array<int, 3>, int> _nljToChiantiIndexm;
-        inline int indexCHIANTI(int n, int l, int twoJplus1) const { return _nljToChiantiIndexm.at({n, l, twoJplus1}); }
 
         // Anderson collision data
         // -----------------------
