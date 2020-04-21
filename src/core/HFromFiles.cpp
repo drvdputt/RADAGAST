@@ -14,32 +14,144 @@ namespace
 {
     const int cNMAX = 5;
     const string chiantiBaseName = "/dat/CHIANTI_8.0.6_data/h/h_1/h_1";
+
     inline vector<int> twoJplus1range(int l)
     {
-        /* If l > 0, then j can be either l + 0.5 or l - 0.5. If l==0, j is always 1/2 and
-	   2j+1 can only be 2 */
+        // If l > 0, then j can be either l + 0.5 or l - 0.5. If l==0, j is always 1/2 and 2j+1
+        // can only be 2
         return l > 0 ? vector<int>({2 * l, 2 * l + 2}) : vector<int>({2});
     }
-} /* namespace */
+}
 
 namespace GasModule
 {
+    HFromFiles::HydrogenLevel::HydrogenLevel(int n, int l, int twoJplus1, double e)
+        : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)
+    {}
+    HFromFiles::HydrogenLevel::HydrogenLevel(int n, int l, double e) : _n(n), _l(l), _twoJplus1(-1), _e(e) {}
+    HFromFiles::HydrogenLevel::HydrogenLevel(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
+
+    double HFromFiles::HydrogenLevel::g() const
+    {
+        if (_l == -1 && _twoJplus1 == -1)
+        {
+            return 2 * _n * _n;
+        }
+        else if (_l != -1)
+        {
+            if (_twoJplus1 == -1)
+                return 4 * _l + 2;
+            else
+                return _twoJplus1;
+        }
+        else
+        {
+            Error::runtime("Wrong combination of n, l, and 2j+1 for H level");
+            return -1;
+        }
+    }
+
     HFromFiles::HFromFiles(int resolvedUpTo) : _resolvedUpTo(resolvedUpTo)
     {
         if (_resolvedUpTo > cNMAX) Error::rangeCheck<int>("Number of resolved levels", _resolvedUpTo, 2, cNMAX);
+
+        // read and process data in the correct order (processing of transition probabilities
+        // and collision strengths might depend on the way the levels were set up)
         readLevels();
-        readData();
-        // Steps that need to happen after read-in
-        prepareForOutput();
+        readTransProbs();
+        readCollisions();
+
         // Set required members of parent class
         setConstants(makeEv(), makeGv(), makeAvv(), makeExtraAvv());
     }
 
-    void HFromFiles::readData()
+    void HFromFiles::readLevels()
     {
-        //-----------------//
-        // READ EINSTEIN A //
-        //-----------------//
+        // Map from quantum numbers to level index as listed in the CHIANTI elvlc file. Uses
+        // fixed size arrays as keys {n, l, 2j+1}. We will use it at the end of this function to
+        // process the nlj levels into nl levels.
+        std::map<std::array<int, 3>, int> nljToChiantiIndexm;
+
+        // Translation from orbital letters into numbers
+        const std::map<char, int> lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
+
+        ifstream elvlc = IOTools::ifstreamRepoFile(chiantiBaseName + ".elvlc");
+        string line;
+
+        // Start with the first line
+        getline(elvlc, line);
+        while (line.compare(1, 2, "-1"))
+        {
+            // Read the different parts of the line
+            int lvIndex, twoSplus1;
+            string config;
+            char lSymbol;
+            double j, observedEnergy, theoreticalEnergy;
+            istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >> observedEnergy
+                >> theoreticalEnergy;
+
+            // Get the first number from the config string
+            int n;
+            istringstream(config) >> n;
+
+            // Translate the angular momentum letter
+            int l = lNumberm.at(lSymbol);
+
+            // Store 2j+1 (static cast to make it clear that j is not integer)
+            int twoJplus1 = static_cast<int>(2 * j + 1);
+
+            // Convert the energy from cm-1 to erg
+            double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
+
+            // The level indices in the data structures will go from 0 to number of levels minus
+            // one. The level indices in the file go from 1 to the number of levels, while those
+            // used for the vector and the map will go from 0 to numL - 1.
+            _chiantiLevelv.emplace_back(n, l, twoJplus1, e);
+            nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
+
+            // Go the the next line
+            getline(elvlc, line);
+        }
+        elvlc.close();
+
+        // take the appropriate averages (either over j, or over j and l)
+        _levelv.clear();
+        int n = 1;
+        while (n <= _resolvedUpTo)
+        {
+            for (int l = 0; l < n; l++)
+            {
+                // average over the j states
+                double energy = 0;
+                for (int twoJplus1 : twoJplus1range(l))
+                    energy += _chiantiLevelv[nljToChiantiIndexm.at({n, l, twoJplus1})].e() * twoJplus1;
+                energy /= 4 * l + 2;
+
+                _levelv.emplace_back(n, l, energy);
+                _nlToIndexm.insert({{n, l}, _levelv.size() - 1});
+            }
+            n++;
+        }
+        while (n <= cNMAX)
+        {
+            // overage over the l and j states
+            double energy = 0;
+            for (int l = 0; l < n; l++)
+            {
+                for (int twoJplus1 : twoJplus1range(l))
+                    energy += _chiantiLevelv[nljToChiantiIndexm.at({n, l, twoJplus1})].e() * twoJplus1;
+            }
+            energy /= 2 * n * n;
+
+            _levelv.emplace_back(n, energy);
+            _nlToIndexm.insert({{n, -1}, _levelv.size() - 1});
+            n++;
+        }
+        _numL = _levelv.size();
+    }
+
+    void HFromFiles::readTransProbs()
+    {
         _chiantiAvv = EMatrix::Zero(_chiantiLevelv.size(), _chiantiLevelv.size());
         ifstream wgfa = IOTools::ifstreamRepoFile(chiantiBaseName + ".wgfa");
         string line;
@@ -62,16 +174,19 @@ namespace GasModule
         }
         wgfa.close();
 
-        //---------------------//
-        // READ COLLISION DATA //
-        //---------------------//
+        // Total transition rate from each level = sum over each row
+        _totalAv = makeAvv().rowwise().sum();
+    }
 
+    void HFromFiles::readCollisions()
+    {
         // Set up index -> nl translation for the Anderson data. Subtract 1 when using an index
         // from the file!
         for (int n = 0; n <= cNMAX; n++)
             for (int l = 0; l < n; l++) _andersonIndexm1ToNLv.push_back({n, l});
 
         ifstream h_coll_str = IOTools::ifstreamRepoFile("dat/h_coll_str.dat");
+        string line;
         getline(h_coll_str, line);
         getline(h_coll_str, line);
 
@@ -103,113 +218,25 @@ namespace GasModule
         _qdataAnderson.check();
     }
 
-    void HFromFiles::prepareForOutput()
-    {
-        // Total transition rate from each level = sum over each row
-        _totalAv = makeAvv().rowwise().sum();
-    }
-
-    void HFromFiles::readLevels()
-    {
-        // Map from quantum numbers to level index as listed in the CHIANTI elvlc file. Uses
-        // fixed size arrays as keys {n, l, 2j+1}. We will use it at the end of this function to
-        // process the nlj levels into nl levels.
-        std::map<std::array<int, 3>, int> nljToChiantiIndexm;
-
-        ifstream elvlc = IOTools::ifstreamRepoFile(chiantiBaseName + ".elvlc");
-        string line;
-
-        // Start with the first line
-        getline(elvlc, line);
-        while (line.compare(1, 2, "-1"))
-        {
-            // Read the different parts of the line
-            int lvIndex, twoSplus1;
-            string config;
-            char lSymbol;
-            double j, observedEnergy, theoreticalEnergy;
-            istringstream(line) >> lvIndex >> config >> twoSplus1 >> lSymbol >> j >> observedEnergy
-                >> theoreticalEnergy;
-
-            // Get the first number from the config string
-            int n;
-            istringstream(config) >> n;
-
-            // Translate the angular momentum letter
-            int l = _lNumberm.at(lSymbol);
-
-            // Store 2j+1 (static cast to make it clear that j is not integer)
-            int twoJplus1 = static_cast<int>(2 * j + 1);
-
-            // Convert the energy from cm-1 to erg
-            double e = observedEnergy * Constant::LIGHT * Constant::PLANCK;
-
-            // The level indices in the data structures will go from 0 to number of levels minus
-            // one. The level indices in the file go from 1 to the number of levels, while those
-            // used for the vector and the map will go from 0 to numL - 1.
-            _chiantiLevelv.emplace_back(n, l, twoJplus1, e);
-            nljToChiantiIndexm.insert({{n, l, twoJplus1}, lvIndex - 1});
-
-            // Go the the next line
-            getline(elvlc, line);
-        }
-        elvlc.close();
-
-        // take the appropriate averages (either over j, or over j and l)
-        _levelOrdering.clear();
-        int n = 1;
-        while (n <= _resolvedUpTo)
-        {
-            for (int l = 0; l < n; l++)
-            {
-                // average over the j states
-                double energy = 0;
-                for (int twoJplus1 : twoJplus1range(l))
-                    energy += _chiantiLevelv[nljToChiantiIndexm.at({n, l, twoJplus1})].e() * twoJplus1;
-                energy /= 4 * l + 2;
-
-                _levelOrdering.emplace_back(n, l, energy);
-                _nlToOutputIndexm.insert({{n, l}, _levelOrdering.size() - 1});
-            }
-            n++;
-        }
-        while (n <= cNMAX)
-        {
-            // overage over the l and j states
-            double energy = 0;
-            for (int l = 0; l < n; l++)
-            {
-                for (int twoJplus1 : twoJplus1range(l))
-                    energy += _chiantiLevelv[nljToChiantiIndexm.at({n, l, twoJplus1})].e() * twoJplus1;
-            }
-            energy /= 2 * n * n;
-
-            _levelOrdering.emplace_back(n, energy);
-            _nlToOutputIndexm.insert({{n, -1}, _levelOrdering.size() - 1});
-            n++;
-        }
-        _numL = _levelOrdering.size();
-    }
-
     size_t HFromFiles::index(int n, int l) const
     {
         if (n > _resolvedUpTo)
-            return _nlToOutputIndexm.at({n, -1});
+            return _nlToIndexm.at({n, -1});
         else
-            return _nlToOutputIndexm.at({n, l});
+            return _nlToIndexm.at({n, l});
     }
 
     EVector HFromFiles::makeEv() const
     {
         EVector the_ev(_numL);
-        for (size_t i = 0; i < _numL; i++) the_ev(i) = _levelOrdering[i].e();
+        for (size_t i = 0; i < _numL; i++) the_ev(i) = _levelv[i].e();
         return the_ev;
     }
 
     EVector HFromFiles::makeGv() const
     {
         EVector the_gv(_numL);
-        for (size_t i = 0; i < _numL; i++) the_gv(i) = _levelOrdering[i].g();
+        for (size_t i = 0; i < _numL; i++) the_gv(i) = _levelv[i].g();
         return the_gv;
     }
 
@@ -229,7 +256,7 @@ namespace GasModule
             // g_original = g_collapsed). This is based on the assumption that the populations
             // are statistically distributed.
             int iTarget = index(_chiantiLevelv[i].n(), _chiantiLevelv[i].l());
-            double weight = _chiantiLevelv[i].g() / _levelOrdering[iTarget].g();
+            double weight = _chiantiLevelv[i].g() / _levelv[iTarget].g();
 
             for (int f = 0; f < numLevelsFromData; f++)
             {
@@ -252,10 +279,10 @@ namespace GasModule
         size_t index1s = index(1, 0);
 
         // Check if the n2 level is resolved, and retrieve the Key, Value pair
-        auto index2sIt = _nlToOutputIndexm.find({2, 0});
+        auto index2sIt = _nlToIndexm.find({2, 0});
         // If the level is collapsed, the pair 0,2 won't be found, and the find function will
         // return 'end'. So if the result is not 'end', this means that the resolved 2,0 level was
-        bool n2Resolved = index2sIt != _nlToOutputIndexm.end();
+        bool n2Resolved = index2sIt != _nlToIndexm.end();
 
         // Hardcode the two-photon decay of 2s to 1s
         double rate = 8.229;
@@ -318,13 +345,12 @@ namespace GasModule
 
                 // upward and downward rates, derived from the interpolated collision strength
                 double rateDown = UpsilonDownv[transitionIndex] * 8.6291e-6 / (gi * sqrt(T)) * ne;
-                double rateUp =
-                    rateDown * gi / gf * exp((_levelOrdering[fTarget].e() - _levelOrdering[iTarget].e()) / kT);
+                double rateUp = rateDown * gi / gf * exp((_levelv[fTarget].e() - _levelv[iTarget].e()) / kT);
 
                 // analogously to makeAvv(), add these numbers to the transition matrix at the
                 // right position and with the right weights
-                double iWeight = gi / _levelOrdering[iTarget].g();
-                double fWeight = gf / _levelOrdering[fTarget].g();
+                double iWeight = gi / _levelv[iTarget].g();
+                double fWeight = gf / _levelv[fTarget].g();
                 the_cvv(iTarget, fTarget) += iWeight * rateDown;
                 the_cvv(fTarget, iTarget) += fWeight * rateUp;
             }

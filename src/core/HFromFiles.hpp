@@ -22,28 +22,16 @@ namespace GasModule
         HFromFiles(int resolvedUpTo = 5);
 
     private:
-        /** Reads levels and their quantum numbers from CHIANTI, as well as the A coefficients
-            between them. The listed levels are only those involved in spontaneous transitions, up
-            to n = 5: 1s 2s 2p 2p 3s 3p 3p 3d 3d 4s 4p 4p 4d 4d 4f 4f 5s 5p 5p 5d 5d 5f 5f 5g 5g,
-            and are also j-resolved (Hence the duplicates shown in this sentence). */
-        void readData();
-
-        /** Processes some of the data that was read to help with determining the final
-            coefficients. The final number of levels, the parameters (n, l if resolved), and the
-            order of the levels are determined. All of these properties depend on the number of
-            resolved levels that was requested during construction. */
-        void prepareForOutput();
-
         /** Read and process the levels and their quantum numbers from the CHIANTI file: 1s 2s
             2p 2p 3s 3p 3p 3d 3d 4s 4p 4p 4d 4d 4f 4f 5s 5p 5p 5d 5d 5f 5f 5g 5g. They are
             j-resolved (Hence the duplicates shown in this sentence). */
         void readLevels();
 
-        /** Read the transition coefficients (assumes that readLevels has already been
-            called) */
+        /** Read the transition (Einstein A) coefficients (assumes that readLevels has already
+            been called). */
         void readTransProbs();
 
-        /** Read collision data (Anderson) */
+        /** Read collision data (Anderson) (assumes that readLevels has already been called). */
         void readCollisions();
 
         EVector makeEv() const;
@@ -58,33 +46,28 @@ namespace GasModule
         class HydrogenLevel
         {
         public:
-            /** Constructor for an nlJ-resolved level. Takes \f$n\f$ and \f$l\f$ as integers, and
-                \f$2j + 1\f$ instead of \f$j\f$ so an int can be used. */
-            HydrogenLevel(int n, int l, int twoJplus1, double e) : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e) {}
+            /** Constructor for an nlJ-resolved level. Takes \f$n\f$ and \f$l\f$ as integers,
+                and \f$2j + 1\f$ instead of \f$j\f$ so an int can be used. */
+            HydrogenLevel(int n, int l, int twoJplus1, double e);
             /** Constructor for an nl-resolved level. Puts -1 at the place of \f$2j+1\f$. */
-            HydrogenLevel(int n, int l, double e) : _n(n), _l(l), _twoJplus1(-1), _e(e) {}
+            HydrogenLevel(int n, int l, double e);
+            /** Constructor for a fully colapsed level. */
+            HydrogenLevel(int n, double e);
 
-            HydrogenLevel(int n, double e) : _n(n), _l(-1), _twoJplus1(-1), _e(e) {}
-
-            bool nljResolved() const { return _twoJplus1 >= 0; }
-            bool nlResolved() const { return _l >= 0 && _twoJplus1 < 0; }
-            bool nCollapsed() const { return _l < 0; }
+            /** Quantum number n. */
             int n() const { return _n; }
+
+            /** Quantum number l. Returns -1 if l is not resolved. */ 
             int l() const { return _l; }
+
+            /** Quantum number 2j+1. Returns -1 if 2j+1 is not resolved. */
             int twoJplus1() const { return _twoJplus1; }
+
+            /** Energy (erg) */
             double e() const { return _e; }
 
             /** Degeneracy of the level. Double because ratios of different g are often used. */
-            double g() const
-            {
-                if (nCollapsed())
-                    return 2 * _n * _n;
-                else if (nlResolved())
-                    return 4 * _l + 2;
-                else
-                    return _twoJplus1;
-            }
-
+            double g() const;
         private:
             int _n, _l, _twoJplus1;  // quantum numbers
             double _e;               // energy
@@ -145,28 +128,23 @@ namespace GasModule
         // Store the data using this class
         CollisionData _qdataAnderson;
 
-        // Misc
-        // ----
-
-        // Translation from orbital letters into numbers
-        const std::map<char, int> _lNumberm = {{'S', 0}, {'P', 1}, {'D', 2}, {'F', 3}, {'G', 4}};
-
         // Total spontaneous decay rate of each level. Needed for the l-changing collision formula
         // of PS64.
         EVector _totalAv;
 
         // Number of levels
-        size_t _numL{0};
+        int _numL{0};
 
         // Highest n for which l is resolved
         int _resolvedUpTo{5};
 
-        // Quantum numbers of the levels. l = -1 means that the level is collapsed. The energy
-        // levels, A-coefficients are stored in the same order as this vector.
-        std::vector<HydrogenLevel> _levelOrdering;
+        // The levels, stored as we will use them. The energy levels and A-coefficients
+        // implemented for the LevelCoefficients parent class are in the same order as this
+        // vector.
+        std::vector<HydrogenLevel> _levelv;
 
-        // Map from {n, l} to the index in _levelOrdering.
-        std::map<std::array<int, 2>, size_t> _nlToOutputIndexm;
+        // Map from {n, l} to the index in _levelv.
+        std::map<std::array<int, 2>, int> _nlToIndexm;
     };
 }
 #endif  // CORE_HYDROGENFROMFILES_HPP
