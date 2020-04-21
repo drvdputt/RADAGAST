@@ -400,36 +400,25 @@ namespace GasModule
     {
         if (nPartner <= 0) return;
 
+        // choose collision data for the relevant particle
         const CollisionData& qdata = _qdataPerPartner[iPartner];
 
-        /* Find the grid point to the right of (>=) the requested log-temperature. (Returns last
-	   point if T > Tmax). We will naively extrapolate for points outside the range, and cut
-	   off the result at 0 if it becomes negative. */
-        const Array& temperaturev = qdata.temperaturev();
-        int iRight = TemplatedUtils::index(T, temperaturev);
-        iRight = max(iRight, 1);
-        int iLeft = iRight - 1;
-        double tRight = temperaturev[iRight];
-        double tLeft = temperaturev[iLeft];
+        // interpolate the data for all transitions
+        Array qv = qdata.qv(T);
 
-        double kT = T * Constant::BOLTZMAN;
-        const vector<array<int, 2>>& transitionv = qdata.transitionv();
-        for (int transitionIndex = 0; transitionIndex < transitionv.size(); transitionIndex++)
+        // fill in the interpolated data into the C matrix, and derive upward coefficients
+        double kT = Constant::BOLTZMAN * T;
+        for (int transitionIndex = 0; transitionIndex < qdata.transitionv().size(); transitionIndex++)
         {
-            // Interpolate data points naively for temperatures left and right of T
-            double qLeft = qdata.q(iLeft, transitionIndex);
-            double qRight = qdata.q(iRight, transitionIndex);
-            double q = TemplatedUtils::interpolateLinear(T, tLeft, tRight, qLeft, qRight);
-            // Make zero if interpolation makes this negative
-            q = max(0., q);
-
             // The levels involved in this transition
-            int i = transitionv[transitionIndex][0];
-            int f = transitionv[transitionIndex][1];
-            double Cif = q * nPartner;
+            int i = qdata.transitionv()[transitionIndex][0];
+            int f = qdata.transitionv()[transitionIndex][1];
+            double Cif = qv[transitionIndex] * nPartner;
             the_cvv(i, f) += Cif;
             the_cvv(f, i) += otherDirectionC(Cif, i, f, kT);
         }
+
+        // supplement missing coefficients with g-bar approximation
         addGBarCvv(the_cvv, kT, iPartner, nPartner);
     }
 

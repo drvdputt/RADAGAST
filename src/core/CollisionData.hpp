@@ -43,24 +43,8 @@ namespace GasModule
             something's off with the map or the transition list. */
         void check() const;
 
-        /* GETTERS. Pick whichever you find most useful. Seems like I a have a bi-directional map
-           thing going on. Having this generalized might be handy in the future. */
-
-        /** Get the temperature vector */
-        const Array& temperaturev() const { return _temperaturev; }
-
         /** Get a list of all the transitions (initial, final) that were inserted. */
         const std::vector<std::array<int, 2>>& transitionv() const { return _transitionv; }
-
-        /** Get the data entry for the transition i -> f, for the temperature at index iT.
-            Returns 0 if no data was inserted for i -> f. */
-        double q(int iT, int i, int f) const;
-
-        /** Directly access by transtion index. These are handy if you're iterating over the
-            transition vector. The index pairs stored by the transition vector can then be used to
-            fill the value retrieved by the function below into the correct location of the
-            collision matrix. */
-        double q(int iT, int transitionIndex) const { return _qvv(iT, transitionIndex); }
 
         /** Interpolate all transitions at the same temperature. Returns an Array containing the
             collision coefficients for each transition in transitionv(). */

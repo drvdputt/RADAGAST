@@ -47,18 +47,6 @@ namespace GasModule
         }
     }
 
-    double CollisionData::q(int iT, int i, int f) const
-    {
-        auto mapEntry = _transitionToColm.find({i, f});
-        if (mapEntry == _transitionToColm.end())
-            return 0.;
-        else
-        {
-            int transitionIndex = mapEntry->second;
-            return _qvv(iT, transitionIndex);
-        }
-    }
-
     Array CollisionData::qv(double T) const
     {
         // indices between which to interpolate
