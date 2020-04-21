@@ -37,7 +37,7 @@ namespace GasModule
         // (not the word 'half' in the label) the reaction rate, we end up with an equal tempo of
         // H2 formation, but one that scales only linearly with nH. TODO: find a way around the 0.5
         // coefficient, so that I can use integer coefficients
-        addReaction("H2 formation", {"H"}, {2}, {"H2"}, {1.}, {1});
+        addReaction("H2 formation", {"H"}, {2}, {"H2"}, {1}, {1});
 
         prepareCoefficients();
     }

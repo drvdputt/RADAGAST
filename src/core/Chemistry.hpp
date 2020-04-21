@@ -36,12 +36,12 @@ namespace GasModule
             when done adding species and/or reactions.*/
         void addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                          const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
-                         const std::vector<double>& productStoichv, const std::vector<int>& reactantPowerv);
+                         const std::vector<int>& productStoichv, const std::vector<int>& reactantPowerv);
 
         /** Version without the optional argument. */
         void addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                          const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
-                         const std::vector<double>& productStoichv);
+                         const std::vector<int>& productStoichv);
 
         /** This should be called after reactions have been added */
         void prepareCoefficients();
@@ -97,12 +97,12 @@ namespace GasModule
                 size as rNamev and rCoeffv. Exponents are integer since it's faster and
                 currently we don't need real ones. */
             Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
-                     const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv,
+                     const std::vector<std::string>& pNamev, const std::vector<int>& pCoeffv,
                      const std::vector<int>& rPowerv);
 
             const std::vector<std::string> _rNamev, _pNamev;
             const std::vector<int> _rCoeffv;
-            const std::vector<double> _pCoeffv;
+            const std::vector<int> _pCoeffv;
             const std::vector<int> _rPowerv;
         };
 
@@ -112,7 +112,7 @@ namespace GasModule
         // Filled in by prepareCoefficients(), indexed on (species, reaction)
         EMatrix_int _rStoichvv;  // reactant coefficients
         EMatrix_int _rPowervv;   // reactant density power in reaction speed
-        EMatrix _netStoichvv;    // product - reactant coefficients
+        EMatrix _netStoichvv;    // net coefficients (double, else Eigen complains)
         size_t _numSpecies;
         int _numReactions;
     };

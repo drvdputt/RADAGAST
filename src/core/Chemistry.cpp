@@ -43,7 +43,7 @@ namespace GasModule
 
     void Chemistry::addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                                 const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
-                                const std::vector<double>& productStoichv, const std::vector<int>& reactantPowerv)
+                                const std::vector<int>& productStoichv, const std::vector<int>& reactantPowerv)
     {
         Error::equalCheck("Lengths of list of species names and vector of coefficients", reactantNamev.size(),
                           reactantStoichv.size());
@@ -62,7 +62,7 @@ namespace GasModule
 
     void Chemistry::addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                                 const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
-                                const std::vector<double>& productStoichv)
+                                const std::vector<int>& productStoichv)
     {
         // use reactant power = reactant coefficient by default
         addReaction(reactionName, reactantNamev, reactantStoichv, productNamev, productStoichv, reactantStoichv);
@@ -125,7 +125,7 @@ namespace GasModule
         // temporary value is needed. This gets rid of an automatically generated resize() call.
         // Normally, Eigen decides the best option by itself, but here it can't because it doesn't know
         // at compile time what FvOuput points to, so it chooses the safest option by default.
-        Eigen::Map<EVector>(FvOutput, _numSpecies).noalias() = _netStoichvv * kv;
+        Eigen::Map<EVector>(FvOutput, _numSpecies).noalias() = _netStoichvv.cast<double>() * kv;
     }
 
     void Chemistry::evaluateJvv(double* JvvDataRowMajor, const double* nv, const EVector& rateCoeffv,
@@ -282,7 +282,7 @@ namespace GasModule
     }
 
     Chemistry::Reaction::Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
-                                  const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv,
+                                  const std::vector<std::string>& pNamev, const std::vector<int>& pCoeffv,
                                   const std::vector<int>& rPowerv)
         : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv}, _pCoeffv{pCoeffv}, _rPowerv{rPowerv}
     {}
