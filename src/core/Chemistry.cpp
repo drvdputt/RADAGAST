@@ -43,19 +43,29 @@ namespace GasModule
 
     void Chemistry::addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                                 const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
-                                const std::vector<double>& productStoichv)
+                                const std::vector<double>& productStoichv, const std::vector<int>& reactantPowerv)
     {
         Error::equalCheck("Lengths of list of species names and vector of coefficients", reactantNamev.size(),
                           reactantStoichv.size());
         Error::equalCheck("Lengths of list of species names and vector of coefficients", productNamev.size(),
                           productStoichv.size());
+        Error::equalCheck("length of reactant list and power override list", reactantNamev.size(),
+                          reactantPowerv.size());
 
         // Give the reaction a number, and put its name in the map.
         _reactionIndexm.emplace(reactionName, _reactionIndexm.size());
 
         // Register the names and ratios of the species involved. Vectors with coefficients of
         // the right size will be created later.
-        _reactionv.emplace_back(reactantNamev, reactantStoichv, productNamev, productStoichv);
+        _reactionv.emplace_back(reactantNamev, reactantStoichv, productNamev, productStoichv, reactantPowerv);
+    }
+
+    void Chemistry::addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
+                                const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
+                                const std::vector<double>& productStoichv)
+    {
+        // use reactant power = reactant coefficient by default
+        addReaction(reactionName, reactantNamev, reactantStoichv, productNamev, productStoichv, reactantStoichv);
     }
 
     void Chemistry::prepareCoefficients()
@@ -270,11 +280,6 @@ namespace GasModule
             }
         }
     }
-
-    Chemistry::Reaction::Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
-                                  const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv)
-        : _rNamev{rNamev}, _pNamev{pNamev}, _rCoeffv{rCoeffv}, _pCoeffv{pCoeffv}, _rPowerv{rCoeffv}
-    {}
 
     Chemistry::Reaction::Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
                                   const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv,

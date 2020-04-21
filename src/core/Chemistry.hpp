@@ -29,10 +29,16 @@ namespace GasModule
 
         /** Function to provide a clear syntax for adding reactions in the setup of the chemical
             network. Each reaction is given a number, and the reaction is added to the reaction
-            index using the given name as a key. Subclasses typically implement a constructor which
-            calls addReaction and prepareCoefficients.
+            index using the given name as a key. The last, optional argument allows the user to
+            change the density power of the reactants (by default, it is equal to the
+            stoichiometric coefficient). Subclasses typically implement a constructor which
+            calls addReaction and prepareCoefficients. Make sure to call prepareCoefficients
+            when done adding species and/or reactions.*/
+        void addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
+                         const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
+                         const std::vector<double>& productStoichv, const std::vector<int>& reactantPowerv);
 
-            Be sure to call prepareCoefficients when done adding species and/or reactions .*/
+        /** Version without the optional argument. */
         void addReaction(const std::string& reactionName, const std::vector<std::string>& reactantNamev,
                          const std::vector<int>& reactantStoichv, const std::vector<std::string>& productNamev,
                          const std::vector<double>& productStoichv);
@@ -86,17 +92,10 @@ namespace GasModule
         class Reaction
         {
         public:
-            /** Create a new reaction which can be used in Chemistry. The names and numbers
-                stored are processed when Chemistry::prepareCoefficients() is called. The
-                exponents for the reactant densities in the reaction speed formula will be set
-                to their stoichiometric coefficient. (e.g. exponent of nH would be 2 if 2H -> H2
-                was a reaction). */
-            Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
-                     const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv);
-
-            /** Create a new reaction with custom exponents for the reactant densities. The last
-                argument needs to have the same size as rNamev and rCoeffv. Exponents are
-                integer since it's faster and currently we don't need real ones. */
+            /** See documentation of Chemistry::addReaction(). Create a new reaction with custom
+                exponents for the reactant densities. The last argument needs to have the same
+                size as rNamev and rCoeffv. Exponents are integer since it's faster and
+                currently we don't need real ones. */
             Reaction(const std::vector<std::string>& rNamev, const std::vector<int>& rCoeffv,
                      const std::vector<std::string>& pNamev, const std::vector<double>& pCoeffv,
                      const std::vector<int>& rPowerv);

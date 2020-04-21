@@ -37,7 +37,7 @@ namespace GasModule
         // (not the word 'half' in the label) the reaction rate, we end up with an equal tempo of
         // H2 formation, but one that scales only linearly with nH. TODO: find a way around the 0.5
         // coefficient, so that I can use integer coefficients
-        addReaction("half H2 formation", {"H"}, {1}, {"H2"}, {.5});
+        addReaction("H2 formation", {"H"}, {2}, {"H2"}, {1.}, {1});
 
         prepareCoefficients();
     }
@@ -52,7 +52,7 @@ namespace GasModule
         k(reactionIndex("H2 dissociation")) = kDissFromH2Levels;
         // The rate of this reaction is twice the H2 formation rate. See comment in constructor
         // implementation.
-        k(reactionIndex("half H2 formation")) = 2 * kH2FormationGrain;
+        k(reactionIndex("H2 formation")) = kH2FormationGrain;
         DEBUG("0 photo-ion; 1 coll-ion; 2 rad-rec; 3 dissoc; 4 H2form\n" << k << '\n');
         return k;
     }
