@@ -62,6 +62,10 @@ namespace GasModule
             collision matrix. */
         double q(int iT, int transitionIndex) const { return _qvv(iT, transitionIndex); }
 
+        /** Interpolate all transitions at the same temperature. Returns an Array containing the
+            collision coefficients for each transition in transitionv(). */
+        Array qv(double T) const;
+
     private:
         /** Stores the temperature associated with each temperature index. [K]. */
         Array _temperaturev;

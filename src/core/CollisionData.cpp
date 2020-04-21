@@ -58,4 +58,22 @@ namespace GasModule
             return _qvv(iT, transitionIndex);
         }
     }
+
+    Array CollisionData::qv(double T) const
+    {
+        // indices between which to interpolate
+        int left, right;
+        std::tie(left, right) = TemplatedUtils::saneIndexPair(T, _temperaturev);
+
+        int numTransitions = _transitionv.size();
+        Array result(numTransitions);
+        for (int transitionIndex = 0; transitionIndex < numTransitions; transitionIndex++)
+        {
+            // extrapolates linearly based on last two points, so need to clip at 0
+            result[transitionIndex] = std::max(
+                0., TemplatedUtils::interpolateLinear(T, _temperaturev[left], _temperaturev[right],
+                                                      _qvv(left, transitionIndex), _qvv(right, transitionIndex)));
+        }
+        return result;
+    }
 }
