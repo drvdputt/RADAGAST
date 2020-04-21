@@ -216,10 +216,10 @@ namespace GasModule
         double densityProduct = 1;
         for (size_t s = 0; s < _numSpecies; s++)
         {
-            // If the species in involved in this reaction (stoich on left side > 0), calculate the
-            // density to the power of its stoichiometry in the reaction.
-            int Rs = _rStoichvv(s, r);
-            if (Rs) densityProduct *= gsl_pow_int(nv[s], Rs);
+            // If the species in involved in this reaction (stoich on left side > 0), calculate
+            // the density to the power of its stoichiometry in the reaction (or another power
+            // if overridden).
+            if (_rStoichvv(s, r)) densityProduct *= gsl_pow_int(nv[s], _rPowervv(s, r));
         }
         return densityProduct * rateCoeffv(r);
     }
@@ -234,9 +234,8 @@ namespace GasModule
             // precalculate these powers
             for (size_t s = 0; s < _numSpecies; s++)
             {
-                int Rs = _rStoichvv(s, r);
-                if (Rs)
-                    densityPowers[s] = gsl_pow_int(nv[s], Rs);
+                if (_rStoichvv(s, r))
+                    densityPowers[s] = gsl_pow_int(nv[s], _rPowervv(s, r));
                 else
                     densityPowers[s] = 0;
             }
@@ -248,8 +247,7 @@ namespace GasModule
                 double& Jrj = Jkvv(r, j);
 
                 // if n_j not involved, just set to 0
-                int Rj = _rStoichvv(j, r);
-                if (Rj == 0)
+                if (!_rStoichvv(j, r))
                 {
                     Jrj = 0;
                     continue;
@@ -261,13 +259,14 @@ namespace GasModule
                 // All species involved in the reaction except n_j
                 for (size_t s = 0; s < _numSpecies; s++)
                 {
-                    // if species is involved, multiply with n_s^Rs
+                    // if species is involved, multiply with n_s^_rPowervv(s,r)
                     if (_rStoichvv(s, r) && s != j) Jrj *= densityPowers[s];
                 }
 
-                // derivative of the n_j^Rj factor: Rj n_j^(Rj - 1). Do not call pow if the exponent is
-                // trivial (Rj == 1), or if Jrj is already zero.
-                if (Rj != 1 && Jrj) Jrj *= Rj * gsl_pow_int(nv[j], Rj - 1);
+                // derivative of the n_j^power factor: power n_j^(power - 1). Do not call pow if
+                // the exponent is trivial (power == 1), or if Jrj is already zero.
+                int power = _rPowervv(j, r);
+                if (power != 1 && Jrj) Jrj *= power * gsl_pow_int(nv[j], power - 1);
             }
         }
     }
