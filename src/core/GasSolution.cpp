@@ -91,8 +91,6 @@ namespace GasModule
 
     double GasSolution::heating()
     {
-        // double freefreeHeat = _freeFree->heating(np(s) * ne(s), s.T, s.specificIntensity);
-        // TODO: decide whether to keep the above, as it is negligible in any case I can imagine
         double hLine = _hSolution->netHeating();
         double h2Line = _h2Solution->netHeating();
         double hPhotoIonHeat = Ionization::heating(nH(), _specificIntensity);

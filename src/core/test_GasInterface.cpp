@@ -30,7 +30,8 @@ TEST_CASE("Blackbodies test")
         SUBCASE("no dust") { withDust = false; }
         SUBCASE("MRNdust")
         {
-            // TODO: make the maximum grain temperature higher, since it wants to go to Tc
+            // Note: technically, the maximum grain temperature should be increased for this
+            // test (ideally, it ends up being == Tc).
             withDust = true;
             warnOnly = true;
         }

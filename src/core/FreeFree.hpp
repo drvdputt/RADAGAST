@@ -49,10 +49,6 @@ namespace GasModule
             density squared [cm-6]. Multiplying with ne*np will give the opacity in [cm-1]. */
         double opacityCoefficient(double nu, double T) const;
 
-        /** Calculate the heating due to direct absorption of photons the free electrons moving in
-            the field of the free protons. */
-        double heating(double np_ne, double T, const Spectrum& specificIntensity) const;
-
         /** Calculate the cooling due to Bremsstrahlung, given the product of the electron and
             proton densities, and their kinetic temperature. [erg cm-3 s-1]. */
         double cooling(double np_ne, double T) const;

@@ -285,9 +285,7 @@ namespace GasModule
         double sqrtkT = sqrt(kT);
         double logg2 = log10(Constant::RYDBERG / kT);
 
-        // TODO: use an intermediate spectrum object here, and then call its 'binned' function,
-        // if needed. Might be needed for very wide frequency bins, but the current way might be
-        // good enough
+        // this emissivity is smooth enough to just pick the representative frequency in each bin
         for (size_t iFreq = 0; iFreq < eFrequencyv.size(); iFreq++)
         {
             double u = Constant::PLANCK * eFrequencyv[iFreq] / kT;
@@ -320,18 +318,6 @@ namespace GasModule
         // C / nu^3 (1 - exp(-u)) gff(u, gamma^2)
         double opCoeffNu = opCoef_constantFactor / sqrtkT / nu / nu / nu * -expm1(-u) * gauntFactor(logu, loggamma2);
         return opCoeffNu;
-    }
-
-    double FreeFree::heating(double np_ne, double T, const Spectrum& specificIntensity) const
-    {
-        // This opacity is very smooth, so just go over the points of the input spectrum
-        const Array& nuv{specificIntensity.frequencyv()};
-        const Array& vv{specificIntensity.valuev()};
-
-        Array intensityOpacityv(nuv.size());
-        for (size_t i = 0; i < nuv.size(); i++) intensityOpacityv[i] = vv[i] * opacityCoefficient(nuv[i], T);
-
-        return np_ne * Constant::FPI * TemplatedUtils::integrate<double>(nuv, intensityOpacityv);
     }
 
     double FreeFree::cooling(double np_ne, double T) const
