@@ -41,14 +41,9 @@ namespace GasModule
         const LevelSolution* levelSolution() const { return &_levelSolution; }
 
     private:
-        /** Returns a vector containing the source terms for the equilibrium equations, such as the
-            partial recombination rates into each level. Note that this function is separated from
-            the ionization balance calculation, as there only the total recombination rate matters.
-            In this case, this function returns the partial recombination rate into each level,
-            interpolated from some formulae found in 2015-Raga (for levels 3-5) , and Draine's book
-            (for levels 1, 2). The l-resolved recombination rates are just weighed by the
-            degeneracy of the level, for levels 3, 4 and 5. TODO: Use better data here. [cm-3
-            s-1] */
+        /** Returns a vector containing the source terms for the equilibrium equations, i.e. the
+            partial recombination rates into each level. Currently, some data from OpenADAS is
+            used. [cm-3 s-1] */
         EVector sourcev(const CollisionParameters& cp) const;
 
         /** Produces the sink term to be used by the equilibrium equations. Currently, some
