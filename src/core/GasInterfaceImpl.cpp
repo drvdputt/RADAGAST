@@ -66,8 +66,6 @@ namespace GasModule
         _freeFree.addEmissionCoefficientv(gs.temperature(), _eFrequencyv, emissivityv);
         emissivityv *= npne(gs) / Constant::FPI;
 
-        // TODO: switch to add line emissivity (needs recalculation of levels)
-
         emissivityv += TwoPhoton::emissivityv(_eFrequencyv, gs._n2s);
 
         if (SI)
@@ -84,7 +82,6 @@ namespace GasModule
         _freeFree.addOpacityCoefficientv(gs.temperature(), _oFrequencyv, opacityv);
         opacityv *= sv.np() * sv.ne();
 
-        // TODO: this should actually be the average over the cross section for this frequency bin
         for (size_t i = 0; i < _oFrequencyv.size(); i++)
             opacityv[i] += sv.nH() * Ionization::crossSection(_oFrequencyv[i]);
 

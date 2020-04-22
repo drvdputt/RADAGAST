@@ -160,7 +160,6 @@ namespace GasModule
         // I need this per grain size. Doing this thing for now.
         double grainPhotoHeat = grainHeating();
         double grainCollCool = grainCooling();
-        gd->setPhotoelectricHeating(Array({grainPhotoHeat}));
         gd->setHeating("total grainphoto", grainPhotoHeat);
         gd->setCooling("grain collisions", grainCollCool);
 

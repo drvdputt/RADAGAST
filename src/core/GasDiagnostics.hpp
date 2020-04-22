@@ -17,10 +17,6 @@ namespace GasModule
         /** Configuration */
         bool saveLevelPopulations() const { return _saveLevelPopulations; }
 
-        /** Invidivual photoelectric heating contributions. TODO: make this work per population
-            and/or per size. */
-        const std::valarray<double>& photoelectricHeating() const { return _photoelectricHeating; }
-
         /** All heating rates (including total photoelectric), stored as a map with keys */
         const std::map<std::string, double>& heating() const { return _heatingm; }
 
@@ -42,7 +38,6 @@ namespace GasModule
         /** Things that fall outside of a specific category */
         const std::map<std::string, double>& userValues() const { return _userValuem; }
 
-        void setPhotoelectricHeating(const std::valarray<double>& peh) { _photoelectricHeating = peh; }
         void setReactionNames(const std::vector<std::string>& rn) { _reactionNamev = rn; }
         void setReactionRates(const std::valarray<double>& rr) { _reactionRatev = rr; }
         void setHPopulations(const std::valarray<double>& hp) { _hPopulationv = hp; }
@@ -53,8 +48,6 @@ namespace GasModule
 
     private:
         bool _saveLevelPopulations{true};
-
-        std::valarray<double> _photoelectricHeating;
 
         std::map<std::string, double> _heatingm;
         std::map<std::string, double> _coolingm;

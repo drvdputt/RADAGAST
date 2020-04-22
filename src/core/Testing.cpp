@@ -484,9 +484,8 @@ namespace GasModule
 
             double heat = s.heating();
             double cool = s.cooling();
-            double grainHeat = gd.photoelectricHeating().sum();
-            double netHeating = heat - cool + grainHeat;
-            heatFile.writeLine<Array>({t, netHeating, heat, cool, grainHeat});
+            double netHeating = heat - cool;
+            heatFile.writeLine<Array>({t, netHeating, heat, cool});
 
             densFileLine[0] = t;
             double totalH = 0;
@@ -859,7 +858,7 @@ namespace GasModule
             s.fillDiagnostics(&gd);
 
             cout << "Htot = " << s.heating() << '\n';
-            cout << "grainHeat = " << gd.photoelectricHeating().sum() << '\n';
+            cout << "grainHeat = " << gd.heating().at("total grainphoto") << '\n';
             cout << "Ctot = " << s.cooling() << '\n';
             cout << "eden = " << s.ne() << '\n';
             cout << "H+ " << s.np() << '\n';

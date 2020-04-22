@@ -37,8 +37,8 @@ namespace GasModule
 
         for (size_t i = 0; i < numSizes; i++)
         {
-            // Cross section of the grain. This needs to be an integrated quantity over the bin,
-            // but lets approximate for now. TODO: integrated cross section for grains.
+            // Cross section of the grain. This actually needs to be average(a^2) over the grain
+            // bin, and not average(a)^2, but lets approximate with the latter for now.
             double Td{temperaturev[i]};
             double sigmad{sizev[i]};
             sigmad *= sigmad * Constant::PI;
