@@ -2,13 +2,14 @@
 // for now)
 
 #include "Constants.hpp"
+#include "Functions.hpp"
 #include "H2Data.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
 #include "SimpleColumnFile.hpp"
 
 // parameters
-const double thermalWidth = 80.;
+const double lineWidthT = 80.;
 
 const double min = 0.005 * Constant::UM;
 const double max = 1000 * Constant::UM;
@@ -116,8 +117,8 @@ int main()
             {
                 // for width, use formula copied from LevelCoefficients::lineProfile but with
                 // constant temperature (200 K is a rough guildelinee).
-                double thermalVelocity = sqrt(Constant::BOLTZMAN * thermalWidth / (2 * Constant::HMASS));
-                double sigma = center * thermalVelocity / Constant::LIGHT;
+                double sigma = center * GasModule::Functions::thermalVelocityWidth(lineWidthT, 2 * Constant::HMASS)
+                               / Constant::LIGHT;
                 addLinePoints(center, sigma, specialPoints);
                 count++;
             }

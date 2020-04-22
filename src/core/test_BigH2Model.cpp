@@ -1,8 +1,8 @@
 #include "BigH2Model.hpp"
 #include "CollisionParameters.hpp"
 #include "DoctestUtils.hpp"
+#include "Functions.hpp"
 #include "H2Data.hpp"
-#include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 
@@ -89,8 +89,7 @@ TEST_CASE("H2-specific algorithm")
         double n = 1;
         const CollisionParameters cp = makeCP(0, 0, 0, n);
         Array specificIntensityv(frequencyv.size());
-        for (size_t i = 0; i < frequencyv.size(); i++)
-            specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], T);
+        for (size_t i = 0; i < frequencyv.size(); i++) specificIntensityv[i] = Functions::planck(frequencyv[i], T);
         Spectrum specificIntensity(frequencyv, specificIntensityv);
         BigH2Model bigh2(&hff, &specificIntensity);
         bigh2.solve(n, cp);

@@ -1,6 +1,6 @@
 #include "GrainH2Formation.hpp"
 #include "Constants.hpp"
-#include "SpecialFunctions.hpp"
+#include "Functions.hpp"
 
 namespace GasModule
 {
@@ -33,7 +33,7 @@ namespace GasModule
         double onePlusSqrtFrac = 1. + sqrtEHc_Es / sqrtEHp_Es;
 
         double Tgas_100 = Tgas / 100.;
-        double vH = SpecialFunctions::meanThermalVelocity(Tgas, Constant::HMASS);
+        double vH = Functions::meanThermalVelocity(Tgas, Constant::HMASS);
 
         for (size_t i = 0; i < numSizes; i++)
         {

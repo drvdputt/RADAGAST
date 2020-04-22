@@ -1,8 +1,8 @@
 #include "DoctestUtils.hpp"
+#include "Functions.hpp"
 #include "HFromFiles.hpp"
 #include "LevelCoefficients.hpp"
 #include "LineProfile.hpp"
-#include "SpecialFunctions.hpp"
 #include "Testing.hpp"
 #include "doctest.h"
 
@@ -93,7 +93,7 @@ TEST_CASE("H line profile normalizations")
         // Try different gaussian broadenings
         for (double T : {1, 10, 100, 1000, 10000})
         {
-            double sigma_nu = nu0 * SpecialFunctions::thermalVelocityWidth(T, Constant::HMASS) / Constant::LIGHT;
+            double sigma_nu = nu0 * Functions::thermalVelocityWidth(T, Constant::HMASS) / Constant::LIGHT;
             LineProfile lp(nu0, sigma_nu, halfWidth);
             double norm = lp.integrateSpectrum(flat);
             bool line_norm_ok = TemplatedUtils::equalWithinTolerance(norm, 1., rtol);

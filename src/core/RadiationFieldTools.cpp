@@ -1,5 +1,5 @@
 #include "RadiationFieldTools.hpp"
-#include "SpecialFunctions.hpp"
+#include "Functions.hpp"
 #include <vector>
 
 namespace GasModule
@@ -8,7 +8,7 @@ namespace GasModule
     {
         Array I_nu(frequencyv.size());
         for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
-            I_nu[iFreq] = SpecialFunctions::planck(frequencyv[iFreq], Tc);
+            I_nu[iFreq] = Functions::planck(frequencyv[iFreq], Tc);
         return I_nu;
     }
 

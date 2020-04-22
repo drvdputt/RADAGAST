@@ -3,8 +3,8 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
+#include "Functions.hpp"
 #include "GrainPopulation.hpp"
-#include "SpecialFunctions.hpp"
 #include <cassert>
 
 namespace GasModule

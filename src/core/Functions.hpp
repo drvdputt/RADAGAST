@@ -6,8 +6,9 @@
 
 namespace GasModule
 {
-    /** Defines a number of mathematical functions, some 'special', others not so special. */
-    namespace SpecialFunctions
+    /** Defines a number of simple mathematical and physical functions, not bound to a specific
+        piece of implementation. */
+    namespace Functions
     {
         /** This function returns the Voigt function \f[ H(a,x) = \frac{a}{\pi}
             \int_{-\infty}^\infty \frac{ e^{-u^2}\,{\rm{d}}u }{ (x-u)^2+a^2 } \f] We use an

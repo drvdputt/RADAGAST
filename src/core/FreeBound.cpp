@@ -2,10 +2,10 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Error.hpp"
+#include "Functions.hpp"
 #include "IOTools.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
-#include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include <gsl/gsl_pow_int.h>

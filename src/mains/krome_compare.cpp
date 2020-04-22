@@ -1,6 +1,6 @@
+#include "Functions.hpp"
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
-#include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "Spectrum.hpp"
 #include "Testing.hpp"
@@ -22,7 +22,7 @@ int main()
     double highFreq = high_eV * Constant::EV / Constant::PLANCK;
     Array frequencyv = Testing::generateGeometricGridv(nPhotoBins, lowFreq, highFreq);
     Array intensityv(frequencyv.size());
-    for (int i = 0; i < frequencyv.size(); i++) intensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
+    for (int i = 0; i < frequencyv.size(); i++) intensityv[i] = Functions::planck(frequencyv[i], Tc);
     Spectrum specificIntensity(frequencyv, intensityv);
 
     // Write out the radiation field in eV / cm2 / sr / hz

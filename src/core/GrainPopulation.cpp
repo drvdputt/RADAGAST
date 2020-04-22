@@ -1,9 +1,9 @@
 #include "GrainPopulation.hpp"
 #include "Error.hpp"
+#include "Functions.hpp"
 #include "GrainH2Formation.hpp"
 #include "GrainPhotoelectricData.hpp"
 #include "Options.hpp"
-#include "SpecialFunctions.hpp"
 #include "Testing.hpp"
 
 namespace GasModule
@@ -51,7 +51,7 @@ namespace GasModule
             for (size_t t = 0; t < Tv.size(); t++)
             {
                 for (size_t i = 0; i < frequencyv.size(); i++)
-                    greybodyIntegrandv[i] = qAbsvv[m][i] * SpecialFunctions::planck(frequencyv[i], Tv[t]);
+                    greybodyIntegrandv[i] = qAbsvv[m][i] * Functions::planck(frequencyv[i], Tv[t]);
 
                 bbEmission(m, t) = Constant::FPI * crossSection
                                    * TemplatedUtils::integrate<double, Array, Array>(frequencyv, greybodyIntegrandv);

@@ -2,8 +2,8 @@
 #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "Functions.hpp"
 #include "Options.hpp"
-#include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"
 
 using namespace std;
@@ -175,7 +175,7 @@ namespace GasModule
 
         // The standard deviation in frequency units. It is about half of the FWHM for a
         // Gaussian
-        double sigma_nu = nu0 * SpecialFunctions::thermalVelocityWidth(T, _mass) / Constant::LIGHT;
+        double sigma_nu = nu0 * Functions::thermalVelocityWidth(T, _mass) / Constant::LIGHT;
 
         return LineProfile(nu0, sigma_nu, halfWidth);
     }

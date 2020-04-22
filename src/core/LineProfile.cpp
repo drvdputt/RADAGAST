@@ -1,9 +1,9 @@
 #include "LineProfile.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "Functions.hpp"
 #include "IOTools.hpp"
 #include "Options.hpp"
-#include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"
 #include <cmath>
 #include <iomanip>
@@ -24,9 +24,9 @@ namespace GasModule
     {
         // double x = (nu - _center) * _one_sqrt2sigma;
         // Note that the normalization factor is 1 / sqrt(2 pi) sigma
-        // return SpecialFunctions::voigt(_a, x) / Constant::SQRT2PI / _sigma_gauss;
-        // return SpecialFunctions::pseudoVoigt(nu - _center, _sigma_gauss, _halfWidth_lorentz);
-        return SpecialFunctions::gauss(nu - _center, _sigma_gauss);
+        // return Functions::voigt(_a, x) / Constant::SQRT2PI / _sigma_gauss;
+        // return Functions::pseudoVoigt(nu - _center, _sigma_gauss, _halfWidth_lorentz);
+        return Functions::gauss(nu - _center, _sigma_gauss);
     }
 
     Array LineProfile::recommendedFrequencyGrid(int numPoints) const
@@ -44,7 +44,7 @@ namespace GasModule
 
         double yMax = (*this)(_center);
         // With 2.33 sigma, we get about 0.99 of the gaussian
-        double xMax = std::max(2.8 * _sigma_gauss, SpecialFunctions::lorentz_percentile(0.995, _halfWidth_lorentz));
+        double xMax = std::max(2.8 * _sigma_gauss, Functions::lorentz_percentile(0.995, _halfWidth_lorentz));
         double yMin = (*this)(_center + xMax);
         double linearStep = (yMax - yMin) / (iCenter + 1);  // +1 to avoid stepping below 0
 
@@ -75,7 +75,7 @@ namespace GasModule
             previousx = x;
 
             // Assume a gaussian. We want to go down a fixed step in the vertical direction.
-            x = SpecialFunctions::inverse_gauss((y - linearStep) * scaleGauss, _sigma_gauss);
+            x = Functions::inverse_gauss((y - linearStep) * scaleGauss, _sigma_gauss);
 
             // If drop was too big, scale down
             double nexty = (*this)(_center + x);

@@ -2,6 +2,7 @@
 #include "BigH2Model.hpp"
 #include "CollisionParameters.hpp"
 #include "FreeBound.hpp"
+#include "Functions.hpp"
 #include "GasDiagnostics.hpp"
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
@@ -13,7 +14,6 @@
 #include "Ionization.hpp"
 #include "RadiationFieldTools.hpp"
 #include "SimpleColumnFile.hpp"
-#include "SpecialFunctions.hpp"
 #include "SpeciesIndex.hpp"
 #include "TemplatedUtils.hpp"
 #include "WeingartnerDraine2001.hpp"
@@ -172,7 +172,7 @@ namespace GasModule
         auto heating = [&](double T) -> int {
             Array blackbodyIntegrandv(frequencyv.size());
             for (size_t i = 0; i < frequencyv.size(); i++)
-                blackbodyIntegrandv[i] = SpecialFunctions::planck(frequencyv[i], T) * crossSectionv[i];
+                blackbodyIntegrandv[i] = Functions::planck(frequencyv[i], T) * crossSectionv[i];
 
             double bbEmission = 0;
             if (T > 0.) bbEmission = TemplatedUtils::integrate<double, Array, Array>(frequencyv, blackbodyIntegrandv);
@@ -195,7 +195,7 @@ namespace GasModule
         boundBound.lineInfo(numLines, lineFreqv, naturalWidthv);
 
         double lineWindowFactor = 1.;
-        double thermalFactor = sqrt(Constant::BOLTZMAN * 50000 / Constant::HMASS) / Constant::LIGHT;
+        double thermalFactor = Functions::thermalVelocityWidth(50000, Constant::HMASS) / Constant::LIGHT;
         naturalWidthv = lineWindowFactor * (naturalWidthv + lineFreqv * thermalFactor);
 
         vector<double> gridVector(begin(oldPoints), end(oldPoints));
@@ -840,7 +840,7 @@ namespace GasModule
         // double G0{1e2};
         Array frequencyv = gasInterface.iFrequencyv();
         Array specificIntensityv(frequencyv.size());
-        for (int i = 0; i < frequencyv.size(); i++) specificIntensityv[i] = SpecialFunctions::planck(frequencyv[i], Tc);
+        for (int i = 0; i < frequencyv.size(); i++) specificIntensityv[i] = Functions::planck(frequencyv[i], Tc);
 
         specificIntensityv *=
             bollum / 16 / Constant::PI / distance / distance / GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);

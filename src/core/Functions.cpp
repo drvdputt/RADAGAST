@@ -1,4 +1,4 @@
-#include "SpecialFunctions.hpp"
+#include "Functions.hpp"
 #include "Constants.hpp"
 #include "Error.hpp"
 #include "TemplatedUtils.hpp"
@@ -7,7 +7,7 @@
 
 namespace GasModule
 {
-    double SpecialFunctions::voigt(double a, double u)
+    double Functions::voigt(double a, double u)
     {
         if (a <= 0.0) Error::runtime("Bad argument (a = " + std::to_string(a) + ") . a should be positive.");
 
@@ -218,7 +218,7 @@ namespace GasModule
         }
     }  // namespace
 
-    double SpecialFunctions::pseudoVoigt(double x, double sigma_gauss, double gamma_lorentz)
+    double Functions::pseudoVoigt(double x, double sigma_gauss, double gamma_lorentz)
     {
         // from Ida et al. (2000), citing Thompson et al. (!987)
         constexpr double twoSqrt2ln2 = 2.3548200450309493;
@@ -245,48 +245,42 @@ namespace GasModule
         return (1 - eta) * gauss(x, sigma_gauss) + eta * lorentz(x, gamma_lorentz);
     }
 
-    double SpecialFunctions::maxwellBoltzman(double v, double T, double m)
+    double Functions::maxwellBoltzman(double v, double T, double m)
     {
         double twokT = 2 * Constant::BOLTZMAN * T;
         double v2 = v * v;
         return Constant::FPI * std::pow(m / Constant::PI / twokT, 1.5) * v2 * std::exp(-m * v2 / twokT);
     }
 
-    double SpecialFunctions::meanThermalVelocity(double T, double m)
+    double Functions::meanThermalVelocity(double T, double m)
     {
         return sqrt(8. / Constant::PI * Constant::BOLTZMAN * T / m);
     }
 
-    double SpecialFunctions::thermalVelocityWidth(double T, double m)
-    {
-        return sqrt(Constant::BOLTZMAN * T / m);
-    }
+    double Functions::thermalVelocityWidth(double T, double m) { return sqrt(Constant::BOLTZMAN * T / m); }
 
-    double SpecialFunctions::planck(double nu, double T)
+    double Functions::planck(double nu, double T)
     {
         constexpr double twoPlanckOverCsquare = 2 * Constant::PLANCK / Constant::LIGHT / Constant::LIGHT;
         return twoPlanckOverCsquare * nu * nu * nu / expm1(Constant::PLANCK * nu / Constant::BOLTZMAN / T);
     }
 
-    double SpecialFunctions::lorentz(double x, double gamma) { return gamma / (x * x + gamma * gamma) / Constant::PI; }
+    double Functions::lorentz(double x, double gamma) { return gamma / (x * x + gamma * gamma) / Constant::PI; }
 
-    double SpecialFunctions::inverse_lorentz(double l, double gamma)
+    double Functions::inverse_lorentz(double l, double gamma)
     {
         return std::sqrt(gamma / Constant::PI / l - gamma * gamma);
     }
 
-    double SpecialFunctions::lorentz_percentile(double p, double gamma)
-    {
-        return gamma * std::tan(Constant::PI * (p - .5));
-    }
+    double Functions::lorentz_percentile(double p, double gamma) { return gamma * std::tan(Constant::PI * (p - .5)); }
 
-    double SpecialFunctions::gauss(double x, double sigma)
+    double Functions::gauss(double x, double sigma)
     {
         double x_sigma = x / sigma;
         return exp(-x_sigma * x_sigma / 2) / sigma / Constant::SQRT2PI;
     }
 
-    double SpecialFunctions::inverse_gauss(double g, double sigma)
+    double Functions::inverse_gauss(double g, double sigma)
     {
         return sigma * std::sqrt(-2 * std::log(Constant::SQRT2PI * sigma * g));
     }
