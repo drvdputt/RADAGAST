@@ -24,8 +24,9 @@ namespace GasModule
         /** Total radiative recombination rate coefficient in cpm3 / s */
         double recombinationRateCoeff(double T);
 
-        /** Heating due to thermalization of freed electrons */
-        double heating(double nH, const Spectrum& specificIntensity);
+        /** Heating due to thermalization of freed electrons (erg s-1). Multiply with nH to get
+            heating rate. */
+        double heatingPerH(const Spectrum& specificIntensity);
 
         /** Kinetic energy lost during recombination (basically the photon energy, minus the
             binding energy contribution. */

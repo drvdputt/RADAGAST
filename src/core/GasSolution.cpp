@@ -14,8 +14,8 @@ namespace GasModule
                              const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
                              std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound, const FreeFree& freeFree)
         : _sv(speciesIndex), _hSolution(std::move(hModel)),
-          _h2Solution(std::move(h2Model)), _specificIntensity{specificIntensity}, _freeBound{freeBound}, _freeFree{
-                                                                                                             freeFree}
+          _h2Solution(std::move(h2Model)), _specificIntensity{specificIntensity},
+          _freeBound{freeBound}, _freeFree{freeFree}, _ionHeatPerH{Ionization::heatingPerH(specificIntensity)}
     {
         int numPop = gri->numPopulations();
         if (numPop)
@@ -93,7 +93,7 @@ namespace GasModule
     {
         double hLine = _hSolution->netHeating();
         double h2Line = _h2Solution->netHeating();
-        double hPhotoIonHeat = Ionization::heating(nH(), _specificIntensity);
+        double hPhotoIonHeat = nH() * _ionHeatPerH;
         double dissHeat = _h2Solution->dissociationHeating();
         double grainHeat = grainHeating();
         DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
@@ -147,7 +147,7 @@ namespace GasModule
         double netHline = _hSolution->netHeating();
         double netH2line = _h2Solution->netHeating();
 
-        gd->setHeating("H ion", Ionization::heating(nH(), _specificIntensity));
+        gd->setHeating("H ion", nH() * _ionHeatPerH);
         gd->setCooling("Hrec", Ionization::cooling(nH(), np(), ne(), _t));
         gd->setHeating("H deexc", netHline);
         gd->setCooling("H exc", -netHline);
@@ -155,7 +155,6 @@ namespace GasModule
         gd->setHeating("H2 deexc", netH2line);
         gd->setCooling("H2 exc", -netH2line);
         gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating());
-        // gd->setHeating("freefree", x);
         gd->setCooling("freefree", _freeFree.cooling(np() * ne(), _t));
 
         // I need this per grain size. Doing this thing for now.

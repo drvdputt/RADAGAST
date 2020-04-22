@@ -130,6 +130,9 @@ namespace GasModule
         const Spectrum& _specificIntensity;
         const FreeBound& _freeBound;
         const FreeFree& _freeFree;
+
+        // quantities that depend only on the radiation field (constant)
+        double _ionHeatPerH;
     };
 }
 #endif  // CORE_GASSOLUTION_HPP

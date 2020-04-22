@@ -112,31 +112,27 @@ namespace GasModule
         return a / (sqrt(T / T0) * pow(1 + sqrt(T / T0), 1 - b) * pow(1 + sqrt(T / T1), 1 + b));
     }
 
-    double Ionization::heating(double nH, const Spectrum& specificIntensity)
+    double Ionization::heatingPerH(const Spectrum& specificIntensity)
     {
-        // 0. start from I_nu (erg s-1 cm-2 hz-1 sr-1)
         const Array& Iv = specificIntensity.valuev();
         const Array& nuv = specificIntensity.frequencyv();
 
-        // 1. energy difference * number of photons s-1 cm-2 hz-1 = h(nu - threshold) * 4pi I_nu
-        // / (hnu) = (nu - threshold) * 4pi I_nu / nu. TODO: only do this calculation up to
-        // threshold
-        Array integrandv = (nuv - THRESHOLD) * Constant::FPI * Iv / nuv;
-
-        // 2. multiply with crossSection, and stop when we go below threshold -> erg s-1 hz-1
+        // stop when we go below threshold
+        Array integrandv(nuv.size());
         int i = nuv.size() - 1;
         while (i >= 0 && nuv[i] > THRESHOLD)
         {
-            integrandv[i] *= crossSection(nuv[i]);
+            // Start from I_nu -> erg s-1 cm-2 hz-1 sr-1. Then, h(nu - threshold) * 4pi I_nu /
+            // hnu = (nu - threshold) * 4pi I_nu / nu -> erg cm-2 hz-1. Then multiply with
+            // crossSection -> erg s-1 hz-1.
+            integrandv[i] = (nuv[i] - THRESHOLD) * Constant::FPI * Iv[i] / nuv[i] * crossSection(nuv[i]);
             i--;
         }
         // i is now 1 below integration bound
 
-        // 3. integrate over frequency -> erg s-1
+        // integrate over frequency -> erg s-1
         double heatPerH = TemplatedUtils::integrate<double>(nuv, integrandv, i + 1, nuv.size() - 1);
-
-        // 4. multiply with H density -> erg s-1 cm-3
-        return nH * heatPerH;
+        return heatPerH;
     }
 
     double Ionization::cooling(double nH, double np, double ne, double T)
