@@ -24,11 +24,13 @@ namespace GasModule
         GrainInterface();
         ~GrainInterface();
 
-        /** Clients can use this to add populations to this GrainInterface. It is a wrapper around
-            the constructor of GrainPopulation. This way we avoid having to pull in the
-            dependencies of GrainPopulation. The frequency list should be the same as iFrequencyv
-            of the GasInterface (TODO: make this more elegant), and indicates for which frequencies
-            the given qAbs is tabulated. */
+        /** Clients can use this to add populations to this GrainInterface. It is a wrapper
+            around the constructor of GrainPopulation. This way we avoid having to pull in the
+            dependencies of GrainPopulation. The frequency list should be the same as
+            iFrequencyv of the GasInterface , and indicates for which frequencies the given qAbs
+            is tabulated. (TODO: enforce this more strictly. I can e.g. implement a function in
+            GasInterface which creates and empty GrainInterface, passing a pointer to
+            iFrequencyv via the constructor). */
         void addPopulation(GasModule::GrainTypeLabel type, const std::valarray<double>& sizev,
                            const std::valarray<double>& densityv, const std::valarray<double>& temperaturev,
                            const std::valarray<double>& frequencyv, const std::vector<std::valarray<double>>& qAbsvv);
