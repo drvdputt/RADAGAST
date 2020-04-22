@@ -68,6 +68,10 @@ namespace GasModule
             Should be called after @c recalculate(). */
         double surfaceH2FormationRateCoeff(double Tgas) const;
 
+        /** Return the average charge for grains with size index m of this population. Assumes
+            that recalculate() has already been called. */
+        double averageCharge(int m) const;
+
     private:
         // Population to which the vectors and arrays below map (one element per size)
         const GasModule::GrainPopulation* _population;

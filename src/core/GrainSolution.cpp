@@ -143,4 +143,6 @@ namespace GasModule
         return _population->h2formationData()->surfaceH2FormationRateCoeff(_population->sizev(), _newTemperaturev,
                                                                            _population->densityv(), Tgas);
     }
+
+    double GrainSolution::averageCharge(int m) const { return _chargeDistributionv[m].average(); }
 }

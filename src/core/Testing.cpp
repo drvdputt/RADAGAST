@@ -427,7 +427,7 @@ namespace GasModule
         for (size_t i = 0; i < grsv.size(); i++)
         {
             OutColumnFile f(outputPath + "grainpop_" + std::to_string(i) + ".dat",
-                            {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature"});
+                            {"size", "density(cm-3)", "massdensity(g cm-3)", "temperature", "charge"});
 
             const auto* pop = grsv[i]._population;
             for (size_t m = 0; m < pop->numSizes(); m++)
@@ -436,10 +436,9 @@ namespace GasModule
                 double numberDen = pop->density(m);
                 double mass = 4. / 3. * Constant::PI * a * a * a * WD01::bulkDensity(bulkCar);
                 double t = grsv[i]._newTemperaturev[m];
-                f.writeLine<Array>({a, numberDen, numberDen * mass, t});
+                f.writeLine<Array>({a, numberDen, numberDen * mass, t, grsv[i].averageCharge(m)});
             }
         }
-        // TODO: write out charge distributions
     }
 
     void Testing::plotHeatingCurve_main()
