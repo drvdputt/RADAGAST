@@ -23,8 +23,7 @@ namespace GasModule
             two-photon process. */
         Array emissivityv(const Array eFrequencyv) const;
 
-        /** This function returns the line opacity. TODO: maybe include bound-free cross section
-            that depends on the level populations. */
+        /** This function returns the line opacity. */
         Array opacityv(const Array oFrequencyv) const;
 
         /** From the level populations, calculate the net heating-cooling balance by

@@ -194,9 +194,6 @@ namespace GasModule
             }
 
             EVector previousNv = nv;
-            // TODO: deal with possible "singular matrix" error from GSL. Usually appears
-            // when integration time is too long, and no changes happen anymore (related to
-            // precision?)
             int status = gsl_odeiv2_driver_apply(d, &t, goalTime, &nv[0]);
             if (status != GSL_SUCCESS)
             {
