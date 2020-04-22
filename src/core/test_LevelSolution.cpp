@@ -15,13 +15,12 @@ TEST_CASE("Test LevelSolver using two-level LTE ")
     SpeciesIndex spindex({"H", "e-"});
     SpeciesVector sv(&spindex);
     sv.setNe(ne);
-    CollisionParameters gas(T, sv);
+    CollisionParameters cp(T, sv);
 
     TwoLevelHardcoded twolv;
     LevelSolution s(&twolv);
-    s.setT(T);
+    s.updateRates(cp);
     s.setNv(n * twolv.solveBoltzmanEquations(T));
-    s.setCvv(twolv.cvv(gas));
 
     // Deliberately use very low resolution
     Array eFrequencyv = Testing::generateGeometricGridv(5, Testing::defaultMinFreq, Testing::defaultMaxFreq);

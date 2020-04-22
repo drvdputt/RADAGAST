@@ -6,40 +6,48 @@
 
 namespace GasModule
 {
+    class CollisionParameters;
     class LevelCoefficients;
+    class Spectrum;
 
-    /** Stores non-constant quantities that have to do with a level system, and calculates
-        derived quantities */
+    /** Storage of non-constant quantities for a level system. Also implements several derived
+        quantities. Some data members are just there to keep the memory allocated, and to gather
+        all the non-constant level data in one place. Make sure that the arguments passed to the
+        setters are compatible are with the LevelCoefficients given at construction. 
+        Once all setters have been used correctly, the other functions can be called safely. */
     class LevelSolution
     {
     public:
-        /** Pass a pointer to the correct LevelCoefficients object, for access to the constants.
-            Make sure that the arguments passed to setCvv and setNv are dimensionally compatible
-            with the given LevelCoefficients. A temperature and density are also needed to
-            calculate the line width and normalization. Once these have been set externally,
-            using the setters, the other functions can be called safely. */
+        /** Pass a pointer to the correct LevelCoefficients object, for access to the
+            constants. */
         LevelSolution(const LevelCoefficients* lc) : _levelCoefficients{lc} {};
 
-        /** Set new temperature */
-        void setT(double t) { _t = t; }
-        double t() const { return _t; }
+        /** Set the temperature to T, and the rates and densities to zero, in case the density
+            of the relevant species is zero. */
+        void setToZero(double T);
 
-        /** Update the collision coefficients */
-        void setCvv(const EMatrix& cvv)
-        {
-            _isCvvSet = true;
-            _cvv = cvv;
-        }
+        /** Update the stored data, based on the given radiation field and collision parameters,
+            using the LevelCoefficients pointer that was given at construction. */
+        void updateRates(const Spectrum& specificIntensity, const CollisionParameters& cp);
 
-        /** Update the level populations */
-        void setNv(const EVector& nv)
-        {
-            _isNvSet = true;
-            _nv = nv;
-        }
+        /** Same as the above, but with zero radiation field (only collisional) */
+        void updateRates(const CollisionParameters& cp);
+
+        /** Return the total transition rate matrix (to be called after updateRates()). This is
+            the sum of the spontaneous (Aij), induced (Bij) and collisional (Cij)
+            transitions. */
+        EMatrix Tvv() const;
+
+        /** Set the level population vector */
+        void setNv(const EVector& nv) { _nv = nv; }
 
         /** Return the stored populations */
         const EVector& nv() const { return _nv; }
+
+        /** Returns true if the level population vector nv is of the wrong dimension, or
+            consists entirely of zeros. In that case, it is not suitable for an initial
+            guess. */
+        bool hasBadNv() const;
 
         /** Return the fractional populations */
         EVector fv() const;
@@ -54,19 +62,12 @@ namespace GasModule
         /** Net heating due to (de-)excitation [erg s-1 cm-3] */
         double netHeating() const;
 
-        /** True if nv has been filled in */
-        bool isNvSet() const { return _isNvSet; }
-
-        /** True if cvv has been filled in */
-        bool isCvvSet() const { return _isCvvSet; }
-
     private:
         const LevelCoefficients* _levelCoefficients;
         double _t{0.};
         EVector _nv;
+        EMatrix _bpvv;
         EMatrix _cvv;
-        bool _isNvSet{false};
-        bool _isCvvSet{false};
     };
 }
 #endif  // CORE_LEVELSOLUTION_HPP

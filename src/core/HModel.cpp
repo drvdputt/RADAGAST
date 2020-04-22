@@ -18,24 +18,15 @@ namespace GasModule
 
     void HModel::solve(double n, const CollisionParameters& cp)
     {
-        _levelSolution.setT(cp._t);
-
         if (n <= 0)
         {
-            int numLv = _hData->numLv();
-            _levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
-            _levelSolution.setNv(EVector::Zero(numLv));
+            _levelSolution.setToZero(cp._t);
             return;
         }
-
-        EMatrix Cvv;
-        EMatrix Tvv = _hData->totalTransitionRatesvv(*_specificIntensity, cp, &Cvv);
-        _levelSolution.setCvv(Cvv);
-
-        EVector the_sourcev = sourcev(cp);
-        EVector the_sinkv = sinkv();
         DEBUG("Solving levels nH = " << n << std::endl);
-        EVector newNv = LevelSolver::statisticalEquilibrium(n, Tvv, the_sourcev, the_sinkv);
+
+        _levelSolution.updateRates(*_specificIntensity, cp);
+        EVector newNv = LevelSolver::statisticalEquilibrium(n, _levelSolution.Tvv(), sourcev(cp), sinkv());
         _levelSolution.setNv(newNv);
     }
 

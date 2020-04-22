@@ -38,16 +38,4 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
         CHECK(lineFreqv[0] == (ev(1) - ev(0)) / Constant::PLANCK);
         CHECK(naturalLineWidthv[0] == avv(1, 0) / Constant::FPI);
     }
-
-    SUBCASE("totalTransitionRatesvv")
-    {
-        EMatrix Tvv = twolv.totalTransitionRatesvv(specificIntensity, gas);
-        CHECK(Tvv == avv);
-
-        gas._sv.setNe(100);
-        EMatrix cvv;
-        Tvv = twolv.totalTransitionRatesvv(specificIntensity, gas, &cvv);
-        CHECK(Tvv == avv + cvv);
-        CHECK(cvv == twolv.cvv(gas));
-    }
 }

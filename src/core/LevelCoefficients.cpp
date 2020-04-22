@@ -52,39 +52,6 @@ namespace GasModule
         });
     }
 
-    EMatrix LevelCoefficients::totalTransitionRatesvv(const Spectrum& specificIntensity, const CollisionParameters& cp,
-                                                      EMatrix* cvv_p, EMatrix* bpvv_p) const
-    {
-        // If no pointer was given, store cvv in newly allocated space. (I change value of
-        // cvv_p, for convenience in the rest of this function.).
-        EMatrix new_cvv;
-        if (cvv_p)
-            *cvv_p = cvv(cp);
-        else
-        {
-            new_cvv = cvv(cp);
-            cvv_p = &new_cvv;
-        }
-
-        // Idem
-        EMatrix new_bpvv;
-        if (bpvv_p)
-            *bpvv_p = prepareAbsorptionMatrix(specificIntensity, cp._t, *cvv_p);
-        else
-        {
-            new_bpvv = prepareAbsorptionMatrix(specificIntensity, cp._t, *cvv_p);
-            bpvv_p = &new_bpvv;
-        }
-
-        if (Options::levelcoefficients_printLevelMatrices)
-        {
-            DEBUG("Aij" << endl << _avv << endl << endl);
-            DEBUG("BPij" << endl << *bpvv_p << endl << endl);
-            DEBUG("Cij" << endl << *cvv_p << endl << endl);
-        }
-        return _avv + _extraAvv + *bpvv_p + *cvv_p;
-    }
-
     EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
                                                        const EMatrix& Cvv) const
     {

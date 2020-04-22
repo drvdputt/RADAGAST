@@ -1,8 +1,42 @@
 #include "LevelSolution.hpp"
+#include "CollisionParameters.hpp"
 #include "LevelCoefficients.hpp"
 
 namespace GasModule
 {
+    void LevelSolution::updateRates(const Spectrum& specificIntensity, const CollisionParameters& cp)
+    {
+        _t = cp._t;
+        _cvv = _levelCoefficients->cvv(cp);
+        _bpvv = _levelCoefficients->prepareAbsorptionMatrix(specificIntensity, _t, _cvv);
+    }
+
+    void LevelSolution::updateRates(const CollisionParameters& cp)
+    {
+        _t = cp._t;
+        _cvv = _levelCoefficients->cvv(cp);
+        _bpvv = EMatrix::Zero(_levelCoefficients->numLv(), _levelCoefficients->numLv());
+    }
+
+    void LevelSolution::setToZero(double T)
+    {
+        _t = T;
+        int numLv = _levelCoefficients->numLv();
+        _cvv = EMatrix::Zero(numLv, numLv);
+        _bpvv = EMatrix::Zero(numLv, numLv);
+        _nv = EVector::Zero(numLv);
+    }
+
+    EMatrix LevelSolution::Tvv() const
+    {
+        return _levelCoefficients->avv() + _levelCoefficients->extraAvv() + _bpvv + _cvv;
+    }
+
+    bool LevelSolution::hasBadNv() const
+    {
+        return _nv.size() == 0 || (_nv.array() < 0).any() || (_nv.array() == 0).all();
+    }
+
     EVector LevelSolution::fv() const
     {
         double sum = _nv.sum();

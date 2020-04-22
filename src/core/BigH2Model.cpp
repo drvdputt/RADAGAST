@@ -19,44 +19,41 @@ namespace GasModule
 
     void BigH2Model::solve(double n, const CollisionParameters& cp, double h2form)
     {
-        _levelSolution.setT(cp._t);
         _n = n;
-
         if (n <= 0)
         {
-            int numLv = _h2Data->numLv();
-            _levelSolution.setCvv(EMatrix::Zero(numLv, numLv));
-            _levelSolution.setNv(EVector::Zero(numLv));
+            _levelSolution.setToZero(cp._t);
             return;
         }
 
-        _tvv = _h2Data->totalTransitionRatesvv(*_specificIntensity, cp, &_cvv, &_bpvv);
-        _levelSolution.setCvv(_cvv);
+        // transition matrices
+        _levelSolution.updateRates(*_specificIntensity, cp);
 
+        // source term due to H2 formation
         EVector sourcev = EVector::Zero(_h2Data->numLv());
         sourcev.head(_h2Data->startOfExcitedIndices()) = _h2Data->formationDistribution();
         sourcev *= h2form / sourcev.sum();
 
-        if (!_levelSolution.isNvSet())
-        {
-            EVector initialGuessv = EVector::Zero(_h2Data->numLv());
+        // sink term due to direct + solomon dissociation
+        EVector sinkv = _directDissociationRatev + _h2Data->dissociationProbabilityv();
 
+        // choose an initial guess if there is no decent previous solution
+        if (_levelSolution.hasBadNv())
+        {
             // Use LTE for the X levels, and 0 for the rest
             int endX = _h2Data->startOfExcitedIndices();
+            EVector initialGuessv = EVector::Zero(_h2Data->numLv());
             initialGuessv.head(endX) = LevelSolver::statisticalEquilibrium_boltzman(n, cp._t, _h2Data->ev().head(endX),
                                                                                     _h2Data->gv().head(endX));
-
             DEBUG("Using LTE as initial guess for H2" << std::endl);
             _levelSolution.setNv(initialGuessv);
         }
 
-        // direct + solomon
-        EVector sinkv = _directDissociationRatev + _h2Data->dissociationProbabilityv();
         // There are no transitions between electronically excited levels. Get this index here,
         // so that the solver called below can simplify the calculation using this assumption.
         int fullyConnectedCutoff = _h2Data->startOfExcitedIndices();
-        EVector newNv = LevelSolver::statisticalEquilibrium_iterative(n, _tvv, sourcev, sinkv, _levelSolution.nv(),
-                                                                      fullyConnectedCutoff);
+        EVector newNv = LevelSolver::statisticalEquilibrium_iterative(n, _levelSolution.Tvv(), sourcev, sinkv,
+                                                                      _levelSolution.nv(), fullyConnectedCutoff);
         _levelSolution.setNv(newNv);
     }
 
@@ -82,14 +79,11 @@ namespace GasModule
         return solomonHeat + directHeat;
     }
 
-    double BigH2Model::netHeating() const
-    {
-        return _levelSolution.netHeating();
-    }
+    double BigH2Model::netHeating() const { return _levelSolution.netHeating(); }
 
     double BigH2Model::orthoPara() const
     {
-        if (!_levelSolution.isNvSet()) return 0.75;
+        if (_levelSolution.hasBadNv()) return 0.75;
 
         double orthoSum = 0;
         double paraSum = 0;

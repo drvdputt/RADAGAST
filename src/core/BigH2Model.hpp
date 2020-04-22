@@ -40,13 +40,6 @@ namespace GasModule
         // values that depend on radiation field only
         EVector _directDissociationRatev;
         EVector _directDissociationHeatv;
-
-        // Keep this allocated, instead of freeing it at the end of solve(); TODO: move these
-        // into LevelSolution, and pass LevelSolution to
-        // LevelCoefficients::totalTransitionRatesvv.
-        EMatrix _cvv;
-        EMatrix _bpvv;
-        EMatrix _tvv;
     };
 }
 

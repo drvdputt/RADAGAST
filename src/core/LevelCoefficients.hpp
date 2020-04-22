@@ -12,15 +12,10 @@ namespace GasModule
 {
     struct CollisionParameters;
 
-    /** This class deals with level coefficients. A data class (e.g. H2FromFiles) can inherit from
-        this class to re-use the level coefficient infrastructure, if it also wants to read in
-        level coefficients. In the typical use case, totalTransitionRatesvv is called, and its
-        output is passed to one of the functions in the LevelSolver namespace.
-
-        The most important function of this class, is prepareAbsorptionMatrix, which integrates over
-        each line to calculate the induced transition rates. To facilitate this, a function which
-        can generate LineProfile objects is also implemented here, as well as a function to loop
-        over all the active (Aij != 0) transitions. */
+    /** This class deals with level coefficients. A data class (e.g. H2FromFiles) can inherit
+        from this class to re-use the level coefficient infrastructure. The most important
+        reason for this base class, is a common implemenation of prepareAbsorptionMatrix, which
+        integrates over each line to calculate the induced transition rates. T */
     class LevelCoefficients
     {
     public:
@@ -51,21 +46,18 @@ namespace GasModule
             two-photon continuum). */
         const EMatrix& extraAvv() const { return _extraAvv; }
 
+        /** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from
+            the Aij) and Pij is the line power, i.e. the radiation field integrated over the
+            line profile. The temperature and collision coefficients are needed, because these
+            influence the shape of the line profile. The units of Bij and Pij are often
+            different in the literature and other codes (it depends on the units used for the
+            radiation field), but their product should always have units [s-1]. */
+        EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T, const EMatrix& Cvv) const;
+
         /** Ouputs some properties about the different line transitions. The results for the number
             of lines, their frequencies [s-1] and their natural widths (decay rate [s-1] / 4 pi)
             are returned by reference. */
         void lineInfo(int& numLines, Array& lineFreqv, Array& naturalLineWidthv) const;
-
-        /** Construct the rate matrix T_ij for the given radiation field and gas properties. This
-            is the sum of the spontaneous (Aij), induced (Bij) and collisional (Cij) transitions.
-            The induced transitions rates (B coefficients * line power) are derived from the given
-            specific intensity. Optionally, the collision coefficients can be returned separately
-            by pointer, so they don't have to be calculated again later (the result is exactly the
-            same as calling cvv() but it is more efficient to calculate the total matrix and cvv at
-            the same time). Same for the induced radiative transition matrix. By passing these
-            pointers, you can also avoid having to free the memory for these matrices. [s-1] */
-        EMatrix totalTransitionRatesvv(const Spectrum& specificIntensity, const CollisionParameters& cp,
-                                       EMatrix* cvv_p = nullptr, EMatrix* bpvv_p = nullptr) const;
 
         /** Calculates the level populations using a simple Boltzman LTE equation. Also serves as
             an example of how to properly set up a LevelSolution object. */
@@ -80,16 +72,6 @@ namespace GasModule
             temperatures */
         EVector solveBoltzmanEquations(double T) const;
 
-    private:
-        /** Create the matrix [Bij*Pij], where Bij are the Einstein B coefficients (derived from
-            the Aij) and Pij is the line power, i.e. the radiation field integrated over the line
-            profile. The temperature and collision coefficients are needed, because these influence
-            the shape of the line profile. The units of Bij and Pij are often different in the
-            literature and other codes (it depends on the units used for the radiation field), but
-            their product should always have units [s-1]. */
-        EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T, const EMatrix& Cvv) const;
-
-    public:
         /** Abstraction of the loop over all lines. Executes thingWithLine for all combinations
             upper > lower that have _Avv(upper, lower) > 0. If the levels are sorted, and all
             downward transitions have line activity, then this function will loop over all elements

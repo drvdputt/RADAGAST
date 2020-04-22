@@ -80,11 +80,6 @@ namespace GasModule
         // (currenly not used for H2).
         const bool levelsolver_printEquations = false;
 
-        // Print the transition coefficients (A, B and C matrices) to standard output (only in
-        // DEBUG). Currenly quite cryptic, as it happens in the general class, and therefore the
-        // species is not mentioned in the output.
-        const bool levelcoefficients_printLevelMatrices = false;
-
         // VERY COSTLY: When integrating the B-coefficients, also do the integration 'manually' on
         // a very fine grid, and report the difference between the optimized line integration and
         // the 'manual' way. This is implemented in LevelCoefficients, but is actually a check on
