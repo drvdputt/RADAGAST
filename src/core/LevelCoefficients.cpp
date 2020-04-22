@@ -3,6 +3,7 @@
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
 #include "Options.hpp"
+#include "SpecialFunctions.hpp"
 #include "TemplatedUtils.hpp"
 
 using namespace std;
@@ -169,14 +170,12 @@ namespace GasModule
                            + Cvv(lower, upper);  // decay rate of bottom level
         // (stimulated emission doesn't count, as it causes no broadening)
 
-        double thermalVelocity = sqrt(Constant::BOLTZMAN * T / _mass);
-
         // Half the FWHM of the Lorentz
         double halfWidth = decayRate / Constant::FPI;
 
         // The standard deviation in frequency units. It is about half of the FWHM for a
         // Gaussian
-        double sigma_nu = nu0 * thermalVelocity / Constant::LIGHT;
+        double sigma_nu = nu0 * SpecialFunctions::thermalVelocityWidth(T, _mass) / Constant::LIGHT;
 
         return LineProfile(nu0, sigma_nu, halfWidth);
     }

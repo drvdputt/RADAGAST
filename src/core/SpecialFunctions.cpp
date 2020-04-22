@@ -257,6 +257,11 @@ namespace GasModule
         return sqrt(8. / Constant::PI * Constant::BOLTZMAN * T / m);
     }
 
+    double SpecialFunctions::thermalVelocityWidth(double T, double m)
+    {
+        return sqrt(Constant::BOLTZMAN * T / m);
+    }
+
     double SpecialFunctions::planck(double nu, double T)
     {
         constexpr double twoPlanckOverCsquare = 2 * Constant::PLANCK / Constant::LIGHT / Constant::LIGHT;

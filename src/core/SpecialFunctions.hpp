@@ -28,6 +28,12 @@ namespace GasModule
             this is not the same as the RMS velocity. */
         double meanThermalVelocity(double T, double m);
 
+        /** Width of a Gaussian thermal velocity distribution. Note the difference with the mean
+            thermal velocity above: the latter is the mean of the absolute value of the velocity
+            (abs(v) is Maxwell-distributed), while this function gives the width of the v
+            distribution, which is Gaussian. */
+        double thermalVelocityWidth(double T, double m);
+
         /** This function evaluates Planck's law at a frequency nu, for a photon gas of temperature
             T. The result is the specific intensity in cgs: erg / s / cm^2 / sr / Hz. */
         double planck(double nu, double T);
