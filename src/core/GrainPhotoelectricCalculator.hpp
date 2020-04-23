@@ -120,13 +120,16 @@ namespace GasModule
             integral and number rate integral). */
         void getPET_PDT_Emin(int i, int Z, double& pet, double& pdt, double& Emin) const;
 
-        /** Integrates over the radiation field, counting the number of absorptions per second, per
-            projected grain area. f_hnuDiff can be any function of hnuDiff = (hnu - pet).
-            Multiplying with yield will give the total photoelectric emission rate in electrons s-1
-            cm-2, while multiplying with the average energy and the yield will give the heating
-            rate in erg s-1 cm-2. */
-        double photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
-                                            std::function<double(double hnuDiff)> f_hnuDiff) const;
+        /** Integrates over the radiation field, counting the number of absorptions per second,
+            per projected grain area, times a given tabulated function fNu. The integration over
+            frequency is only carried about above the photoelectric threshold. The values in fNu
+            below the index of the photoelectric threshold do not matter (index referes to
+            position in env._meanIntensity.frequencyv()). When fNu is the yield for each
+            frequency, this function will give the total photoelectric emission rate in
+            electrons s-1 cm-2, while passing the average energy times yield will give the
+            heating rate in erg s-1 cm-2. fNu needs to be the same size as
+            env._meanIntensity. */
+        double photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double nuPET, const Array& fNu) const;
 
         /** Integration loop which applies equation 20 for the photodetachment cross section. Do
         not forget to multiply the result with abs(Z)! */
@@ -160,6 +163,9 @@ namespace GasModule
         // (both contain expm1).
         Array _eStickPositiveCache;
         Array _eStickNegativeCache;
+
+        // Experiment: cache indexed on i, z
+        std::map<std::array<int, 2>, Array> _yieldCache;
     };
 }
 #endif  // CORE_GRAINPHOTOELECTRICCALCULATOR_HPP

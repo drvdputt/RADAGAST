@@ -120,20 +120,18 @@ namespace GasModule
         pdt = ip_v + Emin;
     }
 
-    double
-    GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
-                                                               std::function<double(double hnuDiff)> f_hnuDiff) const
+    double GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double nuPET,
+                                                                      const Array& fNu) const
     {
         const Array& frequencyv = env._meanIntensity->frequencyv();
         const Array& meanIntensityv = env._meanIntensity->valuev();
 
         // yield is zero by definition below photoelectric threshold
-        double nu_pet = pet / Constant::PLANCK;
         int i = frequencyv.size() - 1;
-        while (i >= 0 && frequencyv[i] > nu_pet)
+        while (i >= 0 && frequencyv[i] > nuPET)
         {
             double hnu = Constant::PLANCK * frequencyv[i];
-            env._integrationWorkspace[i] = Qabsv[i] * meanIntensityv[i] / hnu * f_hnuDiff(hnu - pet);
+            env._integrationWorkspace[i] = Qabsv[i] * meanIntensityv[i] / hnu * fNu[i];
             i--;
         }
 
@@ -187,17 +185,20 @@ namespace GasModule
         double a = _sizev[i];
         const double e2_a = Constant::ESQUARE / a;
 
-        // It's cheaper to calculate these together (and safer, less code duplication), so I made
-        // this funtion, and pass these values as arguments when needed.
+        // It's cheaper to calculate these together (and safer, less code duplication)
         double pet, pdt, Emin;
         getPET_PDT_Emin(i, Z, pet, pdt, Emin);
+        double nuPET = pet / Constant::PLANCK;
 
         // WD01 text between eq 10 and 11
         double Elow = Z < 0 ? Emin : -(Z + 1) * e2_a;
 
-        auto yieldTimesAverageEnergy = [&](double hnuDiff) {
+        const Array& frequencyv = env._meanIntensity->frequencyv();
+        Array yieldTimesAverageEnergyv(frequencyv.size());
+        for (int j = frequencyv.size() - 1; j >= 0 && frequencyv[j] > nuPET; j--)
+        {
+            double hnuDiff = Constant::PLANCK * frequencyv[j] - pet;
             double Y = photoelectricYield(i, Z, hnuDiff, Emin);
-
             double Ehigh = Z < 0 ? hnuDiff + Emin : hnuDiff;
             // The integral over the electron energy distribution (integral E f(E) dE), over the
             // energy range for which electrons can escape
@@ -205,11 +206,10 @@ namespace GasModule
             // Divide by (integral f(E) dE) over the same range, which normalizes the above value
             // --> IntE / y2 gives an average energy
             double y2 = WD01::escapingFraction(Z, Elow, Ehigh);
-
-            return Y * IntE / y2;
-        };
+            yieldTimesAverageEnergyv[j] = Y * IntE / y2;
+        }
         double heatingRatePE =
-            Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, pet, yieldTimesAverageEnergy);
+            Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, nuPET, yieldTimesAverageEnergyv);
 
         double heatingRatePD = 0;
         if (Z < 0) heatingRatePD = photodetachmentIntegrationLoop(Z, env, pdt, &Emin);
@@ -227,9 +227,16 @@ namespace GasModule
         double a = _sizev[i];
         double pet, pdt, Emin;
         getPET_PDT_Emin(i, Z, pet, pdt, Emin);
+        double nuPET = pet / Constant::PLANCK;
 
-        auto yieldf = [&](double hnuDiff) { return photoelectricYield(i, Z, hnuDiff, Emin); };
-        double emissionRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, pet, yieldf);
+        const Array& frequencyv = env._meanIntensity->frequencyv();
+        Array yieldv(frequencyv.size());
+        for (int j = frequencyv.size() - 1; j >= 0 && frequencyv[j] > nuPET; j--)
+        {
+            double hnuDiff = Constant::PLANCK * frequencyv[j] - pet;
+            yieldv[j] = photoelectricYield(i, Z, hnuDiff, Emin);
+        }
+        double emissionRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(env, Qabsv, nuPET, yieldv);
         double emissionRatePD = 0;
         if (Z < 0) emissionRatePD = photodetachmentIntegrationLoop(Z, env, pdt, nullptr);
 
