@@ -12,11 +12,23 @@
 namespace GasModule
 {
     /** This class provides an implementation of the photoelectric heating recipe described in
-        Weingartner \& Draine (2001), hereafter WD01. With some optimism, it should be possible to
-        use this recipe for other types of grains, if the right functions and properties (yield,
-        ionization potentials, etc.) are made abstract, and implemented in specific subclasses per
-        grain type. There is some caching of grain properties specific for the WD01 grain types.
-        This caching can also move to a subclass if necessary. */
+        Weingartner \& Draine (2001), hereafter WD01. There is some caching of grain properties
+        to speed up the calculation. Because in a simulation, the grain properties could be
+        different per cell, a new instance of this object is created every time the gas is
+        updated. (Reminder: GasSolution has multiple GrainSolutions, and each GrainSolution has
+        a PhotoelectricCalculator.) Hence, it should be OK to have a changing state in this
+        class, which could be very useful for more advanced caching.
+
+        On the other hand, I could force the user to make sure that their GrainInterface is
+        thread local, and then move this class, keeping the caching mechanisms, into
+        GrainInterface. This would make it possible to keep the cache between cell updates. But
+        let's try keeping it as it is for now, and seeing if I can speed things up by caching
+        some of the more expensive integrands (and hoping the allocations to do the caching
+        don't cause to much trouble).
+
+        With some optimism, it should be possible to use this recipe for other types of grains,
+        if the right functions and properties (yield, ionization potentials, etc.) are made
+        abstract, and implemented in specific subclasses per grain type. */
     class GrainPhotoelectricCalculator
     {
     public:
