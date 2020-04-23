@@ -16,8 +16,9 @@ namespace GasModule
         to speed up the calculation. Because in a simulation, the grain properties could be
         different per cell, a new instance of this object is created every time the gas is
         updated. (Reminder: GasSolution has multiple GrainSolutions, and each GrainSolution has
-        a PhotoelectricCalculator.) Hence, it should be OK to have a changing state in this
-        class, which could be very useful for more advanced caching.
+        a PhotoelectricCalculator.) It should be OK to have a changing state in this class,
+        which could be very useful for more advanced caching. Many functions are not const for
+        that reason.
 
         On the other hand, I could force the user to make sure that their GrainInterface is
         thread local, and then move this class, keeping the caching mechanisms, into
@@ -35,10 +36,11 @@ namespace GasModule
         /** Currently, this constructor also takes arguments related to the WD01 grain types. This
             should change if the GrainPhotoelectricData and GrainPhotoelectricCalculator classes
             are ever made abstract, to acommodate for other grain types. */
-        GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil);
+        GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil,
+                                     const Spectrum* meanIntensity);
 
         /** Gathers the parameters that are different depending on the iteration, or the thread
-        using this calculator. */
+            using this calculator. */
         class Locals
         {
             friend class GrainPhotoelectricCalculator;
@@ -47,43 +49,30 @@ namespace GasModule
             Locals() = default;
 
             /** This constructor creates an environment struct for the photoelectric heating
-                calculation. It takes a frequency grid, a specific intensity of the ambient
-                radiation field for each of those frequencies, a gas temperature, and the
-                species densities. From the latter, the most important densities are extracted
-                (ne, np, nH, nH2), and those densities and those densities are placed in an
-                array at the same indices as the charges and masses, for easy iteration over the
-                relevant species. */
-            Locals(const Spectrum* meanIntensity, double T, const SpeciesVector& sv);
+                calculation. It takes the gas temperature, and the species densities. From the
+                latter, the most important densities are extracted (ne, np, nH, nH2), and those
+                densities are placed in an array at the same indices as the charges and masses,
+                for easy iteration over the relevant species. */
+            Locals(double T, const SpeciesVector& sv);
 
         private:
-            const Spectrum* _meanIntensity{nullptr};
             double _T{0.};
             static const int _ie, _ip, _iH, _iH2;
             static const std::array<int, 4> _chargev;
             static const std::array<double, 4> _massv;
             std::array<double, 4> _densityv;
-            // Workspace for the various integrations. This might become a member of
-            // GrainPhotoelectricCalculator later, since a new instance of it is made every time
-            // a new GasSolution (and hence GrainSolution) is constructed.
-            Array _integrationWorkspace;
         };
 
         double yieldFunctionTest() const;
 
-        /* Makes a plot of the heating efficiency in function of the grain size. Saved as a
-       two-column file in $(pwd)/photoelectric using the filename. */
-        void heatingRateTest(double G0, double gasT, double ne) const;
-
-        void chargeBalanceTest(double G0, double gasT, double ne, double np) const;
-
         /** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain
         a charge distribution, and then RateAZ for every charge Z. */
-        double heatingRateA(int i, Locals& env, const Array& Qabsv, const ChargeDistribution& cd) const;
+        double heatingRateA(int i, const Array& Qabsv, const ChargeDistribution& cd);
 
         /** Uses detailed balance to calculate the charge distribution of a grain a, in and
         environment env, given the absorption efficiency of that grain in function of the
         wavelength. */
-        void calculateChargeDistribution(int i, Locals& env, const Array& Qabsv, ChargeDistribution& cd) const;
+        void calculateChargeDistribution(int i, Locals& env, const Array& Qabsv, ChargeDistribution& cd);
 
         /** The cooling due to collisions with a single grain of the given size [erg s-1]. This
             function can also be used to calculate the extra heat that goes into the grain because
@@ -105,11 +94,11 @@ namespace GasModule
 
         /** Calculates the heating rate by a grain of size a and charge Z, given its absorption
             efficiency. */
-        double heatingRateAZ(int i, int Z, Locals& env, const Array& Qabsv) const;
+        double heatingRateAZ(int i, int Z, const Array& Qabsv);
 
         /** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
             according to equation 25 of WD01. */
-        double emissionRate(int i, int Z, Locals& env, const Array& Qabsv) const;
+        double emissionRate(int i, int Z, const Array& Qabsv);
 
         /** The rate [s-1] at which a grain is charged by colliding with other particles. Taken
         from Draine & Sutin (1987) equations 3.1-3.5. */
@@ -129,12 +118,11 @@ namespace GasModule
             electrons s-1 cm-2, while passing the average energy times yield will give the
             heating rate in erg s-1 cm-2. fNu needs to be the same size as
             env._meanIntensity. */
-        double photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double nuPET, const Array& fNu) const;
+        double photoelectricIntegrationLoop(const Array& Qabsv, double nuPET, const Array& fNu);
 
         /** Integration loop which applies equation 20 for the photodetachment cross section. Do
         not forget to multiply the result with abs(Z)! */
-        double photodetachmentIntegrationLoop(int Z, Locals& env, double pdt,
-                                              const double* calcEnergyWithThisEmin = nullptr) const;
+        double photodetachmentIntegrationLoop(int Z, double pdt, const double* calcEnergyWithThisEmin = nullptr);
 
         /** Things specific for WD01. If another recipe is ever implemented, then
             GrainPhotoelectricCalculator should become abstract, and the function and data members
@@ -148,24 +136,29 @@ namespace GasModule
         double autoIonizationThreshold(int i) const;
 
         double stickingCoefficient(int i, int z, int z_i) const;
-
-        double _workFunction;
-        bool _carOrSil;
         ///@}
 
-        // Some things will be cached based on the size
+        // constant data
+        const Spectrum* _meanIntensity;
+        double _workFunction;
+        bool _carOrSil;
         Array _sizev;
 
-        // Cache the output of WD01::y1 (contains expm1)
-        Array _y1Cache;
-
-        // Cache the sticking coefficient for electrons colliding with positive and negative grains
-        // (both contain expm1).
+        // constant after construction (mostly precalculated data as function of grain size)
+        Array _y1Cache;  // output of WD01::y1 (contains expm1)
+        // sticking coefficients for electrons colliding with positive and negative grains (both
+        // contain expm1)
         Array _eStickPositiveCache;
         Array _eStickNegativeCache;
 
-        // Experiment: cache indexed on i, z
+        // cached data (changes during the calculation)
+        Array _integrationWorkspace;  // some memory to keep allocated between integrations
+        // Yield is expensive to evaluate. Cache yield as function of frequency (see
+        // meanIntensity) for pairs of i (size index), z (charge).
         std::map<std::array<int, 2>, Array> _yieldCache;
+
+    public:
+        // some utilities for testing
     };
 }
 #endif  // CORE_GRAINPHOTOELECTRICCALCULATOR_HPP

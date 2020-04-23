@@ -30,10 +30,12 @@ namespace GasModule
             see its documentation. */
         GrainPhotoelectricData(bool carOrSil);
 
-        /** Create a photoelectric calculator, for a given array of grain sizes. This object will
-            serve as a workspace for the photoelectric heating, allowing the storage of
-            intermediate results and caching. */
-        std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
+        /** Create a photoelectric calculator, for a given array of grain sizes. This object
+            will serve as a workspace for the photoelectric heating, allowing the storage of
+            intermediate results and caching. A pointer to the radiation field is also given to
+            allow some precalculations. */
+        std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av,
+                                                                     const Spectrum* meanIntensity) const;
 
     private:
         bool _carOrSil;

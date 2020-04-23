@@ -19,6 +19,7 @@
 #include "WeingartnerDraine2001.hpp"
 #include <gsl/gsl_const_cgs.h>
 #include <sys/stat.h>
+#include <iomanip>
 
 using namespace std;
 
@@ -513,38 +514,125 @@ namespace GasModule
 
     void Testing::plotPhotoelectricHeating()
     {
+        // frequency grid
+        const double minWav{0.0912 * Constant::UM};  // cutoff at 13.6 eV
+        const double maxWav{1000 * Constant::UM};
+        Array frequencyv = Testing::generateGeometricGridv(200, Constant::LIGHT / maxWav, Constant::LIGHT / minWav);
+
+        // grain properties
         bool car = true;
         GrainPhotoelectricData gpd(car);
+        double aMin = 3 * Constant::ANGSTROM;
+        double aMax = 10000 * Constant::ANGSTROM;
+        const size_t Na = 90;
+        Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
+        const std::vector<Array> qAbsvv = Testing::qAbsvvForTesting(car, sizev, frequencyv);
 
-        double n = 2.5e1;
-        double f = 3.e-4;
-        double ne = n * f;
-        double gasT = 1000;
-        vector<double> G0values;
-        if (gasT == 1000) G0values = {2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
-        if (gasT == 100) G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
-        vector<int> pickValues{0, 1, 2, 3, 4};
+        Array chargeBalanceTestSizev(200. * Constant::ANGSTROM, 1);
+        Array chargeBalanceTestQabsv = Testing::qAbsvvForTesting(car, chargeBalanceTestSizev, frequencyv)[0];
 
-        {  // yield function test needs specific set of sizes
+        // yield function test needs specific set of sizes, and no radiation field
+        // -------------------
+        {  // avoid shadowing
             vector<double> av = {4e-8, 10e-8, 30e-8, 100e-8, 300e-8};
-            auto gpc = gpd.makeCalculator(Array(av.data(), av.size()));
+            Spectrum meanIntensity;
+            auto gpc = gpd.makeCalculator(Array(av.data(), av.size()), &meanIntensity);
             gpc->yieldFunctionTest();
         }
 
-        {  // Grain sizes for heating rate test
-            double aMin = 3 * Constant::ANGSTROM;
-            double aMax = 10000 * Constant::ANGSTROM;
-            const size_t Na = 90;
-            Array sizev = Testing::generateGeometricGridv(Na, aMin, aMax);
-            auto gpc = gpd.makeCalculator(sizev);
+        // heating rate test
+        // -----------------
 
-            for (int i : pickValues) gpc->heatingRateTest(G0values[i], gasT, ne);
-        }
+        // gas description
+        double n = 2.5e1;
+        double f = 3.e-4;
+        double ne = n * f;
+        double T = 1000;
+        SpeciesIndex spindex = SpeciesIndex::makeDefault();
+        SpeciesVector sv(&spindex);
+        sv.setNe(ne);
+        sv.setNp(ne);
+        GrainPhotoelectricCalculator::Locals env(T, sv);
 
-        {  // Single grain size for charge balance test
-            Array sizev(200. * Constant::ANGSTROM, 1);
-            auto gpc = gpd.makeCalculator(sizev);
-            for (int i : pickValues) gpc->chargeBalanceTest(G0values[i], gasT, ne, ne);
+        // radiation fields
+        vector<double> G0values;
+        if (T == 1000) G0values = {2.45e-2, 2.45e-1, 2.45e0, 2.45e1, 2.45e2};
+        if (T == 100) G0values = {.75e-1, .75e0, .75e1, .75e2, .75e3};
+        vector<int> pickValues{0, 1, 2, 3, 4};
+
+        // run heating rate test and charge balance test for a couple of the above radiation
+        // fields
+        for (int j : pickValues)
+        {
+            double G0 = G0values[j];
+            const double Tc{3.e4};
+            Spectrum meanIntensity(frequencyv, RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0));
+
+            {
+                auto gpc = gpd.makeCalculator(sizev, &meanIntensity);
+
+                // File that writes out the absorption efficiency, averaged using the input radiation field
+                // as weights.
+                ofstream avgQabsOf = IOTools::ofstreamFile("photoelectric/avgQabsInterp.txt");
+
+                // Output file will contain one line for every grain size
+                stringstream efficiencyFnSs;
+                efficiencyFnSs << "photoelectric/efficiencyG" << std::setprecision(4) << scientific << G0 << ".dat";
+                ofstream efficiencyOf = IOTools::ofstreamFile(efficiencyFnSs.str());
+
+                for (size_t i = 0; i < sizev.size(); i++)
+                {
+                    double a = sizev[i];
+
+                    double intensityQabsIntegral =
+                        TemplatedUtils::integrate<double, Array, Array>(frequencyv, qAbsvv[i] * meanIntensity.valuev());
+                    double totalAbsorbed = Constant::PI * a * a * Constant::FPI * intensityQabsIntegral;
+
+                    // one file per charge distribution per radiation field
+                    ChargeDistribution cd;
+                    gpc->calculateChargeDistribution(i, env, qAbsvv[i], cd);
+                    stringstream filename;
+                    filename << "photoelectric/multi-fz/fz_a" << std::setfill('0') << std::setw(8)
+                             << std::setprecision(2) << fixed << a / Constant::ANGSTROM << ".txt";
+                    stringstream header;
+                    header << "# a = " << a << '\n';
+                    header << "# ne = " << ne << '\n';
+                    header << "# Tgas = " << T << '\n';
+                    cd.plot(filename.str(), header.str());
+
+                    // heating efficiencies for all sizes, in a file for each radiation field
+                    double heating = gpc->heatingRateA(i, qAbsvv[i], cd);
+                    double efficiency = heating / totalAbsorbed;
+                    if (!isfinite(efficiency))
+                        cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed << endl;
+                    efficiencyOf << a / Constant::ANGSTROM << '\t' << efficiency << '\n';
+
+                    // ISRF-averaged absorption Qabs (to check if Qabs was loaded correctly)
+                    double intensityIntegral = TemplatedUtils::integrate<double>(frequencyv, meanIntensity.valuev());
+                    double avgQabs = intensityQabsIntegral / intensityIntegral;
+                    avgQabsOf << a / Constant::ANGSTROM << '\t' << avgQabs << endl;
+                }
+                efficiencyOf.close();
+                cout << "Wrote " << efficiencyFnSs.str() << endl;
+                avgQabsOf.close();
+                cout << "Wrote avgQabsInterp.txt" << endl;
+                cout << "Charging parameter = " << G0 * sqrt(T) / ne << endl;
+            }
+
+            // for each radiation field, also run charge balance test with single grain size
+            {
+                auto gpc = gpd.makeCalculator(chargeBalanceTestSizev, &meanIntensity);
+                ChargeDistribution cd;
+                gpc->calculateChargeDistribution(0, env, chargeBalanceTestQabsv, cd);
+                cout << "Zmax = " << cd.zmax() << " Zmin = " << cd.zmin() << '\n';
+
+                stringstream header;
+                header << "# a = " << chargeBalanceTestSizev[0] << endl;
+                header << "# G0 = " << G0 << endl;
+                header << "# ne = " << ne << endl;
+                header << "# Tgas = " << T << endl;
+                cd.plot("photoelectric/fZ.txt", header.str());
+            }
         }
     }
 

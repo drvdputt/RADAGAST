@@ -18,12 +18,13 @@ namespace GasModule
           _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())
     {
         if (population->photoelectricData())
-            _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
+            _photoelectricCalculator =
+                population->photoelectricData()->makeCalculator(population->sizev(), meanIntensity);
     }
 
     void GrainSolution::recalculate(double T, const SpeciesVector& sv)
     {
-        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(_meanIntensity, T, sv);
+        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(T, sv);
 
         if (_population->h2formationData())
             _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(),
@@ -35,8 +36,8 @@ namespace GasModule
         if (_photoelectricCalculator)
         {
             for (int i = 0; i < _numSizes; i++)
-                _cachedPEHeatv[i] = _photoelectricCalculator->heatingRateA(
-                    i, _photoelectricLocals, _population->qAbsv(i), _chargeDistributionv[i]);
+                _cachedPEHeatv[i] =
+                    _photoelectricCalculator->heatingRateA(i, _population->qAbsv(i), _chargeDistributionv[i]);
         }
 
         // temperatures depend on charge distributions and photoelectric heating
