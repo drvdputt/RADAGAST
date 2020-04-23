@@ -63,8 +63,6 @@ namespace GasModule
             std::array<double, 4> _densityv;
         };
 
-        double yieldFunctionTest() const;
-
         /** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain
         a charge distribution, and then RateAZ for every charge Z. */
         double heatingRateA(int i, const Array& Qabsv, const ChargeDistribution& cd);

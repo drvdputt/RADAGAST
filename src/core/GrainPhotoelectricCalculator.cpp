@@ -389,44 +389,6 @@ namespace GasModule
         return Constant::PI * a * a * lambdaG;
     }
 
-    double GrainPhotoelectricCalculator::yieldFunctionTest() const
-    {
-        // Parameters
-        const int Z = 10;
-
-        // Plot range
-        const double hnuMin = 5 * Constant::EV;
-        const double hnuMax = 15 * Constant::EV;
-        const size_t N = 500;
-
-        ofstream out = IOTools::ofstreamFile("photoelectric/yieldTest.dat");
-        for (int i = 0; i < _sizev.size(); i++)
-        {
-            double a = _sizev[i];
-            out << "# a = " << a << '\n';
-
-            // Quantities independent of nu
-            double ip_v = ionizationPotential(i, Z);
-
-            double Emin{WD01::eMin(a, Z)};
-
-            // WD01 eq 6
-            double hnu_pet = Z >= -1 ? ip_v : ip_v + Emin;
-
-            double hnu = hnuMin;
-            const double step = (hnuMax - hnuMin) / N;
-            for (size_t n = 0; n < N; n++)
-            {
-                double hnuDiff = hnu - hnu_pet;
-                if (hnuDiff > 0) out << hnu / Constant::EV << '\t' << photoelectricYield(i, Z, hnuDiff, Emin) << '\n';
-                hnu += step;
-            }
-            out << '\n';
-        }
-        out.close();
-        return 0.0;
-    }
-
     double GrainPhotoelectricCalculator::ionizationPotential(int i, int z) const
     {
         return WD01::ionizationPotential(_sizev[i], z, _carOrSil);

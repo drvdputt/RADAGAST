@@ -531,15 +531,6 @@ namespace GasModule
         Array chargeBalanceTestSizev(200. * Constant::ANGSTROM, 1);
         Array chargeBalanceTestQabsv = Testing::qAbsvvForTesting(car, chargeBalanceTestSizev, frequencyv)[0];
 
-        // yield function test needs specific set of sizes, and no radiation field
-        // -------------------
-        {  // avoid shadowing
-            vector<double> av = {4e-8, 10e-8, 30e-8, 100e-8, 300e-8};
-            Spectrum meanIntensity;
-            auto gpc = gpd.makeCalculator(Array(av.data(), av.size()), &meanIntensity);
-            gpc->yieldFunctionTest();
-        }
-
         // heating rate test
         // -----------------
 
