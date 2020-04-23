@@ -35,9 +35,9 @@ namespace GasModule
             HModel and H2Model, ownership is transferred (using move) to this object, since their
             contents change while searching for the solution. When a non-trivial GrainInterface
             object is passed, this class will keep track of a list of GrainSolution objects. */
-        GasSolution(const GasModule::GrainInterface* gri, const Spectrum& meanIntensity,
+        GasSolution(const GasModule::GrainInterface* gri, const Spectrum* meanIntensity,
                     const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
-                    const FreeBound& freeBound, const FreeFree& freeFree);
+                    const FreeBound* freeBound, const FreeFree* freeFree);
 
         GasSolution(GasSolution&&) = default;
 
@@ -51,9 +51,6 @@ namespace GasModule
         /** Update the charge distribution and temperature of the grains based on the current
             species densities. Should be called after using setSpeciesNv. */
         void solveGrains();
-
-        /** The radiation field */
-        const Spectrum& meanIntensity() const { return _meanIntensity; }
 
         /** The temperature */
         double t() const { return _t; }
@@ -127,9 +124,9 @@ namespace GasModule
         std::shared_ptr<H2Model> _h2Solution;
 
         // references to constant data
-        const Spectrum& _meanIntensity;
-        const FreeBound& _freeBound;
-        const FreeFree& _freeFree;
+        const Spectrum* _meanIntensity;
+        const FreeBound* _freeBound;
+        const FreeFree* _freeFree;
 
         // quantities that depend only on the radiation field (constant)
         double _ionHeatPerH;

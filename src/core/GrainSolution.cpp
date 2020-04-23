@@ -12,8 +12,8 @@
 
 namespace GasModule
 {
-    GrainSolution::GrainSolution(const GasModule::GrainPopulation* population)
-        : _population{population}, _numSizes(population->numSizes()),
+    GrainSolution::GrainSolution(const GasModule::GrainPopulation* population, const Spectrum* meanIntensity)
+        : _population{population}, _meanIntensity{meanIntensity}, _numSizes(population->numSizes()),
           _chargeDistributionv(population->numSizes()), _newTemperaturev{population->initialTemperaturev()},
           _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())
     {
@@ -21,10 +21,9 @@ namespace GasModule
             _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
     }
 
-    void GrainSolution::recalculate(const Spectrum* meanIntensity, double T, const SpeciesVector& sv)
+    void GrainSolution::recalculate(double T, const SpeciesVector& sv)
     {
-        _meanIntensity = meanIntensity;
-        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(meanIntensity, T, sv);
+        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(_meanIntensity, T, sv);
 
         if (_population->h2formationData())
             _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(),

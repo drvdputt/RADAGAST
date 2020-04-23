@@ -12,6 +12,10 @@ namespace GasModule
     class GrainH2Formation;
     class GrainPhotoelectricData;
 
+    /** This class contains the constants for a grain population. Given that the grain
+        properties for a number of cells are the same, it can be used by multiple threads
+        simultaneously, with the exception of the setDensityv() function. The latter should only
+        be used in serial code. */
     class GrainPopulation
     {
     public:

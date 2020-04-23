@@ -24,13 +24,14 @@ namespace GasModule
 
     public:
         /** Create a GrainSolution object for the given GrainPopulation. If the given population
-            contains a GrainPhotoelectricData instance, then the GrainPhotoelectricCalculator will
-            also be initialized. */
-        GrainSolution(const GasModule::GrainPopulation* population);
+            contains a GrainPhotoelectricData instance, then the GrainPhotoelectricCalculator
+            will also be initialized. The radiation field is assumed to be constant during the
+            lifetime of this object, so pass a pointer to it here. */
+        GrainSolution(const GasModule::GrainPopulation* population, const Spectrum* meanIntensity);
 
-        /** Recalculate the grain temperatures and grain charges using updated radiation field,
-            temperature and densities. */
-        void recalculate(const Spectrum* meanIntensity, double T, const SpeciesVector& sv);
+        /** Recalculate the grain temperatures and grain charges using radiation field given at
+            construction, for new temperature and densities. */
+        void recalculate(double T, const SpeciesVector& sv);
 
     private:
         /** Recalculate the temperature for each size, by finding the temperature for which <
@@ -73,8 +74,9 @@ namespace GasModule
         double averageCharge(int m) const;
 
     private:
-        // Population to which the vectors and arrays below map (one element per size)
+        // pointers to constant data
         const GasModule::GrainPopulation* _population;
+        const Spectrum* _meanIntensity;
         int _numSizes;
 
         // Calculator instance which contains caching mechanisms based on the list of sizes of the
@@ -92,9 +94,6 @@ namespace GasModule
 
         // Heating (of grain) due to H2 formation for each size
         Array _h2Heatv;
-
-        // Pointer to last used radiation field
-        const Spectrum* _meanIntensity{nullptr};
 
         // Cache photoelectric heating (or gas) during recalculate(), so it can be reused for
         // photoelectricGasHeating. This is the heating for a single grain of a certain size.
