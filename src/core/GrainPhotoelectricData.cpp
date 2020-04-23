@@ -9,8 +9,9 @@ namespace GasModule
     {}
 
     std::unique_ptr<GrainPhotoelectricCalculator>
-    GrainPhotoelectricData::makeCalculator(const Array& av, const Spectrum* meanIntensity) const
+    GrainPhotoelectricData::makeCalculator(const Array* av, const std::vector<Array>* qAbsvv,
+                                           const Spectrum* meanIntensity) const
     {
-        return std::make_unique<GrainPhotoelectricCalculator>(av, _workFunction, _carOrSil, meanIntensity);
+        return std::make_unique<GrainPhotoelectricCalculator>(av, qAbsvv, _workFunction, _carOrSil, meanIntensity);
     }
 }

@@ -36,8 +36,8 @@ namespace GasModule
         /** Currently, this constructor also takes arguments related to the WD01 grain types. This
             should change if the GrainPhotoelectricData and GrainPhotoelectricCalculator classes
             are ever made abstract, to acommodate for other grain types. */
-        GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil,
-                                     const Spectrum* meanIntensity);
+        GrainPhotoelectricCalculator(const Array* sizev, const std::vector<Array>* qAbsvv, double workFunction,
+                                     bool carOrSil, const Spectrum* meanIntensity);
 
         /** Gathers the parameters that are different depending on the iteration, or the thread
             using this calculator. */
@@ -63,14 +63,14 @@ namespace GasModule
             std::array<double, 4> _densityv;
         };
 
-        /** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to obtain
-        a charge distribution, and then RateAZ for every charge Z. */
-        double heatingRateA(int i, const Array& Qabsv, const ChargeDistribution& cd);
+        /** Calculates the heating rate per grain for a grain size a. Uses chargeBalance to
+            obtain a charge distribution, and then RateAZ for every charge Z. */
+        double heatingRateA(int i, const ChargeDistribution& cd);
 
         /** Uses detailed balance to calculate the charge distribution of a grain a, in and
-        environment env, given the absorption efficiency of that grain in function of the
-        wavelength. */
-        void calculateChargeDistribution(int i, Locals& env, const Array& Qabsv, ChargeDistribution& cd);
+            environment env, given the absorption efficiency of that grain in function of the
+            wavelength. */
+        void calculateChargeDistribution(int i, Locals& env, ChargeDistribution& cd);
 
         /** The cooling due to collisions with a single grain of the given size [erg s-1]. This
             function can also be used to calculate the extra heat that goes into the grain because
@@ -92,11 +92,11 @@ namespace GasModule
 
         /** Calculates the heating rate by a grain of size a and charge Z, given its absorption
             efficiency. */
-        double heatingRateAZ(int i, int Z, const Array& Qabsv);
+        double heatingRateAZ(int i, int Z);
 
         /** Calculates the rate at which photoelectrons are emitted from a single grain [s-1],
             according to equation 25 of WD01. */
-        double emissionRate(int i, int Z, const Array& Qabsv);
+        double emissionRate(int i, int Z);
 
         /** The rate [s-1] at which a grain is charged by colliding with other particles. Taken
         from Draine & Sutin (1987) equations 3.1-3.5. */
@@ -116,7 +116,7 @@ namespace GasModule
             electrons s-1 cm-2, while passing the average energy times yield will give the
             heating rate in erg s-1 cm-2. fNu needs to be the same size as
             env._meanIntensity. */
-        double photoelectricIntegrationLoop(const Array& Qabsv, double nuPET, const Array& fNu);
+        double photoelectricIntegrationLoop(int i, double nuPET, const Array& fNu);
 
         /** Integration loop which applies equation 20 for the photodetachment cross section. Do
         not forget to multiply the result with abs(Z)! */
@@ -140,7 +140,8 @@ namespace GasModule
         const Spectrum* _meanIntensity;
         double _workFunction;
         bool _carOrSil;
-        Array _sizev;
+        const Array* _sizev;
+        const std::vector<Array>* _qAbsvv;
 
         // constant after construction (mostly precalculated data as function of grain size)
         Array _y1Cache;  // output of WD01::y1 (contains expm1)

@@ -16,19 +16,21 @@ using namespace std;
 
 namespace GasModule
 {
-    GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array& sizev, double workFunction, bool carOrSil,
+    GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array* sizev, const std::vector<Array>* qAbsvv,
+                                                               double workFunction, bool carOrSil,
                                                                const Spectrum* meanIntensity)
-        : _meanIntensity{meanIntensity}, _workFunction{workFunction}, _carOrSil{carOrSil}, _sizev{sizev},
+        : _meanIntensity{meanIntensity},
+          _workFunction{workFunction}, _carOrSil{carOrSil}, _sizev{sizev}, _qAbsvv{qAbsvv},
           _integrationWorkspace(meanIntensity->frequencyv().size())
     {
-        _y1Cache.resize(_sizev.size());
-        _eStickPositiveCache.resize(_sizev.size());
-        _eStickNegativeCache.resize(_sizev.size());
-        for (size_t i = 0; i < _sizev.size(); i++)
+        _y1Cache.resize(_sizev->size());
+        _eStickPositiveCache.resize(_sizev->size());
+        _eStickNegativeCache.resize(_sizev->size());
+        for (size_t i = 0; i < _sizev->size(); i++)
         {
-            _y1Cache[i] = WD01::y1(_sizev[i]);
-            _eStickPositiveCache[i] = WD01::estick_positive(_sizev[i]);
-            _eStickNegativeCache[i] = WD01::estick_negative(_sizev[i]);
+            _y1Cache[i] = WD01::y1((*_sizev)[i]);
+            _eStickPositiveCache[i] = WD01::estick_positive((*_sizev)[i]);
+            _eStickNegativeCache[i] = WD01::estick_negative((*_sizev)[i]);
         }
     }
 
@@ -50,13 +52,12 @@ namespace GasModule
     int GrainPhotoelectricCalculator::minimumCharge(int i) const
     {
         double Uait = autoIonizationThreshold(i);
-        return WD01::minimumCharge(_sizev[i], Uait);
+        return WD01::minimumCharge((*_sizev)[i], Uait);
     }
 
-    void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& env, const Array& Qabsv,
-                                                                   ChargeDistribution& cd)
+    void GrainPhotoelectricCalculator::calculateChargeDistribution(int i, Locals& env, ChargeDistribution& cd)
     {
-        double a = _sizev[i];
+        double a = (*_sizev)[i];
 
         // Express a in angstroms
         double aA = a / Constant::ANGSTROM;
@@ -86,7 +87,7 @@ namespace GasModule
         // due to positive ions is very small anyway.
         auto chargeUpRate = [&](int z) {
             double Jtotal{0};
-            Jtotal += emissionRate(i, z, Qabsv);
+            Jtotal += emissionRate(i, z);
             for (size_t j = 0; j < env._chargev.size(); j++)
             {
                 if (env._chargev[j] > 0)
@@ -112,7 +113,7 @@ namespace GasModule
 
     void GrainPhotoelectricCalculator::getPET_PDT_Emin(int i, int Z, double& pet, double& pdt, double& Emin) const
     {
-        Emin = WD01::eMin(_sizev[i], Z);
+        Emin = WD01::eMin((*_sizev)[i], Z);
         double ip_v = ionizationPotential(i, Z);
         // WD01 eq 6
         pet = Z >= -1 ? ip_v : ip_v + Emin;
@@ -120,22 +121,22 @@ namespace GasModule
         pdt = ip_v + Emin;
     }
 
-    double GrainPhotoelectricCalculator::photoelectricIntegrationLoop(const Array& Qabsv, double nuPET,
-                                                                      const Array& fNu)
+    double GrainPhotoelectricCalculator::photoelectricIntegrationLoop(int i, double nuPET, const Array& fNu)
     {
         const Array& frequencyv = _meanIntensity->frequencyv();
         const Array& meanIntensityv = _meanIntensity->valuev();
+        const Array& Qabsv = _qAbsvv->at(i);
 
         // yield is zero by definition below photoelectric threshold
-        int i = frequencyv.size() - 1;
-        while (i >= 0 && frequencyv[i] > nuPET)
+        int j = frequencyv.size() - 1;
+        while (j >= 0 && frequencyv[j] > nuPET)
         {
-            double hnu = Constant::PLANCK * frequencyv[i];
-            _integrationWorkspace[i] = Qabsv[i] * meanIntensityv[i] / hnu * fNu[i];
-            i--;
+            double hnu = Constant::PLANCK * frequencyv[j];
+            _integrationWorkspace[j] = Qabsv[j] * meanIntensityv[j] / hnu * fNu[j];
+            j--;
         }
 
-        if (i >= frequencyv.size() - 1)
+        if (j >= frequencyv.size() - 1)
             return 0;
         else
         {
@@ -143,7 +144,7 @@ namespace GasModule
 
             // <function unit> sr-1 cm-2 s-1
             double integral =
-                TemplatedUtils::integrate<double>(frequencyv, _integrationWorkspace, i + 1, frequencyv.size() - 1);
+                TemplatedUtils::integrate<double>(frequencyv, _integrationWorkspace, j + 1, frequencyv.size() - 1);
             // <function unit> cm-2 s-1
             return Constant::FPI * integral;
         }
@@ -157,32 +158,32 @@ namespace GasModule
 
         // no effect below photodetachment threshold
         double nu_pdt = pdt / Constant::PLANCK;
-        int i = frequencyv.size() - 1;
-        while (i >= 0 && frequencyv[i] > nu_pdt)
+        int j = frequencyv.size() - 1;
+        while (j >= 0 && frequencyv[j] > nu_pdt)
         {
-            double hnu = Constant::PLANCK * frequencyv[i];
+            double hnu = Constant::PLANCK * frequencyv[j];
             double hnuDiff = hnu - pdt;
             // <function unit> / time / angle
-            _integrationWorkspace[i] = WD01::sigmaPDT(Z, hnuDiff) * meanIntensityv[i] / hnu;
-            if (calcEnergyWithThisEmin) _integrationWorkspace[i] *= hnuDiff + *calcEnergyWithThisEmin;
-            i--;
+            _integrationWorkspace[j] = WD01::sigmaPDT(Z, hnuDiff) * meanIntensityv[j] / hnu;
+            if (calcEnergyWithThisEmin) _integrationWorkspace[j] *= hnuDiff + *calcEnergyWithThisEmin;
+            j--;
         }
 
-        if (i >= frequencyv.size() - 1)
+        if (j >= frequencyv.size() - 1)
             return 0;
         else
         {
             // <erg optional> s-1 sr-1
             double integral =
-                TemplatedUtils::integrate<double>(frequencyv, _integrationWorkspace, i + 1, frequencyv.size() - 1);
+                TemplatedUtils::integrate<double>(frequencyv, _integrationWorkspace, j + 1, frequencyv.size() - 1);
             // <erg optional> s-1
             return Constant::FPI * integral;
         }
     }
 
-    double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z, const Array& Qabsv)
+    double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z)
     {
-        double a = _sizev[i];
+        double a = (*_sizev)[i];
         const double e2_a = Constant::ESQUARE / a;
 
         // It's cheaper to calculate these together (and safer, less code duplication)
@@ -212,22 +213,21 @@ namespace GasModule
             double y2 = WD01::escapingFraction(Z, Elow, Ehigh);
             yieldTimesAverageEnergyv[j] = Y * IntE / y2;
         }
-        double heatingRatePE =
-            Constant::PI * a * a * photoelectricIntegrationLoop(Qabsv, nuPET, yieldTimesAverageEnergyv);
+        double heatingRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(i, nuPET, yieldTimesAverageEnergyv);
 
         double heatingRatePD = 0;
         if (Z < 0) heatingRatePD = photodetachmentIntegrationLoop(Z, pdt, &Emin);
         return heatingRatePE + heatingRatePD;
     }
 
-    double GrainPhotoelectricCalculator::heatingRateA(int i, const Array& Qabsv, const ChargeDistribution& cd)
+    double GrainPhotoelectricCalculator::heatingRateA(int i, const ChargeDistribution& cd)
     {
-        return cd.sumOverCharge([&](int z) { return heatingRateAZ(i, z, Qabsv); });
+        return cd.sumOverCharge([&](int z) { return heatingRateAZ(i, z); });
     }
 
-    double GrainPhotoelectricCalculator::emissionRate(int i, int Z, const Array& Qabsv)
+    double GrainPhotoelectricCalculator::emissionRate(int i, int Z)
     {
-        double a = _sizev[i];
+        double a = (*_sizev)[i];
         double pet, pdt, Emin;
         getPET_PDT_Emin(i, Z, pet, pdt, Emin);
         double nuPET = pet / Constant::PLANCK;
@@ -242,7 +242,7 @@ namespace GasModule
             double hnuDiff = Constant::PLANCK * frequencyv[j] - pet;
             yieldv[j] = photoelectricYield(i, Z, hnuDiff, Emin);
         }
-        double emissionRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(Qabsv, nuPET, yieldv);
+        double emissionRatePE = Constant::PI * a * a * photoelectricIntegrationLoop(i, nuPET, yieldv);
         double emissionRatePD = 0;
         if (Z < 0) emissionRatePD = photodetachmentIntegrationLoop(Z, pdt, nullptr);
 
@@ -252,7 +252,7 @@ namespace GasModule
     double GrainPhotoelectricCalculator::collisionalChargingRate(int i, double gasT, int Z, int particleCharge,
                                                                  double particleMass, double particleDensity) const
     {
-        double a = _sizev[i];
+        double a = (*_sizev)[i];
         double kT = Constant::BOLTZMAN * gasT;
 
         // WD eq 26: akT / q^2 = akT / e^2 / z^2
@@ -281,7 +281,7 @@ namespace GasModule
     double GrainPhotoelectricCalculator::recombinationCoolingRate(int i, const Locals& env,
                                                                   const ChargeDistribution& cd) const
     {
-        double a = _sizev[i];
+        double a = (*_sizev)[i];
 
         // Calculates WD01 equation 42
         double kT = Constant::BOLTZMAN * env._T;
@@ -324,7 +324,7 @@ namespace GasModule
                                                                   const ChargeDistribution& cd, double Tgrain,
                                                                   bool forGrain) const
     {
-        double a = _sizev[i];
+        double a = (*_sizev)[i];
         double kT = env._T * Constant::BOLTZMAN;
         double kTgrain = Tgrain * Constant::BOLTZMAN;
 
@@ -391,22 +391,22 @@ namespace GasModule
 
     double GrainPhotoelectricCalculator::ionizationPotential(int i, int z) const
     {
-        return WD01::ionizationPotential(_sizev[i], z, _carOrSil);
+        return WD01::ionizationPotential((*_sizev)[i], z, _carOrSil);
     }
 
     double GrainPhotoelectricCalculator::photoelectricYield(int i, int z, double hnuDiff, double Emin) const
     {
-        return WD01::yield_cached(_sizev[i], z, hnuDiff, Emin, _carOrSil, _y1Cache[i]);
+        return WD01::yield_cached((*_sizev)[i], z, hnuDiff, Emin, _carOrSil, _y1Cache[i]);
     }
 
     double GrainPhotoelectricCalculator::autoIonizationThreshold(int i) const
     {
-        return WD01::autoIonizationThreshold(_sizev[i], _carOrSil);
+        return WD01::autoIonizationThreshold((*_sizev)[i], _carOrSil);
     }
 
     double GrainPhotoelectricCalculator::stickingCoefficient(int i, int z, int z_i) const
     {
-        return WD01::stickingCoefficient_cached(_sizev[i], z, z_i, _carOrSil, _eStickPositiveCache[i],
+        return WD01::stickingCoefficient_cached((*_sizev)[i], z, z_i, _carOrSil, _eStickPositiveCache[i],
                                                 _eStickNegativeCache[i]);
     }
 }

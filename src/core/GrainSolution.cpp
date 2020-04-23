@@ -18,8 +18,8 @@ namespace GasModule
           _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())
     {
         if (population->photoelectricData())
-            _photoelectricCalculator =
-                population->photoelectricData()->makeCalculator(population->sizev(), meanIntensity);
+            _photoelectricCalculator = population->photoelectricData()->makeCalculator(
+                &population->sizev(), &population->qAbsvv(), meanIntensity);
     }
 
     void GrainSolution::recalculate(double T, const SpeciesVector& sv)
@@ -36,8 +36,7 @@ namespace GasModule
         if (_photoelectricCalculator)
         {
             for (int i = 0; i < _numSizes; i++)
-                _cachedPEHeatv[i] =
-                    _photoelectricCalculator->heatingRateA(i, _population->qAbsv(i), _chargeDistributionv[i]);
+                _cachedPEHeatv[i] = _photoelectricCalculator->heatingRateA(i, _chargeDistributionv[i]);
         }
 
         // temperatures depend on charge distributions and photoelectric heating
@@ -93,8 +92,7 @@ namespace GasModule
         DEBUG("grain average charge:");
         for (int i = 0; i < _numSizes; i++)
         {
-            _photoelectricCalculator->calculateChargeDistribution(i, _photoelectricLocals, _population->qAbsv(i),
-                                                                  _chargeDistributionv[i]);
+            _photoelectricCalculator->calculateChargeDistribution(i, _photoelectricLocals, _chargeDistributionv[i]);
             DEBUG(' ' << i << ' ' << _chargeDistributionv[i].average());
         }
         DEBUG('\n');

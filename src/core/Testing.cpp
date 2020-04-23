@@ -529,7 +529,7 @@ namespace GasModule
         const std::vector<Array> qAbsvv = Testing::qAbsvvForTesting(car, sizev, frequencyv);
 
         Array chargeBalanceTestSizev(200. * Constant::ANGSTROM, 1);
-        Array chargeBalanceTestQabsv = Testing::qAbsvvForTesting(car, chargeBalanceTestSizev, frequencyv)[0];
+        std::vector<Array> chargeBalanceTestQabsvv = Testing::qAbsvvForTesting(car, chargeBalanceTestSizev, frequencyv);
 
         // heating rate test
         // -----------------
@@ -560,7 +560,7 @@ namespace GasModule
             Spectrum meanIntensity(frequencyv, RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0));
 
             {
-                auto gpc = gpd.makeCalculator(sizev, &meanIntensity);
+                auto gpc = gpd.makeCalculator(&sizev, &qAbsvv, &meanIntensity);
 
                 // File that writes out the absorption efficiency, averaged using the input radiation field
                 // as weights.
@@ -581,7 +581,7 @@ namespace GasModule
 
                     // one file per charge distribution per radiation field
                     ChargeDistribution cd;
-                    gpc->calculateChargeDistribution(i, env, qAbsvv[i], cd);
+                    gpc->calculateChargeDistribution(i, env, cd);
                     stringstream filename;
                     filename << "photoelectric/multi-fz/fz_a" << std::setfill('0') << std::setw(8)
                              << std::setprecision(2) << fixed << a / Constant::ANGSTROM << ".txt";
@@ -592,7 +592,7 @@ namespace GasModule
                     cd.plot(filename.str(), header.str());
 
                     // heating efficiencies for all sizes, in a file for each radiation field
-                    double heating = gpc->heatingRateA(i, qAbsvv[i], cd);
+                    double heating = gpc->heatingRateA(i, cd);
                     double efficiency = heating / totalAbsorbed;
                     if (!isfinite(efficiency))
                         cout << "Heating " << heating << " totalabsorbed " << totalAbsorbed << endl;
@@ -612,9 +612,9 @@ namespace GasModule
 
             // for each radiation field, also run charge balance test with single grain size
             {
-                auto gpc = gpd.makeCalculator(chargeBalanceTestSizev, &meanIntensity);
+                auto gpc = gpd.makeCalculator(&chargeBalanceTestSizev, &chargeBalanceTestQabsvv, &meanIntensity);
                 ChargeDistribution cd;
-                gpc->calculateChargeDistribution(0, env, chargeBalanceTestQabsv, cd);
+                gpc->calculateChargeDistribution(0, env, cd);
                 cout << "Zmax = " << cd.zmax() << " Zmin = " << cd.zmin() << '\n';
 
                 stringstream header;
