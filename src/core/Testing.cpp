@@ -163,11 +163,10 @@ namespace GasModule
         return result;
     }
 
-    double Testing::equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv,
+    double Testing::equilibriumTemperature(const Array& frequencyv, const Array& meanIntensityv,
                                            const Array& crossSectionv, double minT, double maxT)
     {
-        double absorption =
-            TemplatedUtils::integrate<double, Array, Array>(frequencyv, crossSectionv * specificIntensityv);
+        double absorption = TemplatedUtils::integrate<double, Array, Array>(frequencyv, crossSectionv * meanIntensityv);
 
         auto heating = [&](double T) -> int {
             Array blackbodyIntegrandv(frequencyv.size());
@@ -348,11 +347,11 @@ namespace GasModule
     void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath, double Tc,
                                       double G0, double n)
     {
-        Array specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
+        Array meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
         GasModule::GasState gs;
         GasModule::GrainInterface gri{};
-        gi.updateGasState(gs, n, specificIntensityv, gri);
+        gi.updateGasState(gs, n, meanIntensityv, gri);
         writeGasState(outputPath, gi, gs);
     }
 
@@ -448,20 +447,20 @@ namespace GasModule
         double Tc = 30000;
         double g0 = 1e0;
         double n = 1000;
-        Spectrum specificIntensity{frequencyv, RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, g0)};
+        Spectrum meanIntensity{frequencyv, RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, g0)};
         GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv};
         GasModule::GrainInterface gri{};
         string outputPath = "heatingcurve/";
-        plotHeatingCurve(gi, outputPath, n, specificIntensity, gri);
+        plotHeatingCurve(gi, outputPath, n, meanIntensity, gri);
     }
 
     void Testing::plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
-                                   const Spectrum& specificIntensity, GasModule::GrainInterface& gri)
+                                   const Spectrum& meanIntensity, GasModule::GrainInterface& gri)
     {
         // Initial
         Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
         double T0 = 10000;
-        GasSolution s = gi.solveDensities(n, T0, specificIntensity, gri);
+        GasSolution s = gi.solveDensities(n, T0, meanIntensity, gri);
         GasDiagnostics gd;
         s.fillDiagnostics(&gd);
 
@@ -479,7 +478,7 @@ namespace GasModule
         const GasSolution* previous = nullptr;
         auto outputCooling = [&](double t) {
             std::cout << "T = " << t << '\n';
-            gi.solveDensities(s, n, t, specificIntensity, previous);
+            gi.solveDensities(s, n, t, meanIntensity, previous);
             s.fillDiagnostics(&gd);
 
             double heat = s.heating();
@@ -681,8 +680,8 @@ namespace GasModule
         Array unrefinedv = generateGeometricGridv(20000, Constant::LIGHT / (1e4 * Constant::UM),
                                                   Constant::LIGHT / (0.005 * Constant::UM));
 
-        Array specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(unrefinedv, Tc, G0);
-        Spectrum specificIntensity(unrefinedv, specificIntensityv);
+        Array meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(unrefinedv, Tc, G0);
+        Spectrum meanIntensity(unrefinedv, meanIntensityv);
 
         // Add points for H2 lines
         H2Data h2l(maxJ, maxV);
@@ -694,7 +693,7 @@ namespace GasModule
         sv.setDensities(spindex.linearCombination(SpeciesIndex::e_p_H_H2, {ne, np, nH, nH2}));
         CollisionParameters cp(T, sv);
 
-        BigH2Model h2m(&h2l, &specificIntensity);
+        BigH2Model h2m(&h2l, &meanIntensity);
         h2m.solve(nH2, cp);
         if (write)
         {
@@ -759,8 +758,7 @@ namespace GasModule
         runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
     }
 
-    void Testing::genMRNDust(GasModule::GrainInterface& gri, double nHtotal, const Spectrum& specificIntensity,
-                             bool car)
+    void Testing::genMRNDust(GasModule::GrainInterface& gri, double nHtotal, const Spectrum& meanIntensity, bool car)
     {
         // need grains from .005 to .25 micron
         double amin = 50 * Constant::ANGSTROM;
@@ -790,16 +788,16 @@ namespace GasModule
             areav[i] = average_power_of_size(2.);
         }
         auto label = car ? GasModule::GrainTypeLabel::CAR : GasModule::GrainTypeLabel::SIL;
-        const auto& qabsvv = qAbsvvForTesting(car, sizev, specificIntensity.frequencyv());
+        const auto& qabsvv = qAbsvvForTesting(car, sizev, meanIntensity.frequencyv());
         Array temperaturev(numSizes);
         for (size_t i = 0; i < numSizes; i++)
         {
             Array crossSectionv = qabsvv[i] * Constant::PI * areav[i];
-            temperaturev[i] = equilibriumTemperature(specificIntensity.frequencyv(), specificIntensity.valuev(),
-                                                     crossSectionv, 1., 100000.);
+            temperaturev[i] =
+                equilibriumTemperature(meanIntensity.frequencyv(), meanIntensity.valuev(), crossSectionv, 1., 100000.);
             // cout << "grain " << i << ": " << temperaturev[i] << " K\n";
         }
-        gri.addPopulation(label, sizev, densityv, temperaturev, specificIntensity.frequencyv(), qabsvv);
+        gri.addPopulation(label, sizev, densityv, temperaturev, meanIntensity.frequencyv(), qabsvv);
     }
 
     namespace
@@ -837,21 +835,21 @@ namespace GasModule
 
         // double G0{1e2};
         Array frequencyv = gasInterface.iFrequencyv();
-        Array specificIntensityv(frequencyv.size());
-        for (int i = 0; i < frequencyv.size(); i++) specificIntensityv[i] = Functions::planck(frequencyv[i], Tc);
+        Array meanIntensityv(frequencyv.size());
+        for (int i = 0; i < frequencyv.size(); i++) meanIntensityv[i] = Functions::planck(frequencyv[i], Tc);
 
-        specificIntensityv *=
+        meanIntensityv *=
             bollum / 16 / Constant::PI / distance / distance / GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
         // Dust model
         GasModule::GrainInterface gri;
         bool car = true;
-        genMRNDust(gri, nHtotal, Spectrum{frequencyv, specificIntensityv}, car);
+        genMRNDust(gri, nHtotal, Spectrum{frequencyv, meanIntensityv}, car);
 
-        Spectrum specificIntensity(frequencyv, specificIntensityv);
-        GasSolution s = gasInterface.solveTemperature(nHtotal, specificIntensity, gri);
+        Spectrum meanIntensity(frequencyv, meanIntensityv);
+        GasSolution s = gasInterface.solveTemperature(nHtotal, meanIntensity, gri);
         // Fixed temperature call, for convenience when testing:
-        // GasSolution s = gi_pimpl->solveDensities(nHtotal, 49.4, specificIntensity, gri);
+        // GasSolution s = gi_pimpl->solveDensities(nHtotal, 49.4, meanIntensity, gri);
         if (write)
         {
             GasDiagnostics gd;
@@ -890,7 +888,7 @@ namespace GasModule
             for (size_t i = 0; i < frequencyv.size(); i++)
             {
                 double wav = Constant::LIGHT / frequencyv[i];
-                radfield.writeLine<Array>({wav / Constant::UM, Constant::FPI * frequencyv[i] * specificIntensityv[i]});
+                radfield.writeLine<Array>({wav / Constant::UM, Constant::FPI * frequencyv[i] * meanIntensityv[i]});
             }
             GasModule::GasState gs;
             s.setGasState(gs);

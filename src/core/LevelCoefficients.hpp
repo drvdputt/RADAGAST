@@ -52,7 +52,7 @@ namespace GasModule
             influence the shape of the line profile. The units of Bij and Pij are often
             different in the literature and other codes (it depends on the units used for the
             radiation field), but their product should always have units [s-1]. */
-        EMatrix prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T, const EMatrix& Cvv) const;
+        EMatrix prepareAbsorptionMatrix(const Spectrum& meanIntensity, double T, const EMatrix& Cvv) const;
 
         /** Ouputs some properties about the different line transitions. The results for the number
             of lines, their frequencies [s-1] and their natural widths (decay rate [s-1] / 4 pi)

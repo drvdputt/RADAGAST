@@ -10,10 +10,10 @@
 
 namespace GasModule
 {
-    HModel::HModel(const HData* hData, const Spectrum* specificIntensity)
-        : _hData{hData}, _specificIntensity{specificIntensity}, _levelSolution(_hData)
+    HModel::HModel(const HData* hData, const Spectrum* meanIntensity)
+        : _hData{hData}, _meanIntensity{meanIntensity}, _levelSolution(_hData)
     {
-        _ionizationRate = Ionization::photoRateCoeff(*specificIntensity);
+        _ionizationRate = Ionization::photoRateCoeff(*meanIntensity);
     }
 
     void HModel::solve(double n, const CollisionParameters& cp)
@@ -25,7 +25,7 @@ namespace GasModule
         }
         DEBUG("Solving levels nH = " << n << std::endl);
 
-        _levelSolution.updateRates(*_specificIntensity, cp);
+        _levelSolution.updateRates(*_meanIntensity, cp);
         EVector newNv = LevelSolver::statisticalEquilibrium(n, _levelSolution.Tvv(), sourcev(cp), sinkv());
         _levelSolution.setNv(newNv);
     }

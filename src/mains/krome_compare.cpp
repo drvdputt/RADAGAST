@@ -23,7 +23,7 @@ int main()
     Array frequencyv = Testing::generateGeometricGridv(nPhotoBins, lowFreq, highFreq);
     Array intensityv(frequencyv.size());
     for (int i = 0; i < frequencyv.size(); i++) intensityv[i] = Functions::planck(frequencyv[i], Tc);
-    Spectrum specificIntensity(frequencyv, intensityv);
+    Spectrum meanIntensity(frequencyv, intensityv);
 
     // Write out the radiation field in eV / cm2 / sr / hz
     Array ev = Constant::PLANCK * frequencyv / Constant::EV;
@@ -54,7 +54,7 @@ int main()
     outfile << "# T e H H2 H+ heat cool";
     for (double T = 1000; T < 100000; T *= 1.05)
     {
-        GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri, kGrainH2);
+        GasSolution s = gasInterface.solveDensities(n, T, meanIntensity, gri, kGrainH2);
         // Uncomment this to re-use the previous solution as an initial guess
         // sp = &s;
         double heat = s.heating();
@@ -70,7 +70,7 @@ int main()
     }
     for (double T = 100000; T > 10; T /= 1.05)
     {
-        GasSolution s = gasInterface.solveDensities(n, T, specificIntensity, gri, kGrainH2);
+        GasSolution s = gasInterface.solveDensities(n, T, meanIntensity, gri, kGrainH2);
         // sp = &s;
         double heat = s.heating();
         double cool = s.cooling();

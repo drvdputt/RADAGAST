@@ -21,7 +21,7 @@ TEST_CASE("Test LevelCoefficients implementation two level subclass")
     SpeciesVector sv(&spindex);
     CollisionParameters gas(500, sv);
 
-    Spectrum specificIntensity;
+    Spectrum meanIntensity;
 
     CHECK(twolv.numLv() == 2);
 

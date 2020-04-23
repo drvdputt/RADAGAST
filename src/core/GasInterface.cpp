@@ -25,10 +25,10 @@ namespace GasModule
 
     const std::valarray<double>& GasInterface::eFrequencyv() const { return _pimpl->eFrequencyv(); }
 
-    void GasInterface::updateGasState(GasState& gs, double n, const std::valarray<double>& specificIntensityv,
+    void GasInterface::updateGasState(GasState& gs, double n, const std::valarray<double>& meanIntensityv,
                                       GrainInterface& gri, GasDiagnostics* gd) const
     {
-        _pimpl->updateGasState(gs, n, specificIntensityv, gri, gd);
+        _pimpl->updateGasState(gs, n, meanIntensityv, gri, gd);
     }
 
     std::valarray<double> GasInterface::emissivityBasic(const GasState& gs, bool SI) const
@@ -42,51 +42,51 @@ namespace GasModule
     }
 
     std::valarray<double> GasInterface::emissivityWithLines(const GasModule::GasState& gs,
-                                                            const std::valarray<double>& specificIntensityv,
+                                                            const std::valarray<double>& meanIntensityv,
                                                             const GrainInterface& gri, bool SI, bool addHLines,
                                                             bool addH2Lines) const
     {
-        return _pimpl->emissivityWithLines(gs, specificIntensityv, gri, SI, addHLines, addH2Lines);
+        return _pimpl->emissivityWithLines(gs, meanIntensityv, gri, SI, addHLines, addH2Lines);
     }
 
     std::valarray<double> GasInterface::opacityWithLines(const GasModule::GasState& gs,
-                                                         const std::valarray<double>& specificIntensityv,
+                                                         const std::valarray<double>& meanIntensityv,
                                                          const GrainInterface& gri, bool SI, bool addHLines,
                                                          bool addH2Lines) const
     {
-        return _pimpl->opacityWithLines(gs, specificIntensityv, gri, SI, addHLines, addH2Lines);
+        return _pimpl->opacityWithLines(gs, meanIntensityv, gri, SI, addHLines, addH2Lines);
     }
 
-    std::string GasInterface::quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const
+    std::string GasInterface::quickInfo(const GasState& gs, const std::valarray<double>& meanIntensity) const
     {
-        return _pimpl->quickInfo(gs, specificIntensity);
+        return _pimpl->quickInfo(gs, meanIntensity);
     }
 
     int GasInterface::index(const std::string& name) const { return _pimpl->index(name); }
 
-    GasSolution GasInterface::solveTemperature(double n, const Spectrum& specificIntensity,
+    GasSolution GasInterface::solveTemperature(double n, const Spectrum& meanIntensity,
                                                GasModule::GrainInterface& gri) const
     {
-        return _pimpl->solveTemperature(n, specificIntensity, gri);
+        return _pimpl->solveTemperature(n, meanIntensity, gri);
     }
 
-    GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& specificIntensity,
+    GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& meanIntensity,
                                              GasModule::GrainInterface& gri, double h2FormationOverride) const
     {
-        return _pimpl->solveDensities(n, T, specificIntensity, gri, h2FormationOverride);
+        return _pimpl->solveDensities(n, T, meanIntensity, gri, h2FormationOverride);
     }
 
-    double GasInterface::solveDensities(GasSolution& s, double n, double T, const Spectrum& specificIntensity,
+    double GasInterface::solveDensities(GasSolution& s, double n, double T, const Spectrum& meanIntensity,
                                         bool startFromCurrent, double h2FormationOverride) const
     {
-        return _pimpl->solveDensities(s, n, T, specificIntensity, startFromCurrent, h2FormationOverride);
+        return _pimpl->solveDensities(s, n, T, meanIntensity, startFromCurrent, h2FormationOverride);
     }
 
     // GasSolution GasInterface::solveDensitiesNoH2(double n, double T,
-    //                                              const Spectrum& specificIntensity,
+    //                                              const Spectrum& meanIntensity,
     //                                              GasModule::GrainInterface& gri) const
     // {
-    // 	return _pimpl->solveDensitiesNoH2(n, T, specificIntensity, gri);
+    // 	return _pimpl->solveDensitiesNoH2(n, T, meanIntensity, gri);
     // }
 
 }  // namespace GasModule

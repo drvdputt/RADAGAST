@@ -14,7 +14,7 @@ namespace GasModule
             some quantities can be precalculated, using the assumption that the radiation field
             stays constant; with the added benefit that the function singatures become
             smaller. */
-        HModel(const HData* hData, const Spectrum* specificIntensity);
+        HModel(const HData* hData, const Spectrum* meanIntensity);
 
         /** Solve the H levels, and store them in this object. */
         void solve(double n, const CollisionParameters& cp);
@@ -56,7 +56,7 @@ namespace GasModule
         Array twoPhotonEmissivityv(const Array& eFrequencyv) const;
 
         const HData* _hData;
-        const Spectrum* _specificIntensity;
+        const Spectrum* _meanIntensity;
         double _ionizationRate{0.};
         LevelSolution _levelSolution;
     };

@@ -10,12 +10,12 @@
 
 namespace GasModule
 {
-    GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum& specificIntensity,
+    GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum& meanIntensity,
                              const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
                              std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound, const FreeFree& freeFree)
         : _sv(speciesIndex), _hSolution(std::move(hModel)),
-          _h2Solution(std::move(h2Model)), _specificIntensity{specificIntensity},
-          _freeBound{freeBound}, _freeFree{freeFree}, _ionHeatPerH{Ionization::heatingPerH(specificIntensity)}
+          _h2Solution(std::move(h2Model)), _meanIntensity{meanIntensity}, _freeBound{freeBound}, _freeFree{freeFree},
+          _ionHeatPerH{Ionization::heatingPerH(meanIntensity)}
     {
         int numPop = gri->numPopulations();
         if (numPop)
@@ -40,7 +40,7 @@ namespace GasModule
 
     void GasSolution::solveGrains()
     {
-        for (auto& g : _grainSolutionv) g.recalculate(&_specificIntensity, _t, _sv);
+        for (auto& g : _grainSolutionv) g.recalculate(&_meanIntensity, _t, _sv);
 
         _kGrainH2FormationRateCoeff = 0.;
         for (const auto& g : _grainSolutionv) _kGrainH2FormationRateCoeff += g.surfaceH2FormationRateCoeff(_t);
@@ -127,7 +127,7 @@ namespace GasModule
         double h2form = kGrainH2FormationRateCoeff();
         double h2dissoc = _h2Solution->dissociationRate();
 
-        double hphotoion = Ionization::photoRateCoeff(_specificIntensity);
+        double hphotoion = Ionization::photoRateCoeff(_meanIntensity);
         double hcolion = Ionization::collisionalRateCoeff(_t);
         double hrec = Ionization::recombinationRateCoeff(_t);
 

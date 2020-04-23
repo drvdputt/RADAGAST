@@ -31,7 +31,7 @@ namespace GasModule
             particles. Since the calculation of the H2 formation and destruction rate are
             complicated, the are expected to be calculated somewhere else, and passed as arguments
             here. This function simply fills them in into the right spot of the k-vector. */
-        EVector rateCoeffv(double T, const Spectrum& specificIntensity, double kDissFromH2Levels,
+        EVector rateCoeffv(double T, const Spectrum& meanIntensity, double kDissFromH2Levels,
                            double kH2FormationGrain) const;
     };
 }

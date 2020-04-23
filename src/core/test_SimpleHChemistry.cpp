@@ -12,15 +12,15 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 {
     const double T = 10000;
     Array frequencyv = Testing::generateGeometricGridv(200, 1e11, 1e16);
-    Array specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, 25000, 10);
-    Spectrum specificIntensity(frequencyv, specificIntensityv);
+    Array meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, 25000, 10);
+    Spectrum meanIntensity(frequencyv, meanIntensityv);
 
     SimpleHChemistry chemistry{};
 
     // no h2
     double kform = 0;
     double kdiss = 0;
-    EVector kv = chemistry.rateCoeffv(T, specificIntensity, kdiss, kform);
+    EVector kv = chemistry.rateCoeffv(T, meanIntensity, kdiss, kform);
     std::stringstream ss;
     ss << "Rate coeff: ionization, recombination, dissociation\n" << kv << '\n';
     std::string ratesMessage = ss.str();
@@ -32,7 +32,7 @@ TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
     SpeciesVector sv(&chemistry.speciesIndex());
     sv.setDensities(nv);
     double f_network = sv.np() / (sv.np() + sv.nH());
-    double f_exact = Ionization::solveBalance(sv0.nH() + sv0.np(), T, specificIntensity);
+    double f_exact = Ionization::solveBalance(sv0.nH() + sv0.np(), T, meanIntensity);
     CHECK_MESSAGE(TemplatedUtils::equalWithinTolerance(f_exact, f_network, 1e-6),
                   "exact ionization rate = " << f_exact << " while the one from chemical network is " << f_network
                                              << " (species vector is " << nv << ")");

@@ -40,8 +40,8 @@ namespace GasModule
     const std::array<double, 4> GrainPhotoelectricCalculator::Locals::_massv{
         Constant::ELECTRONMASS, Constant::PROTONMASS, Constant::HMASS, 2 * Constant::HMASS};
 
-    GrainPhotoelectricCalculator::Locals::Locals(const Spectrum* specificIntensity, double T, const SpeciesVector& sv)
-        : _specificIntensity(specificIntensity), _T(T), _integrationWorkspace(specificIntensity->numPoints())
+    GrainPhotoelectricCalculator::Locals::Locals(const Spectrum* meanIntensity, double T, const SpeciesVector& sv)
+        : _meanIntensity(meanIntensity), _T(T), _integrationWorkspace(meanIntensity->numPoints())
     {
         // these are different every time a new Locals is created
         _densityv = {sv.ne(), sv.np(), sv.nH(), sv.nH2()};
@@ -62,7 +62,7 @@ namespace GasModule
         double aA = a / Constant::ANGSTROM;
 
         // Highest possible energy of a photon
-        const Array& frequencyv = env._specificIntensity->frequencyv();
+        const Array& frequencyv = env._meanIntensity->frequencyv();
         double hnumax = Constant::PLANCK * frequencyv[frequencyv.size() - 1];
 
         // The maximum charge is one more than the highest charge which still allows ionization by
@@ -124,8 +124,8 @@ namespace GasModule
     GrainPhotoelectricCalculator::photoelectricIntegrationLoop(Locals& env, const Array& Qabsv, double pet,
                                                                std::function<double(double hnuDiff)> f_hnuDiff) const
     {
-        const Array& frequencyv = env._specificIntensity->frequencyv();
-        const Array& specificIntensityv = env._specificIntensity->valuev();
+        const Array& frequencyv = env._meanIntensity->frequencyv();
+        const Array& meanIntensityv = env._meanIntensity->valuev();
 
         // yield is zero by definition below photoelectric threshold
         double nu_pet = pet / Constant::PLANCK;
@@ -133,7 +133,7 @@ namespace GasModule
         while (i >= 0 && frequencyv[i] > nu_pet)
         {
             double hnu = Constant::PLANCK * frequencyv[i];
-            env._integrationWorkspace[i] = Qabsv[i] * specificIntensityv[i] / hnu * f_hnuDiff(hnu - pet);
+            env._integrationWorkspace[i] = Qabsv[i] * meanIntensityv[i] / hnu * f_hnuDiff(hnu - pet);
             i--;
         }
 
@@ -154,8 +154,8 @@ namespace GasModule
     double GrainPhotoelectricCalculator::photodetachmentIntegrationLoop(int Z, Locals& env, double pdt,
                                                                         const double* calcEnergyWithThisEmin) const
     {
-        const Array& frequencyv = env._specificIntensity->frequencyv();
-        const Array& specificIntensityv = env._specificIntensity->valuev();
+        const Array& frequencyv = env._meanIntensity->frequencyv();
+        const Array& meanIntensityv = env._meanIntensity->valuev();
 
         // no effect below photodetachment threshold
         double nu_pdt = pdt / Constant::PLANCK;
@@ -165,7 +165,7 @@ namespace GasModule
             double hnu = Constant::PLANCK * frequencyv[i];
             double hnuDiff = hnu - pdt;
             // <function unit> / time / angle
-            env._integrationWorkspace[i] = WD01::sigmaPDT(Z, hnuDiff) * specificIntensityv[i] / hnu;
+            env._integrationWorkspace[i] = WD01::sigmaPDT(Z, hnuDiff) * meanIntensityv[i] / hnu;
             if (calcEnergyWithThisEmin) env._integrationWorkspace[i] *= hnuDiff + *calcEnergyWithThisEmin;
             i--;
         }
@@ -417,28 +417,28 @@ namespace GasModule
     namespace
     {
         // Wavelength grid to use for the tests
-        void testSpectrum(double G0, Array& frequencyv, Array& specificIntensityv)
+        void testSpectrum(double G0, Array& frequencyv, Array& meanIntensityv)
         {
             const double minWav{0.0912 * Constant::UM};  // cutoff at 13.6 eV
             const double maxWav{1000 * Constant::UM};
             const double Tc{3.e4};
             frequencyv = Testing::generateGeometricGridv(200, Constant::LIGHT / maxWav, Constant::LIGHT / minWav);
-            specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0);
+            meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0);
         }
     }  // namespace
 
     void GrainPhotoelectricCalculator::heatingRateTest(double G0, double gasT, double ne) const
     {
-        Array frequencyv, specificIntensityv;
-        testSpectrum(G0, frequencyv, specificIntensityv);
+        Array frequencyv, meanIntensityv;
+        testSpectrum(G0, frequencyv, meanIntensityv);
 
         // Gather environment parameters
-        const Spectrum specificIntensity(frequencyv, specificIntensityv);
+        const Spectrum meanIntensity(frequencyv, meanIntensityv);
         SpeciesIndex spindex = SpeciesIndex::makeDefault();
         SpeciesVector sv(&spindex);
         sv.setNe(ne);
         sv.setNp(ne);
-        Locals env(&specificIntensity, gasT, sv);
+        Locals env(&meanIntensity, gasT, sv);
 
         // File that writes out the absorption efficiency, averaged using the input radiation field
         // as weights.
@@ -459,7 +459,7 @@ namespace GasModule
             const Array& Qabsv = qAbsvv[i];
 
             // Integrate over the radiation field
-            Array intensityTimesQabsv = Qabsv * specificIntensityv;
+            Array intensityTimesQabsv = Qabsv * meanIntensityv;
             double intensityQabsIntegral = TemplatedUtils::integrate<double>(frequencyv, intensityTimesQabsv);
 
             // Calculate and write out the charge distribution and heating efficiency
@@ -483,7 +483,7 @@ namespace GasModule
             efficiencyOf << a / Constant::ANGSTROM << '\t' << efficiency << '\n';
 
             // Calculate and write out the ISRF-averaged absorption efficiency
-            double intensityIntegral = TemplatedUtils::integrate<double>(frequencyv, specificIntensityv);
+            double intensityIntegral = TemplatedUtils::integrate<double>(frequencyv, meanIntensityv);
             double avgQabs = intensityQabsIntegral / intensityIntegral;
             avgQabsOf << a / Constant::ANGSTROM << '\t' << avgQabs << endl;
         }
@@ -496,14 +496,14 @@ namespace GasModule
 
     void GrainPhotoelectricCalculator::chargeBalanceTest(double G0, double gasT, double ne, double np) const
     {
-        Array frequencyv, specificIntensityv;
-        testSpectrum(G0, frequencyv, specificIntensityv);
-        Spectrum specificIntensity(frequencyv, specificIntensityv);
+        Array frequencyv, meanIntensityv;
+        testSpectrum(G0, frequencyv, meanIntensityv);
+        Spectrum meanIntensity(frequencyv, meanIntensityv);
         auto spindex = SpeciesIndex::makeDefault();
         SpeciesVector sv(&spindex);
         sv.setNe(ne);
         sv.setNp(np);
-        Locals env(&specificIntensity, gasT, sv);
+        Locals env(&meanIntensity, gasT, sv);
 
         double a = _sizev[0];
         // Qabs for each frequency

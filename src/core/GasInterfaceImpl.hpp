@@ -50,31 +50,31 @@ namespace GasModule
         const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }
         const std::valarray<double>& eFrequencyv() const { return _eFrequencyv; }
 
-        void updateGasState(GasModule::GasState&, double n, const std::valarray<double>& specificIntensityv,
+        void updateGasState(GasModule::GasState&, double n, const std::valarray<double>& meanIntensityv,
                             GasModule::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
         Array emissivityBasic(const GasModule::GasState& gs, bool SI = false) const;
         Array opacityBasic(const GasModule::GasState& gs, bool SI = false) const;
-        Array emissivityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
-                                  const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const;
-        Array opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
-                               const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const;
+        Array emissivityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv, const GrainInterface& gri,
+                                  bool SI, bool addHLines, bool addH2Lines) const;
+        Array opacityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv, const GrainInterface& gri,
+                               bool SI, bool addHLines, bool addH2Lines) const;
 
-        std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& specificIntensity) const;
+        std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& meanIntensity) const;
         int index(const std::string& name) const;
 
-        GasSolution solveTemperature(double n, const Spectrum& specificIntensity, GasModule::GrainInterface&) const;
-        GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity, GasModule::GrainInterface&,
+        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, GasModule::GrainInterface&) const;
+        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, GasModule::GrainInterface&,
                                    double h2FormationOverride = -1) const;
-        double solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
+        double solveDensities(GasSolution&, double n, double T, const Spectrum& meanIntensity,
                               bool startFromCurrent = false, double h2FormationOverride = -1) const;
-        GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
+        GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& meanIntensity,
                                        GasModule::GrainInterface&) const;
 
     private:
         /** Construct a new GasSolution model, passing all the necessary (references to) objects.
             The SpeciesModelManager is used to create the HModel and H2Model. */
-        GasSolution makeGasSolution(const Spectrum& specificIntensity, const GasModule::GrainInterface*) const;
+        GasSolution makeGasSolution(const Spectrum& meanIntensity, const GasModule::GrainInterface*) const;
 
         /** Create a species vector which is zero everywhere, except for e-, p+, H, and H2.
             Arguments: the total amount of H nuclei n, the ionized to total fraction (np / n), the

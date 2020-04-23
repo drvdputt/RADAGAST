@@ -7,9 +7,9 @@
 
 namespace GasModule
 {
-    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* specificIntensity) : _lteCool{lteCool}
+    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity) : _lteCool{lteCool}
     {
-        _g = RadiationFieldTools::gHabing(*specificIntensity);
+        _g = RadiationFieldTools::gHabing(*meanIntensity);
     }
 
     void SimpleH2::solve(double n, const CollisionParameters& cp, double h2form)
@@ -107,8 +107,8 @@ namespace GasModule
 // of code somewhere:
 //
 // // See 2014-Sternberg eq 3
-// auto iv = *_specificIntensity.valuev();
-// auto nuv = *_specificIntensity.frequencyv();
+// auto iv = *_meanIntensity.valuev();
+// auto nuv = *_meanIntensity.frequencyv();
 
 // // F0 = integral 912 to 1108 Angstrom of Fnu(= 4pi Inu) with Inu in cm-2 s-1 Hz sr-1
 // Array photonFluxv = Constant::FPI * iv / nuv / Constant::PLANCK;

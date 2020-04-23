@@ -20,14 +20,14 @@ namespace GasModule
         Array freqToWavGrid(const Array& frequencyv);
 
         /** Convert specific intensity from per frequency to per wavelength units */
-        Array freqToWavSpecificIntensity(const Array& frequencyv, const Array& specificIntensity_nu);
+        Array freqToWavSpecificIntensity(const Array& frequencyv, const Array& meanIntensity_nu);
 
         /** Convert an emissivity (assumed to be in erg / s / cm-3 / Hz) to W / cm-3 / Hz */
         template<typename T> T emissivity_to_SI(T value);
 
         /** Get the radiation field between 6 and 13.6 eV (2066 and 912 Angstrom), relative to
             the Habing unit radiation field (see @c Constants) */
-        double gHabing(const Spectrum& specificIntensity);
+        double gHabing(const Spectrum& meanIntensity);
         constexpr double nuMinHabing = 6. * Constant::EV / Constant::PLANCK;
         constexpr double nuMaxHabing = Constant::LIGHT / (912. * Constant::ANGSTROM);
     }  // namespace RadiationFieldTools

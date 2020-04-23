@@ -221,8 +221,7 @@ namespace GasModule
     double FreeFree::gauntFactor(double logu, double logg2) const
     {
         // The data range should be more than enough. Return zero if out of range
-        if (logu < _loguMin || _loguMax < logu || logg2 < _loggamma2Min || _loggamma2Max < logg2)
-            return 0.;
+        if (logu < _loguMin || _loguMax < logu || logg2 < _loggamma2Min || _loggamma2Max < logg2) return 0.;
 
         // Find the gamma^2-index to the right of logg2 , maximum the max column index)
         int iRight = ceil((logg2 - _loggamma2Min) / _logStep);

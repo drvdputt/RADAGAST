@@ -33,9 +33,9 @@ TEST_CASE("H2-specific algorithm")
         double n = 1e8;
         const CollisionParameters cp = makeCP(100, 100, 100, n);
 
-        Array specificIntensityv(frequencyv.size());
-        Spectrum specificIntensity(frequencyv, specificIntensityv);
-        BigH2Model bigh2(&hff, &specificIntensity);
+        Array meanIntensityv(frequencyv.size());
+        Spectrum meanIntensity(frequencyv, meanIntensityv);
+        BigH2Model bigh2(&hff, &meanIntensity);
 
         bigh2.solve(n, cp);
         EVector nv_lte = n * hff.solveBoltzmanEquations(T);
@@ -60,9 +60,9 @@ TEST_CASE("H2-specific algorithm")
 
         const CollisionParameters cp = makeCP(0, 0, 0, n);
 
-        Array specificIntensityv(frequencyv.size());
-        Spectrum specificIntensity(frequencyv, specificIntensityv);
-        BigH2Model bigh2(&hff, &specificIntensity);
+        Array meanIntensityv(frequencyv.size());
+        Spectrum meanIntensity(frequencyv, meanIntensityv);
+        BigH2Model bigh2(&hff, &meanIntensity);
 
         bigh2.solve(n, cp);
         const EVector& nv = bigh2.levelSolution()->nv();
@@ -88,10 +88,10 @@ TEST_CASE("H2-specific algorithm")
     {
         double n = 1;
         const CollisionParameters cp = makeCP(0, 0, 0, n);
-        Array specificIntensityv(frequencyv.size());
-        for (size_t i = 0; i < frequencyv.size(); i++) specificIntensityv[i] = Functions::planck(frequencyv[i], T);
-        Spectrum specificIntensity(frequencyv, specificIntensityv);
-        BigH2Model bigh2(&hff, &specificIntensity);
+        Array meanIntensityv(frequencyv.size());
+        for (size_t i = 0; i < frequencyv.size(); i++) meanIntensityv[i] = Functions::planck(frequencyv[i], T);
+        Spectrum meanIntensity(frequencyv, meanIntensityv);
+        BigH2Model bigh2(&hff, &meanIntensity);
         bigh2.solve(n, cp);
         EVector nv_lte = n * hff.solveBoltzmanEquations(T);
         const EVector& nv_sol = bigh2.levelSolution()->nv();

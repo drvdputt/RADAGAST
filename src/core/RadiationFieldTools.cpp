@@ -28,18 +28,18 @@ namespace GasModule
         return wavelengthv;
     }
 
-    Array RadiationFieldTools::freqToWavSpecificIntensity(const Array& frequencyv, const Array& specificIntensity_nu)
+    Array RadiationFieldTools::freqToWavSpecificIntensity(const Array& frequencyv, const Array& meanIntensity_nu)
     {
         Array I_lambda(frequencyv.size());
         for (size_t iFreq = 0; iFreq < frequencyv.size(); iFreq++)
             I_lambda[I_lambda.size() - iFreq - 1] =
-                specificIntensity_nu[iFreq] * frequencyv[iFreq] * frequencyv[iFreq] / Constant::LIGHT;
+                meanIntensity_nu[iFreq] * frequencyv[iFreq] * frequencyv[iFreq] / Constant::LIGHT;
         return I_lambda;
     }
 
-    double RadiationFieldTools::gHabing(const Spectrum& specificIntensity)
+    double RadiationFieldTools::gHabing(const Spectrum& meanIntensity)
     {
-        double intensity = specificIntensity.average(nuMinHabing, nuMaxHabing) * (nuMaxHabing - nuMinHabing);
+        double intensity = meanIntensity.average(nuMinHabing, nuMaxHabing) * (nuMaxHabing - nuMinHabing);
         return Constant::FPI * intensity / Constant::HABING_FLUX;
     }
 }

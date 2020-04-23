@@ -10,9 +10,9 @@ using namespace std;
 
 namespace GasModule
 {
-    double Ionization::solveBalance(double nH, double T, const Spectrum& specificIntensity)
+    double Ionization::solveBalance(double nH, double T, const Spectrum& meanIntensity)
     {
-        double integral = photoRateCoeff(specificIntensity);
+        double integral = photoRateCoeff(meanIntensity);
         double gamma = collisionalRateCoeff(T);
         double alpha = recombinationRateCoeff(T);
 
@@ -39,12 +39,12 @@ namespace GasModule
         return min(ne / nH, 1.);
     }
 
-    double Ionization::photoRateCoeff(const Spectrum& specificIntensity)
+    double Ionization::photoRateCoeff(const Spectrum& meanIntensity)
     {
         // Just integrate over the points of the input spectrum here, since the photoionization
         // cross section is smooth
-        const Array& nuv = specificIntensity.frequencyv();
-        const Array& vv = specificIntensity.valuev();
+        const Array& nuv = meanIntensity.frequencyv();
+        const Array& vv = meanIntensity.valuev();
 
         // Integrate over the points [THRESHOLD, nuv[iThres], nuv[iThres + 1], ...]. Including the
         // threshold in the integration is a good correction if the grid is coarse, but ultimately,
@@ -61,7 +61,7 @@ namespace GasModule
         // radiation field / nu * cross section
 
         // interpolate for this point
-        integrandv[0] = specificIntensity.evaluate(xv[0]) / xv[0] * crossSection(xv[0]);
+        integrandv[0] = meanIntensity.evaluate(xv[0]) / xv[0] * crossSection(xv[0]);
         for (size_t i = 1; i < numPoints; i++)
             // use the raw spectrum data for the rest
             integrandv[i] = vv[iThres + i - 1] / xv[i] * crossSection(xv[i]);
@@ -112,10 +112,10 @@ namespace GasModule
         return a / (sqrt(T / T0) * pow(1 + sqrt(T / T0), 1 - b) * pow(1 + sqrt(T / T1), 1 + b));
     }
 
-    double Ionization::heatingPerH(const Spectrum& specificIntensity)
+    double Ionization::heatingPerH(const Spectrum& meanIntensity)
     {
-        const Array& Iv = specificIntensity.valuev();
-        const Array& nuv = specificIntensity.frequencyv();
+        const Array& Iv = meanIntensity.valuev();
+        const Array& nuv = meanIntensity.frequencyv();
 
         // stop when we go below threshold
         Array integrandv(nuv.size());

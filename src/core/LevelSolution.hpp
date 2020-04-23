@@ -28,7 +28,7 @@ namespace GasModule
 
         /** Update the stored data, based on the given radiation field and collision parameters,
             using the LevelCoefficients pointer that was given at construction. */
-        void updateRates(const Spectrum& specificIntensity, const CollisionParameters& cp);
+        void updateRates(const Spectrum& meanIntensity, const CollisionParameters& cp);
 
         /** Same as the above, but with zero radiation field (only collisional) */
         void updateRates(const CollisionParameters& cp);

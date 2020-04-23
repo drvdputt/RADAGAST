@@ -71,8 +71,8 @@ updateGasState is thread safe.
 
 @code
 parallel_for_loop(0, numCells, [&] (int cell) {
-  // Specific intensity in frequency units (erg s-1 cm-2 sr-1 Hz-1), and the number density of H nuclei in cm-3
-  const std::valarray<double>& specificIntensityv = i_nuv(cell);
+  // Mean intensity in frequency units (erg s-1 cm-2 sr-1 Hz-1), and the number density of H nuclei in cm-3
+  const std::valarray<double>& meanIntensityv = i_nuv(cell);
   double nH = hdensity(cell);
 
   // No grains

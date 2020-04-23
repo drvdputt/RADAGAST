@@ -9,11 +9,11 @@ namespace GasModule
     {
         /** Solves the ionization balance (in the nebular approximation, i.e. this function assumes
             that all hydrogen is in the ground state). */
-        double solveBalance(double nH, double T, const Spectrum& specificIntensity);
+        double solveBalance(double nH, double T, const Spectrum& meanIntensity);
 
         /** Photoionization rate coefficient. Integrates over the spectrum. Multiply with neutral
             density to get total rate. */
-        double photoRateCoeff(const Spectrum& specificIntensity);
+        double photoRateCoeff(const Spectrum& meanIntensity);
 
         /** Photoionization cross section in cm2 */
         double crossSection(double frequency);
@@ -26,7 +26,7 @@ namespace GasModule
 
         /** Heating due to thermalization of freed electrons (erg s-1). Multiply with nH to get
             heating rate. */
-        double heatingPerH(const Spectrum& specificIntensity);
+        double heatingPerH(const Spectrum& meanIntensity);
 
         /** Kinetic energy lost during recombination (basically the photon energy, minus the
             binding energy contribution. */

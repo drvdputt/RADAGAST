@@ -52,26 +52,26 @@ namespace GasModule
         });
     }
 
-    EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& specificIntensity, double T,
+    EMatrix LevelCoefficients::prepareAbsorptionMatrix(const Spectrum& meanIntensity, double T,
                                                        const EMatrix& Cvv) const
     {
         EMatrix BPvv = EMatrix::Zero(_numLv, _numLv);
-        double spectrumMax = specificIntensity.valMax();
+        double spectrumMax = meanIntensity.valMax();
         forActiveLinesDo([&](size_t upper, size_t lower) {
             // Calculate Pij for the lower triangle (= stimulated emission)
             LineProfile lp = lineProfile(upper, lower, T, Cvv);
-            double linePower = lp.integrateSpectrum(specificIntensity, spectrumMax);
+            double linePower = lp.integrateSpectrum(meanIntensity, spectrumMax);
 
             if (Options::levelcoefficients_reportSpecIntegral)
             {
                 // Compare above integral to explicit calculation using the whole wavelength
                 // range with many points. Useful check in case of steep slopes in the spectrum,
                 // or very wide wings of the line.
-                auto f = [&](double x) -> double { return lp(x) * specificIntensity.evaluate(x); };
+                auto f = [&](double x) -> double { return lp(x) * meanIntensity.evaluate(x); };
 
                 size_t many_points = 1e6;
-                double manualIntegral = TemplatedUtils::integrateFunction<double>(
-                    f, specificIntensity.freqMin(), specificIntensity.freqMax(), many_points);
+                double manualIntegral = TemplatedUtils::integrateFunction<double>(f, meanIntensity.freqMin(),
+                                                                                  meanIntensity.freqMax(), many_points);
 
                 double ratio = manualIntegral / linePower;
 

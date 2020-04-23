@@ -49,11 +49,11 @@ namespace GasModule
     }
 
     void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
-                                          const std::valarray<double>& specificIntensityv,
+                                          const std::valarray<double>& meanIntensityv,
                                           GasModule::GrainInterface& grainInfo, GasDiagnostics* gd) const
     {
-        Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
-        GasSolution s = solveTemperature(n, specificIntensity, grainInfo);
+        Spectrum meanIntensity(_iFrequencyv, meanIntensityv);
+        GasSolution s = solveTemperature(n, meanIntensity, grainInfo);
         s.setGasState(gs);
         if (gd) s.fillDiagnostics(gd);
     }
@@ -95,7 +95,7 @@ namespace GasModule
             return opacityv;
     }
 
-    Array GasInterfaceImpl::emissivityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
+    Array GasInterfaceImpl::emissivityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv,
                                                 const GrainInterface& gri, bool SI, bool addHLines,
                                                 bool addH2Lines) const
     {
@@ -103,12 +103,12 @@ namespace GasModule
         Array emissivityv = emissivityBasic(gs, false);
 
         // copy some things
-        Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
+        Spectrum meanIntensity(_iFrequencyv, meanIntensityv);
         auto sv = speciesVector(gs);
 
         // calculate the gas solution, without iteration since we already provide the correct t
         // and nv
-        auto s = makeGasSolution(specificIntensity, &gri);
+        auto s = makeGasSolution(meanIntensity, &gri);
         s.setT(gs._t);
         s.setSpeciesNv(sv.speciesNv());
         s.solveGrains();
@@ -125,19 +125,19 @@ namespace GasModule
             return emissivityv;
     }
 
-    Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& specificIntensityv,
+    Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv,
                                              const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const
     {
         // get the continuum
         Array opacityv = opacityBasic(gs, false);
 
         // copy some things
-        Spectrum specificIntensity(_iFrequencyv, specificIntensityv);
+        Spectrum meanIntensity(_iFrequencyv, meanIntensityv);
         auto sv = speciesVector(gs);
 
         // calculate the gas solution, without iteration since we already provide the correct t
         // and nv
-        auto s = makeGasSolution(specificIntensity, &gri);
+        auto s = makeGasSolution(meanIntensity, &gri);
         s.setT(gs._t);
         s.setSpeciesNv(sv.speciesNv());
 
@@ -160,9 +160,9 @@ namespace GasModule
     }
 
     std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
-                                            const std::valarray<double>& specificIntensity) const
+                                            const std::valarray<double>& meanIntensity) const
     {
-        Spectrum si(_iFrequencyv, specificIntensity);
+        Spectrum si(_iFrequencyv, meanIntensity);
         auto sv = speciesVector(gs);
         std::stringstream ss;
         ss << "G0 " << RadiationFieldTools::gHabing(si) << " T " << gs._t << " ne " << sv.ne() << " np " << sv.np()
@@ -178,7 +178,7 @@ namespace GasModule
         {
             const GasInterfaceImpl* gasInterfacePimpl;
             double n;
-            const Spectrum* specificIntensity;
+            const Spectrum* meanIntensity;
             GasSolution* solution_storage;
             bool use_previous_solution;
         };
@@ -191,19 +191,19 @@ namespace GasModule
             auto* p = static_cast<struct heating_f_params*>(params);
             // Refresh the solution stored somewhere, with optimization based on the current solution
             GasSolution& s = *p->solution_storage;
-            double netHeat = p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->specificIntensity,
+            double netHeat = p->gasInterfacePimpl->solveDensities(s, p->n, pow(10., logT), *p->meanIntensity,
                                                                   p->use_previous_solution);
             return netHeat;
         }
     }  // namespace
 
-    GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& specificIntensity,
+    GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& meanIntensity,
                                                    GasModule::GrainInterface& gri) const
     {
-        GasSolution s = makeGasSolution(specificIntensity, &gri);
+        GasSolution s = makeGasSolution(meanIntensity, &gri);
         if (n <= 0)
         {
-            solveDensities(s, 0, 0, specificIntensity);
+            solveDensities(s, 0, 0, meanIntensity);
             return s;
         }
 
@@ -211,7 +211,7 @@ namespace GasModule
         gsl_root_fsolver* solver = gsl_root_fsolver_alloc(T);
 
         gsl_function F;
-        struct heating_f_params p = {this, n, &specificIntensity, &s, false};
+        struct heating_f_params p = {this, n, &meanIntensity, &s, false};
         F.function = &heating_f;
         F.params = &p;
 
@@ -236,16 +236,16 @@ namespace GasModule
         if (logTmax > logTmaxmax && heating_f_Tmax >= 0.)
         {
             // If net heating is still positive, just solve for the maximum temperature.
-            std::cout << "Could not find equilibrium temperature. G0 is "
-                      << RadiationFieldTools::gHabing(specificIntensity) << '\n';
-            solveDensities(s, n, Tmaxmax, specificIntensity);
+            std::cout << "Could not find equilibrium temperature. G0 is " << RadiationFieldTools::gHabing(meanIntensity)
+                      << '\n';
+            solveDensities(s, n, Tmaxmax, meanIntensity);
             return s;
         }
         if (heating_f_Tmin <= 0 && heating_f_Tmax <= 0)
         {
             // If even after all this, heating is negative on both sides, solve for the lowest
             // temperature as the 'safe' option.
-            solveDensities(s, n, Tmin, specificIntensity);
+            solveDensities(s, n, Tmin, meanIntensity);
             return s;
         }
 
@@ -256,7 +256,7 @@ namespace GasModule
             // If something else is stil wrong, be verbose and solve for lowest temperature
             std::cout << "heating at " << pow(10., logTmin) << " K -->" << heating_f_Tmin << '\n';
             std::cout << "heating at " << pow(10., logTmax) << " K -->" << heating_f_Tmax << '\n';
-            solveDensities(s, n, Tmin, specificIntensity);
+            solveDensities(s, n, Tmin, meanIntensity);
             return s;
         }
 
@@ -291,15 +291,15 @@ namespace GasModule
         return s;
     }
 
-    GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum& specificIntensity,
+    GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum& meanIntensity,
                                                  GasModule::GrainInterface& gri, double h2FormationOverride) const
     {
-        GasSolution s = makeGasSolution(specificIntensity, &gri);
-        solveDensities(s, n, T, specificIntensity, false, h2FormationOverride);
+        GasSolution s = makeGasSolution(meanIntensity, &gri);
+        solveDensities(s, n, T, meanIntensity, false, h2FormationOverride);
         return s;
     }
 
-    double GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const Spectrum& specificIntensity,
+    double GasInterfaceImpl::solveDensities(GasSolution& s, double n, double T, const Spectrum& meanIntensity,
                                             bool startFromCurrent, double h2FormationOverride) const
     {
         if (n <= 0)
@@ -327,7 +327,7 @@ namespace GasModule
         }
         if (manualGuess)
         {
-            double ionFrac = Ionization::solveBalance(n, T, specificIntensity);
+            double ionFrac = Ionization::solveBalance(n, T, meanIntensity);
             double molFrac = 0.1;
             s.setSpeciesNv(guessSpeciesNv(n, ionFrac, molFrac));
         }
@@ -380,7 +380,7 @@ namespace GasModule
 
             // Calculate all reaction rates and put them (+ the H2 rates provided as arguments)
             // into a vector of the right format
-            EVector reactionRates = _chemistry.rateCoeffv(T, specificIntensity, kDissH2Levels, kFormH2);
+            EVector reactionRates = _chemistry.rateCoeffv(T, meanIntensity, kDissH2Levels, kFormH2);
 
             // CHEM RATES -> CHEMISTRY SOLUTION
             EVector newSpeciesNv = _chemistry.solveBalance(reactionRates, s.speciesVector().speciesNv());
@@ -420,7 +420,7 @@ namespace GasModule
         return previousHeating - previousCooling;
     }
 
-    GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& specificIntensity,
+    GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& meanIntensity,
                                                   const GasModule::GrainInterface* gri) const
     {
         // Since I keep forgetting why it is good to make a factory function return unique
@@ -443,9 +443,9 @@ namespace GasModule
 
         // Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
         // C++14. Scott Meyers.
-        std::unique_ptr<HModel> hm = _manager.makeHModel(&specificIntensity);
-        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&specificIntensity);
-        GasSolution s(gri, specificIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), _freeBound, _freeFree);
+        std::unique_ptr<HModel> hm = _manager.makeHModel(&meanIntensity);
+        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&meanIntensity);
+        GasSolution s(gri, meanIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), _freeBound, _freeFree);
         return s;
     }
 

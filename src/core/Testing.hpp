@@ -21,8 +21,8 @@ namespace GasModule
         std::vector<Array> qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv);
 
         // Makeshift dust equilibrium calculation
-        double equilibriumTemperature(const Array& frequencyv, const Array& specificIntensityv,
-                                      const Array& crossSectionv, double minT, double maxT);
+        double equilibriumTemperature(const Array& frequencyv, const Array& meanIntensityv, const Array& crossSectionv,
+                                      double minT, double maxT);
 
         // USEFUL CONSTANTS //
         constexpr double defaultMinFreq = Constant::LIGHT / (1e3 * Constant::UM);
@@ -66,7 +66,7 @@ namespace GasModule
 
         void plotHeatingCurve_main();
         void plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
-                              const Spectrum& specificIntensity, GasModule::GrainInterface&);
+                              const Spectrum& meanIntensity, GasModule::GrainInterface&);
 
         void plotIonizationStuff();
 
@@ -95,7 +95,7 @@ namespace GasModule
 
         GasModule::GasInterface genHonlyModel();
 
-        void genMRNDust(GasModule::GrainInterface&, double nHtotal, const Spectrum& specificIntensityv, bool car);
+        void genMRNDust(GasModule::GrainInterface&, double nHtotal, const Spectrum& meanIntensityv, bool car);
 
         /** Run the model with the maximum number of levels, and iterate until the temperature
             converges. */

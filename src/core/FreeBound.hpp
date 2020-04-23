@@ -34,8 +34,7 @@ namespace GasModule
     private:
         /** Emission coefficient for recombination to the ground state, using Maxwell
             distribution, Milne relation and ionization cross section. [erg s-1 Hz-1 cm3] */
-        static double
-        ionizingContinuumCoefficient(double T, double frequency);
+        static double ionizingContinuumCoefficient(double T, double frequency);
 
         // Data to be loaded in constructor body. First index is for frequency, second for
         // temperature

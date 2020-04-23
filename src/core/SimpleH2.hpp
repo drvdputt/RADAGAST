@@ -16,7 +16,7 @@ namespace GasModule
     public:
         /** Create a new workspace for the simple H2 model. A pointer to the LTE H2 line cooling
             table needs to be given (see SpeciesModelManager). */
-        SimpleH2(const LookupTable* lteCool, const Spectrum* specificIntensity);
+        SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity);
 
         /** Calculate the H2 to H2* ratio, and all other quantities that depend on more than
             just the radiation field. Should be called before any of the functions below. */

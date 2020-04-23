@@ -14,9 +14,9 @@ TEST_CASE("Calculation of G")
     SUBCASE("Tc = 7500") { Tc = 7500; }
 
     double G0 = 1;
-    Array specificIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0);
+    Array meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, G0);
 
-    Spectrum specificIntensity(frequencyv, specificIntensityv);
-    double G = RadiationFieldTools::gHabing(specificIntensity);
+    Spectrum meanIntensity(frequencyv, meanIntensityv);
+    double G = RadiationFieldTools::gHabing(meanIntensity);
     DoctestUtils::checkTolerance("G vs G0", G, G0, 1e-2);
 }

@@ -9,8 +9,8 @@
 
 namespace GasModule
 {
-    BigH2Model::BigH2Model(const H2Data* h2Data, const Spectrum* specificIntensity)
-        : _h2Data{h2Data}, _specificIntensity{specificIntensity}, _levelSolution(_h2Data)
+    BigH2Model::BigH2Model(const H2Data* h2Data, const Spectrum* meanIntensity)
+        : _h2Data{h2Data}, _meanIntensity{meanIntensity}, _levelSolution(_h2Data)
     {
         // since the radiation field stays constant, precalculate these integrals
         _directDissociationRatev = directDissociationIntegralv();
@@ -27,7 +27,7 @@ namespace GasModule
         }
 
         // transition matrices
-        _levelSolution.updateRates(*_specificIntensity, cp);
+        _levelSolution.updateRates(*_meanIntensity, cp);
 
         // source term due to H2 formation
         EVector sourcev = EVector::Zero(_h2Data->numLv());
@@ -153,8 +153,8 @@ namespace GasModule
                 const Array& cs_nuv = cs.frequencyv();
 
                 // Usable integration range
-                double minFreq = std::max(cs.freqMin(), _specificIntensity->freqMin());
-                double maxFreq = std::min(cs.freqMax(), _specificIntensity->freqMax());
+                double minFreq = std::max(cs.freqMin(), _meanIntensity->freqMin());
+                double maxFreq = std::min(cs.freqMax(), _meanIntensity->freqMax());
 
                 // Integration lower bound: Index right of the minimum frequency
                 size_t iNuMin = TemplatedUtils::index(minFreq, cs_nuv);
@@ -173,7 +173,7 @@ namespace GasModule
                     // I_nu / h nu. (As always constant factors are applied after
                     // integrating.)
                     double nu = cs_nuv[iNu];
-                    sigmaFv[iNu] *= _specificIntensity->evaluate(nu) / nu;
+                    sigmaFv[iNu] *= _meanIntensity->evaluate(nu) / nu;
 
                     // If we are calculating the heating rate (erg s-1) instead of
                     // the number rate (s-1), multiply with the energy minus the

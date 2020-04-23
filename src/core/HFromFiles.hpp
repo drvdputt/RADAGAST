@@ -57,7 +57,7 @@ namespace GasModule
             /** Quantum number n. */
             int n() const { return _n; }
 
-            /** Quantum number l. Returns -1 if l is not resolved. */ 
+            /** Quantum number l. Returns -1 if l is not resolved. */
             int l() const { return _l; }
 
             /** Quantum number 2j+1. Returns -1 if 2j+1 is not resolved. */
@@ -68,6 +68,7 @@ namespace GasModule
 
             /** Degeneracy of the level. Double because ratios of different g are often used. */
             double g() const;
+
         private:
             int _n, _l, _twoJplus1;  // quantum numbers
             double _e;               // energy
@@ -123,7 +124,7 @@ namespace GasModule
 
         // Correspondence between the in the Anderson data file (minus 1), and n,l. Minus 1
         // because the indices in the file start from 1.
-        std::vector<std::array<int,2>> _andersonIndexm1ToNLv;
+        std::vector<std::array<int, 2>> _andersonIndexm1ToNLv;
 
         // Store the data using this class
         CollisionData _qdataAnderson;

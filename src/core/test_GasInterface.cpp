@@ -39,10 +39,10 @@ TEST_CASE("Blackbodies test")
 
     for (double Tc : Tv)
     {
-        Spectrum specificIntensity(frequencyv, RadiationFieldTools::generateBlackbodyv(frequencyv, Tc));
+        Spectrum meanIntensity(frequencyv, RadiationFieldTools::generateBlackbodyv(frequencyv, Tc));
         GasModule::GrainInterface gri;
-        if (withDust) Testing::genMRNDust(gri, nHtotal, specificIntensity, true);
-        GasSolution s = gi.solveTemperature(nHtotal, specificIntensity, gri);
+        if (withDust) Testing::genMRNDust(gri, nHtotal, meanIntensity, true);
+        GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, gri);
         double T = s.t();
         CAPTURE(Tc);
         CAPTURE(T);
@@ -63,8 +63,8 @@ TEST_CASE("Blackbodies test")
 TEST_CASE("zero radiation field")
 {
     Array frequencyv = Testing::defaultFrequencyv(300);
-    Array specificIntensityv(frequencyv.size());
-    Spectrum specificIntensity(frequencyv, specificIntensityv);
+    Array meanIntensityv(frequencyv.size());
+    Spectrum meanIntensity(frequencyv, meanIntensityv);
     GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
     double nHtotal = 0.;
     GasModule::GrainInterface gri;
@@ -74,9 +74,9 @@ TEST_CASE("zero radiation field")
     {
         nHtotal = 100.;
         SUBCASE("zero grains") {}
-        SUBCASE("nonzero grains") { Testing::genMRNDust(gri, nHtotal, specificIntensity, true); }
+        SUBCASE("nonzero grains") { Testing::genMRNDust(gri, nHtotal, meanIntensity, true); }
     }
 
-    GasSolution s = gi.solveTemperature(nHtotal, specificIntensity, gri);
+    GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, gri);
     // no checks for now, just make sure it doesn't crash
 }

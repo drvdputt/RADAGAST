@@ -91,7 +91,7 @@ namespace GasModule
             object will be filled with various diagnostic data (slow!). I'm not sure if I'm going
             to keep this functionality, now that the functions for working with @c GasSolution
             exist. */
-        void updateGasState(GasState&, double n, const std::valarray<double>& specificIntensityv, GrainInterface& gri,
+        void updateGasState(GasState&, double n, const std::valarray<double>& meanIntensityv, GrainInterface& gri,
                             GasDiagnostics* gd = nullptr) const;
 
         /** Return the emissivity of the gas, discretized on @c eFrequencyv [erg cm-3 s-1 Hz-1
@@ -106,20 +106,19 @@ namespace GasModule
         /** Same as the above, but will add the emissivity of the lines. Some recalculations are
             necessary, hence the radiation field and grain details are needed again. */
         std::valarray<double> emissivityWithLines(const GasModule::GasState& gs,
-                                                  const std::valarray<double>& specificIntensityv,
+                                                  const std::valarray<double>& meanIntensityv,
                                                   const GrainInterface& gri, bool SI, bool addHLines,
                                                   bool addH2Lines) const;
 
         /** Same as the above, but will add the opacity of the lines. Some recalculations are
             necessary, hence the radiation field and grain details are needed again. */
         std::valarray<double> opacityWithLines(const GasModule::GasState& gs,
-                                               const std::valarray<double>& specificIntensityv,
-                                               const GrainInterface& gri, bool SI, bool addHLines,
-                                               bool addH2Lines) const;
+                                               const std::valarray<double>& meanIntensityv, const GrainInterface& gri,
+                                               bool SI, bool addHLines, bool addH2Lines) const;
 
         /** Create a string containing a 1-line overview of the result. Units are included in the
             string. */
-        std::string quickInfo(const GasState& gs, const std::valarray<double>& specificIntensity) const;
+        std::string quickInfo(const GasState& gs, const std::valarray<double>& meanIntensity) const;
 
         /** Return the index of the stored density in the gas state for a given species
             (specified as a string). If the given species is not available, -1 will be returned.
@@ -133,11 +132,11 @@ namespace GasModule
 
         /** Find the equilibrium temperature, by repeatedly solving the densities and evaluating th
             heating and cooling. @c updateGasState works via this function under the hood. */
-        GasSolution solveTemperature(double n, const Spectrum& specificIntensity, GasModule::GrainInterface&) const;
+        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, GasModule::GrainInterface&) const;
 
         /** Find the equilibrium densities for a fixed temperature (heating/cooling will be out of
             equilibrium). */
-        GasSolution solveDensities(double n, double T, const Spectrum& specificIntensity, GasModule::GrainInterface&,
+        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, GasModule::GrainInterface&,
                                    double h2FormationOverride = -1) const;
 
         /** Recalculate the densities for an existing GasSolution object. If startFromCurrent is
@@ -146,12 +145,12 @@ namespace GasModule
             contained in the @c GasSolution, a more heuristic initial guess is made for the
             chemistry, where the ionized fraction is based on the radiation field, and the
             molecular fraction is 0.1. Returns the net heating (heating - cooling).*/
-        double solveDensities(GasSolution&, double n, double T, const Spectrum& specificIntensity,
+        double solveDensities(GasSolution&, double n, double T, const Spectrum& meanIntensity,
                               bool startFromCurrent = false, double h2FormationOverride = -1) const;
 
         /** NOT IMPLEMENTED. Solve for a fixed temperature, forcing H2 to zero. Useful for
             ionization-only tests. */
-        GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& specificIntensity,
+        GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& meanIntensity,
                                        GasModule::GrainInterface&) const;
 
     private:

@@ -9,7 +9,7 @@ namespace GasModule
     class BigH2Model : public H2Model
     {
     public:
-        BigH2Model(const H2Data* h2Data, const Spectrum* specificIntensity);
+        BigH2Model(const H2Data* h2Data, const Spectrum* meanIntensity);
         void solve(double n, const CollisionParameters& cp, double h2form = 0) override;
         double dissociationRate() const override;
         double dissociationHeating() const override;
@@ -33,7 +33,7 @@ namespace GasModule
         EVector directDissociationIntegralv(bool heatRate = false) const;
 
         const H2Data* _h2Data;
-        const Spectrum* _specificIntensity;
+        const Spectrum* _meanIntensity;
         LevelSolution _levelSolution;
         double _n{0.};
 

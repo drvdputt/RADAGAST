@@ -4,11 +4,11 @@
 
 namespace GasModule
 {
-    void LevelSolution::updateRates(const Spectrum& specificIntensity, const CollisionParameters& cp)
+    void LevelSolution::updateRates(const Spectrum& meanIntensity, const CollisionParameters& cp)
     {
         _t = cp._t;
         _cvv = _levelCoefficients->cvv(cp);
-        _bpvv = _levelCoefficients->prepareAbsorptionMatrix(specificIntensity, _t, _cvv);
+        _bpvv = _levelCoefficients->prepareAbsorptionMatrix(meanIntensity, _t, _cvv);
     }
 
     void LevelSolution::updateRates(const CollisionParameters& cp)

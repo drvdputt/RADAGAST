@@ -53,10 +53,10 @@ namespace GasModule
                 (ne, np, nH, nH2), and those densities and those densities are placed in an
                 array at the same indices as the charges and masses, for easy iteration over the
                 relevant species. */
-            Locals(const Spectrum* specificIntensity, double T, const SpeciesVector& sv);
+            Locals(const Spectrum* meanIntensity, double T, const SpeciesVector& sv);
 
         private:
-            const Spectrum* _specificIntensity{nullptr};
+            const Spectrum* _meanIntensity{nullptr};
             double _T{0.};
             static const int _ie, _ip, _iH, _iH2;
             static const std::array<int, 4> _chargev;

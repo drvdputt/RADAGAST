@@ -39,11 +39,11 @@ namespace GasModule
         prepareCoefficients();
     }
 
-    EVector SimpleHChemistry::rateCoeffv(double T, const Spectrum& specificIntensity, double kDissFromH2Levels,
+    EVector SimpleHChemistry::rateCoeffv(double T, const Spectrum& meanIntensity, double kDissFromH2Levels,
                                          double kH2FormationGrain) const
     {
         EVector k(numReactions());
-        k(reactionIndex("H photoionization")) = Ionization::photoRateCoeff(specificIntensity);
+        k(reactionIndex("H photoionization")) = Ionization::photoRateCoeff(meanIntensity);
         k(reactionIndex("H collisional ionization")) = Ionization::collisionalRateCoeff(T);
         k(reactionIndex("H radiative recombination")) = Ionization::recombinationRateCoeff(T);
         k(reactionIndex("H2 dissociation")) = kDissFromH2Levels;

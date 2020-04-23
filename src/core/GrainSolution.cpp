@@ -21,10 +21,10 @@ namespace GasModule
             _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
     }
 
-    void GrainSolution::recalculate(const Spectrum* specificIntensity, double T, const SpeciesVector& sv)
+    void GrainSolution::recalculate(const Spectrum* meanIntensity, double T, const SpeciesVector& sv)
     {
-        _specificIntensity = specificIntensity;
-        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(specificIntensity, T, sv);
+        _meanIntensity = meanIntensity;
+        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(meanIntensity, T, sv);
 
         if (_population->h2formationData())
             _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(),
@@ -66,10 +66,9 @@ namespace GasModule
             double cross = Constant::PI * _population->size(i) * _population->size(i);
             // work with the total absorption here (hence we multiply by 4pi and pi a^2). This
             // makes it more straightforward to factor in the 'extra' heating contributions.
-            double absorption =
-                Constant::FPI * cross
-                * TemplatedUtils::integrate<double, Array, Array>(_specificIntensity->frequencyv(),
-                                                                  _population->qAbsv(i) * _specificIntensity->valuev());
+            double absorption = Constant::FPI * cross
+                                * TemplatedUtils::integrate<double, Array, Array>(
+                                    _meanIntensity->frequencyv(), _population->qAbsv(i) * _meanIntensity->valuev());
 
             auto heating = [&](double T) -> int {
                 double bbEmission = 0;

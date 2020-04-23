@@ -30,7 +30,7 @@ namespace GasModule
 
         /** Recalculate the grain temperatures and grain charges using updated radiation field,
             temperature and densities. */
-        void recalculate(const Spectrum* specificIntensity, double T, const SpeciesVector& sv);
+        void recalculate(const Spectrum* meanIntensity, double T, const SpeciesVector& sv);
 
     private:
         /** Recalculate the temperature for each size, by finding the temperature for which <
@@ -94,7 +94,7 @@ namespace GasModule
         Array _h2Heatv;
 
         // Pointer to last used radiation field
-        const Spectrum* _specificIntensity{nullptr};
+        const Spectrum* _meanIntensity{nullptr};
 
         // Cache photoelectric heating (or gas) during recalculate(), so it can be reused for
         // photoelectricGasHeating. This is the heating for a single grain of a certain size.
