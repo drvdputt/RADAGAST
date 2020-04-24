@@ -6,6 +6,7 @@
 #include "GrainInterface.hpp"
 #include "SpeciesIndex.hpp"
 #include "Spectrum.hpp"
+#include <array>
 #include <functional>
 #include <vector>
 
@@ -99,7 +100,7 @@ namespace GasModule
         double emissionRate(int i, int Z);
 
         /** The rate [s-1] at which a grain is charged by colliding with other particles. Taken
-        from Draine & Sutin (1987) equations 3.1-3.5. */
+            from Draine & Sutin (1987) equations 3.1-3.5. */
         double collisionalChargingRate(int i, double gasT, int Z, int particleCharge, double particleMass,
                                        double particleDensity) const;
 
@@ -119,7 +120,7 @@ namespace GasModule
         double photoelectricIntegrationLoop(int i, double nuPET, const Array& fNu);
 
         /** Integration loop which applies equation 20 for the photodetachment cross section. Do
-        not forget to multiply the result with abs(Z)! */
+            not forget to multiply the result with abs(Z)! */
         double photodetachmentIntegrationLoop(int Z, double pdt, const double* calcEnergyWithThisEmin = nullptr);
 
         /** Things specific for WD01. If another recipe is ever implemented, then
@@ -152,9 +153,22 @@ namespace GasModule
 
         // cached data (changes during the calculation)
         Array _integrationWorkspace;  // some memory to keep allocated between integrations
-        // Yield is expensive to evaluate. Cache yield as function of frequency (see
-        // meanIntensity) for pairs of i (size index), z (charge).
+
+        // Cache stuff for pairs of i (size index), z (charge). Use map for now, but in
+        // principle, a contiguous array could be used, since we have a fixed upper limit for
+        // the amount of charges anyway.
+
+        // when the emission rate has been calculated, we can reuse the yield (as function of
+        // frequency) for the heating rate calculation. Might get rid of this later, if it's not
+        // worth the effort.
         std::map<std::array<int, 2>, Array> _yieldCache;
+
+        // as long as the grain properties and the radiation field don't change, these only
+        // depend on the charge and the size. By caching these, new values will only have to be
+        // calculated if the range of one of the charge distributions changes (which can happen
+        // when gas temperature changes)
+        std::map<std::array<int, 2>, double> _emissionRateCache;
+        std::map<std::array<int, 2>, double> _heatingRateCache;
 
     public:
         // some utilities for testing

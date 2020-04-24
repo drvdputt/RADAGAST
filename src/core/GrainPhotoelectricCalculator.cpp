@@ -183,6 +183,9 @@ namespace GasModule
 
     double GrainPhotoelectricCalculator::heatingRateAZ(int i, int Z)
     {
+        auto cacheEntry = _heatingRateCache.find({i, Z});
+        if (cacheEntry != _heatingRateCache.end()) return cacheEntry->second;
+
         double a = (*_sizev)[i];
         const double e2_a = Constant::ESQUARE / a;
 
@@ -217,7 +220,10 @@ namespace GasModule
 
         double heatingRatePD = 0;
         if (Z < 0) heatingRatePD = photodetachmentIntegrationLoop(Z, pdt, &Emin);
-        return heatingRatePE + heatingRatePD;
+
+        double result = heatingRatePE + heatingRatePD;
+        _heatingRateCache[{i, Z}] = result;
+        return result;
     }
 
     double GrainPhotoelectricCalculator::heatingRateA(int i, const ChargeDistribution& cd)
@@ -227,6 +233,9 @@ namespace GasModule
 
     double GrainPhotoelectricCalculator::emissionRate(int i, int Z)
     {
+        auto cacheEntry = _emissionRateCache.find({i, Z});
+        if (cacheEntry != _emissionRateCache.end()) return cacheEntry->second;
+
         double a = (*_sizev)[i];
         double pet, pdt, Emin;
         getPET_PDT_Emin(i, Z, pet, pdt, Emin);
@@ -246,7 +255,9 @@ namespace GasModule
         double emissionRatePD = 0;
         if (Z < 0) emissionRatePD = photodetachmentIntegrationLoop(Z, pdt, nullptr);
 
-        return emissionRatePE + emissionRatePD;
+        double result = emissionRatePE + emissionRatePD;
+        _emissionRateCache[{i, Z}] = result;
+        return result;
     }
 
     double GrainPhotoelectricCalculator::collisionalChargingRate(int i, double gasT, int Z, int particleCharge,
