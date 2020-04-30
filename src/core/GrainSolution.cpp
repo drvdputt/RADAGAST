@@ -12,19 +12,19 @@
 
 namespace GasModule
 {
-    GrainSolution::GrainSolution(const GasModule::GrainPopulation* population)
-        : _population{population}, _numSizes(population->numSizes()),
+    GrainSolution::GrainSolution(const GasModule::GrainPopulation* population, const Spectrum* meanIntensity)
+        : _population{population}, _meanIntensity{meanIntensity}, _numSizes(population->numSizes()),
           _chargeDistributionv(population->numSizes()), _newTemperaturev{population->initialTemperaturev()},
           _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())
     {
         if (population->photoelectricData())
-            _photoelectricCalculator = population->photoelectricData()->makeCalculator(population->sizev());
+            _photoelectricCalculator = population->photoelectricData()->makeCalculator(
+                &population->sizev(), &population->qAbsvv(), meanIntensity);
     }
 
-    void GrainSolution::recalculate(const Spectrum* meanIntensity, double T, const SpeciesVector& sv)
+    void GrainSolution::recalculate(double T, const SpeciesVector& sv)
     {
-        _meanIntensity = meanIntensity;
-        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(meanIntensity, T, sv);
+        _photoelectricLocals = GrainPhotoelectricCalculator::Locals(T, sv);
 
         if (_population->h2formationData())
             _h2Heatv = _population->h2formationData()->surfaceH2FormationHeatPerSize(_population->sizev(),
@@ -36,8 +36,7 @@ namespace GasModule
         if (_photoelectricCalculator)
         {
             for (int i = 0; i < _numSizes; i++)
-                _cachedPEHeatv[i] = _photoelectricCalculator->heatingRateA(
-                    i, _photoelectricLocals, _population->qAbsv(i), _chargeDistributionv[i]);
+                _cachedPEHeatv[i] = _photoelectricCalculator->heatingRateA(i, _chargeDistributionv[i]);
         }
 
         // temperatures depend on charge distributions and photoelectric heating
@@ -93,8 +92,7 @@ namespace GasModule
         DEBUG("grain average charge:");
         for (int i = 0; i < _numSizes; i++)
         {
-            _photoelectricCalculator->calculateChargeDistribution(i, _photoelectricLocals, _population->qAbsv(i),
-                                                                  _chargeDistributionv[i]);
+            _photoelectricCalculator->calculateChargeDistribution(i, _photoelectricLocals, _chargeDistributionv[i]);
             DEBUG(' ' << i << ' ' << _chargeDistributionv[i].average());
         }
         DEBUG('\n');

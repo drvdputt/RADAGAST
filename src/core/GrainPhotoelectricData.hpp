@@ -5,12 +5,13 @@
 
 namespace GasModule
 {
-    /** This class stores data related to the photoelectric effect, which is static (i.e. does not
-        depend on grain sizes, no caching). It also acts as a factory for
+    /** This class stores data related to the photoelectric effect, which is static (i.e. does
+        not depend on grain sizes, no caching). It also acts as a factory for
         GrainPhotoelectricCalculator objects. If a different photoelectric data + calculation
-        recipe would be implemented, then the abstraction could be made as follows:
+        recipe would be implemented, then the abstraction could be made as follows (this
+        approach is probably called abstract factory):
 
-        - Make both GrainPhotoelectricData and GrainPhotoelectricCalculator abstract.
+        - Make both GrainPhotoelectricData and GrainPhotoelectricCalculator abstract
 
         - makeCalculator becomes strictly virtual
 
@@ -30,10 +31,13 @@ namespace GasModule
             see its documentation. */
         GrainPhotoelectricData(bool carOrSil);
 
-        /** Create a photoelectric calculator, for a given array of grain sizes. This object will
-            serve as a workspace for the photoelectric heating, allowing the storage of
-            intermediate results and caching. */
-        std::unique_ptr<GrainPhotoelectricCalculator> makeCalculator(const Array& av) const;
+        /** Create a photoelectric calculator, for a given array of grain sizes, a constant
+            radiation field, and Qabs values for each size and frequency. This object will serve
+            as a workspace for the photoelectric heating, allowing the storage of intermediate
+            results and caching. Passing the requested constants here helps with some
+            precalculations and caching mechanisms inside the GrainPhotoelectricCalculator. */
+        std::unique_ptr<GrainPhotoelectricCalculator>
+        makeCalculator(const Array* sizev, const std::vector<Array>* qAbsvv, const Spectrum* meanIntensity) const;
 
     private:
         bool _carOrSil;

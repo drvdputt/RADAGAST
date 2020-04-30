@@ -8,8 +8,10 @@ namespace GasModule
         : _carOrSil{carOrSil}, _workFunction{WD01::workFunction(carOrSil)}
     {}
 
-    std::unique_ptr<GrainPhotoelectricCalculator> GrainPhotoelectricData::makeCalculator(const Array& av) const
+    std::unique_ptr<GrainPhotoelectricCalculator>
+    GrainPhotoelectricData::makeCalculator(const Array* av, const std::vector<Array>* qAbsvv,
+                                           const Spectrum* meanIntensity) const
     {
-        return std::make_unique<GrainPhotoelectricCalculator>(av, _workFunction, _carOrSil);
+        return std::make_unique<GrainPhotoelectricCalculator>(av, qAbsvv, _workFunction, _carOrSil, meanIntensity);
     }
 }

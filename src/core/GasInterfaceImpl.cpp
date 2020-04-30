@@ -445,7 +445,7 @@ namespace GasModule
         // C++14. Scott Meyers.
         std::unique_ptr<HModel> hm = _manager.makeHModel(&meanIntensity);
         std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&meanIntensity);
-        GasSolution s(gri, meanIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), _freeBound, _freeFree);
+        GasSolution s(gri, &meanIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), &_freeBound, &_freeFree);
         return s;
     }
 

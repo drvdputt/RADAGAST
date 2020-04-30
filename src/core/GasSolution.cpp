@@ -10,18 +10,18 @@
 
 namespace GasModule
 {
-    GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum& meanIntensity,
+    GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum* meanIntensity,
                              const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
-                             std::unique_ptr<H2Model> h2Model, const FreeBound& freeBound, const FreeFree& freeFree)
+                             std::unique_ptr<H2Model> h2Model, const FreeBound* freeBound, const FreeFree* freeFree)
         : _sv(speciesIndex), _hSolution(std::move(hModel)),
           _h2Solution(std::move(h2Model)), _meanIntensity{meanIntensity}, _freeBound{freeBound}, _freeFree{freeFree},
-          _ionHeatPerH{Ionization::heatingPerH(meanIntensity)}
+          _ionHeatPerH{Ionization::heatingPerH(*meanIntensity)}
     {
         int numPop = gri->numPopulations();
         if (numPop)
         {
             _grainSolutionv.reserve(numPop);
-            for (int i = 0; i < numPop; i++) _grainSolutionv.emplace_back(&gri->populationv()->at(i));
+            for (int i = 0; i < numPop; i++) _grainSolutionv.emplace_back(&gri->populationv()->at(i), meanIntensity);
         }
     }
 
@@ -40,7 +40,7 @@ namespace GasModule
 
     void GasSolution::solveGrains()
     {
-        for (auto& g : _grainSolutionv) g.recalculate(&_meanIntensity, _t, _sv);
+        for (auto& g : _grainSolutionv) g.recalculate(_t, _sv);
 
         _kGrainH2FormationRateCoeff = 0.;
         for (const auto& g : _grainSolutionv) _kGrainH2FormationRateCoeff += g.surfaceH2FormationRateCoeff(_t);
@@ -53,8 +53,8 @@ namespace GasModule
         lineEmv += _h2Solution->emissivityv(eFrequencyv);
 
         Array contEmCoeffv(eFrequencyv.size());
-        _freeBound.addEmissionCoefficientv(_t, eFrequencyv, contEmCoeffv);
-        _freeFree.addEmissionCoefficientv(_t, eFrequencyv, contEmCoeffv);
+        _freeBound->addEmissionCoefficientv(_t, eFrequencyv, contEmCoeffv);
+        _freeFree->addEmissionCoefficientv(_t, eFrequencyv, contEmCoeffv);
 
         return lineEmv + (np() * ne() / Constant::FPI) * contEmCoeffv;
     }
@@ -67,7 +67,7 @@ namespace GasModule
         lineOpv += _h2Solution->opacityv(oFrequencyv);
 
         Array contOpv(numFreq);
-        _freeFree.addOpacityCoefficientv(_t, oFrequencyv, contOpv);
+        _freeFree->addOpacityCoefficientv(_t, oFrequencyv, contOpv);
         contOpv *= np() * ne();
 
         Array totalOpv(numFreq);
@@ -82,7 +82,7 @@ namespace GasModule
 
     double GasSolution::cooling() const
     {
-        double freefreeCool = _freeFree.cooling(np() * ne(), _t);
+        double freefreeCool = _freeFree->cooling(np() * ne(), _t);
         double hRecCool = Ionization::cooling(nH(), np(), ne(), _t);
         double grainCool = grainCooling();
         DEBUG("Cooling contributions: FF" << freefreeCool << " FB " << hRecCool << " Grcol " << grainCool << '\n');
@@ -127,7 +127,7 @@ namespace GasModule
         double h2form = kGrainH2FormationRateCoeff();
         double h2dissoc = _h2Solution->dissociationRate();
 
-        double hphotoion = Ionization::photoRateCoeff(_meanIntensity);
+        double hphotoion = Ionization::photoRateCoeff(*_meanIntensity);
         double hcolion = Ionization::collisionalRateCoeff(_t);
         double hrec = Ionization::recombinationRateCoeff(_t);
 
@@ -155,7 +155,7 @@ namespace GasModule
         gd->setHeating("H2 deexc", netH2line);
         gd->setCooling("H2 exc", -netH2line);
         gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating());
-        gd->setCooling("freefree", _freeFree.cooling(np() * ne(), _t));
+        gd->setCooling("freefree", _freeFree->cooling(np() * ne(), _t));
 
         // I need this per grain size. Doing this thing for now.
         double grainPhotoHeat = grainHeating();
