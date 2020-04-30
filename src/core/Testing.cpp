@@ -803,7 +803,7 @@ namespace GasModule
     namespace
     {
         /** writes out a map as a single line column file, where the keys are the column names */
-        void writeMapAsColumnFile(string filename, const map<string, double>& map)
+        void writeMapAsColumnFile(const string& filename, const map<string, double>& map)
         {
             vector<string> namev;
             vector<double> valuev;
@@ -814,8 +814,13 @@ namespace GasModule
                 namev.emplace_back(item.first);
                 valuev.emplace_back(item.second);
             }
-            OutColumnFile f(filename, namev);
-            f.writeLine(valuev);
+            if (namev.size())
+            {
+                OutColumnFile f(filename, namev);
+                f.writeLine(valuev);
+            }
+            else
+                cout << "No values for " << filename << "! Skipping...\n";
         }
     }  // namespace
 
