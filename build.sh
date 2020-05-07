@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
 SRC_DIR=$(pwd)
 NJOB=${1:-1} # set to 1 if 1st command line argument is not given
-BT=${2:-Release} # set to Release if argument is not given
+KEY=${2:-Release} # set to Release if argument is not given
 
 declare -a EXTRA
-if [[ $BT == "Debug" ]]; then
+if [[ $KEY == "Debug" ]]; then
+    BT=Debug
     BUILD_DIR=../cmake_debug
-    EXTRA=(-DCMAKE_CXX_FLAGS="-fsanitize=address -g" -DCMAKE_C_FLAGS="-fsanitize=address -g" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -lasan" -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address -lasan")
-elif [[ $BT == "Release" ]]; then
+    # EXTRA=(-DCMAKE_CXX_FLAGS="-fsanitize=address -g" -DCMAKE_C_FLAGS="-fsanitize=address -g" -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address -lasan" -DCMAKE_MODULE_LINKER_FLAGS="-fsanitize=address -lasan")
+elif [[ $KEY == "Release" ]]; then
+    BT=Release
     BUILD_DIR=../cmake_release
 else
-    echo Build type $BT not recognized.
+    echo Build type $KEY not recognized.
     exit 0
 fi
 
