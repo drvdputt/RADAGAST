@@ -9,7 +9,7 @@
 #include "SimpleColumnFile.hpp"
 
 // parameters
-const double lineWidthT = 80.;
+const double lineWidthT = 20.;
 
 const double min = 0.005 * Constant::UM;
 const double max = 1000 * Constant::UM;
