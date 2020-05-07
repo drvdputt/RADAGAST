@@ -162,8 +162,12 @@ int main()
     // add the last point manually
     allpoints.push_back(max);
 
+    // remove duplicates
+    auto newEnd = std::unique(allpoints.begin(), allpoints.end());
+    allpoints.resize(std::distance(allpoints.begin(), newEnd));
+
     // write out the result
-    GasModule::OutColumnFile outfile("wlg.dat", {"wavelength (micron)", "frequency (hz)"}, 9);
+    GasModule::OutColumnFile outfile("wlg.dat", {"wavelength (micron)", "frequency (hz)"}, 11);
     for (int i = 0; i < allpoints.size(); i++)
     {
         double lambda_micron = allpoints[i] / Constant::UM;
