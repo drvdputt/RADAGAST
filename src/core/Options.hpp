@@ -1,10 +1,15 @@
 #ifndef CORE_OPTIONS_HPP
 #define CORE_OPTIONS_HPP
 
+#include <string>
+
 namespace GasModule
 {
     namespace Options
     {
+        /** Helper function to get environment variable, with default if not set */
+        std::string getenvWithDefault(const std::string& variableName, const std::string& defaultValue);
+
         /////////////
         // PHYSICS //
         /////////////
@@ -13,12 +18,13 @@ namespace GasModule
 
         // Determine which levels and transition data to load/use for the electronic ground
         // state (X) and the electronically excited states (E). These can be set separately
-        // because different levels are important for different processes.
-        const int h2data_X_maxJ = 6;
-        const int h2data_X_maxV = 1;
-        const int h2data_E_maxJ = 4;
-        const int h2data_E_minV = 8;
-        const int h2data_E_maxV = 25;
+        // because different levels are important for different processes. I will make these
+        // overridable by environment variables to allow for easier convergence testing.
+        const int h2data_X_maxJ = std::stoi(getenvWithDefault("H2MAXJ", "6"));
+        const int h2data_X_maxV = std::stoi(getenvWithDefault("H2XMAXV", "2"));
+        const int h2data_E_maxJ = std::stoi(getenvWithDefault("H2MAXJ", "6"));
+        const int h2data_E_minV = std::stoi(getenvWithDefault("H2EMINV", "8"));
+        const int h2data_E_maxV = std::stoi(getenvWithDefault("H2EMAXV", "25"));
 
         // Take into account cooling of the gas by collisions with the grains. Also activates the
         // corresponding heating term for the grains.
