@@ -15,7 +15,8 @@ namespace GasModule
             density to get total rate. */
         double photoRateCoeff(const Spectrum& meanIntensity);
 
-        /** Photoionization cross section in cm2 */
+        /** Photoionization cross section in cm2, using the analytical fit and coefficients from
+            Verner, Ferland and Korista (1996), ApJ, 465:487-498. */
         double crossSection(double frequency);
 
         /** Collisional ionization rate coefficient from the ground state in cm3 / s */
