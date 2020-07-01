@@ -2,6 +2,7 @@
 #define CORE_GASDIAGNOSTICS_HPP
 
 #include <map>
+#include <string>
 #include <valarray>
 #include <vector>
 

@@ -2,6 +2,7 @@
 #define CORE_CHARGEDISTRIBUTION_HPP
 
 #include <functional>
+#include <string>
 #include <vector>
 
 namespace GasModule

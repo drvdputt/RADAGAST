@@ -5,6 +5,7 @@
 #include "Table.hpp"
 #include <array>
 #include <map>
+#include <string>
 #include <vector>
 
 namespace GasModule
