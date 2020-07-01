@@ -2,6 +2,7 @@
 #define CORE_FREEBOUND_HPP
 
 #include "Table.hpp"
+#include <string>
 #include <vector>
 
 namespace GasModule
