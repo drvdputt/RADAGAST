@@ -409,6 +409,7 @@ namespace GasModule
             size_t i = index(n, l);
             double tau2 = 1. / _totalAv(i) / _totalAv(i);
             double twoLog10Rc = min(10.95 + log10(T * tau2 / muOverm), 1.68 + log10(T / np));
+            // TODO: should np be the electron density instead? It says N_e in PS64.
 
             // eq 43
             double q_nl = qnlFactor * D_nl * (11.54 + log10(T / D_nl / muOverm) + twoLog10Rc);
