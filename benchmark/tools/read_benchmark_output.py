@@ -91,6 +91,18 @@ class CloudyResult:
 
         return h2form_g, h2dissoc
 
+    def get_rates(self):
+        """ in this order: h2 form, h2 dissoc, h ion, h rec """
+
+        h2rates = self.get_h2_rates()
+        hionization = pd.read_csv(
+            self.d / "hionization.s-1.cm-3_s-1.out", sep="\t", nrows=1
+        ).dropna()
+        ne, n_p = self.get_densities(numpy=True)[[0, 1]]
+        ion = hionization["gam1"][0]
+        rec = hionization["RecTot"][0] / ne / n_p
+        return np.array([h2rates[0], h2rates[1], ion, rec])
+
     def get_grain_temps(self):
         """get list of grain temperatures"""
         cloudy_graintemps = pd.read_csv(self.d / "graintemperature.out", sep="\t")
@@ -128,7 +140,7 @@ class CloudyResult:
     def get_heat(self):
         """ get heating in this order: h photo, H2 diss, grain photo """
         dic = self.get_heat_or_cool(True)
-        return [dic[k] for k in ["H  1", "H2dH", "GrnP"]]
+        return np.array([dic[k] for k in ["H  1", "H2dH", "GrnP"]])
 
     def get_cool(self):
         """ get cooling in this order: H rec, H line, H ff, H2 line + H2cx, dust col """
@@ -144,7 +156,7 @@ class CloudyResult:
             ]
         ]
         result[3] += dic["H2cX 0.0"]
-        return result
+        return np.array(result)
 
 
 class GasModuleResult:
@@ -171,6 +183,10 @@ class GasModuleResult:
         optical = np.loadtxt(self.d / "opticalProperties.dat")
         return optical[:, 1], optical[:, 2]
 
+    def get_opacity(self):
+        optical = np.loadtxt(self.d / "opticalProperties.dat")
+        return optical[:, 1], optical[:, 3]
+
     def get_h_populations(self):
         hpop = np.loadtxt(self.d / "hpopulations.dat")
         y = hpop[:, 2]
@@ -184,6 +200,10 @@ class GasModuleResult:
     def get_h2_rates(self):
         rates = np.loadtxt(self.d / "rates.dat")
         return rates[:2]
+
+    def get_rates(self):
+        rates = np.loadtxt(self.d / "rates.dat")
+        return rates[[0, 1, 2, 4]]
 
     def get_grain_temps(self):
         """get list of grain temperatures"""
