@@ -938,7 +938,7 @@ namespace GasModule
         {
             GasDiagnostics gd;
             s.fillDiagnostics(&gd);
-
+            cout << "G0 = " << RadiationFieldTools::gHabing(meanIntensity) << '\n';
             cout << "Htot = " << s.heating() << '\n';
             cout << "grainHeat = " << gd.heating().at("total grainphoto") << '\n';
             cout << "Ctot = " << s.cooling() << '\n';
