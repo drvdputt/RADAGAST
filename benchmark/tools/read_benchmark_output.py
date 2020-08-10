@@ -112,7 +112,7 @@ class CloudyResult:
         if is_heat:
             fname = "heating.out"
             i_total = 2
-            labels = ["H  1", "H2dH", "GrnP"]
+            labels = ["H  1", "H2dH", "GrnP", "H2vH"]
         else:
             fname = "cooling.out"
             i_total = 3
@@ -138,9 +138,9 @@ class CloudyResult:
         return contributions
 
     def get_heat(self):
-        """ get heating in this order: h photo, H2 diss, grain photo """
+        """ get heating in this order: h photo, H2 diss, grain photo, h2ln """
         dic = self.get_heat_or_cool(True)
-        return np.array([dic[k] for k in ["H  1", "H2dH", "GrnP"]])
+        return np.array([dic[k] for k in ["H  1", "H2dH", "GrnP", "H2vH"]])
 
     def get_cool(self):
         """ get cooling in this order: H rec, H line, H ff, H2 line + H2cx, dust col """
@@ -211,9 +211,9 @@ class GasModuleResult:
         return grainprops[:, 3]
 
     def get_heat(self):
-        """ get heating in this order: h photo, H2 diss, grain photo """
+        """ get heating in this order: h photo, H2 diss, grain photo, h2ln """
         heats = np.loadtxt(self.d / "heat.dat")
-        return heats[[1, 3, 4]]
+        return heats[[1, 3, 4, 2]]
 
     def get_cool(self):
         """ get cooling in this order: H rec, H line, H ff, H2 line + H2cx, dust col """
