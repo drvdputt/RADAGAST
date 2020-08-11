@@ -17,6 +17,8 @@ available_templates = [
     for s in glob.glob(str(template_dir) + "/*_template")
 ]
 
+gasmodule_envvar = "H2MAXJ=99 H2XMAXV=99 H2EMINV=0 H2EMAXV=99"
+
 
 def main():
     """Generate a set of benchmarks for comparing cloudy and the gas module.
@@ -97,9 +99,10 @@ def main():
                 f.write(cloudy_template_string.format(nh=nh, tc=tc, lum=lum))
 
             cloudy_job = "cd {wdir} && {cloudy} -r {name}\n".format(
-                wdir=output_subdir.resolve(), cloudy=cloudy_exe, name=template_name,
+                wdir=output_subdir.resolve(), cloudy=cloudy_exe, name=template_name
             )
-            gasmodule_job = "cd {wdir} && mkdir -p MRNDust && {gasmodule} {nh} {tc} {lum}\n".format(
+            gasmodule_job = "cd {wdir} && mkdir -p MRNDust && {env} {gasmodule} {nh} {tc} {lum}\n".format(
+                env=gasmodule_envvar,
                 wdir=output_subdir.resolve(),
                 gasmodule=gasmodule_main,
                 nh=nh,
