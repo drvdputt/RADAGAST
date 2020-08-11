@@ -70,6 +70,17 @@ class CloudyResult:
         else:
             return np.zeros(1)
 
+    def get_h_lines(self):
+        """lya, ha, hb"""
+        if self.ok:
+            cloudy_lines = pd.read_table(self.d / "lines.out", nrows=1)
+            lya = cloudy_lines['H  1 1215.67A'][0]
+            ha = cloudy_lines['H  1 6562.81A'][0]
+            hb = cloudy_lines['H  1 4861.33A'][0]
+            return np.array([lya, ha, hb])
+        else:
+            return np.zeros(3)
+
     def get_h2_populations(self):
         """indexed arbitrarily, but should be the same for cloudy and gas module"""
         if self.ok:
@@ -191,6 +202,11 @@ class GasModuleResult:
         hpop = np.loadtxt(self.d / "hpopulations.dat")
         y = hpop[:, 2]
         return y / sum(y)
+
+    def get_h_lines(self):
+        """lya, ha, hb"""
+        hline = np.loadtxt(self.d / "lines.dat")
+        return hline
 
     def get_h2_populations(self):
         h2pop = np.loadtxt(self.d / "h2populations.dat")

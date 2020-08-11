@@ -35,6 +35,25 @@ namespace GasModule
         return _levelSolution.emissivityv(eFrequencyv) + twoPhotonEmissivityv(eFrequencyv);
     }
 
+    double HModel::lineEmissivity(int ni, int nf) const
+    {
+        // Sum over all transitions with these upper and lower n (the difference in l only
+        // causes a small difference in energy).
+        double total = 0;
+        for (int li = 0; li < ni; li++)
+        {
+            int upper = _hData->index(ni, li);
+            if (upper == -1) continue;
+            for (int lf = 0; lf < nf; lf++)
+            {
+                int lower = _hData->index(nf, lf);
+                if (lower == -1) continue;
+                total += _hData->lineIntensityFactor(upper, lower, _levelSolution.nv()(upper));
+            }
+        }
+        return total;
+    }
+
     Array HModel::opacityv(const Array oFrequencyv) const { return _levelSolution.opacityv(oFrequencyv); }
 
     double HModel::netHeating() const { return _levelSolution.netHeating(); }

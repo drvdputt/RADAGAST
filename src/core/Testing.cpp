@@ -985,6 +985,13 @@ namespace GasModule
             for (double n : gd.hPopulations()) hpop.writeLine<Array>({0., 0., n});
             OutColumnFile h2pop(prefix + "h2populations.dat", populationColumns);
             for (double n : gd.h2Populations()) h2pop.writeLine<Array>({0., 0., n});
+
+            vector<string> lineNames = {"Lya", "Ha", "Hb"};
+            double lya = s.hModel()->lineEmissivity(2, 1);
+            double ha = s.hModel()->lineEmissivity(3, 2);
+            double hb = s.hModel()->lineEmissivity(4, 2);
+            OutColumnFile lines(prefix + "lines.dat", lineNames);
+            lines.writeLine(vector<double>{lya, ha, hb});
         }
     }
 }

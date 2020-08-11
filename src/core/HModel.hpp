@@ -23,6 +23,10 @@ namespace GasModule
             two-photon process. */
         Array emissivityv(const Array eFrequencyv) const;
 
+        /** The total emissivity of a single line, given the quantum numbers n of the upper and
+            lower level. */
+        double lineEmissivity(int ni, int nf) const;
+
         /** This function returns the line opacity. */
         Array opacityv(const Array oFrequencyv) const;
 
