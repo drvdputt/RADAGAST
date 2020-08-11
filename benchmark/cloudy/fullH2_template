@@ -41,6 +41,13 @@ save cooling "cooling.out" last
 save continuum "continuum.out" last units micron luminosity
 save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
 save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
+save lines emissivity "lines.out" last
+H  1      1215.67A
+H  1      1025.72A
+H  1      6562.81A
+H  1      4861.33A
+H  1      4340.46A
+end of lines
 save chemistry rates destruction "h2destruction.out" "H2" coef last
 save chemistry rates creation "h2creation.out" "H2" last
 save h2 rates "h2rates.out" last
