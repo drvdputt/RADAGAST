@@ -26,6 +26,7 @@ no grain neutralization
 # turn off some physics
 no advection
 no charge transfer
+# chemistry reaction ("PHOTON,H2=>e-,H2+","H+,H2=>H,H2+","H+,H2=>H3+","H+,H2=>PHOTON,H3+","H2,H2+=>H,H3+","e-,H2=>H,H-","e-,H2=>e-,H,H") off
 save grain abundance "grainabundance.g_cm-3.out" last
 save grain H2rate "grainH2rate.out" last
 save grain heating "grainheating.erg_cm-3_s-1.out" last
