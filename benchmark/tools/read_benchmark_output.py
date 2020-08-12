@@ -4,6 +4,7 @@ when plotting the benchmark results."""
 from pathlib import Path
 import numpy as np
 import pandas as pd
+import math as m
 
 
 class BenchmarkResult:
@@ -77,7 +78,7 @@ class CloudyResult:
             lya = cloudy_lines['H  1 1215.67A'][0]
             ha = cloudy_lines['H  1 6562.81A'][0]
             hb = cloudy_lines['H  1 4861.33A'][0]
-            return np.array([lya, ha, hb])
+            return np.array([lya, ha, hb]) / (4 * m.pi)
         else:
             return np.zeros(3)
 
