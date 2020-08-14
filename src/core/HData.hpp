@@ -35,7 +35,7 @@ namespace GasModule
         EVector recombinationRatev(double T) const;
 
     private:
-        std::unique_ptr<const RecombinationRate> _rr;
+        Mao2016RecombinationRate _rr;
     };
 }
 #endif  // CORE_HDATA_HPP

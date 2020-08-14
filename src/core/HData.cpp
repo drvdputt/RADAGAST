@@ -2,10 +2,11 @@
 #include "Constants.hpp"
 #include "Ionization.hpp"
 #include "Options.hpp"
+#include "RecombinationRate.hpp"
 
 namespace GasModule
 {
-    HData::HData() : LevelCoefficients(Constant::HMASS), _rr{std::make_unique<HydrogenADF48>()} {}
+    HData::HData() : LevelCoefficients(Constant::HMASS) {}
 
     EVector HData::recombinationRatev(double T) const
     {
@@ -16,7 +17,8 @@ namespace GasModule
         {
             for (int l = 0; l < n; l++)
             {
-                result[index(n, l)] += _rr->alpha(n, l, T);
+                double maovalue = _rr.alpha(n, l, T);
+                result[index(n, l)] += maovalue;
             }
         }
         if (Options::hlevels_topoff)
