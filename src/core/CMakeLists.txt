@@ -13,7 +13,7 @@ if(TARGET Eigen3::Eigen)
   get_target_property(EIGEN3_INCLUDE_DIR Eigen3::Eigen INTERFACE_INCLUDE_DIRECTORIES)
 elseif(EIGEN3_INCLUDE_DIR)
   # if no package was found, try using manually set value
-  message("EIGEN_INCLUDE_DIR was set to ${EIGEN3_INCLUDE_DIR} manually")
+  message("EIGEN3_INCLUDE_DIR was set to ${EIGEN3_INCLUDE_DIR} manually")
 endif()
 
 # One last thing: on some systems, the path to an eigen module (e.g. Dense) looks like this:
