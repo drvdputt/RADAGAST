@@ -16,7 +16,7 @@ For the linking step, add the linker path and library names using the flags
 `-L<CMAKE_INSTALL_PREFIX>/lib` and `-lridge`. Your binary will also need to be linked to
 GSL using `-lgsl` and `-lgslcblas`.
 ```
-gcc main.o -o -L"$(HOME)"/RIDGE-0/cmake_release/lib -lridge -lgsl -gslcblas
+gcc main.o -o main -L"$(HOME)"/RIDGE-0/cmake_release/lib -lridge -lgsl -gslcblas
 ```
 The order of the `-l` flags is important here for certain linkers (ld). First, ld needs to
 process RIDGE-0, so that it can make a list of symbols that it needs from GSL, and only then
