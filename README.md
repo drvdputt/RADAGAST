@@ -41,5 +41,18 @@ and performing linear algebra, and <a href="https://www.gnu.org/software/gsl/">G
 solving several non-linear equations. Currently, these libraries are dependencies, but the git
 history might contain a copy.
 
+## Getting started
+First read how to [build](dox/build.md) the library.
 
+Then try running the main binary produced at `RIDGE-0/../cmake_release/src/mains/main`.
+Experiment by giving a few numerical command line arguments to this program. The command
+``` main 1e5 1e4 1e3 ```
+will run an example model with a gas density of 1e5 cm-3, under the effect
+of a blackbody source located at a (fixed) distance of 1 pc with a color temperature of 1e4 K and a
+bolometric luminosity of 1e3 solar luminosities.
 
+When this binary works without problems, copy the library built at
+`RIDGE-0/../cmake_release/src/core/libridge.a` to your preferred location (or set
+`CMAKE_INSTALL_PREFIX` and run make install). Then read the [instructions](dox/use.md) on how to
+use the API, write a simple C++ script making the calls, and try building and linking your own
+C++ script to the library.
