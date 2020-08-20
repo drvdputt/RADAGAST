@@ -3,7 +3,7 @@
 
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Coefficients and equations from Glover and Abel 2008, MNRAS, 388, 1627. Collisions with He
         are also available, but are not implemented. */

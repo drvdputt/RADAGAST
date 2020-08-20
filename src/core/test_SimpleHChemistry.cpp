@@ -6,7 +6,7 @@
 #include "Spectrum.hpp"
 #include "Testing.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("SimpleHChemistry: compare exact solution of ionization")
 {

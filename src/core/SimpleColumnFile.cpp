@@ -3,7 +3,7 @@
 #include <ios>
 #include <sstream>
 
-namespace GasModule
+namespace RADAGAST
 {
     void InColumnFile::read(int numCols, int reserveLines)
     {

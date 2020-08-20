@@ -5,7 +5,7 @@
 #include "Constants.hpp"
 #include "Spectrum.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace RadiationFieldTools
     {

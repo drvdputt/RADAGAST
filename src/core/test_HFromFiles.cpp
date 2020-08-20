@@ -5,7 +5,7 @@
 #include "HHardCoded.hpp"
 #include "SpeciesIndex.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Test correctness of collapsed A-matrix for hydrogen")
 {

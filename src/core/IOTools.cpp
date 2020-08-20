@@ -4,7 +4,7 @@
 
 #ifndef REPOROOT
 #    error \
-        "Please specify the main GasModule git directory on the compiler command line using -D\"/full/path/to/GasModule/git\""
+        "Please specify the main RADAGAST git directory on the compiler command line using -D\"/full/path/to/RADAGAST/git\""
 #endif
 
 using namespace std;
@@ -14,7 +14,7 @@ namespace
     const string repoRoot = REPOROOT;
 }
 
-namespace GasModule
+namespace RADAGAST
 {
     ifstream IOTools::ifstreamRepoFile(const string& pathRelativeToGitDir)
     {

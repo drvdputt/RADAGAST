@@ -2,7 +2,7 @@
 #include "Constants.hpp"
 #include "Functions.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     double GrainH2Formation::surfaceH2FormationRateCoeff(const Array& sizev, const Array& temperaturev,
                                                          const Array& densityv, double Tgas) const

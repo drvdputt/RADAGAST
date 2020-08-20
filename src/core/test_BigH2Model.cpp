@@ -6,7 +6,7 @@
 #include "SpeciesIndex.hpp"
 #include "Testing.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("H2-specific algorithm")
 {

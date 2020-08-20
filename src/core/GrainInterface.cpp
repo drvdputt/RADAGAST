@@ -7,7 +7,7 @@
 #include "GrainPopulation.hpp"
 #include <cassert>
 
-namespace GasModule
+namespace RADAGAST
 {
     GrainInterface::GrainInterface() = default;
 
@@ -15,7 +15,7 @@ namespace GasModule
 
     GrainInterface::GrainInterface(GrainInterface&&) = default;
 
-    void GrainInterface::addPopulation(GasModule::GrainTypeLabel type, const Array& sizev, const Array& densityv,
+    void GrainInterface::addPopulation(RADAGAST::GrainTypeLabel type, const Array& sizev, const Array& densityv,
                                        const Array& temperaturev, const Array& frequencyv,
                                        const std::vector<Array>& qAbsvv)
     {

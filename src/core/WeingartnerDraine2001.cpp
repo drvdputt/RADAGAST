@@ -7,7 +7,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     double WD01::atomMass(bool carbonaceous)
     {

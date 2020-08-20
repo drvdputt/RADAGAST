@@ -2,7 +2,7 @@
 #include "SimpleColumnFile.hpp"
 #include "TemplatedUtils.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     LookupTable::LookupTable(const std::string& fname, int numCols, int guessSize)
     {

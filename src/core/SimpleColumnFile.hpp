@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Class to read in data file with tab or space separated columns. */
     class InColumnFile

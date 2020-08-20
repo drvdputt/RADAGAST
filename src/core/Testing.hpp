@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     class FreeBound;
     class GasInterfaceImpl;
@@ -52,11 +52,11 @@ namespace GasModule
             be specified through the optional arguments. The ambient radiation field has a color
             temperature of Tc and a mean UV intensity of G0 habing, and the gas density is n. The
             initial temperature can also be chosen. */
-        void runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath, double Tc = 20000,
+        void runGasInterfaceImpl(const RADAGAST::GasInterface& gi, const std::string& outputPath, double Tc = 20000,
                                  double G0 = 2, double n = 10);
 
-        void writeGasState(const std::string& outputPath, const GasModule::GasInterface& gi,
-                           const GasModule::GasState& gs);
+        void writeGasState(const std::string& outputPath, const RADAGAST::GasInterface& gi,
+                           const RADAGAST::GasState& gs);
 
         /** Write out the grain properties to a file. One file will be written per grain
             population, containing one line per size bin. The columns are the size, number density,
@@ -65,8 +65,8 @@ namespace GasModule
         void writeGrains(const std::string& outputPath, const std::vector<GrainSolution>& grs, bool bulkCar);
 
         void plotHeatingCurve_main();
-        void plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
-                              const Spectrum& meanIntensity, GasModule::GrainInterface&);
+        void plotHeatingCurve(const RADAGAST::GasInterface& gi, const std::string& outputPath, double n,
+                              const Spectrum& meanIntensity, RADAGAST::GrainInterface&);
 
         void plotIonizationStuff();
 
@@ -91,11 +91,11 @@ namespace GasModule
 
         /** Generates a GasInterface object with the maximum number of levels and a suitable
             frequency grid. */
-        GasModule::GasInterface genFullModel(bool refine = false);
+        RADAGAST::GasInterface genFullModel(bool refine = false);
 
-        GasModule::GasInterface genHonlyModel();
+        RADAGAST::GasInterface genHonlyModel();
 
-        void genMRNDust(GasModule::GrainInterface&, double nHtotal, const Spectrum& meanIntensityv, bool car);
+        void genMRNDust(RADAGAST::GrainInterface&, double nHtotal, const Spectrum& meanIntensityv, bool car);
 
         /** Run the model with the maximum number of levels, and iterate until the temperature
             converges. */

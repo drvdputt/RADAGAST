@@ -2,7 +2,7 @@
 #include "RadiationFieldTools.hpp"
 #include "Testing.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Calculation of G")
 {

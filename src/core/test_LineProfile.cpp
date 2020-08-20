@@ -6,7 +6,7 @@
 #include "Testing.hpp"
 #include "doctest.h"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 namespace
 {

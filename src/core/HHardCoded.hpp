@@ -3,7 +3,7 @@
 
 #include "HData.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This provides data for a hydrogen level model in a hardcoded way. It is mainly for
         educational and compararive purposes. I used it to check if the implementation of \c

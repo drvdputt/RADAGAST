@@ -11,7 +11,7 @@
 #include "SpeciesModelManager.hpp"
 #include "Spectrum.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class Chemistry;
 
@@ -50,31 +50,31 @@ namespace GasModule
         const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }
         const std::valarray<double>& eFrequencyv() const { return _eFrequencyv; }
 
-        void updateGasState(GasModule::GasState&, double n, const std::valarray<double>& meanIntensityv,
-                            GasModule::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
+        void updateGasState(RADAGAST::GasState&, double n, const std::valarray<double>& meanIntensityv,
+                            RADAGAST::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
-        Array emissivityBasic(const GasModule::GasState& gs, bool SI = false) const;
-        Array opacityBasic(const GasModule::GasState& gs, bool SI = false) const;
-        Array emissivityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv, const GrainInterface& gri,
+        Array emissivityBasic(const RADAGAST::GasState& gs, bool SI = false) const;
+        Array opacityBasic(const RADAGAST::GasState& gs, bool SI = false) const;
+        Array emissivityWithLines(const RADAGAST::GasState& gs, const Array& meanIntensityv, const GrainInterface& gri,
                                   bool SI, bool addHLines, bool addH2Lines) const;
-        Array opacityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv, const GrainInterface& gri,
+        Array opacityWithLines(const RADAGAST::GasState& gs, const Array& meanIntensityv, const GrainInterface& gri,
                                bool SI, bool addHLines, bool addH2Lines) const;
 
-        std::string quickInfo(const GasModule::GasState& gs, const std::valarray<double>& meanIntensity) const;
+        std::string quickInfo(const RADAGAST::GasState& gs, const std::valarray<double>& meanIntensity) const;
         int index(const std::string& name) const;
 
-        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, GasModule::GrainInterface&) const;
-        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, GasModule::GrainInterface&,
+        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, RADAGAST::GrainInterface&) const;
+        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, RADAGAST::GrainInterface&,
                                    double h2FormationOverride = -1) const;
         double solveDensities(GasSolution&, double n, double T, const Spectrum& meanIntensity,
                               bool startFromCurrent = false, double h2FormationOverride = -1) const;
         GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& meanIntensity,
-                                       GasModule::GrainInterface&) const;
+                                       RADAGAST::GrainInterface&) const;
 
     private:
         /** Construct a new GasSolution model, passing all the necessary (references to) objects.
             The SpeciesModelManager is used to create the HModel and H2Model. */
-        GasSolution makeGasSolution(const Spectrum& meanIntensity, const GasModule::GrainInterface*) const;
+        GasSolution makeGasSolution(const Spectrum& meanIntensity, const RADAGAST::GrainInterface*) const;
 
         /** Create a species vector which is zero everywhere, except for e-, p+, H, and H2.
             Arguments: the total amount of H nuclei n, the ionized to total fraction (np / n), the
@@ -82,12 +82,12 @@ namespace GasModule
         EVector guessSpeciesNv(double n, double ionToTotalFrac, double moleculeToNeutralFrac) const;
 
         /** Utility function to get the product n_p n_e from a gas state. */
-        double npne(const GasModule::GasState&) const;
-        double nH(const GasModule::GasState&) const;
+        double npne(const RADAGAST::GasState&) const;
+        double nH(const RADAGAST::GasState&) const;
 
         /** Interpret the densities stored in the gas state as a species vector for the chemistry
             network contained in this class. */
-        SpeciesVector speciesVector(const GasModule::GasState&) const;
+        SpeciesVector speciesVector(const RADAGAST::GasState&) const;
 
         std::valarray<double> _iFrequencyv;
         std::valarray<double> _oFrequencyv;

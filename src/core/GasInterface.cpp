@@ -2,7 +2,7 @@
 #include "GasInterfaceImpl.hpp"
 #include <gsl/gsl_errno.h>
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace
     {
@@ -41,7 +41,7 @@ namespace GasModule
         return _pimpl->opacityBasic(gs, SI);
     }
 
-    std::valarray<double> GasInterface::emissivityWithLines(const GasModule::GasState& gs,
+    std::valarray<double> GasInterface::emissivityWithLines(const RADAGAST::GasState& gs,
                                                             const std::valarray<double>& meanIntensityv,
                                                             const GrainInterface& gri, bool SI, bool addHLines,
                                                             bool addH2Lines) const
@@ -49,7 +49,7 @@ namespace GasModule
         return _pimpl->emissivityWithLines(gs, meanIntensityv, gri, SI, addHLines, addH2Lines);
     }
 
-    std::valarray<double> GasInterface::opacityWithLines(const GasModule::GasState& gs,
+    std::valarray<double> GasInterface::opacityWithLines(const RADAGAST::GasState& gs,
                                                          const std::valarray<double>& meanIntensityv,
                                                          const GrainInterface& gri, bool SI, bool addHLines,
                                                          bool addH2Lines) const
@@ -65,13 +65,13 @@ namespace GasModule
     int GasInterface::index(const std::string& name) const { return _pimpl->index(name); }
 
     GasSolution GasInterface::solveTemperature(double n, const Spectrum& meanIntensity,
-                                               GasModule::GrainInterface& gri) const
+                                               RADAGAST::GrainInterface& gri) const
     {
         return _pimpl->solveTemperature(n, meanIntensity, gri);
     }
 
     GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& meanIntensity,
-                                             GasModule::GrainInterface& gri, double h2FormationOverride) const
+                                             RADAGAST::GrainInterface& gri, double h2FormationOverride) const
     {
         return _pimpl->solveDensities(n, T, meanIntensity, gri, h2FormationOverride);
     }
@@ -84,9 +84,9 @@ namespace GasModule
 
     // GasSolution GasInterface::solveDensitiesNoH2(double n, double T,
     //                                              const Spectrum& meanIntensity,
-    //                                              GasModule::GrainInterface& gri) const
+    //                                              RADAGAST::GrainInterface& gri) const
     // {
     // 	return _pimpl->solveDensitiesNoH2(n, T, meanIntensity, gri);
     // }
 
-}  // namespace GasModule
+}  // namespace RADAGAST

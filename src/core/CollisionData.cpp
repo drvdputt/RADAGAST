@@ -2,7 +2,7 @@
 #include "Error.hpp"
 #include "TemplatedUtils.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     CollisionData::CollisionData() = default;
 

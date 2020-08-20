@@ -3,7 +3,7 @@
 
 #include "Spectrum.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace Ionization
     {

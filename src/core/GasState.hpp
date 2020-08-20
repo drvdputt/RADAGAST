@@ -4,7 +4,7 @@
 #include <string>
 #include <valarray>
 
-namespace GasModule
+namespace RADAGAST
 {
     class GasState;
     class GasInterface;
@@ -12,7 +12,7 @@ namespace GasModule
     // forward declare friend function
     namespace Testing
     {
-        void writeGasState(const std::string&, const GasModule::GasInterface&, const GasModule::GasState&);
+        void writeGasState(const std::string&, const RADAGAST::GasInterface&, const RADAGAST::GasState&);
     }
 
     /** This class is used to store a minimal set of results at the end of the equilibrium
@@ -24,8 +24,8 @@ namespace GasModule
     class GasState
     {
         friend class GasInterfaceImpl;
-        friend void Testing::writeGasState(const std::string&, const GasModule::GasInterface&,
-                                           const GasModule::GasState&);
+        friend void Testing::writeGasState(const std::string&, const RADAGAST::GasInterface&,
+                                           const RADAGAST::GasState&);
 
     public:
         /** Set all the members of the gas state to new values. This function should not be used by

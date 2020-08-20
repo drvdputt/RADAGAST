@@ -7,7 +7,7 @@
 #include <map>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This class implements the reading in and processing of all the files for the 5-level model
         of H. */

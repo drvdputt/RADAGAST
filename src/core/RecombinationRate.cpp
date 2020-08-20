@@ -12,7 +12,7 @@ namespace
     int NUMROWSMAO = 272; // 256 data rows + 16 unused (s states need only one row)
 }
 
-namespace GasModule
+namespace RADAGAST
 {
     HydrogenADF48::HydrogenADF48() { readADF48File("dat/adf48-cut"); }
 

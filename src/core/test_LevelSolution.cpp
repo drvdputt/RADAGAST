@@ -5,7 +5,7 @@
 #include "TwoLevelHardcoded.hpp"
 #include "doctest.h"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Test LevelSolver using two-level LTE ")
 {

@@ -8,7 +8,7 @@
 #include <map>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Class which contains collision coefficient data. This type of data is typically tabulated
         per transition (a transition is just an abstract pair of indices here), and has a list of

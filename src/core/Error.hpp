@@ -2,7 +2,7 @@
 #define CORE_ERROR_HPP
 
 #include <iostream>
-namespace GasModule
+namespace RADAGAST
 {
     namespace Error
     {

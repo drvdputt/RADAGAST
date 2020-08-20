@@ -6,7 +6,7 @@
 #include <valarray>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     class GrainPopulation;
 
@@ -31,7 +31,7 @@ namespace GasModule
             is tabulated. (TODO: enforce this more strictly. I can e.g. implement a function in
             GasInterface which creates and empty GrainInterface, passing a pointer to
             iFrequencyv via the constructor). */
-        void addPopulation(GasModule::GrainTypeLabel type, const std::valarray<double>& sizev,
+        void addPopulation(RADAGAST::GrainTypeLabel type, const std::valarray<double>& sizev,
                            const std::valarray<double>& densityv, const std::valarray<double>& temperaturev,
                            const std::valarray<double>& frequencyv, const std::vector<std::valarray<double>>& qAbsvv);
 

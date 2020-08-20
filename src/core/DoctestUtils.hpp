@@ -6,7 +6,7 @@
 #include "doctest.h"
 #include <sstream>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Here are some wrappers around some of the doctest assertion macros. Frequently used checks
         are defined here, with some standardized, readable failure messages. */

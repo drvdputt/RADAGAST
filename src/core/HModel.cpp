@@ -8,7 +8,7 @@
 #include "Spectrum.hpp"
 #include "TwoPhoton.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     HModel::HModel(const HData* hData, const Spectrum* meanIntensity)
         : _hData{hData}, _meanIntensity{meanIntensity}, _levelSolution(_hData)

@@ -1,7 +1,7 @@
 #ifndef CORE_WEINGARTNERDRAINE2001_HPP
 #define CORE_WEINGARTNERDRAINE2001_HPP
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Functions to calculate the heating and charging rates according to the recipe by
     Weingartner and Draine (2001). Over time, some other things related to graphite and silicate

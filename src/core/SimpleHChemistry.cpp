@@ -2,7 +2,7 @@
 #include "DebugMacros.hpp"
 #include "Ionization.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     SimpleHChemistry::SimpleHChemistry()
     {

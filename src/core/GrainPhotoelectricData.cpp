@@ -2,7 +2,7 @@
 #include "GrainPhotoelectricCalculator.hpp"
 #include "WeingartnerDraine2001.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     GrainPhotoelectricData::GrainPhotoelectricData(bool carOrSil)
         : _carOrSil{carOrSil}, _workFunction{WD01::workFunction(carOrSil)}

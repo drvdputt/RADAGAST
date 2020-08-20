@@ -1,7 +1,7 @@
 #include "GloverAbel08.hpp"
 #include "TemplatedUtils.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     double GloverAbel08::coolOrthoH(double T)
     {

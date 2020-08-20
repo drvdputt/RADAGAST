@@ -33,10 +33,10 @@ std::valarray<double> frequencyv;
 // < code to to fill in the frequency grid >
 
 // Initialize the gas module by creating a GasInterface object.
-GasModule::GasInterface gasInterface(frequencyv, frequencyv, frequencyv);
+RADAGAST::GasInterface gasInterface(frequencyv, frequencyv, frequencyv);
 
 // Make some place to store a gas state per cell.
-std::vector<GasModule::GasState> gasStatev(numCells);
+std::vector<RADAGAST::GasState> gasStatev(numCells);
 ```
 
 The last line of code allocates space to store the solution for a single computational element.
@@ -69,7 +69,7 @@ parallel_for_loop(0, numCells, [&] (int cell) {
   double nH = hdensity(cell);
 
   // No grains
-  const GasModule::GrainInterface grainInterface;
+  const RADAGAST::GrainInterface grainInterface;
 
   // Solve for T
   gasInterface.updateGasState(gasStatev[cell], nH, Tguess, grainInterface);
@@ -98,11 +98,11 @@ grid used for the input radiation field (`iFrequencyv`).
 #include "GrainInterface.hpp"
 
 // Create grain interface
-GasModule::GrainInterface grainInterface;
+RADAGAST::GrainInterface grainInterface;
 
 for (pop = 0; pop < numPop; pop++) {
    // Choose one of two supported types
-   GasModule::GrainTypeLabel type = GasModule::GrainTypeLabel::CAR;
+   RADAGAST::GrainTypeLabel type = RADAGAST::GrainTypeLabel::CAR;
 
    // Gather these physical quantities
    std::valarray<double> sizev = grain_sizes(pop);

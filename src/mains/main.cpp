@@ -32,25 +32,25 @@ int main(int argc, char** argv)
     try
     {
         // // These output graphable data which can be used to check correctness.
-        // GasModule::Testing::plotPhotoelectricHeating();
-        // GasModule::Testing::plotIonizationStuff();
-        // GasModule::Testing::plotPS64Collisions();
-        // GasModule::Testing::plotInterpolationTests();
-        // GasModule::Testing::plotHeatingCurve_main();
+        // RADAGAST::Testing::plotPhotoelectricHeating();
+        // RADAGAST::Testing::plotIonizationStuff();
+        // RADAGAST::Testing::plotPS64Collisions();
+        // RADAGAST::Testing::plotInterpolationTests();
+        // RADAGAST::Testing::plotHeatingCurve_main();
 
         // These do a run, with writeout, but the results are not directly comparable to
         // something in the way that the ones above work.
-        // GasModule::Testing::runFromFilesvsHardCoded();
-        // GasModule::Testing::runFullModel();
-        // GasModule::Testing::runH2(true);
+        // RADAGAST::Testing::runFromFilesvsHardCoded();
+        // RADAGAST::Testing::runFullModel();
+        // RADAGAST::Testing::runH2(true);
         if (argc == 1)
-            GasModule::Testing::runMRNDust(true);
+            RADAGAST::Testing::runMRNDust(true);
         else if (argc == 4)
         {
             double nH = std::stod(argv[1]);
             double Tc = std::stod(argv[2]);
             double lumSol = std::stod(argv[3]);
-            GasModule::Testing::runMRNDust(true, nH, Tc, lumSol, false);
+            RADAGAST::Testing::runMRNDust(true, nH, Tc, lumSol, false);
         }
     }
     catch (const std::exception& ex)

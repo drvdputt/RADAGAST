@@ -4,7 +4,7 @@
 #include "Table.hpp"
 #include <functional>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Defines a number of simple mathematical and physical functions, not bound to a specific
         piece of implementation. */

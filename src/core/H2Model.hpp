@@ -5,7 +5,7 @@
 #include "GasDiagnostics.hpp"
 #include "LevelSolution.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     struct CollisionParameters;
     class Spectrum;

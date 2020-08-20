@@ -3,7 +3,7 @@
 
 #include "LevelCoefficients.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     /** A toy subclass, for testing and simple demonstrations. */
     class TwoLevelHardcoded : public LevelCoefficients

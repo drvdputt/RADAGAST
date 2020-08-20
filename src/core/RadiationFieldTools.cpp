@@ -2,7 +2,7 @@
 #include "Functions.hpp"
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     Array RadiationFieldTools::generateBlackbodyv(const Array& frequencyv, double Tc)
     {

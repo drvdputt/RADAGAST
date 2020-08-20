@@ -3,7 +3,7 @@
 
 #include <Eigen/Dense>
 
-namespace GasModule
+namespace RADAGAST
 {
     using EMatrix = Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic>;
     using EMatrix_bool = Eigen::Matrix<bool, Eigen::Dynamic, Eigen::Dynamic>;

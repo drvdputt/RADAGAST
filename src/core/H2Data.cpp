@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     H2Data::H2Data(int groundMaxJ, int groundMaxV, int excitedMaxJ, int excitedMinV, int excitedMaxV)
         : LevelCoefficients(2 * Constant::HMASS), _groundMaxJ{groundMaxJ}, _groundMaxV{groundMaxV},

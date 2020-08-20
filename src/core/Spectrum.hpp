@@ -4,7 +4,7 @@
 #include "Array.hpp"
 #include "TemplatedUtils.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class Spectrum
     {

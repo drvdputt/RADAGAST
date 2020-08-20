@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     LevelCoefficients::LevelCoefficients(double mass) : _mass(mass)
     {

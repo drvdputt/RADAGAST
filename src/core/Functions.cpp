@@ -5,7 +5,7 @@
 #include <cmath>
 #include <exception>
 
-namespace GasModule
+namespace RADAGAST
 {
     double Functions::voigt(double a, double u)
     {

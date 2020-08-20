@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     HydrogenHardcoded::HydrogenHardcoded()
     {

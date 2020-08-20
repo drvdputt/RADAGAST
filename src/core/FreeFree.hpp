@@ -5,7 +5,7 @@
 #include "Table.hpp"
 #include <string>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This class provides implementations for quantities related to the free-free processes in a
         hydrogen plasma. It is mainly based on the data for the free-free Gaunt factor that I got

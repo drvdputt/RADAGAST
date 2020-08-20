@@ -2,7 +2,7 @@
 #include "CollisionParameters.hpp"
 #include "LevelCoefficients.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     void LevelSolution::updateRates(const Spectrum& meanIntensity, const CollisionParameters& cp)
     {

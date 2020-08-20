@@ -1,6 +1,6 @@
 #include "Timer.hpp"
 #include "DebugMacros.hpp"
-namespace GasModule
+namespace RADAGAST
 {
     Timer::Timer(const std::string& phrase) : _i{std::chrono::high_resolution_clock::now()}, _phrase{phrase} {}
 

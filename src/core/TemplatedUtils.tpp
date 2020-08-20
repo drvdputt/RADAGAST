@@ -3,7 +3,7 @@
 #include <numeric>
 #include <utility>
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace TemplatedUtils
     {

@@ -23,7 +23,7 @@ namespace
     }
 }
 
-namespace GasModule
+namespace RADAGAST
 {
     HFromFiles::HydrogenLevel::HydrogenLevel(int n, int l, int twoJplus1, double e)
         : _n(n), _l(l), _twoJplus1(twoJplus1), _e(e)

@@ -7,7 +7,7 @@
 #include "LookupTable.hpp"
 #include "SimpleColumnFile.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class HData;
     class H2Data;

@@ -2,7 +2,7 @@
 #include "CollisionParameters.hpp"
 #include "Constants.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     TwoLevelHardcoded::TwoLevelHardcoded() : LevelCoefficients(12 * Constant::HMASS)
     {

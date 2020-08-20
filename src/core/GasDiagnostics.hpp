@@ -6,7 +6,7 @@
 #include <valarray>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This class should be used to store any extra information that is not put into the standard
         GasState, to avoid making it too bloaty. Maybe it will make sense to design it so that not

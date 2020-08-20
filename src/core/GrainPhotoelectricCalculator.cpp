@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     GrainPhotoelectricCalculator::GrainPhotoelectricCalculator(const Array* sizev, const std::vector<Array>* qAbsvv,
                                                                double workFunction, bool carOrSil,

@@ -3,7 +3,7 @@
 
 #include "H2Model.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class LookupTable;
 

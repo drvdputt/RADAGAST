@@ -4,7 +4,7 @@
 #include "Array.hpp"
 #include "EigenAliases.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class CollisionParameters;
     class LevelCoefficients;

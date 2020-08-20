@@ -3,7 +3,7 @@
 
 #include "Chemistry.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class Spectrum;
 

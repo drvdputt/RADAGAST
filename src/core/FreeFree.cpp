@@ -21,7 +21,7 @@ namespace
     const double sqrt_2piOver3m = sqrt(2. * Constant::PI / 3. / Constant::ELECTRONMASS);
 }  // namespace
 
-namespace GasModule
+namespace RADAGAST
 {
     FreeFree::FreeFree()
     {

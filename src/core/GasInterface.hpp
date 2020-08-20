@@ -6,7 +6,7 @@
 #include <memory>
 #include <string>
 
-namespace GasModule
+namespace RADAGAST
 {
     class GasDiagnostics;
     class GasInterfaceImpl;
@@ -105,14 +105,14 @@ namespace GasModule
 
         /** Same as the above, but will add the emissivity of the lines. Some recalculations are
             necessary, hence the radiation field and grain details are needed again. */
-        std::valarray<double> emissivityWithLines(const GasModule::GasState& gs,
+        std::valarray<double> emissivityWithLines(const RADAGAST::GasState& gs,
                                                   const std::valarray<double>& meanIntensityv,
                                                   const GrainInterface& gri, bool SI, bool addHLines,
                                                   bool addH2Lines) const;
 
         /** Same as the above, but will add the opacity of the lines. Some recalculations are
             necessary, hence the radiation field and grain details are needed again. */
-        std::valarray<double> opacityWithLines(const GasModule::GasState& gs,
+        std::valarray<double> opacityWithLines(const RADAGAST::GasState& gs,
                                                const std::valarray<double>& meanIntensityv, const GrainInterface& gri,
                                                bool SI, bool addHLines, bool addH2Lines) const;
 
@@ -132,11 +132,11 @@ namespace GasModule
 
         /** Find the equilibrium temperature, by repeatedly solving the densities and evaluating th
             heating and cooling. @c updateGasState works via this function under the hood. */
-        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, GasModule::GrainInterface&) const;
+        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, RADAGAST::GrainInterface&) const;
 
         /** Find the equilibrium densities for a fixed temperature (heating/cooling will be out of
             equilibrium). */
-        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, GasModule::GrainInterface&,
+        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, RADAGAST::GrainInterface&,
                                    double h2FormationOverride = -1) const;
 
         /** Recalculate the densities for an existing GasSolution object. If startFromCurrent is
@@ -151,7 +151,7 @@ namespace GasModule
         /** NOT IMPLEMENTED. Solve for a fixed temperature, forcing H2 to zero. Useful for
             ionization-only tests. */
         GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& meanIntensity,
-                                       GasModule::GrainInterface&) const;
+                                       RADAGAST::GrainInterface&) const;
 
     private:
         std::unique_ptr<GasInterfaceImpl> _pimpl;

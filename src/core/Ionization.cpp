@@ -8,7 +8,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     double Ionization::solveBalance(double nH, double T, const Spectrum& meanIntensity)
     {

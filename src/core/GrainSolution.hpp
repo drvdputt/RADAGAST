@@ -8,7 +8,7 @@
 #include "Testing.hpp"
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     class SpeciesVector;
     class Spectrum;
@@ -27,7 +27,7 @@ namespace GasModule
             contains a GrainPhotoelectricData instance, then the GrainPhotoelectricCalculator
             will also be initialized. The radiation field is assumed to be constant during the
             lifetime of this object, so pass a pointer to it here. */
-        GrainSolution(const GasModule::GrainPopulation* population, const Spectrum* meanIntensity);
+        GrainSolution(const RADAGAST::GrainPopulation* population, const Spectrum* meanIntensity);
 
         /** Recalculate the grain temperatures and grain charges using radiation field given at
             construction, for new temperature and densities. */
@@ -75,7 +75,7 @@ namespace GasModule
 
     private:
         // pointers to constant data
-        const GasModule::GrainPopulation* _population;
+        const RADAGAST::GrainPopulation* _population;
         const Spectrum* _meanIntensity;
         int _numSizes;
 

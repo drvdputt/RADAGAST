@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <sstream>
 
-namespace GasModule
+namespace RADAGAST
 {
     BigH2Model::BigH2Model(const H2Data* h2Data, const Spectrum* meanIntensity)
         : _h2Data{h2Data}, _meanIntensity{meanIntensity}, _levelSolution(_h2Data)

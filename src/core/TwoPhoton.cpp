@@ -1,7 +1,7 @@
 #include "TwoPhoton.hpp"
 #include "Constants.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     Array TwoPhoton::emissivityv(const Array& eFrequencyv, double n2s)
     {

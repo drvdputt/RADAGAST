@@ -6,13 +6,13 @@
 #include "Options.hpp"
 #include "Testing.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     GrainPopulation::GrainPopulation() = default;
 
     GrainPopulation::~GrainPopulation() = default;
 
-    GrainPopulation::GrainPopulation(GasModule::GrainTypeLabel type, const Array& sizev, const Array& densityv,
+    GrainPopulation::GrainPopulation(RADAGAST::GrainTypeLabel type, const Array& sizev, const Array& densityv,
                                      const Array& temperaturev, const Array& frequencyv,
                                      const std::vector<Array>& qAbsvv)
         : _sizev{sizev}, _densityv{densityv}, _temperaturev{temperaturev}, _qAbsvv{qAbsvv}
@@ -21,13 +21,13 @@ namespace GasModule
         Error::equalCheck("sizev.size() and temperaturev.size()", _sizev.size(), _temperaturev.size());
         Error::equalCheck("sizev.size() and qAbsvv.size()", _sizev.size(), _qAbsvv.size());
 
-        if (type == GasModule::GrainTypeLabel::CAR)
+        if (type == RADAGAST::GrainTypeLabel::CAR)
         {
             _h2formation = std::make_unique<GrainH2Formation>(GrainH2FormationData::carSurface,
                                                               GrainH2FormationData::grainHeatingPerH2Formed_car);
             _photoelectricData = std::make_unique<GrainPhotoelectricData>(true);
         }
-        else if (type == GasModule::GrainTypeLabel::SIL)
+        else if (type == RADAGAST::GrainTypeLabel::SIL)
         {
             _h2formation = std::make_unique<GrainH2Formation>(GrainH2FormationData::silSurface,
                                                               GrainH2FormationData::grainHeatingPerH2Formed_sil);
@@ -79,4 +79,4 @@ namespace GasModule
     {
         return _greybodyCoolingCurves.evaluate(m, T);
     }
-}  // namespace GasModule
+}  // namespace RADAGAST

@@ -5,7 +5,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_odeiv2.h>
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace
     {

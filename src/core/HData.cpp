@@ -4,7 +4,7 @@
 #include "Options.hpp"
 #include "RecombinationRate.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     HData::HData() : LevelCoefficients(Constant::HMASS) {}
 

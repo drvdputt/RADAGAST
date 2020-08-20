@@ -10,7 +10,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     LineProfile::LineProfile(double center, double sigma_gauss, double halfWidth_lorentz)
         : _center{center}, _sigma_gauss{sigma_gauss}, _halfWidth_lorentz(halfWidth_lorentz)

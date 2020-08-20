@@ -3,7 +3,7 @@
 
 #include "Spectrum.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     /** A set of tools to handle line profile in an efficient way. */
     class LineProfile

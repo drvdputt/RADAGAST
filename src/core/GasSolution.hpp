@@ -10,7 +10,7 @@
 #include "HModel.hpp"
 #include "SpeciesIndex.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class FreeBound;
     class FreeFree;
@@ -35,7 +35,7 @@ namespace GasModule
             HModel and H2Model, ownership is transferred (using move) to this object, since their
             contents change while searching for the solution. When a non-trivial GrainInterface
             object is passed, this class will keep track of a list of GrainSolution objects. */
-        GasSolution(const GasModule::GrainInterface* gri, const Spectrum* meanIntensity,
+        GasSolution(const RADAGAST::GrainInterface* gri, const Spectrum* meanIntensity,
                     const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
                     const FreeBound* freeBound, const FreeFree* freeFree);
 
@@ -89,7 +89,7 @@ namespace GasModule
         void fillDiagnostics(GasDiagnostics*);
 
         /** Writes the resulting temperature and densities into the given gas state object */
-        void setGasState(GasModule::GasState&) const;
+        void setGasState(RADAGAST::GasState&) const;
 
         /** Get the H2 photodissociation rate from the H2 model [s-1]. */
         double kDissH2Levels() const;

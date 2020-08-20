@@ -4,7 +4,7 @@
 #include "HData.hpp"
 #include "LevelSolution.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class HModel
     {

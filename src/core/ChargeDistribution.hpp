@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     class ChargeDistribution
     {

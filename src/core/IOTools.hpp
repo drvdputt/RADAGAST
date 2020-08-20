@@ -5,14 +5,14 @@
 #include <sstream>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Some shorthand for opening file handles. */
     namespace IOTools
     {
         /** Opens a file that resided somewhere in the repo. The macro REPOROOT must be properly
             set to the path of the git directory (without trailing slash, e.g.
-            /home/user/GasModule/git). The correct way to provide this option to the compiler is as
+            /home/user/RADAGAST/git). The correct way to provide this option to the compiler is as
             follows: -DREPOROOT=\""/path/to/git"\". The backslashes and quotes need to be there to
             make sure the preprocessor inserts a string literal. */
         std::ifstream ifstreamRepoFile(const std::string& pathRelativeToGitDir);

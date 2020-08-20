@@ -6,7 +6,7 @@
 #include "SimpleH2.hpp"
 #include <sstream>
 
-namespace GasModule
+namespace RADAGAST
 {
     SpeciesModelManager::SpeciesModelManager()
     {

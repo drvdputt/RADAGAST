@@ -8,9 +8,9 @@
 #include "Ionization.hpp"
 #include "Options.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
-    GasSolution::GasSolution(const GasModule::GrainInterface* gri, const Spectrum* meanIntensity,
+    GasSolution::GasSolution(const RADAGAST::GrainInterface* gri, const Spectrum* meanIntensity,
                              const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
                              std::unique_ptr<H2Model> h2Model, const FreeBound* freeBound, const FreeFree* freeFree)
         : _sv(speciesIndex), _hSolution(std::move(hModel)),
@@ -168,7 +168,7 @@ namespace GasModule
         _h2Solution->extraDiagnostics(*gd);
     }
 
-    void GasSolution::setGasState(GasModule::GasState& g) const
+    void GasSolution::setGasState(RADAGAST::GasState& g) const
     {
         g.setMembers(_t, {_sv.data(), _sv.size()}, _hSolution->n2s());
     }

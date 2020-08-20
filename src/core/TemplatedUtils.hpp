@@ -6,7 +6,7 @@
 #include <functional>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace TemplatedUtils
     {

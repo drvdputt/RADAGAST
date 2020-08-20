@@ -3,7 +3,7 @@
 
 #include "GrainPhotoelectricCalculator.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This class stores data related to the photoelectric effect, which is static (i.e. does
         not depend on grain sizes, no caching). It also acts as a factory for

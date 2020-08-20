@@ -16,7 +16,7 @@
 #include <gsl/gsl_roots.h>
 #include <iostream>
 
-namespace GasModule
+namespace RADAGAST
 {
     GasInterfaceImpl::GasInterfaceImpl(const Array& iFrequencyv, const Array& oFrequencyv, const Array& eFrequencyv)
         : _iFrequencyv{iFrequencyv}, _oFrequencyv{oFrequencyv}, _eFrequencyv{eFrequencyv}
@@ -48,9 +48,9 @@ namespace GasModule
             _h2crossv[i] = 3.33 * Ionization::crossSection(oFrequencyv[i]);
     }
 
-    void GasInterfaceImpl::updateGasState(GasModule::GasState& gs, double n,
+    void GasInterfaceImpl::updateGasState(RADAGAST::GasState& gs, double n,
                                           const std::valarray<double>& meanIntensityv,
-                                          GasModule::GrainInterface& grainInfo, GasDiagnostics* gd) const
+                                          RADAGAST::GrainInterface& grainInfo, GasDiagnostics* gd) const
     {
         Spectrum meanIntensity(_iFrequencyv, meanIntensityv);
         GasSolution s = solveTemperature(n, meanIntensity, grainInfo);
@@ -58,7 +58,7 @@ namespace GasModule
         if (gd) s.fillDiagnostics(gd);
     }
 
-    Array GasInterfaceImpl::emissivityBasic(const GasModule::GasState& gs, bool SI) const
+    Array GasInterfaceImpl::emissivityBasic(const RADAGAST::GasState& gs, bool SI) const
     {
         // There is some duplication from GasSolution::emissivityv, but let's keep both for now.
         Array emissivityv(_eFrequencyv.size());
@@ -74,7 +74,7 @@ namespace GasModule
             return emissivityv;
     }
 
-    Array GasInterfaceImpl::opacityBasic(const GasModule::GasState& gs, bool SI) const
+    Array GasInterfaceImpl::opacityBasic(const RADAGAST::GasState& gs, bool SI) const
     {
         auto sv = speciesVector(gs);
 
@@ -95,7 +95,7 @@ namespace GasModule
             return opacityv;
     }
 
-    Array GasInterfaceImpl::emissivityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv,
+    Array GasInterfaceImpl::emissivityWithLines(const RADAGAST::GasState& gs, const Array& meanIntensityv,
                                                 const GrainInterface& gri, bool SI, bool addHLines,
                                                 bool addH2Lines) const
     {
@@ -125,7 +125,7 @@ namespace GasModule
             return emissivityv;
     }
 
-    Array GasInterfaceImpl::opacityWithLines(const GasModule::GasState& gs, const Array& meanIntensityv,
+    Array GasInterfaceImpl::opacityWithLines(const RADAGAST::GasState& gs, const Array& meanIntensityv,
                                              const GrainInterface& gri, bool SI, bool addHLines, bool addH2Lines) const
     {
         // get the continuum
@@ -159,7 +159,7 @@ namespace GasModule
             return opacityv;
     }
 
-    std::string GasInterfaceImpl::quickInfo(const GasModule::GasState& gs,
+    std::string GasInterfaceImpl::quickInfo(const RADAGAST::GasState& gs,
                                             const std::valarray<double>& meanIntensity) const
     {
         Spectrum si(_iFrequencyv, meanIntensity);
@@ -198,7 +198,7 @@ namespace GasModule
     }  // namespace
 
     GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& meanIntensity,
-                                                   GasModule::GrainInterface& gri) const
+                                                   RADAGAST::GrainInterface& gri) const
     {
         GasSolution s = makeGasSolution(meanIntensity, &gri);
         if (n <= 0)
@@ -292,7 +292,7 @@ namespace GasModule
     }
 
     GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum& meanIntensity,
-                                                 GasModule::GrainInterface& gri, double h2FormationOverride) const
+                                                 RADAGAST::GrainInterface& gri, double h2FormationOverride) const
     {
         GasSolution s = makeGasSolution(meanIntensity, &gri);
         solveDensities(s, n, T, meanIntensity, false, h2FormationOverride);
@@ -421,7 +421,7 @@ namespace GasModule
     }
 
     GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& meanIntensity,
-                                                  const GasModule::GrainInterface* gri) const
+                                                  const RADAGAST::GrainInterface* gri) const
     {
         // Since I keep forgetting why it is good to make a factory function return unique
         // pointers, here is a reminder:
@@ -457,17 +457,17 @@ namespace GasModule
                                                             moleculeToNeutralFrac * (1 - ionToTotalFrac) * n / 2});
     }
 
-    double GasInterfaceImpl::npne(const GasModule::GasState& gs) const
+    double GasInterfaceImpl::npne(const RADAGAST::GasState& gs) const
     {
         return gs.density(_chemistry.speciesIndex().index("H+")) * gs.density(_chemistry.speciesIndex().index("e-"));
     }
 
-    double GasInterfaceImpl::nH(const GasModule::GasState& gs) const
+    double GasInterfaceImpl::nH(const RADAGAST::GasState& gs) const
     {
         return gs.density(_chemistry.speciesIndex().index("H"));
     }
 
-    SpeciesVector GasInterfaceImpl::speciesVector(const GasModule::GasState& gs) const
+    SpeciesVector GasInterfaceImpl::speciesVector(const RADAGAST::GasState& gs) const
     {
         SpeciesVector sv(&_chemistry.speciesIndex());
         sv.setDensities(Eigen::Map<const EVector>(&gs._nv[0], gs._nv.size()));

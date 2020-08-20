@@ -8,7 +8,7 @@
 #include "TwoLevelHardcoded.hpp"
 #include "doctest.h"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Test LevelCoefficients implementation two level subclass")
 {

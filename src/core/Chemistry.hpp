@@ -7,7 +7,7 @@
 #include <map>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This class can store a list of reactions, and solve the chemical equilibrium based on the
         coefficients of the reactions and their reaction rates. */

@@ -4,7 +4,7 @@
 #include "Testing.hpp"
 #include "doctest.h"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Free-free cooling data vs manual integration")
 {

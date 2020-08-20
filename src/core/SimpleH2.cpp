@@ -5,7 +5,7 @@
 #include "LookupTable.hpp"
 #include "RadiationFieldTools.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity) : _lteCool{lteCool}
     {

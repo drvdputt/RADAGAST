@@ -10,9 +10,9 @@
 #include "Spectrum.hpp"
 #include "TemplatedUtils.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
-    GrainSolution::GrainSolution(const GasModule::GrainPopulation* population, const Spectrum* meanIntensity)
+    GrainSolution::GrainSolution(const RADAGAST::GrainPopulation* population, const Spectrum* meanIntensity)
         : _population{population}, _meanIntensity{meanIntensity}, _numSizes(population->numSizes()),
           _chargeDistributionv(population->numSizes()), _newTemperaturev{population->initialTemperaturev()},
           _h2Heatv(population->numSizes()), _cachedPEHeatv(population->numSizes())

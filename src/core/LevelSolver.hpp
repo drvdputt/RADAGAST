@@ -3,7 +3,7 @@
 
 #include "EigenAliases.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace LevelSolver
     {

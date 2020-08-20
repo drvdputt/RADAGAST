@@ -1,6 +1,6 @@
 #include "SpeciesIndex.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     const std::vector<std::string> SpeciesIndex::e_p_H_H2{"e-", "H+", "H", "H2"};
 

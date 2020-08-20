@@ -10,7 +10,7 @@
 #include <functional>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** This class provides an implementation of the photoelectric heating recipe described in
         Weingartner \& Draine (2001), hereafter WD01. There is some caching of grain properties

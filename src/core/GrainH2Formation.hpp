@@ -4,7 +4,7 @@
 #include "Array.hpp"
 #include "Constants.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Parameters for the formation of H2 on the surface on the grain. See 2013-Röllig et al.
         table C.1. */

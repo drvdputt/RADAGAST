@@ -3,7 +3,7 @@
 
 #include "Array.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace TwoPhoton
     {

@@ -8,7 +8,7 @@
 #include <array>
 #include <memory>
 
-namespace GasModule
+namespace RADAGAST
 {
     struct CollisionParameters;
 

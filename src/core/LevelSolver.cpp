@@ -4,7 +4,7 @@
 #include "Error.hpp"
 #include "Options.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     EVector LevelSolver::statisticalEquilibrium(double totalDensity, const EMatrix& totalTransitionRatesvv,
                                                 const EVector& sourcev, const EVector& sinkv,

@@ -96,15 +96,15 @@ int main()
     addThresholdPoints(80.3 * Constant::NM, 80.2 * Constant::NM, specialPoints);
 
     // H ion threshold (important for opacity / radiation field and H+/H balance)
-    double threshold912 = Constant::LIGHT / GasModule::Ionization::THRESHOLD;
+    double threshold912 = Constant::LIGHT / RADAGAST::Ionization::THRESHOLD;
     addThresholdPoints(threshold912, 91.1 * Constant::NM, specialPoints);
 
     // H2 lines
-    if (GasModule::Options::speciesmodelmanager_enableBigH2)
+    if (RADAGAST::Options::speciesmodelmanager_enableBigH2)
     {
-        GasModule::H2Data h2Data(GasModule::Options::h2data_X_maxJ, GasModule::Options::h2data_X_maxV,
-                                 GasModule::Options::h2data_E_maxJ, GasModule::Options::h2data_E_minV,
-                                 GasModule::Options::h2data_E_maxV);
+        RADAGAST::H2Data h2Data(RADAGAST::Options::h2data_X_maxJ, RADAGAST::Options::h2data_X_maxV,
+                                 RADAGAST::Options::h2data_E_maxJ, RADAGAST::Options::h2data_E_minV,
+                                 RADAGAST::Options::h2data_E_maxV);
         int numLines;
         Array lineFreqv;
         Array lorentzWidthv;
@@ -117,7 +117,7 @@ int main()
             {
                 // for width, use formula copied from LevelCoefficients::lineProfile but with
                 // constant temperature (200 K is a rough guildelinee).
-                double sigma = center * GasModule::Functions::thermalVelocityWidth(lineWidthT, 2 * Constant::HMASS)
+                double sigma = center * RADAGAST::Functions::thermalVelocityWidth(lineWidthT, 2 * Constant::HMASS)
                                / Constant::LIGHT;
                 addLinePoints(center, sigma, specialPoints);
                 count++;
@@ -167,7 +167,7 @@ int main()
     allpoints.resize(std::distance(allpoints.begin(), newEnd));
 
     // write out the result
-    GasModule::OutColumnFile outfile("wlg.dat", {"wavelength (micron)", "frequency (hz)"}, 11);
+    RADAGAST::OutColumnFile outfile("wlg.dat", {"wavelength (micron)", "frequency (hz)"}, 11);
     for (int i = 0; i < allpoints.size(); i++)
     {
         double lambda_micron = allpoints[i] / Constant::UM;

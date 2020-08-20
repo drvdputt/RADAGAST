@@ -49,9 +49,9 @@ namespace
         // open the file
         ifstream file;
         if (car)
-            file = GasModule::IOTools::ifstreamRepoFile("dat/Gra_81.dat");
+            file = RADAGAST::IOTools::ifstreamRepoFile("dat/Gra_81.dat");
         else
-            file = GasModule::IOTools::ifstreamRepoFile("dat/suvSil_81.dat");
+            file = RADAGAST::IOTools::ifstreamRepoFile("dat/suvSil_81.dat");
 
         // skip header lines and read the grid size
         string line;
@@ -113,16 +113,16 @@ namespace
 
         if (a > qds.FILEAV[qds.FILEAV.size() - 1]) return Array(frequencyv.size());
 
-        size_t aIndex = GasModule::TemplatedUtils::index(a, qds.FILEAV);
+        size_t aIndex = RADAGAST::TemplatedUtils::index(a, qds.FILEAV);
         assert(aIndex > 0);
 
-        Array wavelengthv = GasModule::RadiationFieldTools::freqToWavGrid(frequencyv);
+        Array wavelengthv = RADAGAST::RadiationFieldTools::freqToWavGrid(frequencyv);
         vector<double> QabsWav(wavelengthv.size());
         for (size_t w = 0; w < wavelengthv.size(); w++)
         {
             double wav = wavelengthv[w];
 
-            size_t wIndex = GasModule::TemplatedUtils::index(wav, qds.FILELAMBDAV);
+            size_t wIndex = RADAGAST::TemplatedUtils::index(wav, qds.FILELAMBDAV);
             double wLeft = qds.FILELAMBDAV[wIndex - 1];
             double wRight = qds.FILELAMBDAV[wIndex];
 
@@ -130,7 +130,7 @@ namespace
             double aUp = qds.FILEAV[aIndex];
 
             const auto& q = qds.QABSVV;
-            QabsWav[w] = GasModule::TemplatedUtils::interpolateBilinear(
+            QabsWav[w] = RADAGAST::TemplatedUtils::interpolateBilinear(
                 wav, a, wLeft, wRight, aLow, aUp, q[wIndex - 1][aIndex - 1], q[wIndex][aIndex - 1],
                 q[wIndex - 1][aIndex], q[wIndex][aIndex]);
         }
@@ -151,7 +151,7 @@ namespace
 
 }  // namespace
 
-namespace GasModule
+namespace RADAGAST
 {
     vector<Array> Testing::qAbsvvForTesting(bool car, const Array& av, const Array& frequencyv)
     {
@@ -345,19 +345,19 @@ namespace GasModule
         out.close();
     }
 
-    void Testing::runGasInterfaceImpl(const GasModule::GasInterface& gi, const std::string& outputPath, double Tc,
+    void Testing::runGasInterfaceImpl(const RADAGAST::GasInterface& gi, const std::string& outputPath, double Tc,
                                       double G0, double n)
     {
         Array meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(gi.iFrequencyv(), Tc, G0);
 
-        GasModule::GasState gs;
-        GasModule::GrainInterface gri{};
+        RADAGAST::GasState gs;
+        RADAGAST::GrainInterface gri{};
         gi.updateGasState(gs, n, meanIntensityv, gri);
         writeGasState(outputPath, gi, gs);
     }
 
-    void Testing::writeGasState(const string& outputPath, const GasModule::GasInterface& gi,
-                                const GasModule::GasState& gs)
+    void Testing::writeGasState(const string& outputPath, const RADAGAST::GasInterface& gi,
+                                const RADAGAST::GasState& gs)
     {
         cout << "Equilibrium temperature: " << gs.temperature() << endl;
 
@@ -449,14 +449,14 @@ namespace GasModule
         double g0 = 1e0;
         double n = 1000;
         Spectrum meanIntensity{frequencyv, RadiationFieldTools::generateSpecificIntensityv(frequencyv, Tc, g0)};
-        GasModule::GasInterface gi{frequencyv, frequencyv, frequencyv};
-        GasModule::GrainInterface gri{};
+        RADAGAST::GasInterface gi{frequencyv, frequencyv, frequencyv};
+        RADAGAST::GrainInterface gri{};
         string outputPath = "heatingcurve/";
         plotHeatingCurve(gi, outputPath, n, meanIntensity, gri);
     }
 
-    void Testing::plotHeatingCurve(const GasModule::GasInterface& gi, const std::string& outputPath, double n,
-                                   const Spectrum& meanIntensity, GasModule::GrainInterface& gri)
+    void Testing::plotHeatingCurve(const RADAGAST::GasInterface& gi, const std::string& outputPath, double n,
+                                   const Spectrum& meanIntensity, RADAGAST::GrainInterface& gri)
     {
         // Initial
         Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
@@ -789,7 +789,7 @@ namespace GasModule
         }
     }
 
-    GasModule::GasInterface Testing::genFullModel(bool refine)
+    RADAGAST::GasInterface Testing::genFullModel(bool refine)
     {
         Array coarsev = defaultFrequencyv(3000);
         Array eFrequencyv = coarsev;
@@ -809,7 +809,7 @@ namespace GasModule
         return {coarsev, coarsev, eFrequencyv};
     }
 
-    GasModule::GasInterface Testing::genHonlyModel()
+    RADAGAST::GasInterface Testing::genHonlyModel()
     {
         Array coarsev = defaultFrequencyv();
 
@@ -830,14 +830,14 @@ namespace GasModule
     void Testing::runFullModel()
     {
         cout << "RUN_FULL_MODEL\n" << endl;
-        GasModule::GasInterface gi = genHonlyModel();
+        RADAGAST::GasInterface gi = genHonlyModel();
         double Tc = 40000;
         double G0 = 100;
         double n = 1000;
         runGasInterfaceImpl(gi, "gasOnly/", Tc, G0, n);
     }
 
-    void Testing::genMRNDust(GasModule::GrainInterface& gri, double nHtotal, const Spectrum& meanIntensity, bool car)
+    void Testing::genMRNDust(RADAGAST::GrainInterface& gri, double nHtotal, const Spectrum& meanIntensity, bool car)
     {
         // need grains from .005 to .25 micron
         double amin = 50 * Constant::ANGSTROM;
@@ -866,7 +866,7 @@ namespace GasModule
             sizev[i] = average_power_of_size(1.);
             areav[i] = average_power_of_size(2.);
         }
-        auto label = car ? GasModule::GrainTypeLabel::CAR : GasModule::GrainTypeLabel::SIL;
+        auto label = car ? RADAGAST::GrainTypeLabel::CAR : RADAGAST::GrainTypeLabel::SIL;
         const auto& qabsvv = qAbsvvForTesting(car, sizev, meanIntensity.frequencyv());
         Array temperaturev(numSizes);
         for (size_t i = 0; i < numSizes; i++)
@@ -909,7 +909,7 @@ namespace GasModule
         cout << "Parameters: nH " << nH << " Tc " << Tc << " lum " << lumSol << '\n';
 
         // Gas model
-        GasModule::GasInterface gasInterface = genFullModel();
+        RADAGAST::GasInterface gasInterface = genFullModel();
         double nHtotal = nH;
 
         // Radiation field
@@ -926,7 +926,7 @@ namespace GasModule
             bollum / 16 / Constant::PI / distance / distance / GSL_CONST_CGS_STEFAN_BOLTZMANN_CONSTANT / pow(Tc, 4);
 
         // Dust model
-        GasModule::GrainInterface gri;
+        RADAGAST::GrainInterface gri;
         bool car = true;
         genMRNDust(gri, nHtotal, Spectrum{frequencyv, meanIntensityv}, car);
 
@@ -974,7 +974,7 @@ namespace GasModule
                 double wav = Constant::LIGHT / frequencyv[i];
                 radfield.writeLine<Array>({wav / Constant::UM, Constant::FPI * frequencyv[i] * meanIntensityv[i]});
             }
-            GasModule::GasState gs;
+            RADAGAST::GasState gs;
             s.setGasState(gs);
             writeGasState(prefix, gasInterface, gs);
             writeGrains(prefix, s.grainSolutionv(), true);

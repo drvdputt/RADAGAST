@@ -4,7 +4,7 @@
 #include "H2Data.hpp"
 #include "H2Model.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     class BigH2Model : public H2Model
     {

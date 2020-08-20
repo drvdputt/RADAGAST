@@ -7,7 +7,7 @@
 #include <memory>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     class GrainH2Formation;
     class GrainPhotoelectricData;
@@ -32,7 +32,7 @@ namespace GasModule
             and for each point of the frequency grid of the input radiation field. It needs to
             extend to low enough frequencies, if reasonable grain temperatures are wanted.
             Otherwise, the grey body emission of the grains will be wrong.*/
-        GrainPopulation(GasModule::GrainTypeLabel type, const Array& sizev, const Array& densityv,
+        GrainPopulation(RADAGAST::GrainTypeLabel type, const Array& sizev, const Array& densityv,
                         const Array& temperaturev, const Array& frequencyv, const std::vector<Array>& qAbsvv);
 
         /** Undelete the move constructor (needed to be able to put these objects into a vector
@@ -80,6 +80,6 @@ namespace GasModule
         // LookupTable::evaluate is the size index)
         LookupTable _greybodyCoolingCurves;
     };
-}  // namespace GasModule
+}  // namespace RADAGAST
 
 #endif  // CORE_GRAINPOPULATION_HPP

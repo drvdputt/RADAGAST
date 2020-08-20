@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace GasModule
+namespace RADAGAST
 {
     namespace Options
     {

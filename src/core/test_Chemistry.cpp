@@ -2,7 +2,7 @@
 #include "DoctestUtils.hpp"
 #include "SpeciesIndex.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("single species with creation and destruction")
 {

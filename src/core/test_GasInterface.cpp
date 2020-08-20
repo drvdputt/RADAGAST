@@ -4,13 +4,13 @@
 #include "RadiationFieldTools.hpp"
 #include "Testing.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Blackbodies test")
 {
     // Test if options don't make it crash
     Array frequencyv = Testing::defaultFrequencyv(300);
-    GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
+    RADAGAST::GasInterface gi(frequencyv, frequencyv, frequencyv);
     double nHtotal = 1000;
     std::vector<double> Tv;
     bool warnOnly = false;
@@ -40,7 +40,7 @@ TEST_CASE("Blackbodies test")
     for (double Tc : Tv)
     {
         Spectrum meanIntensity(frequencyv, RadiationFieldTools::generateBlackbodyv(frequencyv, Tc));
-        GasModule::GrainInterface gri;
+        RADAGAST::GrainInterface gri;
         if (withDust) Testing::genMRNDust(gri, nHtotal, meanIntensity, true);
         GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, gri);
         double T = s.t();
@@ -65,9 +65,9 @@ TEST_CASE("zero radiation field")
     Array frequencyv = Testing::defaultFrequencyv(300);
     Array meanIntensityv(frequencyv.size());
     Spectrum meanIntensity(frequencyv, meanIntensityv);
-    GasModule::GasInterface gi(frequencyv, frequencyv, frequencyv);
+    RADAGAST::GasInterface gi(frequencyv, frequencyv, frequencyv);
     double nHtotal = 0.;
-    GasModule::GrainInterface gri;
+    RADAGAST::GrainInterface gri;
 
     SUBCASE("zero dens") {}
     SUBCASE("nonzero dens")

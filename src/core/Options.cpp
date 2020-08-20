@@ -1,6 +1,6 @@
 #include "Options.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
 
     std::string Options::getenvWithDefault(const std::string& variableName, const std::string& defaultValue)

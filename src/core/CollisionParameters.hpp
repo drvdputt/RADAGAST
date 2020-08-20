@@ -4,7 +4,7 @@
 #include "EigenAliases.hpp"
 #include "SpeciesIndex.hpp"
 
-namespace GasModule
+namespace RADAGAST
 {
     /** A set of parameters commonly needed to calculate collisions coefficients. Not every
         function that calculates collision coefficients will need all of this information, but

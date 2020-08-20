@@ -2,7 +2,7 @@
 #include "TemplatedUtils.hpp"
 #include <iostream>
 
-namespace GasModule
+namespace RADAGAST
 {
     void GasDiagnostics::setHeating(const std::string& key, double value) { _heatingm[key] = value; }
 

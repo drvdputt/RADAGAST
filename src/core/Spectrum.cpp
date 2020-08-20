@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     Spectrum::Spectrum() : _hasData{false} {}
 

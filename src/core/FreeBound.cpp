@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace GasModule
+namespace RADAGAST
 {
     FreeBound::FreeBound()
     {

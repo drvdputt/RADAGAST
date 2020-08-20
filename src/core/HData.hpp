@@ -5,7 +5,7 @@
 #include "RecombinationRate.hpp"
 #include <array>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Abstract class which specifies how to provide data for the hydrogen model. It inherits from
         LevelCoefficients, so that level coefficients can be delivered in a consistent way. The

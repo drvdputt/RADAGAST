@@ -3,7 +3,7 @@
 #include "IOTools.hpp"
 #include <cmath>
 
-namespace GasModule
+namespace RADAGAST
 {
     double ChargeDistribution::value(int z) const
     {

@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-namespace GasModule
+namespace RADAGAST
 {
     /** Abstract class representing the recombination rate of H. */
     class RecombinationRate

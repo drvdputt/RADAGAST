@@ -1,7 +1,7 @@
 #include "ChargeDistribution.hpp"
 #include "DoctestUtils.hpp"
 
-using namespace GasModule;
+using namespace RADAGAST;
 
 TEST_CASE("Trivial charge distribution")
 {
