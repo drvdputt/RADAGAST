@@ -1,8 +1,8 @@
 file(GLOB SOURCES "*.cpp")
 file(GLOB HEADERS "*.hpp")
 
-add_library(gasmodule_obj OBJECT ${SOURCES} ${HEADERS})
-target_include_directories(gasmodule_obj PUBLIC ../../include INTERFACE ./)
+add_library(radagast_obj OBJECT ${SOURCES} ${HEADERS})
+target_include_directories(radagast_obj PUBLIC ../../include INTERFACE ./)
 
 find_package(Eigen3 3.3 NO_MODULE QUIET)
 if(TARGET Eigen3::Eigen)
@@ -31,18 +31,18 @@ else()
     " 2) Download and decompress eigen3, and set -DEIGEN3_INCLUDE_DIR to the parent directory of 'eigen3' or 'Eigen'.")
 endif()
 
-target_include_directories(gasmodule_obj SYSTEM PUBLIC ${REAL_EIGEN3_INCLUDE_DIR})
+target_include_directories(radagast_obj SYSTEM PUBLIC ${REAL_EIGEN3_INCLUDE_DIR})
 
 find_package(GSL REQUIRED)
-target_include_directories(gasmodule_obj SYSTEM PUBLIC
+target_include_directories(radagast_obj SYSTEM PUBLIC
   $<TARGET_PROPERTY:GSL::gsl,INTERFACE_INCLUDE_DIRECTORIES>
   $<TARGET_PROPERTY:GSL::gslcblas,INTERFACE_INCLUDE_DIRECTORIES>)
 
-add_library(gasmodule $<TARGET_OBJECTS:gasmodule_obj>)
+add_library(radagast $<TARGET_OBJECTS:radagast_obj>)
 # make sure that include directories are inherited
-target_include_directories(gasmodule INTERFACE $<TARGET_PROPERTY:gasmodule_obj,INTERFACE_INCLUDE_DIRECTORIES>)
-target_link_libraries(gasmodule GSL::gsl GSL::gslcblas)
+target_include_directories(radagast INTERFACE $<TARGET_PROPERTY:radagast_obj,INTERFACE_INCLUDE_DIRECTORIES>)
+target_link_libraries(radagast GSL::gsl GSL::gslcblas)
 
 # install static libary and headers to the typical directories under CMAKE_INSTALL_PREFIX
-install(TARGETS gasmodule ARCHIVE DESTINATION lib)
+install(TARGETS radagast ARCHIVE DESTINATION lib)
 install(FILES GasInterface.hpp GrainInterface.hpp GasState.hpp GasDiagnostics.hpp DESTINATION include)

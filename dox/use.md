@@ -149,15 +149,15 @@ If your program is also built using CMake, then you can take inspiration from th
 snippet
 
 ```
-  set(GASMODULE_INSTALL_DIR "/your/install/dir")
-  find_library(GASMODULE_LIBRARIES
+  set(RADAGAST_INSTALL_DIR "/your/install/dir")
+  find_library(RADAGAST_LIBRARIES
     NAMES libgasmodule.a
-    PATHS "${GASMODULE_INSTALL_DIR}/lib")
-  find_path(GASMODULE_INCLUDE_PATH
+    PATHS "${RADAGAST_INSTALL_DIR}/lib")
+  find_path(RADAGAST_INCLUDE_PATH
     NAMES "GasInterface.hpp"
-    PATHS "${GASMODULE_INSTALL_DIR}/include")
-  include_directories(${GASMODULE_INCLUDE_PATH})
-  target_link_libraries(${TARGET} ${GASMODULE_LIBRARIES})
+    PATHS "${RADAGAST_INSTALL_DIR}/include")
+  include_directories(${RADAGAST_INCLUDE_PATH})
+  target_link_libraries(${TARGET} ${RADAGAST_LIBRARIES})
 
   find_package(GSL REQUIRED)
   target_link_libraries(${TARGET} GSL::gsl GSL::gslcblas)

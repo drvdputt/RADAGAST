@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.1)
-project(gasmodule)
+project(RADAGAST)
 
 set(CMAKE_CXX_STANDARD 14)
 add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic -fno-signed-zeros -freciprocal-math -march=native -mtune=native)
