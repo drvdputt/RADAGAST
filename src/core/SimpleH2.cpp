@@ -12,7 +12,7 @@ namespace RADAGAST
         _g = RadiationFieldTools::gHabing(*meanIntensity);
     }
 
-    void SimpleH2::solve(double n, const CollisionParameters& cp, double h2form)
+    void SimpleH2::solve(double n, const CollisionParameters& cp, double /* unused h2form */)
     {
         _nH2 = n;
 
