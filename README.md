@@ -59,3 +59,9 @@ When this binary works without problems, copy the library built at
 `CMAKE_INSTALL_PREFIX` and run make install). Then read the [instructions](dox/use.md) on how to
 use the API, write a simple C++ script making the calls, and try building and linking your own
 C++ script to the library.
+
+## Integration in SKIRT
+There currently exists a branch in my fork of SKIRT which supports gas and makes use of
+RADAGAST. It is not up to data with the current master branch of SKIRT, because some unrelated
+features have created a few conflicts. The reader interested in how this RADAGAST is used in
+practice, can examine this development branch: https://github.com/drvdputt/SKIRT9/tree/gas-dev
