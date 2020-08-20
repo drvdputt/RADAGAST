@@ -62,6 +62,6 @@ C++ script to the library.
 
 ## Integration in SKIRT
 There currently exists a branch in my fork of SKIRT which supports gas and makes use of
-RADAGAST. It is not up to data with the current master branch of SKIRT, because some unrelated
-features have created a few conflicts. The reader interested in how this RADAGAST is used in
+RADAGAST. It is currently not up to data with the master branch of SKIRT, because some new
+features have introduces a few conflicts. The reader interested in how RADAGAST is used in
 practice, can examine this development branch: https://github.com/drvdputt/SKIRT9/tree/gas-dev
