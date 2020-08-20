@@ -1,5 +1,5 @@
 # RADAGAST
-**RAD**iation and **D**ust **A**ffecting the **GA**s **ST**ate 
+**RAD**iation and **D**ust **A**ffecting the **GA**s **ST**ate
 
 ## Description
 RADAGAST is a local (0D) gas model for use in 3D dust radiative transfer simulations. Given a
@@ -14,9 +14,9 @@ Quantities calculated self-consistently
 - Grain temperatures and charge distributions
 
 A non-comprehensive list of processes included in this calculation
-- Photoionization of H 
-- Radiative recombination of H+ 
-- Photodissociation of H2 
+- Photoionization of H
+- Radiative recombination of H+
+- Photodissociation of H2
 - Formation of H2 on dust grain surfaces
 - Heating by the photoelectric effect on dust grains
 - Cooling by collisions between gas and dust grains
