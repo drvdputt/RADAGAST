@@ -4,10 +4,10 @@
 Download a zip of the source code or clone the repository. Due to the way the default build
 works, it is best to have a dedicated parent directory.
 ```
-mkdir RIDGE-0
-cd RIDGE-0
+mkdir RADAGAST
+cd RADAGAST
 mkdir git
-git clone https://github.com/drvdputt/RIDGE-0.git git
+git clone https://github.com/drvdputt/RADAGAST.git git
 ```
 
 ## Ensure dependencies are installed
@@ -24,8 +24,8 @@ git clone https://github.com/drvdputt/RIDGE-0.git git
 
 ## Configure, build, install
 Configuring the build is analogous to most projects that use CMake. In-source builds have been
-explicitly disabled, so first create a build directory `RIDGE-0/release`, as a sister directory
-of `RIDGE-0/git/`.
+explicitly disabled, so first create a build directory `RADAGAST/release`, as a sister directory
+of `RADAGAST/git/`.
 
 Then run CMake from this directory with the `git/` directory (containing the top level
 `CMakeLists.txt`) as the main argument. This is also where build options can be provided using the `-D' option.
@@ -47,7 +47,7 @@ to avoid polluting your system.
 
 Once configured, the variables set for the build can be reviewed by using `cmake -L ../git`. To
 start the build, run `$ make -j <number of jobs>` from the build directory. If you want to use
-RIDGE-0 in another code, you can opt to run `cmake install` to copy some of the files to the
+RADAGAST in another code, you can opt to run `cmake install` to copy some of the files to the
 traditional `lib/` and `include/` directories (located in the directory defined by
 `CMAKE_INSTALL_PREFIX`).
 

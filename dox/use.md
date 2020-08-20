@@ -9,17 +9,17 @@ If compiling your code is a very simple one-liner, use the include flag
 `-I<CMAKE_INSTALL_PREFIX>/include`, where `<CMAKE_INSTALL_PREFIX>` is the install directory you
 specified at configuration. Example:
 ```
-gcc -c main.cpp -o main.o -I"$(HOME)"/RIDGE-0/cmake_release/include
+gcc -c main.cpp -o main.o -I"$(HOME)"/RADAGAST/cmake_release/include
 ```
 
 For the linking step, add the linker path and library names using the flags
-`-L<CMAKE_INSTALL_PREFIX>/lib` and `-lridge`. Your binary will also need to be linked to
+`-L<CMAKE_INSTALL_PREFIX>/lib` and `-lradagast`. Your binary will also need to be linked to
 GSL using `-lgsl` and `-lgslcblas`.
 ```
-gcc main.o -o main -L"$(HOME)"/RIDGE-0/cmake_release/lib -lridge -lgsl -gslcblas
+gcc main.o -o main -L"$(HOME)"/RADAGAST/cmake_release/lib -lradagast -lgsl -gslcblas
 ```
 The order of the `-l` flags is important here for certain linkers (ld). First, ld needs to
-process RIDGE-0, so that it can make a list of symbols that it needs from GSL, and only then
+process RADAGAST, so that it can make a list of symbols that it needs from GSL, and only then
 should the GSL libaries be processed.
 
 ### CMake

@@ -1,8 +1,11 @@
-# RIDGE-0
-**R**adiation, **I**nterstellar **D**ust and **G**as in **E**quilibrium; a **0**D model.
+# RADAGAST
+**RAD**iation and **D**ust **A**ffecting the **GA**s **ST**ate 
 
 ## Description
-RIDGE-0 is a local (0D) gas model for use in 3D dust radiative transfer simulations. Given a certain radiation field and dust model, the equilibrium state for various quantities of the gas are calculated self-consistently. Currently, the module treats the main species consisting of H (H+, H and H2), and their interactions with the radiation field and the dust grains.
+RADAGAST is a local (0D) gas model for use in 3D dust radiative transfer simulations. Given a
+certain radiation field and dust model, the equilibrium state for various quantities of the gas
+are calculated self-consistently. Currently, the module treats the main species consisting of H
+(H+, H and H2), and their interactions with the radiation field and the dust grains.
 
 Quantities calculated self-consistently
 - Gas equilibrium temperature
@@ -24,7 +27,7 @@ From the resulting state, the emissive properties and cross section of the gas c
 - Continuum emission of H (free-bound, free-free, and two-photon)
 - Emission coefficients, opacities, and shapes for the lines of H and H2.
 
-While RIDGE-0 was mainly developed for use in the 3D Monte Carlo Dust Radiative Transfer code <a
+While RADAGAST was mainly developed for use in the 3D Monte Carlo Dust Radiative Transfer code <a
 href="http://www.skirt.ugent.be">SKIRT</a>, it is designed as a stand-alone module which,
 ideally, does not depend on SKIRT in any way. It is possible to use this module in any C++ code
 where the necessary details about the radiation field and the dust can be provided, without
@@ -33,7 +36,7 @@ having to install anything related to SKIRT.
 This code was developed during my PhD research, and contains many equations and data from other authors to implement the processes listed above. Consult my PhD thesis (to be published) for details, equations, and citations. Alternatively, one can build the documentation pages or read the comments for each function in the source code.
 
 ## Third party libraries and data
-RIDGE-0 includes a release of the <a href="https://github.com/onqtam/doctest">doctest</a> C++
+RADAGAST includes a release of the <a href="https://github.com/onqtam/doctest">doctest</a> C++
 testing framework, to power a small set of unit tests.
 
 It also uses <a href="https://eigen.tuxfamily.org">Eigen3</a> for storing vectors and matrices,
@@ -44,7 +47,7 @@ history might contain a copy.
 ## Getting started
 First read how to [build](dox/build.md) the library.
 
-Then try running the main binary produced at `RIDGE-0/../cmake_release/src/mains/main`.
+Then try running the main binary produced at `RADAGAST/../cmake_release/src/mains/main`.
 Experiment by giving a few numerical command line arguments to this program. The command
 ``` main 1e5 1e4 1e3 ```
 will run an example model with a gas density of 1e5 cm-3, under the effect
@@ -52,7 +55,7 @@ of a blackbody source located at a (fixed) distance of 1 pc with a color tempera
 bolometric luminosity of 1e3 solar luminosities.
 
 When this binary works without problems, copy the library built at
-`RIDGE-0/../cmake_release/src/core/libridge.a` to your preferred location (or set
+`RADAGAST/../cmake_release/src/core/libridge.a` to your preferred location (or set
 `CMAKE_INSTALL_PREFIX` and run make install). Then read the [instructions](dox/use.md) on how to
 use the API, write a simple C++ script making the calls, and try building and linking your own
 C++ script to the library.
