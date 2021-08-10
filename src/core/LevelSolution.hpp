@@ -6,7 +6,7 @@
 
 namespace RADAGAST
 {
-    class CollisionParameters;
+    struct CollisionParameters;
     class LevelCoefficients;
     class Spectrum;
 
