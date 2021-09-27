@@ -61,7 +61,9 @@ use the API, write a simple C++ script making the calls, and try building and li
 C++ script to the library.
 
 ## Integration in SKIRT
-There currently exists a branch in my fork of SKIRT which supports gas and makes use of
-RADAGAST. It is currently not up to data with the master branch of SKIRT, because some new
-features have introduces a few conflicts. The reader interested in how RADAGAST is used in
-practice, can examine this development branch: https://github.com/drvdputt/SKIRT9/tree/gas-dev
+The integration with SKIRT is currently being reworked, to make use of the newly developed state
+change mechanisms. See [pull request](https://github.com/SKIRT/SKIRT9/pull/79).
+
+The reader interested in an example of integrating RADAGAST, can examine [SKIRT as used for my
+thesis](https://github.com/drvdputt/SKIRT9/releases/tag/thesis), together with the [analogously
+tagged](https://github.com/drvdputt/RADAGAST/releases/tag/thesis) release of RADAGAST.
