@@ -13,20 +13,25 @@ namespace RADAGAST
     class GasSolution;
     class Spectrum;
 
-    /** This is the interface class that other codes should use. We use the PIMPL pattern here to
-        minimize the amount of includes necessary on the client side, so that the internals of the
-        gas module can be changed without having to recompile large parts of the client code. For
-        implementation details, GasInterfaceImpl.
+    /** This is the interface class that other codes should use. We use the PIMPL pattern here
+        to minimize the amount of includes necessary on the client side, so that the internals
+        of the gas module can be changed without having to recompile large parts of the client
+        code. For implementation details, GasInterfaceImpl. Another advantage is that when
+        installing RADAGAST, only a handful of headers need to be copied to the include/
+        directory. Including GasInterfaceImpl.hpp in the client code directly, would pull in a
+        lot of extra headers.
 
         There are several groups of functions available in this interface. First, there's the
         constructor and several getters for the members that were set during construction. Any data
         given during construction are considered constant during the simulation, and some
         precalculations might be performed based on them.
 
-        The second group consists of functions for working with @c GasState objects. These provide
-        a lightweight way to store the result of the calculation. @c updateGasState and @c
-        initializeGasState change the gas state. The rest extract information from the gas state,
-        either directly or by performing some (re)calculations.
+        The second group consists of functions for working with @c GasState objects. These
+        provide a lightweight way to store the result of the calculation, but they are agnostic
+        of any details about the model. @c updateGasState and @c initializeGasState change the
+        gas state. The rest extract information from the gas state, either directly, or by using
+        some constants stored in the GasInterface instance, or by performing some
+        (re)calculations.
 
         The third group of functions gives full access to the functions that create and modify @c
         GasSolution objects. These are heavyweight, containing all the details of the equilibrium
@@ -93,6 +98,24 @@ namespace RADAGAST
             exist. */
         void updateGasState(GasState&, double n, const std::valarray<double>& meanIntensityv, GrainInterface& gri,
                             GasDiagnostics* gd = nullptr) const;
+
+        /** Serialize GasState into array of doubles, which makes it easier for the client code
+            to implement storage and e.g. MPI communication. Not implemented in GasState,
+            because GasState is agnostic about the details of the model, which we might need. */
+        std::valarray<double> serialize(const GasState&) const;
+
+        /** Write serialized data into GasState. Typical use case:
+            1. run RADAGAST in parallel (MPI)
+            2. store gas states as plain doubles using serialize
+            3. synchronize gas state data between processes using simple MPI calls
+            4. deserialize the blobs and pass the resulting GasStates to RADAGAST to access gas information */
+        void deserialize(GasState&, const std::valarray<double>& blob) const;
+
+        /** Describes every element of the output of serialize, in the form of one string per
+            element. The output looks like {"T", "ne", "np", "nH", "nH2", others...}. GasState
+            is agnostic of the density vector, but GasInterface has access to the chemical
+            model, which is why this is implemented here. */
+        std::vector<std::string> serializationInfo() const;
 
         /** Return the emissivity of the gas, discretized on @c eFrequencyv [erg cm-3 s-1 Hz-1
             sr-1]. If the second argument is @c true, SI units are used instead [W m-3 Hz-1
