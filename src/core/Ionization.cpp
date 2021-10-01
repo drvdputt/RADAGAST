@@ -44,9 +44,14 @@ namespace RADAGAST
         const Array& Iv = meanIntensity.valuev();
         const Array& nuv = meanIntensity.frequencyv();
 
-        // stop when we go below threshold
-        Array integrandv(nuv.size());
+        // start at largest frequency, and stop when we go below threshold
         int i = nuv.size() - 1;
+
+        // when ionizing radiation is not included in wavelength grid, return early
+        if (nuv[i] < THRESHOLD)
+            return 0.;
+
+        Array integrandv(nuv.size());
         while (i >= 0 && nuv[i] > THRESHOLD)
         {
             // Start from I_nu -> erg s-1 cm-2 hz-1 sr-1. Then, 4pi I_nu / hnu = s-1 cm-2 hz-1.
