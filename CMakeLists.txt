@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.1)
 project(RADAGAST)
 
 set(CMAKE_CXX_STANDARD 14)
-add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic -fno-signed-zeros -freciprocal-math -march=native -mtune=native)
+add_compile_options(-Wall -Wextra -Wno-missing-braces -Wno-sign-compare -Werror=return-type -pedantic -fno-signed-zeros -freciprocal-math)
 
 if("${PROJECT_SOURCE_DIR}" STREQUAL "${PROJECT_BINARY_DIR}")
    message(SEND_ERROR "In-source builds are not allowed.\n\
