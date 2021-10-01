@@ -41,35 +41,6 @@ namespace RADAGAST
 
     double Ionization::photoRateCoeff(const Spectrum& meanIntensity)
     {
-        // // Just integrate over the points of the input spectrum here, since the photoionization
-        // // cross section is smooth
-        // const Array& nuv = meanIntensity.frequencyv();
-        // const Array& vv = meanIntensity.valuev();
-
-        // // Integrate over the points [THRESHOLD, nuv[iThres], nuv[iThres + 1], ...]. Including the
-        // // threshold in the integration is a good correction if the grid is coarse, but ultimately,
-        // // the user needs to make sure that the grid is fine enough near the peak/edge of the cross
-        // // section.
-        // size_t iThres = TemplatedUtils::index<double>(THRESHOLD, nuv);
-        // size_t numPoints = nuv.size() - iThres + 1;
-        // Array xv(numPoints);
-        // Array integrandv(numPoints);
-
-        // xv[0] = THRESHOLD;
-        // copy(begin(nuv) + iThres, end(nuv), begin(xv) + 1);
-
-        // // radiation field / nu * cross section
-
-        // // interpolate for this point
-        // integrandv[0] = meanIntensity.evaluate(xv[0]) / xv[0] * crossSection(xv[0]);
-        // for (size_t i = 1; i < numPoints; i++)
-        //     // use the raw spectrum data for the rest
-        //     integrandv[i] = vv[iThres + i - 1] / xv[i] * crossSection(xv[i]);
-
-        // double integral = Constant::FPI / Constant::PLANCK * TemplatedUtils::integrate<double>(xv, integrandv);
-        // return integral;
-
-        // Something might be wrong with the above. Need to rerun SKIRT with this instead
         const Array& Iv = meanIntensity.valuev();
         const Array& nuv = meanIntensity.frequencyv();
 
