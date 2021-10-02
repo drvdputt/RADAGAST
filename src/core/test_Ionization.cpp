@@ -31,9 +31,16 @@ TEST_CASE("Ionization threshold not in grid")
     const Array& meanIntensityv = RadiationFieldTools::generateSpecificIntensityv(frequencyv, 10000, 100);
     Spectrum meanIntensity(frequencyv, meanIntensityv);
     double photoRate = Ionization::photoRateCoeff(meanIntensity);
+    double heatRate = Ionization::heatingPerH(meanIntensity);
 
     if (shouldBeZero)
+    {
         CHECK(photoRate == 0.);
+        CHECK(heatRate == 0.);
+    }
     else
+    {
         CHECK(photoRate > 0.);
+        CHECK(heatRate > 0.);
+    }
 }
