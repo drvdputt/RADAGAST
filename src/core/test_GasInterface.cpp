@@ -1,6 +1,7 @@
 #include "DoctestUtils.hpp"
 #include "GasInterface.hpp"
 #include "GasSolution.hpp"
+#include "GasState.hpp"
 #include "RadiationFieldTools.hpp"
 #include "Testing.hpp"
 
@@ -79,4 +80,30 @@ TEST_CASE("zero radiation field")
 
     GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, gri);
     // no checks for now, just make sure it doesn't crash
+}
+
+TEST_CASE("serialization")
+{
+    // need to make sure this test fails if the current assumptions for the very simple
+    // serialize implementation are violated.
+    auto gi = Testing::genFullModel();
+    GrainInterface gri;
+    GasState gs;
+    auto iv = RadiationFieldTools::generateSpecificIntensityv(gi.iFrequencyv(), 1e4, 100);
+    gi.updateGasState(gs, 1000, iv, gri);
+
+    auto blob = gi.serialize(gs);
+    // hardcode this, to warn me later, when I change the chemistry (number of species), or the
+    // implementation of GasStae. With the way it's implemented now, this should be true
+    CHECK(blob.size() == 6);
+    CHECK(gs.density(0) == blob[1]);
+
+    // manually edit blob to test deserialize, and check again
+    blob[1] = 0;
+    gi.deserialize(gs, blob);
+    CHECK(gs.density(0) == blob[1]);
+
+    // check info function
+    auto info = gi.serializationInfo();
+    CHECK(info.size() == blob.size());
 }

@@ -1,6 +1,7 @@
 #include "GasInterface.hpp"
 #include "GasInterfaceImpl.hpp"
 #include <gsl/gsl_errno.h>
+#include <algorithm>
 
 namespace RADAGAST
 {
@@ -29,6 +30,28 @@ namespace RADAGAST
                                       GrainInterface& gri, GasDiagnostics* gd) const
     {
         _pimpl->updateGasState(gs, n, meanIntensityv, gri, gd);
+    }
+
+    std::valarray<double> GasInterface::serialize(const GasState& gs) const
+    {
+        std::valarray<double> blob(6);
+        blob[0] = gs._t;
+        std::copy(std::begin(gs._nv), std::end(gs._nv), std::begin(blob) + 1);
+        blob[blob.size() - 1] = gs._n2s;
+        return blob;
+    }
+
+    void GasInterface::deserialize(GasState& gs, const std::valarray<double>& blob) const
+    {
+        // this is all just hardcoded. Assumes that blob and current size of _nv in gas state
+        // are compatible. If not, will (and should) probably crash.
+        gs.setMembers(blob[0], std::valarray<double>(&(blob[1]), gs._nv.size()), blob[blob.size() - 1]);
+    }
+
+    std::vector<std::string> GasInterface::serializationInfo() const
+    {
+        // TODO this should be made smarter in case the chemical network becomes configurable
+        return {"T", "ne", "np", "nH", "nH2", "n2s"};
     }
 
     std::valarray<double> GasInterface::emissivityBasic(const GasState& gs, bool SI) const

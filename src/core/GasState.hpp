@@ -24,6 +24,7 @@ namespace RADAGAST
     class GasState
     {
         friend class GasInterfaceImpl;
+        friend class GasInterface;
         friend void Testing::writeGasState(const std::string&, const RADAGAST::GasInterface&,
                                            const RADAGAST::GasState&);
 
