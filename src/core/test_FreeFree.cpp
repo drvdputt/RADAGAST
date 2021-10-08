@@ -24,7 +24,7 @@ TEST_CASE("Free-free cooling data vs manual integration")
         // total emission = 4pi integral(emissivity) = ne np integral(gamma)
         double manuallyIntegrated = np_ne * TemplatedUtils::integrate<double>(integrationgridv, gamma_nuv);
 
-        CAPTURE("cooling data vs manual integration for T = " << T);
+        INFO("cooling data vs manual integration for T = ", T);
         DoctestUtils::checkTolerance("freefree: manually integrated vs from data", manuallyIntegrated, fromData, 1.e-3);
     }
 }

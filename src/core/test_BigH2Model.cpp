@@ -74,8 +74,8 @@ TEST_CASE("H2-specific algorithm")
         // Check if almost all density is in lowest (two) level(s) (ortho+para)
         DoctestUtils::checkTolerance("ground level(s)", nv(0) + nv(1), n, eps);
 
-        CAPTURE("ground level (energy " << ev(0) << ") " << nv(0) << " \n level 1 (energy " << ev(1) << ") " << nv(1)
-                                        << " \n level 3 (energy " << ev(3) << ") " << nv(3) << "\n");
+        INFO("ground level (energy ", ev(0), ") ", nv(0), " \n level 1 (energy ", ev(1), ") ", nv(1),
+             " \n level 3 (energy ", ev(3), ") ", nv(3), "\n");
 
         // Check if all but the lowest two level populations are small compared to total
         CHECK((nv.tail(nv.size() - 2).array() < eps * n).all());
