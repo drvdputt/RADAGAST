@@ -65,7 +65,6 @@ namespace RADAGAST
         _levelCoefficients->forActiveLinesDo([&](size_t upper, size_t lower) {
             double factor = _levelCoefficients->lineOpacityFactor(upper, lower, _nv(upper), _nv(lower));
             LineProfile lp = _levelCoefficients->lineProfile(upper, lower, _t, _cvv);
-            // lp.addToSpectrum(oFrequencyv, total, factor);
             lp.addToBinned(oFrequencyv, total, factor);
         });
         return total;
