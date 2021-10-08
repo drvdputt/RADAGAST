@@ -22,12 +22,6 @@ namespace RADAGAST
             points */
         void addToBinned(const Array& frequencyv, Array& binnedSpectrumv, double factor) const;
 
-        /** Adds the contribution of a single line to the given spectrum. This way we can stop
-            evaluating the voigt function for the line once the contribution to the total spectrum
-            drops below a chosen threshold. 'factor' is the factor by which the line profile should
-            be multiplied before its values are added to the spectrum. */
-        void addToSpectrum(const Array& frequencyv, Array& spectrumv, double factor) const;
-
         /** Integrate the product of the line profile and the given spectrum in an efficient way. A
             recommended set of frequency points for the line (determined by this class) is combined
             with the frequency points that discretize the given spectrum.
@@ -48,6 +42,8 @@ namespace RADAGAST
         double _center, _sigma_gauss, _halfWidth_lorentz;
         double _one_sqrt2sigma;
         double _a;
+        // workaround which switches to purely Lorentzian profile when T=0
+        bool _lorentzMode{false};
     };
 }
 #endif  // CORE_LINEPROFILE_H */

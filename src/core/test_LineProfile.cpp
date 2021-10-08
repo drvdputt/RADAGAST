@@ -1,8 +1,10 @@
+#include "Array.hpp"
 #include "DoctestUtils.hpp"
 #include "Functions.hpp"
 #include "HFromFiles.hpp"
 #include "LevelCoefficients.hpp"
 #include "LineProfile.hpp"
+#include "TemplatedUtils.hpp"
 #include "Testing.hpp"
 #include "doctest.h"
 
@@ -10,20 +12,16 @@ using namespace RADAGAST;
 
 namespace
 {
-    LineProfile testLine()
-    {
-        double c = 4.;
-        double sg = 0.1;
-        double hwl = 0.1;
-        return LineProfile(c, sg, hwl);
-    }
+    double _c = 4.;
 
-    LineProfile mostlyGaussianLine()
+    LineProfile lpFactory(const std::string& testCase)
     {
-        double c = 4.;
-        double sg = 0.2;
-        double hwl = 0.01;
-        return LineProfile(c, sg, hwl);
+        if (testCase == "mixed")
+            return LineProfile(_c, 0.1, 0.1);
+        else if (testCase == "zero")
+            return LineProfile(_c, 0, .1);
+        else  // (testCase == "thermal")
+            return LineProfile(_c, .2, .01);
     }
 
     Spectrum testSpectrum(double base)
@@ -42,26 +40,44 @@ namespace
 TEST_CASE("Test line profile integration over spectrum")
 {
     // Generate a flat spectrum of value base
-    double base = 4.;
+    double base = 5.;
     auto s = testSpectrum(base);
+
+    std::string testCase;
+    double e = 1.e-2;
+    bool warn = false;
 
     SUBCASE("mixed guassian/lorentzian line")
     {
-        auto lp = testLine();
-        double integral = lp.integrateSpectrum(s, 0);
-        // This integral should be about equal to base, if gridpoints are chosen well
-        double e = 1.e-2;
-        DoctestUtils::checkTolerance("test value", integral, base, e, true);
+        testCase = "mixed";
+        // not expected to work perfectly at the moment
+        warn = true;
     }
 
-    SUBCASE("mostly gaussian line")
-    {
-        auto lp = mostlyGaussianLine();
-        double integral = lp.integrateSpectrum(s, 0);
-        // This integral should be about equal to base, if gridpoints are chosen well
-        double e = 1.e-2;
-        DoctestUtils::checkTolerance("test value", integral, base, e);
-    }
+    SUBCASE("mostly gaussian line") { testCase = "thermal"; }
+
+    SUBCASE("zero temp") { testCase = "zero"; }
+
+    auto lp = lpFactory(testCase);
+    double integral = lp.integrateSpectrum(s, 0);
+    // This integral should be about equal to base, if gridpoints are chosen well
+    DoctestUtils::checkTolerance("test value", integral, base, e, warn);
+
+    // we can test the binned addition here too
+    Array freqv = s.frequencyv();
+    Array flux = s.valuev();
+    // last fector in addToSpectrum is integrated line flux
+    double lineStrength = 2;
+    double before = TemplatedUtils::integrate<double, Array, Array>(freqv, flux);
+    lp.addToBinned(freqv, flux, lineStrength);
+    double after = TemplatedUtils::integrate<double, Array, Array>(freqv, flux);
+
+    // check if int(new flux) dnu = int(old flux) dnu + lineStrength
+    DoctestUtils::checkTolerance("old flux + line", after, before+lineStrength, 0.01);
+
+    // Don't have a real way to check result for individual wavelengths yet. I guess we could
+    // try increasing the number of wavelengths and see if it converges to constant + line
+    // profile value.
 }
 
 TEST_CASE("H line profile normalizations")
@@ -91,7 +107,7 @@ TEST_CASE("H line profile normalizations")
         double halfWidth = naturalLineWidthv[i];
 
         // Try different gaussian broadenings
-        for (double T : {1, 10, 100, 1000, 10000})
+        for (double T : {0, 1, 10, 100, 1000, 10000})
         {
             double sigma_nu = nu0 * Functions::thermalVelocityWidth(T, Constant::HMASS) / Constant::LIGHT;
             LineProfile lp(nu0, sigma_nu, halfWidth);

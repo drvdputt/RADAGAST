@@ -18,6 +18,7 @@ namespace RADAGAST
     {
         _one_sqrt2sigma = M_SQRT1_2 / _sigma_gauss;
         _a = _halfWidth_lorentz * _one_sqrt2sigma;
+        if (_sigma_gauss <= 0.) _lorentzMode = true;
     }
 
     double LineProfile::operator()(double nu) const
@@ -26,7 +27,12 @@ namespace RADAGAST
         // Note that the normalization factor is 1 / sqrt(2 pi) sigma
         // return Functions::voigt(_a, x) / Constant::SQRT2PI / _sigma_gauss;
         // return Functions::pseudoVoigt(nu - _center, _sigma_gauss, _halfWidth_lorentz);
-        return Functions::gauss(nu - _center, _sigma_gauss);
+
+        // use gauss, except for zero gaussian width (to avoid bugs)
+        if (_lorentzMode)
+            return Functions::lorentz(nu - _center, _halfWidth_lorentz);
+        else
+            return Functions::gauss(nu - _center, _sigma_gauss);
     }
 
     Array LineProfile::recommendedFrequencyGrid(int numPoints) const
@@ -48,11 +54,16 @@ namespace RADAGAST
         double yMin = (*this)(_center + xMax);
         double linearStep = (yMax - yMin) / (iCenter + 1);  // +1 to avoid stepping below 0
 
-        // Since yMax, and hence (y - linearStep) can be higher than the maximum of a gauss,
-        // inverse_gauss can run into trouble. Scale y down (equivalent to scaling the gauss up)
-        // using this factor.
-        double yMaxGauss = 1. / Constant::SQRT2PI / _sigma_gauss;
-        double scaleGauss = yMaxGauss / yMax;
+        // Since yMax, and hence (y - linearStep) can be higher than the range of the inverse
+        // function we use below (i.e. the peak of Lorentz or Gauss), it can run into trouble.
+        // Scale y down (equivalent to scaling the gauss up) using this factor.
+        double yMaxAllowed;
+        if (_lorentzMode)
+            yMaxAllowed = Functions::lorentz(0, _halfWidth_lorentz);
+        else
+            yMaxAllowed = Functions::gauss(0, _sigma_gauss);
+        // make sure that maximum of this helper function corresponds to actual maximum of line profile
+        double yScale = yMaxAllowed / yMax;
 
         // Fill in the values
         Array freqv(numPoints);
@@ -74,8 +85,12 @@ namespace RADAGAST
         {
             previousx = x;
 
-            // Assume a gaussian. We want to go down a fixed step in the vertical direction.
-            x = Functions::inverse_gauss((y - linearStep) * scaleGauss, _sigma_gauss);
+            // We want to go down a fixed step in the vertical direction.
+            double offset = (y - linearStep) * yScale;
+            if (_lorentzMode)
+                x = Functions::inverse_lorentz(offset, _halfWidth_lorentz);
+            else
+                x = Functions::inverse_gauss(offset, _sigma_gauss);
 
             // If drop was too big, scale down
             double nexty = (*this)(_center + x);
