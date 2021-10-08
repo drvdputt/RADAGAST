@@ -29,7 +29,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: Install Dependencies (MacOS)
-      run: echo placeholder command
+      run: brew install eigen
       if: matrix.os == 'macos-latest'
 
     - name: Configure CMake
