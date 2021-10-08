@@ -78,8 +78,8 @@ TEST_CASE("Combine and dissociate")
         nA = 1e6;
         nB = 1e-6;
     }
-    CAPTURE(nA);
-    CAPTURE(nB);
+    INFO(nA);
+    INFO(nB);
 
     // For each of these subcases, we do the following tests
     double Ntotal = nA + 2 * nB;
@@ -91,7 +91,7 @@ TEST_CASE("Combine and dissociate")
 
     {  // Both formation and destruction
         double eps = 1.e-13;
-        CAPTURE("Balance for " << nA << " " << nB);
+        INFO("Balance for ", nA, " ", nB);
         double kform = 1.;
         double kdiss = 0.2;
         EVector kv(2);
