@@ -19,7 +19,11 @@ namespace
         if (testCase == "mixed")
             return LineProfile(_c, 0.1, 0.1);
         else if (testCase == "zero")
+            // purely lorentzian
             return LineProfile(_c, 0, .1);
+        else if (testCase == "extreme")
+            // extremely narrow profile
+            return LineProfile(_c, 0, 1e-20 * _c);
         else  // (testCase == "thermal")
             return LineProfile(_c, .2, .01);
     }
@@ -58,6 +62,8 @@ TEST_CASE("Test line profile integration over spectrum")
 
     SUBCASE("zero temp") { testCase = "zero"; }
 
+    SUBCASE("extremely narrow") { testCase = "extreme"; }
+
     auto lp = lpFactory(testCase);
     double integral = lp.integrateSpectrum(s, 0);
     // This integral should be about equal to base, if gridpoints are chosen well
@@ -73,7 +79,7 @@ TEST_CASE("Test line profile integration over spectrum")
     double after = TemplatedUtils::integrate<double, Array, Array>(freqv, flux);
 
     // check if int(new flux) dnu = int(old flux) dnu + lineStrength
-    DoctestUtils::checkTolerance("old flux + line", after, before+lineStrength, 0.01);
+    DoctestUtils::checkTolerance("old flux + line", after, before + lineStrength, 0.01);
 
     // Don't have a real way to check result for individual wavelengths yet. I guess we could
     // try increasing the number of wavelengths and see if it converges to constant + line

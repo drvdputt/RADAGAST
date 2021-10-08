@@ -36,8 +36,16 @@ namespace RADAGAST
     private:
         /** Generates a number of points around the line center. For the central points, it is
             attemped keep the vertical spacing more or less constant. For the wings, a linear
-            spacing is used. This had been confirmed to work when the line is mostly Gaussian. */
+            spacing is used. This has been confirmed to work when the line is mostly Gaussian.
+            When the line is extremely narrow, compared to the center frequency, only the center
+            point is returned, because doing otherwise creates numerical precision problems. */
         Array recommendedFrequencyGrid(int numPoints = 27) const;
+
+        /** Add the line to a single bin of the given discretized spectrum, threating the line
+            profile as if it has zero with. The bin chosen is that of which the central
+            wavelength is closest to the center of the line. The added value is factor / (bin
+            width). Does nothing if the center of the line is outside of the frequency range. */
+        void simpleAddToBinned(const Array& frequencyv, Array& binnedSpectrumv, double factor) const;
 
         double _center, _sigma_gauss, _halfWidth_lorentz;
         double _one_sqrt2sigma;
