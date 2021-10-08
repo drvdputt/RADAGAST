@@ -30,6 +30,7 @@ jobs:
 
     - name: Install Dependencies (MacOS)
       run: brew install eigen
+      run: brew install gsl
       if: matrix.os == 'macos-latest'
 
     - name: Configure CMake
