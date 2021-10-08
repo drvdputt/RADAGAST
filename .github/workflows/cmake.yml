@@ -29,8 +29,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: Install Dependencies (MacOS)
-      run: brew install eigen
-      run: brew install gsl
+      run: brew install eigen gsl
       if: matrix.os == 'macos-latest'
 
     - name: Configure CMake
