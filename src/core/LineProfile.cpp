@@ -7,6 +7,7 @@
 #include "TemplatedUtils.hpp"
 #include <cmath>
 #include <iomanip>
+#include <iterator>
 
 using namespace std;
 
@@ -51,6 +52,10 @@ namespace RADAGAST
         double yMax = (*this)(_center);
         // With 2.33 sigma, we get about 0.99 of the gaussian
         double xMax = std::max(2.8 * _sigma_gauss, Functions::lorentz_percentile(0.995, _halfWidth_lorentz));
+
+        // avoid numerical problems for very narrow lines by returning only 1 point
+        if (xMax < 1e-15 * _center) return Array(_center, 1);
+
         double yMin = (*this)(_center + xMax);
         double linearStep = (yMax - yMin) / (iCenter + 1);  // +1 to avoid stepping below 0
 
@@ -131,43 +136,50 @@ namespace RADAGAST
         double gridMax = frequencyv[frequencyv.size() - 1];
 
         const Array& lineGrid = recommendedFrequencyGrid();
+
+        if (lineGrid.size() == 1)
+        {
+            // if the line is too narrow to form a proper grid, just add total integrated value
+            // (1 * factor / deltanu) to the right bin
+            simpleAddToBinned(frequencyv, binnedSpectrumv, factor);
+            return;
+        }
+
+        // else, use the generated frequency grid
         auto lineBegin = begin(lineGrid);
         auto lineEnd = end(lineGrid);
 
         // If line is completely outside grid, do nothing
         if (*lineBegin > gridMax || *(lineEnd - 1) < gridMin) return;
 
-        // If some points for the line are outside the grid, ignore them
+        // line wider than grid --> ignore line points not within grid
         while (*lineBegin < gridMin) lineBegin++;
         while (*(lineEnd - 1) > gridMax) lineEnd--;
         double lineMin = *lineBegin;
         double lineMax = *(lineEnd - 1);
         size_t numLinePoints = distance(lineBegin, lineEnd);
 
-        // We will only do the calculation for frequency bins the line overlaps with.
-
-        // Find the left side of the bin for the first line point
-        auto gridStart = upper_bound(begin(frequencyv), end(frequencyv), lineMin) - 1;
-        // And the right side of the bin for the last line point (the above code guarantees that
-        // lineMax is smaller than the max of frequencyv)
-        auto gridStop = upper_bound(begin(frequencyv), end(frequencyv), lineMax);
+        // line narrower than grid --> ignore grid points not within span of line
+        // (the above code guarantees that lineMax is smaller than the max of frequencyv)
+        auto gridBegin = upper_bound(begin(frequencyv), end(frequencyv), lineMin) - 1;
+        auto gridEnd = upper_bound(begin(frequencyv), end(frequencyv), lineMax);
 
         // The bin edges are defined by the centers between the grid points + the outermost grid
         // points themselves.
         //       bin index, . is center, | is grid point
         //      000111111333
         // start|--.--|--.--|stop
-        size_t nCenters = distance(gridStart, gridStop);
+        size_t nCenters = distance(gridBegin, gridEnd);
         vector<double> binEdges;
         binEdges.reserve(nCenters);
 
-        binEdges.emplace_back(*gridStart);  // leftmost point
-        for (auto right = gridStart + 1; right <= gridStop; right++)
+        binEdges.emplace_back(*gridBegin);  // leftmost point
+        for (auto right = gridBegin + 1; right <= gridEnd; right++)
         {
             auto left = right - 1;
             binEdges.emplace_back((*right + *left) / 2.);  // centers
         }
-        binEdges.emplace_back(*gridStop);  // rightmost point
+        binEdges.emplace_back(*gridEnd);  // rightmost point
 
         // Now merge the bin edges and the line points, which will serve as an
         // integration grid
@@ -183,7 +195,7 @@ namespace RADAGAST
         // Start with the distance to the left edge of the first bin (the result will be added to
         // consecutive grid points 'offset', which, according to our algorithm, are located at the
         // centers of the bins.)
-        size_t offset = distance(begin(frequencyv), gridStart);
+        size_t offset = distance(begin(frequencyv), gridBegin);
         for (auto right = begin(binEdges) + 1; right != end(binEdges); right++, offset++)
         {
             // Find the correct integration range
@@ -216,7 +228,7 @@ namespace RADAGAST
         constexpr size_t numPoints = 20;
         const Array lineGrid = recommendedFrequencyGrid(numPoints);
 
-        if (Options::lineprofile_optimizedLineIntegration)
+        if (lineGrid.size() > 1 && Options::lineprofile_optimizedLineIntegration)
         {
             const size_t iCenter = numPoints / 2;
             // We also have the maximum of the spectrum to our disposal. As long as a frequency
@@ -368,6 +380,29 @@ namespace RADAGAST
                 integrandv[i] = val * (*this)(freq);
             }
             return TemplatedUtils::integrate<double>(frequencyv, integrandv);
+        }
+    }
+
+    void LineProfile::simpleAddToBinned(const Array& frequencyv, Array& binnedSpectrumv, double factor) const
+    {
+        // find closest frequency
+        auto right = upper_bound(begin(frequencyv), end(frequencyv), _center);
+
+        if (right == begin(frequencyv) || right == end(frequencyv))
+            // if out of range do nothing
+            return;
+        else
+        {
+            // else (index 1 to n-1)
+            double dleft = _center - *(right - 1);
+            double dright = *right - _center;
+
+            // if right side is closest, this is the correct bin
+            int i = distance(begin(frequencyv), right);
+            // else, need the one to the left
+            if (dleft < dright) i -= 1;
+
+            binnedSpectrumv[i] += factor / (*right - *(right - 1));
         }
     }
 }
