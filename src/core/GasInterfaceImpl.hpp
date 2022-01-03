@@ -50,8 +50,8 @@ namespace RADAGAST
         const std::valarray<double>& oFrequencyv() const { return _oFrequencyv; }
         const std::valarray<double>& eFrequencyv() const { return _eFrequencyv; }
 
-        void updateGasState(RADAGAST::GasState&, double n, const std::valarray<double>& meanIntensityv,
-                            RADAGAST::GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
+        void updateGasState(RADAGAST::GasState&, double n, const std::valarray<double>& meanIntensityv, double fshield,
+                            RADAGAST::GrainInterface& gri, GasDiagnostics* gd) const;
 
         Array emissivityBasic(const RADAGAST::GasState& gs, bool SI = false) const;
         Array opacityBasic(const RADAGAST::GasState& gs, bool SI = false) const;
@@ -63,9 +63,10 @@ namespace RADAGAST
         std::string quickInfo(const RADAGAST::GasState& gs, const std::valarray<double>& meanIntensity) const;
         int index(const std::string& name) const;
 
-        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, RADAGAST::GrainInterface&) const;
-        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, RADAGAST::GrainInterface&,
-                                   double h2FormationOverride = -1) const;
+        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, double fshield,
+                                     RADAGAST::GrainInterface&) const;
+        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, double fshield,
+                                   RADAGAST::GrainInterface&, double h2FormationOverride = -1) const;
         double solveDensities(GasSolution&, double n, double T, const Spectrum& meanIntensity,
                               bool startFromCurrent = false, double h2FormationOverride = -1) const;
         GasSolution solveDensitiesNoH2(double n, double T, const Spectrum& meanIntensity,
@@ -74,7 +75,8 @@ namespace RADAGAST
     private:
         /** Construct a new GasSolution model, passing all the necessary (references to) objects.
             The SpeciesModelManager is used to create the HModel and H2Model. */
-        GasSolution makeGasSolution(const Spectrum& meanIntensity, const RADAGAST::GrainInterface*) const;
+        GasSolution makeGasSolution(const Spectrum& meanIntensity, double fshield,
+                                    const RADAGAST::GrainInterface*) const;
 
         /** Create a species vector which is zero everywhere, except for e-, p+, H, and H2.
             Arguments: the total amount of H nuclei n, the ionized to total fraction (np / n), the

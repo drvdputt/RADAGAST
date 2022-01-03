@@ -22,12 +22,31 @@ namespace RADAGAST
         while searching for the equilibrium) are stored. When each thread has its own GasSolution
         object to work with, the code will be re-entrant.
 
-        There are functions that update the level populations and the grain temperatures and charge
-        distributions. They should typically be called after setting a new temperature and a new
-        species density vector. Once the equilibria have been calculated, the other public
+        The gas temperature T and density vector nv are to be manually set via the available
+        setters. The goal of this class is to compute all quantities that can be derived from
+        the given (T, nv) state. By having (T, nv) be set manually, this class can also be used
+        to recompute more detailed information from just this small number of doubles, which
+        might have been discarded by a RADAGAST client for memory efficiency reasons.
+
+        There are functions that update the level populations and the grain temperatures and
+        charge distributions. Once the equilibria have been calculated, the other public
         functions can be called to calculate any derived quantities. Some of the latter are not
-        const because some caching or calculations using preallocated memory might happen somewhere
-        down the composition hierarchy. */
+        const because some caching or calculations using preallocated memory might happen
+        somewhere down the composition hierarchy.
+
+        The internal state can be updated consistently by calling the @ updateAll function.
+
+        Concluding, the use case is as follows:
+
+        1. make GasSolution instance
+
+        2. set T and nv
+
+        3. sync all the variables with new T and nv
+
+        4. extract information as desired. The high-level loop of RADAGAST uses this information
+           to find a new (T, nv) and goes back to 2.
+    */
     class GasSolution
     {
     public:
@@ -35,7 +54,7 @@ namespace RADAGAST
             HModel and H2Model, ownership is transferred (using move) to this object, since their
             contents change while searching for the solution. When a non-trivial GrainInterface
             object is passed, this class will keep track of a list of GrainSolution objects. */
-        GasSolution(const RADAGAST::GrainInterface* gri, const Spectrum* meanIntensity,
+        GasSolution(const RADAGAST::GrainInterface* gri, const Spectrum* meanIntensity, double fshield,
                     const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel, std::unique_ptr<H2Model> h2Model,
                     const FreeBound* freeBound, const FreeFree* freeFree);
 
@@ -123,8 +142,12 @@ namespace RADAGAST
         std::shared_ptr<HModel> _hSolution;
         std::shared_ptr<H2Model> _h2Solution;
 
-        // references to constant data
+        // Radiation field and shielding factor, as supplied by the client code (might be needed
+        // in lower-level physics too (probably H2model))
         const Spectrum* _meanIntensity;
+        double _fshield{0};
+
+        // Data read in during RADAGAST set up
         const FreeBound* _freeBound;
         const FreeFree* _freeFree;
 

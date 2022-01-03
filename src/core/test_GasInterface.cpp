@@ -43,7 +43,7 @@ TEST_CASE("Blackbodies test")
         Spectrum meanIntensity(frequencyv, RadiationFieldTools::generateBlackbodyv(frequencyv, Tc));
         RADAGAST::GrainInterface gri;
         if (withDust) Testing::genMRNDust(gri, nHtotal, meanIntensity, true);
-        GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, gri);
+        GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, 1., gri);
         double T = s.t();
         CAPTURE(Tc);
         CAPTURE(T);
@@ -78,7 +78,7 @@ TEST_CASE("zero radiation field")
         SUBCASE("nonzero grains") { Testing::genMRNDust(gri, nHtotal, meanIntensity, true); }
     }
 
-    GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, gri);
+    GasSolution s = gi.solveTemperature(nHtotal, meanIntensity, 1., gri);
     // no checks for now, just make sure it doesn't crash
 }
 
@@ -90,7 +90,7 @@ TEST_CASE("serialization")
     GrainInterface gri;
     GasState gs;
     auto iv = RadiationFieldTools::generateSpecificIntensityv(gi.iFrequencyv(), 1e4, 100);
-    gi.updateGasState(gs, 1000, iv, gri);
+    gi.updateGasState(gs, 1000, iv, 1., gri);
 
     auto blob = gi.serialize(gs);
     // hardcode this, to warn me later, when I change the chemistry (number of species), or the
