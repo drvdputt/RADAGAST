@@ -22,11 +22,11 @@ namespace RADAGAST
         return std::make_unique<HModel>(_hData.get(), meanIntensity);
     }
 
-    std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model(const Spectrum* meanIntensity) const
+    std::unique_ptr<H2Model> SpeciesModelManager::makeH2Model(const Spectrum* meanIntensity, double fshield) const
     {
         if (Options::speciesmodelmanager_enableBigH2)
             return std::make_unique<BigH2Model>(_h2Data.get(), meanIntensity);
         else
-            return std::make_unique<SimpleH2>(&_h2LTECool, meanIntensity);
+            return std::make_unique<SimpleH2>(&_h2LTECool, meanIntensity, fshield);
     }
 }

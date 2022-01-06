@@ -443,7 +443,7 @@ namespace RADAGAST
         // Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
         // C++14. Scott Meyers.
         std::unique_ptr<HModel> hm = _manager.makeHModel(&meanIntensity);
-        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&meanIntensity);
+        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&meanIntensity, fshield);
         GasSolution s(gri, &meanIntensity, fshield, &_chemistry.speciesIndex(), move(hm), move(h2m), &_freeBound,
                       &_freeFree);
         return s;

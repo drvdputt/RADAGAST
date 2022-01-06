@@ -96,8 +96,8 @@ namespace RADAGAST
 
         // scale these H2 quantities with the shielding factor for now. A more physically
         // motivated approach might be implemented later at a lower level, inside the H2 model
-        double h2Line = _h2Solution->netHeating() * _fshield;
-        double dissHeat = _h2Solution->dissociationHeating() * _fshield;
+        double h2Line = _h2Solution->netHeating();
+        double dissHeat = _h2Solution->dissociationHeating();
 
         double grainHeat = grainHeating();
         DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
@@ -129,7 +129,7 @@ namespace RADAGAST
         if (!gd) Error::runtime("GasDiagnostics is nullptr!");
 
         double h2form = kGrainH2FormationRateCoeff();
-        double h2dissoc = _h2Solution->dissociationRate() * _fshield;
+        double h2dissoc = _h2Solution->dissociationRate();
 
         double hphotoion = Ionization::photoRateCoeff(*_meanIntensity);
         double hcolion = Ionization::collisionalRateCoeff(_t);
@@ -149,7 +149,7 @@ namespace RADAGAST
             }
         }
         double netHline = _hSolution->netHeating();
-        double netH2line = _h2Solution->netHeating() * _fshield;
+        double netH2line = _h2Solution->netHeating();
 
         gd->setHeating("H ion", nH() * _ionHeatPerH);
         gd->setCooling("Hrec", Ionization::cooling(nH(), np(), ne(), _t));
@@ -158,7 +158,7 @@ namespace RADAGAST
 
         gd->setHeating("H2 deexc", netH2line);
         gd->setCooling("H2 exc", -netH2line);
-        gd->setHeating("H2 dissoc", kDissH2Levels());
+        gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating());
         gd->setCooling("freefree", _freeFree->cooling(np() * ne(), _t));
 
         // I need this per grain size. Doing this thing for now.
@@ -177,7 +177,7 @@ namespace RADAGAST
         g.setMembers(_t, {_sv.data(), _sv.size()}, _hSolution->n2s());
     }
 
-    double GasSolution::kDissH2Levels() const { return _h2Solution->dissociationRate() * _fshield; }
+    double GasSolution::kDissH2Levels() const { return _h2Solution->dissociationRate(); }
 
     double GasSolution::kGrainH2FormationRateCoeff() const { return _kGrainH2FormationRateCoeff; }
 }
