@@ -352,7 +352,7 @@ namespace RADAGAST
 
         RADAGAST::GasState gs;
         RADAGAST::GrainInterface gri{};
-        gi.updateGasState(gs, n, meanIntensityv, gri);
+        gi.updateGasState(gs, n, meanIntensityv, 1., gri);
         writeGasState(outputPath, gi, gs);
     }
 
@@ -461,7 +461,7 @@ namespace RADAGAST
         // Initial
         Array Tv = Testing::generateGeometricGridv(100, 10, 50000);
         double T0 = 10000;
-        GasSolution s = gi.solveDensities(n, T0, meanIntensity, gri);
+        GasSolution s = gi.solveDensities(n, T0, meanIntensity, 1., gri);
         GasDiagnostics gd;
         s.fillDiagnostics(&gd);
 
@@ -931,7 +931,7 @@ namespace RADAGAST
         genMRNDust(gri, nHtotal, Spectrum{frequencyv, meanIntensityv}, car);
 
         Spectrum meanIntensity(frequencyv, meanIntensityv);
-        GasSolution s = gasInterface.solveTemperature(nHtotal, meanIntensity, gri);
+        GasSolution s = gasInterface.solveTemperature(nHtotal, meanIntensity, 1., gri);
         // Fixed temperature call, for convenience when testing:
         // GasSolution s = gi_pimpl->solveDensities(nHtotal, 49.4, meanIntensity, gri);
         if (write)

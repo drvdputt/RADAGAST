@@ -7,7 +7,7 @@
 
 namespace RADAGAST
 {
-    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity) : _lteCool{lteCool}
+    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity, double fshield) : _fshield{fshield}, _lteCool{lteCool}
     {
         _g = RadiationFieldTools::gHabing(*meanIntensity);
     }
@@ -19,11 +19,8 @@ namespace RADAGAST
         // double Rpump = 3.4e-10 * beta(tau) * G_0 * exp(-2.5 * Av); I assume that G_0 * exp(-2.5
         // * Av) is just the attenuated radiation field.
 
-        // We might needs some value for tau / beta to describe self-shielding. For now, use 1.
-        double beta = 1;
-
         // equation A8 and a factor 1e-1 (from the text: 10% pumps end up in dissociation)
-        double Rpump = 3.4e-10 * beta * _g;
+        double Rpump = 3.4e-10 * _fshield * _g;
         constexpr double Rdecay = 2e-7;  // s-1
 
         // Equation A13 and A14, for downward collisions --> deexcitation heating. Divide by 6
@@ -44,7 +41,7 @@ namespace RADAGAST
         _nH2g = _nH2 - _nH2s;
 
         // Equation A9, for dissociation heating
-        _gamma3 = 1.36e-23 * _nH2 * beta * _g;
+        _gamma3 = 1.36e-23 * _nH2 * _fshield * _g;
 
         // Energy of the psuedo level. See text below eq. A11 in TH85
         constexpr double Es = 2.6 * Constant::EV;

@@ -10,12 +10,12 @@
 
 namespace RADAGAST
 {
-    GasSolution::GasSolution(const RADAGAST::GrainInterface* gri, const Spectrum* meanIntensity,
+    GasSolution::GasSolution(const RADAGAST::GrainInterface* gri, const Spectrum* meanIntensity, double fshield,
                              const SpeciesIndex* speciesIndex, std::unique_ptr<HModel> hModel,
                              std::unique_ptr<H2Model> h2Model, const FreeBound* freeBound, const FreeFree* freeFree)
         : _sv(speciesIndex), _hSolution(std::move(hModel)),
-          _h2Solution(std::move(h2Model)), _meanIntensity{meanIntensity}, _freeBound{freeBound}, _freeFree{freeFree},
-          _ionHeatPerH{Ionization::heatingPerH(*meanIntensity)}
+          _h2Solution(std::move(h2Model)), _meanIntensity{meanIntensity}, _fshield{fshield},
+          _freeBound{freeBound}, _freeFree{freeFree}, _ionHeatPerH{Ionization::heatingPerH(*meanIntensity)}
     {
         int numPop = gri->numPopulations();
         if (numPop)
@@ -92,9 +92,13 @@ namespace RADAGAST
     double GasSolution::heating()
     {
         double hLine = _hSolution->netHeating();
-        double h2Line = _h2Solution->netHeating();
         double hPhotoIonHeat = nH() * _ionHeatPerH;
+
+        // scale these H2 quantities with the shielding factor for now. A more physically
+        // motivated approach might be implemented later at a lower level, inside the H2 model
+        double h2Line = _h2Solution->netHeating();
         double dissHeat = _h2Solution->dissociationHeating();
+
         double grainHeat = grainHeating();
         DEBUG("Heating contributions: Hln " << hLine << " H2ln " << h2Line << " Hphot " << hPhotoIonHeat << " H2diss "
                                             << dissHeat << " Grphot " << grainHeat << '\n');

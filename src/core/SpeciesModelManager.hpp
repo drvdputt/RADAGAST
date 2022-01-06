@@ -32,7 +32,7 @@ namespace RADAGAST
             H2 data stored here, while a SmallH2Model ideally does not need it. A pointer to the
             radiation field is requested, to allow the H2 model to precalculate some
             quantities. */
-        std::unique_ptr<H2Model> makeH2Model(const Spectrum* meanIntensityv) const;
+        std::unique_ptr<H2Model> makeH2Model(const Spectrum* meanIntensityv, double fshield) const;
 
     private:
         std::unique_ptr<HData> _hData;

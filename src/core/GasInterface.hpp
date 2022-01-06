@@ -92,12 +92,20 @@ namespace RADAGAST
             objects. The absorption efficiency of the grains currently needs to be tabulated for
             the same frequencies contained in iFrequencyv.
 
+            Since H2 self-shielding is a non-local effect, it cannot be taken into account by
+            RADAGAST (except with extremely high spectral resolution). The fshield argument
+            provides a way to let the client provide an appropriate self-shielding factor
+            (between 0 and 1), typically derived from its own radiative transfer calculations or
+            approximation for NH2. If this factor is provided, the 'naive' free-space
+            dissociation rate will be multiplied by it. (D = f * average FUV * integrated
+            sigma).
+
             The last argument is an optional pointer to a GasDiagnostics object. If provided, the
             object will be filled with various diagnostic data (slow!). I'm not sure if I'm going
             to keep this functionality, now that the functions for working with @c GasSolution
             exist. */
-        void updateGasState(GasState&, double n, const std::valarray<double>& meanIntensityv, GrainInterface& gri,
-                            GasDiagnostics* gd = nullptr) const;
+        void updateGasState(GasState&, double n, const std::valarray<double>& meanIntensityv, double fshield,
+                            GrainInterface& gri, GasDiagnostics* gd = nullptr) const;
 
         /** Serialize GasState into array of doubles, which makes it easier for the client code
             to implement storage and e.g. MPI communication. Not implemented in GasState,
@@ -155,12 +163,13 @@ namespace RADAGAST
 
         /** Find the equilibrium temperature, by repeatedly solving the densities and evaluating th
             heating and cooling. @c updateGasState works via this function under the hood. */
-        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, RADAGAST::GrainInterface&) const;
+        GasSolution solveTemperature(double n, const Spectrum& meanIntensity, double fshield,
+                                     RADAGAST::GrainInterface&) const;
 
         /** Find the equilibrium densities for a fixed temperature (heating/cooling will be out of
             equilibrium). */
-        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, RADAGAST::GrainInterface&,
-                                   double h2FormationOverride = -1) const;
+        GasSolution solveDensities(double n, double T, const Spectrum& meanIntensity, double fshield,
+                                   RADAGAST::GrainInterface&, double h2FormationOverride = -1) const;
 
         /** Recalculate the densities for an existing GasSolution object. If startFromCurrent is
             true, the current contents of the GasSolution are potentially used as an initial guess

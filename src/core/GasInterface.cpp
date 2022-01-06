@@ -27,9 +27,9 @@ namespace RADAGAST
     const std::valarray<double>& GasInterface::eFrequencyv() const { return _pimpl->eFrequencyv(); }
 
     void GasInterface::updateGasState(GasState& gs, double n, const std::valarray<double>& meanIntensityv,
-                                      GrainInterface& gri, GasDiagnostics* gd) const
+                                      double fshield, GrainInterface& gri, GasDiagnostics* gd) const
     {
-        _pimpl->updateGasState(gs, n, meanIntensityv, gri, gd);
+        _pimpl->updateGasState(gs, n, meanIntensityv, fshield, gri, gd);
     }
 
     std::valarray<double> GasInterface::serialize(const GasState& gs) const
@@ -87,16 +87,16 @@ namespace RADAGAST
 
     int GasInterface::index(const std::string& name) const { return _pimpl->index(name); }
 
-    GasSolution GasInterface::solveTemperature(double n, const Spectrum& meanIntensity,
+    GasSolution GasInterface::solveTemperature(double n, const Spectrum& meanIntensity, double fshield,
                                                RADAGAST::GrainInterface& gri) const
     {
-        return _pimpl->solveTemperature(n, meanIntensity, gri);
+        return _pimpl->solveTemperature(n, meanIntensity, fshield, gri);
     }
 
-    GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& meanIntensity,
+    GasSolution GasInterface::solveDensities(double n, double T, const Spectrum& meanIntensity, double fshield,
                                              RADAGAST::GrainInterface& gri, double h2FormationOverride) const
     {
-        return _pimpl->solveDensities(n, T, meanIntensity, gri, h2FormationOverride);
+        return _pimpl->solveDensities(n, T, meanIntensity, fshield, gri, h2FormationOverride);
     }
 
     double GasInterface::solveDensities(GasSolution& s, double n, double T, const Spectrum& meanIntensity,

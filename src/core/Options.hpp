@@ -14,7 +14,7 @@ namespace RADAGAST
         // PHYSICS //
         /////////////
 
-        const bool speciesmodelmanager_enableBigH2 = true;
+        const bool speciesmodelmanager_enableBigH2 = false;
 
         // Determine which levels and transition data to load/use for the electronic ground
         // state (X) and the electronically excited states (E). These can be set separately

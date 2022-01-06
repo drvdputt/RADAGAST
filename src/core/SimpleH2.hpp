@@ -16,7 +16,7 @@ namespace RADAGAST
     public:
         /** Create a new workspace for the simple H2 model. A pointer to the LTE H2 line cooling
             table needs to be given (see SpeciesModelManager). */
-        SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity);
+        SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity, double fshield);
 
         /** Calculate the H2 to H2* ratio, and all other quantities that depend on more than
             just the radiation field. Should be called before any of the functions below. */
@@ -33,6 +33,7 @@ namespace RADAGAST
 
         // set at construction
         double _g{0};  // radiation field in habing units
+        double _fshield{0}; // self-shielding factor provided by client code
 
         // set during solve()
         double _nH2{0};                           // total H2 density

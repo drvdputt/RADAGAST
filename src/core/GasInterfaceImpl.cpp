@@ -48,12 +48,11 @@ namespace RADAGAST
             _h2crossv[i] = 3.33 * Ionization::crossSection(oFrequencyv[i]);
     }
 
-    void GasInterfaceImpl::updateGasState(RADAGAST::GasState& gs, double n,
-                                          const std::valarray<double>& meanIntensityv,
-                                          RADAGAST::GrainInterface& grainInfo, GasDiagnostics* gd) const
+    void GasInterfaceImpl::updateGasState(RADAGAST::GasState& gs, double n, const std::valarray<double>& meanIntensityv,
+                                          double fshield, RADAGAST::GrainInterface& grainInfo, GasDiagnostics* gd) const
     {
         Spectrum meanIntensity(_iFrequencyv, meanIntensityv);
-        GasSolution s = solveTemperature(n, meanIntensity, grainInfo);
+        GasSolution s = solveTemperature(n, meanIntensity, fshield, grainInfo);
         s.setGasState(gs);
         if (gd) s.fillDiagnostics(gd);
     }
@@ -108,7 +107,7 @@ namespace RADAGAST
 
         // calculate the gas solution, without iteration since we already provide the correct t
         // and nv
-        auto s = makeGasSolution(meanIntensity, &gri);
+        auto s = makeGasSolution(meanIntensity, 1., &gri);
         s.setT(gs._t);
         s.setSpeciesNv(sv.speciesNv());
         s.solveGrains();
@@ -137,7 +136,7 @@ namespace RADAGAST
 
         // calculate the gas solution, without iteration since we already provide the correct t
         // and nv
-        auto s = makeGasSolution(meanIntensity, &gri);
+        auto s = makeGasSolution(meanIntensity, 1., &gri);
         s.setT(gs._t);
         s.setSpeciesNv(sv.speciesNv());
 
@@ -197,10 +196,10 @@ namespace RADAGAST
         }
     }  // namespace
 
-    GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& meanIntensity,
+    GasSolution GasInterfaceImpl::solveTemperature(double n, const Spectrum& meanIntensity, double fshield,
                                                    RADAGAST::GrainInterface& gri) const
     {
-        GasSolution s = makeGasSolution(meanIntensity, &gri);
+        GasSolution s = makeGasSolution(meanIntensity, fshield, &gri);
         if (n <= 0)
         {
             solveDensities(s, 0, 0, meanIntensity);
@@ -291,10 +290,10 @@ namespace RADAGAST
         return s;
     }
 
-    GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum& meanIntensity,
+    GasSolution GasInterfaceImpl::solveDensities(double n, double T, const Spectrum& meanIntensity, double fshield,
                                                  RADAGAST::GrainInterface& gri, double h2FormationOverride) const
     {
-        GasSolution s = makeGasSolution(meanIntensity, &gri);
+        GasSolution s = makeGasSolution(meanIntensity, fshield, &gri);
         solveDensities(s, n, T, meanIntensity, false, h2FormationOverride);
         return s;
     }
@@ -420,7 +419,7 @@ namespace RADAGAST
         return previousHeating - previousCooling;
     }
 
-    GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& meanIntensity,
+    GasSolution GasInterfaceImpl::makeGasSolution(const Spectrum& meanIntensity, double fshield,
                                                   const RADAGAST::GrainInterface* gri) const
     {
         // Since I keep forgetting why it is good to make a factory function return unique
@@ -444,8 +443,9 @@ namespace RADAGAST
         // Reference: Effective Modern C++. 42 SPECIFIC WAYS TO IMPROVE YOUR USE OF C++11 AND
         // C++14. Scott Meyers.
         std::unique_ptr<HModel> hm = _manager.makeHModel(&meanIntensity);
-        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&meanIntensity);
-        GasSolution s(gri, &meanIntensity, &_chemistry.speciesIndex(), move(hm), move(h2m), &_freeBound, &_freeFree);
+        std::unique_ptr<H2Model> h2m = _manager.makeH2Model(&meanIntensity, fshield);
+        GasSolution s(gri, &meanIntensity, fshield, &_chemistry.speciesIndex(), move(hm), move(h2m), &_freeBound,
+                      &_freeFree);
         return s;
     }
 
