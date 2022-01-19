@@ -7,7 +7,8 @@
 
 namespace RADAGAST
 {
-    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity, double fshield) : _fshield{fshield}, _lteCool{lteCool}
+    SimpleH2::SimpleH2(const LookupTable* lteCool, const Spectrum* meanIntensity, double fshield)
+        : _fshield{fshield}, _lteCool{lteCool}
     {
         _g = RadiationFieldTools::gHabing(*meanIntensity);
     }
@@ -23,6 +24,10 @@ namespace RADAGAST
         double Rpump = 3.4e-10 * _fshield * _g;
         constexpr double Rdecay = 2e-7;  // s-1
 
+        // DB96 say 15% instead of 10%. That's one more significant digit. Can't hurt giving
+        // this a shot.
+        double pDiss = .15;
+
         // Equation A13 and A14, for downward collisions --> deexcitation heating. Divide by 6
         // here: see text above equation A14
         double T = cp._t;
@@ -34,7 +39,7 @@ namespace RADAGAST
 
         // 90% of FUV pumps end up in vib-rot excited states. The latter can decay radiatively or
         // collisionally (eq. A14 + text immediatly below)
-        double ratio_ns_ng = .9 * Rpump / (Rdecay + colH + colH2);
+        double ratio_ns_ng = (1 - pDiss) * Rpump / (Rdecay + colH + colH2);
 
         // ns = ratio * ng = ratio * (n - ns) ==> ns = ratio * n / (1 + ratio)
         _nH2s = ratio_ns_ng * _nH2 / (1 + ratio_ns_ng);
@@ -51,7 +56,7 @@ namespace RADAGAST
         DEBUG("G " << _g << " Gamma3 " << _gamma3 << " Gamma4 " << _gamma4 << " GA08 " << _collisionalExcitationCooling
                    << '\n');
 
-        _solomonDissoc = .1 * Rpump;
+        _solomonDissoc = pDiss * Rpump;
         // equation A12, watch out for nan
         _directDissoc = _nH2 > 0 ? 1e-11 * _g * _nH2s / _nH2 : 0;
     }
