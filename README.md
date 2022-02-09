@@ -52,11 +52,10 @@ When this binary works without problems, copy the library built at `RADAGAST/../
 Then read the [instructions](dox/use.md) on how to use the API, write a simple C++ script making the calls, and try building and linking your own C++ script to the library.
 
 ## Integration in SKIRT
-The integration with SKIRT is currently being reworked, to make use of the newly developed state change mechanisms.
+To store, use, and update gas properties, we make use of the newly developed dynamic state mechanisms for SKIRT.
 See [pull request](https://github.com/SKIRT/SKIRT9/pull/79).
-Current development is happening in the [gas-dev branch of SKIRT](https://github.com/drvdputt/SKIRT9/tree/gas-dev). 
-This branch should usually be up to date with the latest of RADAGAST.
+The branch of SKIRT that integrates RADAGAST can be found on my fork, and is called [gas-dev](https://github.com/drvdputt/SKIRT9/tree/gas-dev).
+This branch should be compatible with the latest commit of RADAGAST.
 
-The reader interested in an example of integrating RADAGAST, can examine [SKIRT as used for my
-thesis](https://github.com/drvdputt/SKIRT9/releases/tag/thesis), together with the [analogously
-tagged](https://github.com/drvdputt/RADAGAST/releases/tag/thesis) release of RADAGAST.
+The versions of RADAGAST/SKIRT used for my PhD thesis are older.
+See the [thesis release tag for SKIRT](https://github.com/drvdputt/SKIRT9/releases/tag/thesis), and the [thesis release tag for RADAGAST](https://github.com/drvdputt/RADAGAST/releases/tag/thesis).
