@@ -23,6 +23,11 @@ namespace RADAGAST
             abort();
         }
 
+        static inline void warn(std::string message)
+        {
+            std::cerr << "RADAGAST warning: " << message << '\n';
+        }
+
         template<typename T> void equalCheck(std::string variable_names, T value1, T value2)
         {
             if (value1 != value2)

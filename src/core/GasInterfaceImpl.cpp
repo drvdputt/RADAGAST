@@ -1,6 +1,7 @@
 #include "GasInterfaceImpl.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "EigenAliases.hpp"
 #include "Functions.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "Ionization.hpp"
@@ -364,7 +365,9 @@ namespace RADAGAST
             if (previousAbundancev.array().isNaN().any())
             {
                 std::cerr << previousAbundancev;
-                Error::runtime("Nan in chemistry solution!");
+                Error::warn("Nan in chemistry solution! Setting to zero.");
+                previousAbundancev.setZero();
+                s.setSpeciesNv(EVector::Zero(previousAbundancev.size()));
             }
 
             // GRAIN, LEVELS, AND CHEMISTRY SOLUTIONS -> CHEM RATES
