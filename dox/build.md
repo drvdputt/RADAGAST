@@ -40,10 +40,12 @@ necessary. By default, CMake will look for the Eigen3 headers in a handful of lo
 fails, provide the path to the `eigen3/` containing the headers by setting the
 EIGEN3_INCLUDE_DIR variable, as shown above.
 
-The install prefix can be chosen freely. It determines where the library and its headers will be
-installed once the build has completed. By default, this is `/usr/local/lib/` and
-`/usr/local/include/`, but you might want to change this to a location in your own home directory,
-to avoid polluting your system.
+If you experience header or linking problems related to GSL, it is usually it is installed in a non-standard location (i.e. the module FindGSL.cmake shipped with cmake can't find it).
+In that case, use the option `-DGSL_ROOT_DIR=/your_gsl_install_prefix/`.
+
+The install prefix for RADAGAST can be chosen freely.
+It determines where the library and its headers will be installed once the build has completed.
+By default, this is `/usr/local/lib/` and `/usr/local/include/`, but you might want to change this to a location in your own home directory, to avoid polluting your system.
 
 Once configured, the variables set for the build can be reviewed by using `cmake -L ../git`. To
 start the build, run `$ make -j <number of jobs>` from the build directory. If you want to use
