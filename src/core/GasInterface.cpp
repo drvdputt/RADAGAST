@@ -32,20 +32,29 @@ namespace RADAGAST
         _pimpl->updateGasState(gs, n, meanIntensityv, fshield, gri, gd);
     }
 
-    std::valarray<double> GasInterface::serialize(const GasState& gs) const
+    std::valarray<double> GasInterface::serialize(const GasState& gs, bool SI) const
     {
+        // We use all the inside information we have to make this more efficient
         std::valarray<double> blob(6);
-        blob[0] = gs._t;
+
+        // densities start at 1
         std::copy(std::begin(gs._nv), std::end(gs._nv), std::begin(blob) + 1);
         blob[blob.size() - 1] = gs._n2s;
+        // Convert to m-3 if desired
+        if (SI) blob *= 1e6;
+
+        // temperature at 0
+        blob[0] = gs._t;
         return blob;
     }
 
-    void GasInterface::deserialize(GasState& gs, const std::valarray<double>& blob) const
+    void GasInterface::deserialize(GasState& gs, const std::valarray<double>& blob, bool SI) const
     {
         // this is all just hardcoded. Assumes that blob and current size of _nv in gas state
         // are compatible. If not, will (and should) probably crash.
-        gs.setMembers(blob[0], std::valarray<double>(&(blob[1]), gs._nv.size()), blob[blob.size() - 1]);
+        double densityFactor = SI ? 1e-6 : 1;
+        gs.setMembers(blob[0], densityFactor * std::valarray<double>(&(blob[1]), gs._nv.size()),
+                      densityFactor * blob[blob.size() - 1]);
     }
 
     std::vector<std::string> GasInterface::serializationInfo() const

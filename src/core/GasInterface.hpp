@@ -110,14 +110,14 @@ namespace RADAGAST
         /** Serialize GasState into array of doubles, which makes it easier for the client code
             to implement storage and e.g. MPI communication. Not implemented in GasState,
             because GasState is agnostic about the details of the model, which we might need. */
-        std::valarray<double> serialize(const GasState&) const;
+        std::valarray<double> serialize(const GasState&, bool SI = false) const;
 
         /** Write serialized data into GasState. Typical use case:
             1. run RADAGAST in parallel (MPI)
             2. store gas states as plain doubles using serialize
             3. synchronize gas state data between processes using simple MPI calls
             4. deserialize the blobs and pass the resulting GasStates to RADAGAST to access gas information */
-        void deserialize(GasState&, const std::valarray<double>& blob) const;
+        void deserialize(GasState&, const std::valarray<double>& blob, bool SI = false) const;
 
         /** Describes every element of the output of serialize, in the form of one string per
             element. The output looks like {"T", "ne", "np", "nH", "nH2", others...}. GasState
