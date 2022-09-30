@@ -1,7 +1,9 @@
 #ifndef CORE_ERROR_HPP
 #define CORE_ERROR_HPP
 
+#include <cmath>
 #include <iostream>
+
 namespace RADAGAST
 {
     namespace Error
@@ -30,7 +32,7 @@ namespace RADAGAST
 
         template<typename T> void sanitize(std::string name, T value)
         {
-            if (!isfinite(value)) runtime(name + " is " + std::to_string(value) + "! Clean your input.");
+            if (!std::isfinite(value)) runtime(name + " is " + std::to_string(value) + "! Clean your input.");
         }
 
         template<typename T> void equalCheck(std::string variable_names, T value1, T value2)
