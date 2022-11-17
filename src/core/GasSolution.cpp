@@ -170,6 +170,12 @@ namespace RADAGAST
         // Other things will be written to the 'user values' of gasDiagnostics, somewhere in
         // these calls
         _h2Solution->extraDiagnostics(*gd);
+
+        // write grain temperatures of one population
+        if (_grainSolutionv.size() > 0)
+        {
+            _grainSolutionv[0].extraDiagnostics(*gd, "pop0");
+        }
     }
 
     void GasSolution::setGasState(RADAGAST::GasState& g) const

@@ -3,6 +3,7 @@
 
 #include "Array.hpp"
 #include "ChargeDistribution.hpp"
+#include "GasDiagnostics.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "GrainPopulation.hpp"
 #include "Testing.hpp"
@@ -72,6 +73,11 @@ namespace RADAGAST
         /** Return the average charge for grains with size index m of this population. Assumes
             that recalculate() has already been called. */
         double averageCharge(int m) const;
+
+        /** Add some info about the grains to the diagnostics. Choose a unique prefix for the
+            diagnostic names to prevent output conflicts, because multiple populations are
+            possible. */
+        void extraDiagnostics(GasDiagnostics& gd, const std::string& prefix) const;
 
     private:
         // pointers to constant data
