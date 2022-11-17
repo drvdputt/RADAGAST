@@ -1,13 +1,18 @@
 #ifndef CORE_ERROR_HPP
 #define CORE_ERROR_HPP
 
+#include <cmath>
 #include <iostream>
+
 namespace RADAGAST
 {
     namespace Error
     {
         /** Prints a message to stderr and aborts. */
         static inline void runtime(std::string message);
+
+        /** Check if number is finite and throw runtime error if not */
+        template<typename T> static inline void sanitize(T value);
 
         /** Checks if the two given values are not equal, and prints a message containing the given
             name if this is the case. */
@@ -21,6 +26,13 @@ namespace RADAGAST
         {
             std::cerr << "Runtime error: " << message << std::endl;
             abort();
+        }
+
+        static inline void warn(std::string message) { std::cerr << "RADAGAST warning: " << message << '\n'; }
+
+        template<typename T> void sanitize(std::string name, T value)
+        {
+            if (!std::isfinite(value)) runtime(name + " is " + std::to_string(value) + "! Clean your input.");
         }
 
         template<typename T> void equalCheck(std::string variable_names, T value1, T value2)

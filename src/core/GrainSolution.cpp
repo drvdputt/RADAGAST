@@ -142,4 +142,9 @@ namespace RADAGAST
     }
 
     double GrainSolution::averageCharge(int m) const { return _chargeDistributionv[m].average(); }
+
+    void GrainSolution::extraDiagnostics(GasDiagnostics& gd, const std::string& prefix) const
+    {
+        for (int i = 0; i < _numSizes; i++) gd.setUserValue(prefix + "T" + std::to_string(i), _newTemperaturev[i]);
+    }
 }

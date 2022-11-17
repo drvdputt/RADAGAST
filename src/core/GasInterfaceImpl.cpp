@@ -1,6 +1,8 @@
 #include "GasInterfaceImpl.hpp"
 #include "Constants.hpp"
 #include "DebugMacros.hpp"
+#include "EigenAliases.hpp"
+#include "Error.hpp"
 #include "Functions.hpp"
 #include "GrainPhotoelectricCalculator.hpp"
 #include "Ionization.hpp"
@@ -14,7 +16,10 @@
 #include "TwoPhoton.hpp"
 #include <gsl/gsl_errno.h>
 #include <gsl/gsl_roots.h>
+#include <cmath>
 #include <iostream>
+#include <string>
+#include <valarray>
 
 namespace RADAGAST
 {
@@ -48,9 +53,20 @@ namespace RADAGAST
             _h2crossv[i] = 3.33 * Ionization::crossSection(oFrequencyv[i]);
     }
 
+    namespace
+    {
+        void sanitizeInput(double n, const std::valarray<double>& meanIntensityv, double fshield,
+                           RADAGAST::GrainInterface& grainInfo)
+        {
+            Error::sanitize("n", n);
+            Error::sanitize("fshield", fshield);
+        }
+    }
+
     void GasInterfaceImpl::updateGasState(RADAGAST::GasState& gs, double n, const std::valarray<double>& meanIntensityv,
                                           double fshield, RADAGAST::GrainInterface& grainInfo, GasDiagnostics* gd) const
     {
+        sanitizeInput(n, meanIntensityv, fshield, grainInfo);
         Spectrum meanIntensity(_iFrequencyv, meanIntensityv);
         GasSolution s = solveTemperature(n, meanIntensity, fshield, grainInfo);
         s.setGasState(gs);
@@ -364,7 +380,9 @@ namespace RADAGAST
             if (previousAbundancev.array().isNaN().any())
             {
                 std::cerr << previousAbundancev;
-                Error::runtime("Nan in chemistry solution!");
+                Error::warn("Nan in chemistry solution! Setting to zero.");
+                previousAbundancev.setZero();
+                s.setSpeciesNv(EVector::Zero(previousAbundancev.size()));
             }
 
             // GRAIN, LEVELS, AND CHEMISTRY SOLUTIONS -> CHEM RATES
