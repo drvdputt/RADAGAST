@@ -48,7 +48,7 @@ namespace RADAGAST
         const int h2data_numExcitedLevels = 1;
 
         const int grainsolution_minGrainTemp = 1.;
-        const int grainsolution_maxGrainTemp = 300.;
+        const int grainsolution_maxGrainTemp = 1000.;
         const int grainsolution_tPointsPerDex = 100.;
         const int grainphotoelectriccalculator_maxcharges = 16;
 
