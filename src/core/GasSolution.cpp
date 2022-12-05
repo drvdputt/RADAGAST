@@ -171,10 +171,11 @@ namespace RADAGAST
         // these calls
         _h2Solution->extraDiagnostics(*gd);
 
-        // write grain temperatures of one population
-        if (_grainSolutionv.size() > 0)
+        // write grain temperatures
+        for (size_t i = 0; i < _grainSolutionv.size(); ++i)
         {
-            _grainSolutionv[0].extraDiagnostics(*gd, "pop0");
+            std::string label = "pop" + std::to_string(i);
+            _grainSolutionv[i].extraDiagnostics(*gd, label);
         }
     }
 
