@@ -4,9 +4,16 @@
 
 namespace RADAGAST
 {
-    void GasDiagnostics::setHeating(const std::string& key, double value) { _heatingm[key] = value; }
+    void GasDiagnostics::setReactionInfo(const std::vector<std::string>& reactionNamev,
+                                         const std::vector<double>& reactionRatev)
+    {
+        for (size_t i = 0; i != reactionNamev.size(); ++i)
+            _reactionInfov["chem:" + reactionNamev[i]] = reactionRatev[i];
+    }
 
-    void GasDiagnostics::setCooling(const std::string& key, double value) { _coolingm[key] = value; }
+    void GasDiagnostics::setHeating(const std::string& name, double value) { _heatingm["heat:" + name] = value; }
+
+    void GasDiagnostics::setCooling(const std::string& name, double value) { _coolingm["cool:" + name] = value; }
 
     void GasDiagnostics::setUserValue(const std::string& key, double value)
     {

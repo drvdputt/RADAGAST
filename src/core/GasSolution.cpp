@@ -135,8 +135,8 @@ namespace RADAGAST
         double hcolion = Ionization::collisionalRateCoeff(_t);
         double hrec = Ionization::recombinationRateCoeff(_t);
 
-        gd->setReactionNames({"h2form", "h2dissoc", "hphotoion", "hcolion", "hrec"});
-        gd->setReactionRates({h2form, h2dissoc, hphotoion, hcolion, hrec});
+        gd->setReactionInfo({"H2 form", "H2 diss", "H photoion", "H colion", "H rec"},
+                            {h2form, h2dissoc, hphotoion, hcolion, hrec});
 
         if (gd->saveLevelPopulations())
         {
@@ -151,21 +151,21 @@ namespace RADAGAST
         double netHline = _hSolution->netHeating();
         double netH2line = _h2Solution->netHeating();
 
-        gd->setHeating("H ion", nH() * _ionHeatPerH);
-        gd->setCooling("Hrec", Ionization::cooling(nH(), np(), ne(), _t));
-        gd->setHeating("H deexc", netHline);
+        gd->setHeating("H photoion", nH() * _ionHeatPerH);
+        gd->setCooling("H rec", Ionization::cooling(nH(), np(), ne(), _t));
+        gd->setHeating("H dxc", netHline);
         gd->setCooling("H exc", -netHline);
 
-        gd->setHeating("H2 deexc", netH2line);
+        gd->setHeating("H2 dxc", netH2line);
         gd->setCooling("H2 exc", -netH2line);
-        gd->setHeating("H2 dissoc", _h2Solution->dissociationHeating());
+        gd->setHeating("H2 diss", _h2Solution->dissociationHeating());
         gd->setCooling("freefree", _freeFree->cooling(np() * ne(), _t));
 
         // I need this per grain size. Doing this thing for now.
         double grainPhotoHeat = grainHeating();
         double grainCollCool = grainCooling();
-        gd->setHeating("total grainphoto", grainPhotoHeat);
-        gd->setCooling("grain collisions", grainCollCool);
+        gd->setHeating("grain photo", grainPhotoHeat);
+        gd->setCooling("grain col", grainCollCool);
 
         // Other things will be written to the 'user values' of gasDiagnostics, somewhere in
         // these calls
