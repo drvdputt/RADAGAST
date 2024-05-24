@@ -1,0 +1,49 @@
+# NOTE: DON'T USE BLANK LINES IN THIS FILE, EXCEPT AT THE END
+# This test is supposed to be compared with the output of the MRNtest
+init "honly.ini"
+title hsphere
+# SOURCE
+blackbody {tc}
+luminosity total linear solar {lum}
+# GAS
+radius 0.01 to 0.02 linear parsecs
+hden {nh} linear
+stop temperature 30
+database H-like levels resolved 4
+database H-like levels collapsed 20
+set H2 Jura ELRD
+set H2 grain formation pumping DB96
+set H2 small model BD96
+# Standard 3.5 slope MRN distribution (see data/ism.szd)
+grains "graphite_ism_10.opc" no qheat
+no grain electrons
+no grain molecules
+no grain neutralization
+# turn off some physics
+no advection
+no charge transfer
+save grain abundance "grainabundance.g_cm-3.out" last
+save grain H2rate "grainH2rate.out" last
+save grain heating "grainheating.erg_cm-3_s-1.out" last
+save grain temperature "graintemperature.out" last
+save grain charge "graincharge.out" last
+save grain extinction "grainextinction.out" last
+save grain opacity "grainopacity.out" last
+save overview "overview.dat" last
+save optical depths "opticaldepth.out" units micron last
+save heating "heating.out" last
+save cooling "cooling.out" last
+save continuum "continuum.out" last units micron luminosity
+save diffuse continuum "4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
+save diffuse continuum zone "all_4pi_nu_jnu.erg_cm-3_s-1.out" last units micron
+save chemistry rates destruction "h2destruction.out" "H2" coef last
+save chemistry rates creation "h2creation.out" "H2" last
+save h2 rates "h2rates.out" last
+save chemistry rates destruction "hdestruction.out" "H" coef last
+save chemistry rates creation "hcreation.out" "H" last
+save hydrogen ionization "hionization.s-1.cm-3_s-1.out" last
+save hydrogen populations "hpopulations.cm-3.out" last
+save recombination coefficients "recombination.out" last
+save chemistry rates destruction "pdestruction.out" "H+" coef last
+save chemistry rates creation "pcreation.out" "H+" last
+iterate to convergence
