@@ -130,9 +130,9 @@ namespace
             double aUp = qds.FILEAV[aIndex];
 
             const auto& q = qds.QABSVV;
-            QabsWav[w] = RADAGAST::TemplatedUtils::interpolateBilinear(
-                wav, a, wLeft, wRight, aLow, aUp, q[wIndex - 1][aIndex - 1], q[wIndex][aIndex - 1],
-                q[wIndex - 1][aIndex], q[wIndex][aIndex]);
+            QabsWav[w] = RADAGAST::TemplatedUtils::interpolateBilinear(wav, a, wLeft, wRight, aLow, aUp,
+                                                                       q[wIndex - 1][aIndex - 1], q[wIndex][aIndex - 1],
+                                                                       q[wIndex - 1][aIndex], q[wIndex][aIndex]);
         }
 
 // #define PLOT_QABS
@@ -469,7 +469,7 @@ namespace RADAGAST
         OutColumnFile densFile(outputPath + "densities.dat", {"temperature", "e-", "H+", "H", "H2", "Htot"});
 
         vector<string> rateFileColNames = {"temperature"};
-        for (auto name : gd.reactionNames()) rateFileColNames.emplace_back(name);
+        for (auto& pair : gd.reactionInfov()) rateFileColNames.emplace_back(pair.first);
         OutColumnFile rateFile(outputPath + "chemrates.dat", rateFileColNames);
 
         std::vector<int> h_conservation = {0, 1, 1, 2};
@@ -501,7 +501,7 @@ namespace RADAGAST
             vector<double> lineValues;
             lineValues.reserve(rateFileColNames.size());
             lineValues.emplace_back(t);
-            for (double rate : gd.reactionRates()) lineValues.emplace_back(rate);
+            for (auto& pair : gd.reactionInfov()) lineValues.emplace_back(pair.second);
             rateFile.writeLine(lineValues);
         };
 
@@ -946,8 +946,7 @@ namespace RADAGAST
             cout << "H+ " << s.np() << '\n';
             cout << "HI " << s.nH() << '\n';
             cout << "H2 " << s.nH2() << '\n';
-            for (size_t i = 0; i < gd.reactionNames().size(); i++)
-                cout << gd.reactionNames()[i] << " = " << gd.reactionRates()[i] << '\n';
+            for (auto& pair : gd.reactionInfov()) cout << pair.first << " = " << pair.second << '\n';
 
             string prefix = "MRNDust/";
             if (own_dir)
@@ -961,8 +960,15 @@ namespace RADAGAST
             OutColumnFile overview(prefix + "overview.dat", {"T", "eden", "H+", "HI", "H2"});
             overview.writeLine<Array>({s.t(), s.ne(), s.np(), s.nH(), s.nH2()});
 
-            OutColumnFile rates(prefix + "rates.dat", gd.reactionNames());
-            rates.writeLine(gd.reactionRates());
+            std::vector<std::string> reactionNamev;
+            std::vector<double> reactionRatev;
+            for (auto& pair : gd.reactionInfov())
+            {
+                reactionNamev.push_back(pair.first);
+                reactionRatev.push_back(pair.second);
+            }
+            OutColumnFile rates(prefix + "rates.dat", reactionNamev);
+            rates.writeLine(reactionRatev);
 
             writeMapAsColumnFile(prefix + "heat.dat", gd.heating());
             writeMapAsColumnFile(prefix + "cool.dat", gd.cooling());
